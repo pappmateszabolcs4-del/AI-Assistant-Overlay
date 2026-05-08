@@ -2373,3 +2373,34 @@ Short summary (as of Feb 5):
 
 #### Follow-ups
 - TODO: None
+
+---
+
+### 2026-05-08 (Late)
+
+#### Summary
+- What changed: Centralized main-process language, speech rate, and game context state into [src/main/state/registry.js](src/main/state/registry.js).
+- Why: Finish Phase 1 registry extraction and keep shared state in one place.
+- Impact: No behavioral change; state now flows through the registry.
+
+#### Details
+- Implementation notes: Updated main entry wiring to read/write registry state.
+- Edge cases: None observed.
+
+#### Files touched
+- [src/main/state/registry.js](src/main/state/registry.js)
+- [src/main/index.js](src/main/index.js)
+- [docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md](docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/AUDIT_REPORT.md](docs/2-technical/AUDIT_REPORT.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Not run (not requested)
+
+#### Follow-ups
+- TODO: None

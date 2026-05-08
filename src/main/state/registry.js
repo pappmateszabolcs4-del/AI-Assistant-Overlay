@@ -19,6 +19,9 @@ const registry = {
 
   // Game detection state
   currentDetectedGame: null,
+  currentGameContext: null,
+  currentLanguage: 'en',
+  currentSpeechRate: 100,
   lastGameDetectAt: 0,
   lastKnownGameDisplayId: null,
   lastKnownGameDisplayAt: 0,

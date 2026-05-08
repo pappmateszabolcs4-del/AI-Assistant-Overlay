@@ -24,9 +24,11 @@ const { normalizePanelId } = require('../shared/panels');
 // Removed: V8CodeCaching, CalculateNativeWinOcclusion, renderer-process-limit (all causing resource hogging)
 // Keeping only essential optimizations
 
-let currentLanguage = 'en';
-let currentSpeechRate = 100;
-let currentGameContext = null; // Currently detected game
+registry.currentLanguage = registry.currentLanguage || 'en';
+registry.currentSpeechRate = Number.isFinite(registry.currentSpeechRate)
+  ? registry.currentSpeechRate
+  : 100;
+registry.currentGameContext = registry.currentGameContext || null;
 
 const gameDetect = createGameDetectService({
   registry,
@@ -47,7 +49,7 @@ const openaiService = createOpenAIService({
   registry,
   detectCurrentGame,
   matchGameFromText,
-  getCurrentLanguage: () => currentLanguage
+  getCurrentLanguage: () => registry.currentLanguage
 });
 
 const uiText = createUiTextService();
@@ -77,7 +79,7 @@ const notePanel = createNotePanelManager({
   BrowserWindow,
   clampWindowToWorkArea,
   getPreferredOverlayDisplay,
-  getCurrentLanguage: () => currentLanguage
+  getCurrentLanguage: () => registry.currentLanguage
 });
 
 const infoPanel = createInfoPanelManager({
@@ -85,7 +87,7 @@ const infoPanel = createInfoPanelManager({
   BrowserWindow,
   clampWindowToWorkArea,
   getPreferredOverlayDisplay,
-  getCurrentLanguage: () => currentLanguage
+  getCurrentLanguage: () => registry.currentLanguage
 });
 
 const detachedPanels = createDetachedWindowsManager({
@@ -93,7 +95,7 @@ const detachedPanels = createDetachedWindowsManager({
   BrowserWindow,
   clampWindowToWorkArea,
   getPreferredOverlayDisplay,
-  getCurrentLanguage: () => currentLanguage,
+  getCurrentLanguage: () => registry.currentLanguage,
   sendDetachedPanelsStateToOverlay,
   startDetachedSelfHealPulse,
   normalizePanelId
@@ -136,7 +138,7 @@ const overlayManager = createOverlayManager({
   startDetachedSelfHealPulse,
   reconcileDetachedPanelWindowsVisibility,
   sendDetachedPanelsStateToOverlay,
-  getCurrentLanguage: () => currentLanguage
+  getCurrentLanguage: () => registry.currentLanguage
 });
 
 const mainWindowManager = createMainWindowManager({
@@ -176,7 +178,7 @@ const hotkeyManager = createHotkeyManager({
   reconcileDetachedPanelWindowsVisibility,
   notePanel,
   createOverlayWindow,
-  getCurrentLanguage: () => currentLanguage
+  getCurrentLanguage: () => registry.currentLanguage
 });
 
 const { registerHotkey } = hotkeyManager;
@@ -212,9 +214,9 @@ const ipcRegistrar = createIpcRegistrar({
   openaiService,
   getNotePanelLabels,
   getInfoPanelLabels,
-  setCurrentLanguage: (lang) => { currentLanguage = lang; },
-  getCurrentLanguage: () => currentLanguage,
-  setCurrentSpeechRate: (rate) => { currentSpeechRate = rate; },
+  setCurrentLanguage: (lang) => { registry.currentLanguage = lang; },
+  getCurrentLanguage: () => registry.currentLanguage,
+  setCurrentSpeechRate: (rate) => { registry.currentSpeechRate = rate; },
   isCursorInsideOverlayChildWindow,
   stopOverlayMouseForwardGate,
   startOverlayMouseForwardGate,

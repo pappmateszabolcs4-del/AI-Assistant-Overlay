@@ -87,7 +87,7 @@ src/
 - ARCHITECTURE_REFACTOR_PLAN.md updated with checked items.
 
 ## TODO (Architecture Expansion)
-- [ ] Phase 1: finish registry extraction (centralize window refs + flags).
+- [x] Phase 1: finish registry extraction (centralize window refs + flags).
 - [x] Phase 1: extract windows/* modules (overlay/detached/pinned/note/info).
 - [x] Phase 1: extract ipc/* modules with pure delegation.
 - [x] Phase 1: extract services/game-detect.js and services/openai.js if clean.

@@ -6,6 +6,18 @@
 
 ---
 
+## [1.0.16] - 2026-05-08 (Registry State Centralization)
+
+### 🔧 Changed
+
+- Centralized main-process language/speech/game context state into the registry.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+---
+
 ## [1.0.15] - 2026-05-08 (Main Entry Relocation)
 
 ### 🔧 Changed

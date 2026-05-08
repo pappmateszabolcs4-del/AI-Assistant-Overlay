@@ -79,6 +79,9 @@ This audit was conducted on Feb 5. The following notable improvements were added
 - Main process entry logic moved into [src/main/index.js](src/main/index.js).
 - Root [main.js](main.js) now delegates to keep the Electron entry point stable.
 
+### Registry State Centralization
+- Main-process language, speech rate, and game context now live in [src/main/state/registry.js](src/main/state/registry.js).
+
 ---
 
 ## 📋 AUDIT METHODOLOGY
