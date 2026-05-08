@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Info</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+      user-select: none;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: #f5f7fa;
+    }
+
+    /* Scrollbar styling (match main overlay) */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+    }
+
+    *::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    *::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    *::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 3px;
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+      background: rgba(91, 158, 255, 0.6);
+    }
+
+    #root {
+      position: fixed;
+      inset: 0;
+      pointer-events: auto;
+      display: flex;
+    }
+
+    .panel {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      background: rgba(26, 31, 46, 0.95);
+      border: 1px solid rgba(91, 158, 255, 0.4);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 14px;
+    }
+
+    .drag-area {
+      cursor: grab;
+      user-select: none;
+    }
+
+    .drag-area:active {
+      cursor: grabbing;
+    }
+
+    .modal-title {
+      font-size: 1.2em;
+      font-weight: 600;
+      color: #f5f7fa;
+      margin: 0;
+    }
+
+    .modal-message {
+      color: #8ba3c0;
+      line-height: 1.5;
+      white-space: pre-line;
+      overflow: auto;
+      user-select: text;
+      flex: 1 1 auto;
+      min-height: 0;
+      padding-right: 2px;
+    }
+
+    
+
+    .modal-message {
+      white-space: normal;
+    }
+
+    .info-paragraph {
+      margin: 0 0 10px 0;
+      color: #8ba3c0;
+    }
+
+    .info-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .info-item {
+      position: relative;
+      padding-left: 14px;
+      color: #8ba3c0;
+    }
+
+    .info-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.62em;
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(91, 158, 255, 0.65);
+      box-shadow: 0 0 0 3px rgba(91, 158, 255, 0.12);
+    }
+
+    .info-key {
+      font-weight: 650;
+      color: rgba(245, 247, 250, 0.92);
+      letter-spacing: 0.01em;
+    }
+
+    .info-sep {
+      opacity: 0.75;
+    }
+
+    .info-spacer {
+      height: 6px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .modal-btn-cancel {
+      background: rgba(91, 158, 255, 0.2);
+      color: #5b9eff;
+      border: 1px solid rgba(91, 158, 255, 0.4);
+    }
+
+    .modal-btn-cancel:hover {
+      background: rgba(91, 158, 255, 0.35);
+    }
+
+    .resize-handle {
+      position: absolute;
+      background: transparent;
+      z-index: 10;
+      pointer-events: auto;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .resize-handle:hover {
+      background: transparent;
+    }
+
+    .resize-handle-left {
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      cursor: ew-resize;
+    }
+
+    .resize-handle-left::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 32px;
+      border-radius: 2px;
+      background: rgba(91, 158, 255, 0.18);
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    .resize-handle-left:hover::before {
+      background: rgba(91, 158, 255, 0.18);
+    }
+
+    .resize-handle-right {
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      cursor: ew-resize;
+    }
+
+    .resize-handle-right::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 32px;
+      border-radius: 2px;
+      background: rgba(91, 158, 255, 0.18);
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    .resize-handle-right:hover::before {
+      background: rgba(91, 158, 255, 0.18);
+    }
+
+    .resize-handle-bottom {
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 10px;
+      cursor: ns-resize;
+    }
+
+    .resize-handle-bottom::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 34px;
+      height: 2px;
+      border-radius: 2px;
+      background: rgba(91, 158, 255, 0.18);
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    .resize-handle-bottom:hover::before {
+      background: rgba(91, 158, 255, 0.18);
+    }
+
+    .resize-handle-corner {
+      right: 0;
+      bottom: 0;
+      width: 16px;
+      height: 16px;
+      cursor: nwse-resize;
+    }
+
+    .resize-handle-corner::before {
+      content: '';
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      background: repeating-linear-gradient(
+        135deg,
+        rgba(91, 158, 255, 0.16) 0px,
+        rgba(91, 158, 255, 0.16) 2px,
+        rgba(91, 158, 255, 0.00) 2px,
+        rgba(91, 158, 255, 0.00) 4px
+      );
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    .resize-handle-corner:hover::before {
+      background: repeating-linear-gradient(
+        135deg,
+        rgba(91, 158, 255, 0.16) 0px,
+        rgba(91, 158, 255, 0.16) 2px,
+        rgba(91, 158, 255, 0.00) 2px,
+        rgba(91, 158, 255, 0.00) 4px
+      );
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div class="panel">
+      <div class="drag-area" id="dragHeader">
+        <div class="modal-title" id="title">ℹ️ Info</div>
+      </div>
+
+      <div class="resize-handle resize-handle-left" id="resizeLeft"></div>
+      <div class="resize-handle resize-handle-right" id="resizeRight"></div>
+      <div class="resize-handle resize-handle-bottom" id="resizeBottom"></div>
+      <div class="resize-handle resize-handle-corner" id="resizeCorner"></div>
+
+      <div class="modal-message" id="infoText"></div>
+
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-cancel" id="closeBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    const { IPC_CHANNELS } = require('./src/shared/ipc-channels');
+
+    const titleEl = document.getElementById('title');
+    const closeBtn = document.getElementById('closeBtn');
+    const dragHeader = document.getElementById('dragHeader');
+    const infoText = document.getElementById('infoText');
+
+    const resizeLeft = document.getElementById('resizeLeft');
+    const resizeRight = document.getElementById('resizeRight');
+    const resizeBottom = document.getElementById('resizeBottom');
+    const resizeCorner = document.getElementById('resizeCorner');
+
+    function syncClickThrough(allowThrough) {
+      ipcRenderer.invoke(IPC_CHANNELS.SET_CLICK_THROUGH, !!allowThrough).catch(() => {});
+    }
+
+    function isInteractiveTarget(target) {
+      return !!(target && document.body.contains(target));
+    }
+
+    let hovered = false;
+    let forceInteractiveCount = 0;
+    let lastPointerClientX = 0;
+    let lastPointerClientY = 0;
+    let hoverEvalFrame = null;
+
+    function pushForceInteractive() {
+      forceInteractiveCount += 1;
+      hovered = true;
+      syncClickThrough(false);
+    }
+
+    function popForceInteractive() {
+      forceInteractiveCount = Math.max(0, forceInteractiveCount - 1);
+      if (forceInteractiveCount > 0) return;
+      syncClickThrough(!hovered);
+    }
+
+    document.addEventListener('pointerover', (ev) => {
+      if (hovered) return;
+      if (isInteractiveTarget(ev.target)) {
+        hovered = true;
+        syncClickThrough(false);
+      }
+    }, true);
+
+    document.addEventListener('pointerout', (ev) => {
+      if (forceInteractiveCount > 0) return;
+      if (!hovered) return;
+      if (!isInteractiveTarget(ev.target)) return;
+      if (isInteractiveTarget(ev.relatedTarget)) return;
+      hovered = false;
+      syncClickThrough(true);
+    }, true);
+
+    function evaluateHoverFromPoint(clientX, clientY) {
+      if (forceInteractiveCount > 0) return;
+      const el = document.elementFromPoint(clientX, clientY);
+      hovered = isInteractiveTarget(el);
+      syncClickThrough(!hovered);
+    }
+
+    function scheduleHoverEvaluation() {
+      if (hoverEvalFrame) return;
+      hoverEvalFrame = requestAnimationFrame(() => {
+        hoverEvalFrame = null;
+        evaluateHoverFromPoint(lastPointerClientX, lastPointerClientY);
+      });
+    }
+
+    document.addEventListener('pointermove', (ev) => {
+      lastPointerClientX = ev.clientX;
+      lastPointerClientY = ev.clientY;
+      scheduleHoverEvaluation();
+    }, true);
+
+    function applyPayload(payload) {
+      if (!payload) return;
+      const labels = payload.labels || {};
+      if (labels.title) titleEl.textContent = labels.title;
+      if (labels.body) renderInfoBody(labels.body);
+      if (labels.btnClose) closeBtn.textContent = labels.btnClose;
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderInfoLineToHtml(text) {
+      const raw = String(text || '').trim();
+      if (!raw) return '';
+
+      const kvMatch = raw.match(/^([^:]{1,32}):\s*(.+)$/);
+      if (kvMatch) {
+        const key = escapeHtml(kvMatch[1].trim());
+        const rest = escapeHtml(kvMatch[2].trim());
+        return `<span class="info-key">${key}:</span> ${rest}`;
+      }
+      return escapeHtml(raw);
+    }
+
+    function renderInfoBody(bodyText) {
+      const lines = String(bodyText || '').split(/\r?\n/);
+
+      let html = '';
+      let bulletItems = [];
+
+      function flushBullets() {
+        if (!bulletItems.length) return;
+        html += `<ul class="info-list">${bulletItems.join('')}</ul>`;
+        bulletItems = [];
+      }
+
+      for (const line of lines) {
+        const trimmed = String(line || '').trim();
+        if (!trimmed) {
+          flushBullets();
+          html += `<div class="info-spacer"></div>`;
+          continue;
+        }
+
+        if (trimmed.startsWith('•')) {
+          const content = trimmed.replace(/^•\s*/, '');
+          const rendered = renderInfoLineToHtml(content);
+          bulletItems.push(`<li class="info-item">${rendered}</li>`);
+          continue;
+        }
+
+        flushBullets();
+        html += `<p class="info-paragraph">${renderInfoLineToHtml(trimmed)}</p>`;
+      }
+
+      flushBullets();
+
+      infoText.innerHTML = html || '';
+    }
+
+    ipcRenderer.on(IPC_CHANNELS.INFO_PANEL_INIT, (_event, payload) => {
+      applyPayload(payload);
+    });
+
+    closeBtn.addEventListener('pointerdown', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
+
+    closeBtn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      ipcRenderer.invoke(IPC_CHANNELS.INFO_PANEL_CLOSE).catch(() => {});
+    });
+
+    let pendingMove = null;
+    let moveRaf = null;
+
+    function requestMoveWindow(x, y) {
+      pendingMove = { x, y };
+      if (moveRaf) return;
+      moveRaf = requestAnimationFrame(() => {
+        moveRaf = null;
+        const next = pendingMove;
+        pendingMove = null;
+        if (!next) return;
+        ipcRenderer.send(IPC_CHANNELS.INFO_PANEL_MOVE, { x: next.x, y: next.y });
+      });
+    }
+
+    let pendingBounds = null;
+    let boundsRaf = null;
+
+    function requestSetBounds(bounds) {
+      pendingBounds = bounds;
+      if (boundsRaf) return;
+      boundsRaf = requestAnimationFrame(() => {
+        boundsRaf = null;
+        const next = pendingBounds;
+        pendingBounds = null;
+        if (!next) return;
+        ipcRenderer.send(IPC_CHANNELS.INFO_PANEL_SET_BOUNDS, next);
+      });
+    }
+
+    function getPointerScreen(ev) {
+      const screenX = (typeof ev.screenX === 'number') ? ev.screenX : (window.screenX + ev.clientX);
+      const screenY = (typeof ev.screenY === 'number') ? ev.screenY : (window.screenY + ev.clientY);
+      return { x: Math.round(screenX), y: Math.round(screenY) };
+    }
+
+    let dragState = null;
+
+    dragHeader.addEventListener('pointerdown', (ev) => {
+      if (ev.button !== 0) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      pushForceInteractive();
+      const pt = getPointerScreen(ev);
+      dragState = {
+        pointerId: ev.pointerId,
+        offsetX: Math.round(pt.x - window.screenX),
+        offsetY: Math.round(pt.y - window.screenY)
+      };
+
+      try { dragHeader.setPointerCapture(dragState.pointerId); } catch (_) {}
+    });
+
+    dragHeader.addEventListener('pointermove', (ev) => {
+      if (!dragState || ev.pointerId !== dragState.pointerId) return;
+      ev.preventDefault();
+      const pt = getPointerScreen(ev);
+      const nextX = Math.round(pt.x - dragState.offsetX);
+      const nextY = Math.round(pt.y - dragState.offsetY);
+      requestMoveWindow(nextX, nextY);
+    });
+
+    dragHeader.addEventListener('pointerup', (ev) => {
+      if (!dragState || ev.pointerId !== dragState.pointerId) return;
+      ev.preventDefault();
+      try { dragHeader.releasePointerCapture(dragState.pointerId); } catch (_) {}
+      dragState = null;
+      popForceInteractive();
+
+      ipcRenderer.send(IPC_CHANNELS.INFO_PANEL_COMMIT_BOUNDS);
+    });
+
+    dragHeader.addEventListener('pointercancel', (ev) => {
+      if (!dragState || ev.pointerId !== dragState.pointerId) return;
+      try { dragHeader.releasePointerCapture(dragState.pointerId); } catch (_) {}
+      dragState = null;
+      popForceInteractive();
+    });
+
+    const MIN_WIDTH = 240;
+    const MIN_HEIGHT = 140;
+
+    let resizeState = null;
+
+    function beginResize(ev, edge) {
+      if (ev.button !== 0) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      pushForceInteractive();
+      const pt = getPointerScreen(ev);
+      resizeState = {
+        pointerId: ev.pointerId,
+        edge,
+        startScreenX: pt.x,
+        startScreenY: pt.y,
+        startBounds: { x: window.screenX, y: window.screenY, width: window.innerWidth, height: window.innerHeight }
+      };
+
+      try { ev.currentTarget.setPointerCapture(resizeState.pointerId); } catch (_) {}
+    }
+
+    function onResizeMove(ev) {
+      if (!resizeState || ev.pointerId !== resizeState.pointerId) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      const pt = getPointerScreen(ev);
+      const dx = pt.x - resizeState.startScreenX;
+      const dy = pt.y - resizeState.startScreenY;
+      const b = resizeState.startBounds;
+
+      let nextX = b.x;
+      let nextY = b.y;
+      let nextW = b.width;
+      let nextH = b.height;
+
+      if (resizeState.edge === 'right') {
+        nextW = b.width + dx;
+      } else if (resizeState.edge === 'left') {
+        nextW = b.width - dx;
+        nextX = b.x + dx;
+      } else if (resizeState.edge === 'bottom') {
+        nextH = b.height + dy;
+      } else if (resizeState.edge === 'corner') {
+        nextW = b.width + dx;
+        nextH = b.height + dy;
+      }
+
+      if (resizeState.edge === 'left') {
+        const rawW = Math.round(nextW);
+        if (rawW < MIN_WIDTH) {
+          nextW = MIN_WIDTH;
+          nextX = b.x + (b.width - MIN_WIDTH);
+        }
+      }
+
+      nextW = Math.max(MIN_WIDTH, Math.round(nextW));
+      nextH = Math.max(MIN_HEIGHT, Math.round(nextH));
+
+      requestSetBounds({ x: Math.round(nextX), y: Math.round(nextY), width: nextW, height: nextH });
+    }
+
+    function endResize(ev) {
+      if (!resizeState || ev.pointerId !== resizeState.pointerId) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      try { ev.currentTarget.releasePointerCapture(resizeState.pointerId); } catch (_) {}
+      resizeState = null;
+      popForceInteractive();
+
+      ipcRenderer.send(IPC_CHANNELS.INFO_PANEL_COMMIT_BOUNDS);
+    }
+
+    function cancelResize(ev) {
+      if (!resizeState || ev.pointerId !== resizeState.pointerId) return;
+      try { ev.currentTarget.releasePointerCapture(resizeState.pointerId); } catch (_) {}
+      resizeState = null;
+      popForceInteractive();
+    }
+
+    const resizeHandles = [
+      { el: resizeLeft, edge: 'left' },
+      { el: resizeRight, edge: 'right' },
+      { el: resizeBottom, edge: 'bottom' },
+      { el: resizeCorner, edge: 'corner' }
+    ];
+
+    resizeHandles.forEach(({ el, edge }) => {
+      if (!el) return;
+      el.addEventListener('pointerdown', (ev) => beginResize(ev, edge));
+      el.addEventListener('pointermove', onResizeMove);
+      el.addEventListener('pointerup', endResize);
+      el.addEventListener('pointercancel', cancelResize);
+    });
+
+    syncClickThrough(true);
+  </script>
+</body>
+</html>

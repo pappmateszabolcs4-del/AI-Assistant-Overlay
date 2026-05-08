@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Electron App</title>
+  </head>
+  <body>
+    <!-- Resize handles -->
+    <div class="resize-handle resize-handle-top"></div>
+    <div class="resize-handle resize-handle-bottom"></div>
+    <div class="resize-handle resize-handle-left"></div>
+    <div class="resize-handle resize-handle-right"></div>
+    <div class="resize-handle resize-handle-topleft"></div>
+    <div class="resize-handle resize-handle-topright"></div>
+    <div class="resize-handle resize-handle-bottomleft"></div>
+    <div class="resize-handle resize-handle-bottomright"></div>
+    
+    <div class="titlebar">
+      <div class="drag-region"></div>
+      <div class="window-controls">
+        <button id="minBtn" title="Kicsinyítés">–</button>
+        <button id="maxBtn" title="Nagyítás/Visszaállítás">☐</button>
+        <button id="closeBtn" title="Bezárás">✕</button>
+      </div>
+    </div>
+    <div id="app-container">
+      <header>
+        <h1>AI Game Assistant</h1>
+        <nav>
+          <button id="openOverlayBtn" class="primary">🎮 Overlay</button>
+          <button id="settingsBtn">⚙️ Settings</button>
+        </nav>
+      </header>
+      <main>
+        <p>Üdvözöl az AI Game Assistant!<br>Válassz funkciót a fenti menüből.</p>
+      </main>
+    </div>
+    <div id="settingsPanel" class="overlay-hidden">
+      <div class="overlay-content settings-wide">
+        <button id="closeSettingsBtn" class="close" type="button" tabindex="0">X</button>
+        <h2>⚙️ Beállítások</h2>
+        <div id="settingsContent">
+          
+          <div class="settings-section">
+            <h3>🎯 Általános</h3>
+            <div class="setting-item">
+              <label for="languageSelect">Nyelv:</label>
+              <select id="languageSelect">
+                <option value="hu">Magyar</option>
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+                <option value="ru">Русский</option>
+                <option value="fr">Français</option>
+                <option value="zh">中文</option>
+              </select>
+            </div>
+            <div class="setting-item">
+              <label for="themeSelect">Theme:</label>
+              <select id="themeSelect">
+                <option value="dark">Dark Mode</option>
+                <option value="light">Light Mode</option>
+                <option value="gaming">Gaming Mode</option>
+              </select>
+            </div>
+            <div class="setting-item">              <label for="autoStartCheck">
+                <input type="checkbox" id="autoStartCheck">
+                Windows indításkor automatikus start
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3 id="hotkeysTitle">⌨️ Billentyűparancsok</h3>
+            <div style="margin-bottom: 12px;">
+              <label style="display: block; margin-bottom: 8px;" id="overlayHotkeyLabel">Overlay hotkey:</label>
+              <div style="display: flex; align-items: center; gap: 8px; justify-content: flex-start;">
+                <span style="color: var(--text-secondary); font-weight: 500; font-size: 1em;">Ctrl + Shift +</span>
+                <input type="text" id="hotkeyInput" readonly placeholder="K" maxlength="3" style="cursor: pointer; text-align: center; font-weight: 700; font-size: 1.2em; width: 70px; padding: 10px; background: var(--bg-primary); border: 2px solid var(--accent); color: var(--accent); border-radius: var(--radius-sm);">
+              </div>
+              <p style="margin: 12px 0 0 0; font-size: 0.88em; color: var(--text-secondary); line-height: 1.4;" id="hotkeyDescription">
+                Global hotkey - works in-game.
+              </p>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>🎤 Hang</h3>
+            <div class="setting-item">
+              <label for="micSelect">Mikrofon eszköz:</label>
+              <select id="micSelect">
+                <option value="default">Alapértelmezett</option>
+              </select>
+            </div>
+            <div class="setting-item">
+              <label for="recordDuration">Rögzítési idő (mp):</label>
+              <div class="range-container">
+                <input type="range" id="recordDuration" value="10" min="1" max="60">
+                <span id="recordDurationValue" style="min-width: 35px; text-align: center; font-weight: bold;">10</span>
+              </div>
+            </div>
+            <div class="setting-item">
+              <label for="speechRate">Beszéd hangereje:</label>
+              <div class="range-container">
+                <input type="range" id="speechRate" value="100" min="0" max="200">
+                <span id="speechRateValue" style="min-width: 35px; text-align: center; font-weight: bold;">100</span>
+              </div>
+            </div>
+          </div>
+
+            <div class="settings-section">
+              <h3 id="openaiSectionTitle">🤖 OpenAI API</h3>
+              <div class="setting-item" style="grid-template-columns: 140px 1fr;">
+                <label for="openaiApiKey" id="openaiApiKeyLabel">API Kulcs:</label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <input type="password" id="openaiApiKey" placeholder="sk-..." style="flex: 1; font-family: monospace; font-size: 0.9em;">
+                  <button id="deleteApiKeyBtn" style="background: rgba(255, 59, 48, 0.1); border: 1px solid rgba(255, 59, 48, 0.3); color: #ff3b30; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 1.1em; transition: all 0.2s;" title="Kulcs törlése">🗑️</button>
+                </div>
+              </div>
+              <div style="margin-top: 8px; padding: 0 0 0 148px;">
+                <p id="openaiStorageNote" style="margin: 0 0 8px 0; font-size: 0.85em; color: var(--text-secondary); line-height: 1.4;">
+                  🔒 Biztonságosan tárolódik az OS-ben (Windows Credential Manager).
+                </p>
+                <div id="openaiStatus" style="padding: 8px; background: rgba(91, 158, 255, 0.1); border-radius: 6px; border-left: 3px solid rgba(91, 158, 255, 0.5);">
+                  <p style="margin: 0; font-size: 0.9em; color: var(--text-secondary);"><span id="openaiStatusLabel">Status:</span> <span id="openaiStatusText" style="color: var(--accent);">Ellenőrzés...</span></p>
+                </div>
+              </div>
+            </div>
+
+          <div class="settings-actions">
+            <button id="saveSettingsBtn" class="primary">💾 Mentés</button>
+            <button id="resetSettingsBtn">🔄 Alapértelmezések</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    
+    <!-- Kilépés megerősítő modal -->
+    <div id="exitModal" class="modal-overlay overlay-hidden">
+      <div class="modal-content">
+        <h3>❓ Megerősítés</h3>
+        <p id="exitModalText">Biztosan ki akarsz lépni?</p>
+        <div class="modal-actions">
+          <button id="confirmExitBtn" class="primary">✓ Igen</button>
+          <button id="cancelExitBtn">✕ Mégsem</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Custom Alert Modal -->
+    <div id="alertModal" class="modal-overlay overlay-hidden">
+      <div class="modal-content alert-modal">
+        <p id="alertMessage"></p>
+        <div class="modal-actions">
+          <button id="alertOkBtn" class="primary">OK</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Custom Confirmation Modal -->
+    <div id="confirmModal" class="modal-overlay overlay-hidden">
+      <div class="modal-content alert-modal">
+        <p id="confirmMessage"></p>
+        <div class="modal-actions">
+          <button id="confirmYesBtn" class="primary">✓ Igen</button>
+          <button id="confirmNoBtn">✕ Mégsem</button>
+        </div>
+      </div>
+    </div>
+    
+    <style>
+      /*
+      ============================================
+      DESIGN SYSTEM - EGYSÉGESÍTETT UI ELEMEK
+      ============================================
+      
+      Colors:
+      - --bg-primary: Fő háttér (oldal háttér)
+      - --bg-secondary: Másodlagos háttér (panel, card)
+      - --bg-tertiary: Harmadik szintű háttér (section, group)
+      - --text-primary: Elsődleges szöveg (nagy, fontos)
+      - --text-secondary: Másodlagos szöveg (kisebb, segítő)
+      - --accent: Hangsúlyozó szín (gomb, link, aktív)
+      - --accent-hover: Hover állapot az accent elemekhez
+      - --accent-dark: Sötétebb accent (alternatív)
+      - --border-color: Szegélyek, elválasztók
+      - --shadow: Drop shadow
+      - --success: Sikeres üzenetek
+      - --warning: Figyelmeztetés
+      
+      SPACING:
+      - --radius-sm: 6px (kis elemek, gombok)
+      - --radius-md: 12px (input mezők, section-ök)
+      - --radius-lg: 16px (nagyobb panel, modal)
+      
+      PANEL/MODAL KONVENCIO:
+      1. CONTAINER:
+         - position: fixed + top/left/width/height (full screen)
+         - background: rgba(0, 0, 0, 0.5) (semi-transparent overlay)
+         - display: flex + align-items: center + justify-content: center (középre centrálás)
+         - z-index: megfelelő (modal: 2100, overlay: 1000, titlebar: 9999)
+         - backdrop-filter: blur(4px)
+         - padding: 20px
+      
+      2. CONTENT:
+         - background: var(--bg-secondary)
+         - border: 1px solid var(--border-color)
+         - border-radius: var(--radius-lg)
+         - padding: 32px (KÖTELEZŐ EGYSÉGESÍTÉS)
+         - box-shadow: 0 20px 60px var(--shadow)
+         - max-width: 90vw
+         - min-width: 320px
+      
+      BUTTON KONVENCIO:
+      - Primary (aktív): background: var(--accent), color: #fff, border: var(--accent)
+      - Secondary (inaktív): background: var(--bg-tertiary), color: var(--text-primary), border: var(--border-color)
+      - Hover: transform: translateY(-2px), box-shadow: 0 4px 12px var(--shadow)
+      - Active: transform: translateY(0)
+      - Border-radius: var(--radius-md)
+      - Padding: 12px 28px (nagy gomb), 8px 12px (kis gomb)
+      - Transition: all 0.2s ease
+      
+      INPUT KONVENCIO:
+      - background: var(--bg-primary)
+      - border: 1px solid var(--border-color)
+      - border-radius: var(--radius-sm)
+      - padding: 10px 12px
+      - color: var(--text-primary)
+      - Focus: outline: none, border-color: var(--accent), box-shadow: 0 0 0 3px var(--accent)20
+      - Transition: all 0.2s ease
+      
+      SECTION KONVENCIO:
+      - padding: 20px
+      - background: var(--bg-tertiary)
+      - border-radius: var(--radius-md)
+      - border: 1px solid var(--border-color)
+      - margin-bottom: 24px
+      - h3: szín: var(--accent), font-weight: 600
+      
+      ANIMATION:
+      - slideDown: 0.3s ease-out (modal megnyitása)
+      - scaleIn: 0.3s ease-out (modal confirm)
+      - Hover: 0.2s ease (egyéb)
+      
+      ============================================
+      */
+      :root {
+        --bg-primary: #0f1419;
+        --bg-secondary: #1a1f2e;
+        --bg-tertiary: #252d3d;
+        --text-primary: #f5f7fa;
+        --text-secondary: #c4cdd9;
+        --accent: #5b9eff;
+        --accent-hover: #4a8ae8;
+        --accent-dark: #3f6fd9;
+        --border-color: #5b9eff33;
+        --shadow: rgba(0, 0, 0, 0.4);
+        --success: #10b981;
+        --warning: #f59e0b;
+        --radius-sm: 6px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+      }
+      
+      body.light-mode {
+        --bg-primary: #f8fafb;
+        --bg-secondary: #ffffff;
+        --bg-tertiary: #f0f4f8;
+        --text-primary: #1f2937;
+        --text-secondary: #6b7280;
+        --accent: #3b82f6;
+        --accent-hover: #2563eb;
+        --accent-dark: #1d4ed8;
+        --border-color: #d1d5db;
+        --shadow: rgba(0, 0, 0, 0.1);
+        --success: #059669;
+        --warning: #d97706;
+        --radius-sm: 6px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+      }
+      
+      body.gaming-mode {
+        --bg-primary: #0a0e1a;
+        --bg-secondary: #12172b;
+        --bg-tertiary: #1a2035;
+        --text-primary: #00f3ff;
+        --text-secondary: #8b9dc3;
+        --accent: #ff00ff;
+        --accent-hover: #cc00cc;
+        --accent-dark: #9900ff;
+        --border-color: #00f3ff;
+        --shadow: rgba(0, 243, 255, 0.3);
+        --success: #39ff14;
+        --warning: #ffaa00;
+        --radius-sm: 2px;
+        --radius-md: 4px;
+        --radius-lg: 8px;
+      }
+      
+      /* Gaming Mode Special Effects */
+      body.gaming-mode .titlebar {
+        box-shadow: 0 2px 15px rgba(0, 243, 255, 0.4);
+        border-bottom: 2px solid var(--border-color);
+      }
+      
+      body.gaming-mode #app-container,
+      body.gaming-mode .overlay-content,
+      body.gaming-mode .settings-wide {
+        box-shadow: 0 0 20px rgba(0, 243, 255, 0.2),
+                    0 0 40px rgba(255, 0, 255, 0.1),
+                    inset 0 0 60px rgba(0, 243, 255, 0.05);
+        border: 1px solid var(--border-color);
+      }
+      
+      body.gaming-mode button.primary {
+        background: linear-gradient(135deg, #ff00ff, #00f3ff);
+        border: 1px solid #00f3ff;
+        box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      body.gaming-mode button.primary:hover {
+        box-shadow: 0 0 25px rgba(255, 0, 255, 0.8),
+                    0 0 35px rgba(0, 243, 255, 0.6);
+        animation: pulse-glow 1.5s ease-in-out infinite;
+      }
+      
+      @keyframes pulse-glow {
+        0%, 100% {
+          box-shadow: 0 0 15px rgba(255, 0, 255, 0.5),
+                      0 0 25px rgba(0, 243, 255, 0.3);
+        }
+        50% {
+          box-shadow: 0 0 25px rgba(255, 0, 255, 0.8),
+                      0 0 40px rgba(0, 243, 255, 0.6);
+        }
+      }
+      
+      body.gaming-mode .settings-section h3,
+      body.gaming-mode #overlay h2,
+      body.gaming-mode header h1 {
+        text-shadow: 0 0 10px currentColor,
+                     0 0 20px currentColor;
+      }
+      
+      body.gaming-mode input[type="range"]::-webkit-slider-thumb {
+        background: linear-gradient(135deg, #ff00ff, #00f3ff);
+        box-shadow: 0 0 10px #ff00ff, 0 0 20px #00f3ff;
+      }
+      
+      body.gaming-mode .settings-section {
+        background: linear-gradient(135deg, #1a2035 0%, #12172b 100%);
+        border: 1px solid rgba(0, 243, 255, 0.3);
+      }
+      
+      /* Resize handles az ablak szélein */
+      .resize-handle {
+        position: fixed;
+        -webkit-app-region: no-drag;
+        z-index: 3000;
+      }
+      .resize-handle-top {
+        top: 0;
+        left: 10px;
+        right: 10px;
+        height: 5px;
+        cursor: n-resize;
+      }
+      .resize-handle-bottom {
+        bottom: 0;
+        left: 10px;
+        right: 10px;
+        height: 5px;
+        cursor: s-resize;
+      }
+      .resize-handle-left {
+        left: 0;
+        top: 10px;
+        bottom: 10px;
+        width: 5px;
+        cursor: w-resize;
+      }
+      .resize-handle-right {
+        right: 0;
+        top: 10px;
+        bottom: 10px;
+        width: 5px;
+        cursor: e-resize;
+      }
+      .resize-handle-topleft {
+        top: 0;
+        left: 0;
+        width: 10px;
+        height: 10px;
+        cursor: nw-resize;
+      }
+      .resize-handle-topright {
+        top: 0;
+        right: 0;
+        width: 10px;
+        height: 10px;
+        cursor: ne-resize;
+      }
+      .resize-handle-bottomleft {
+        bottom: 0;
+        left: 0;
+        width: 10px;
+        height: 10px;
+        cursor: sw-resize;
+      }
+      .resize-handle-bottomright {
+        bottom: 0;
+        right: 0;
+        width: 10px;
+        height: 10px;
+        cursor: se-resize;
+      }
+      
+      .titlebar {
+        width: 100vw;
+        height: 36px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        -webkit-app-region: drag;
+        user-select: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 9999;
+        pointer-events: auto;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .window-controls {
+        display: flex;
+        gap: 6px;
+        -webkit-app-region: no-drag;
+        margin-right: 12px;
+        pointer-events: auto;
+      }
+      .drag-region {
+        flex: 1;
+        height: 100%;
+        -webkit-app-region: drag;
+      }
+      .window-controls button {
+        width: 32px;
+        height: 32px;
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        font-size: 1em;
+        cursor: pointer;
+        border-radius: var(--radius-sm);
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .window-controls button:hover {
+        background: var(--bg-tertiary);
+        color: var(--accent);
+      }
+      .window-controls button:active {
+        background: var(--accent);
+        color: var(--bg-primary);
+      }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        transition: background 0.3s, color 0.3s;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      #app-container {
+        max-width: 520px;
+        margin: 52px auto 32px;
+        background: var(--bg-secondary);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 8px 32px var(--shadow);
+        padding: 32px;
+        border: 1px solid var(--border-color);
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+      header h1 {
+        font-size: 1.8em;
+        margin: 0;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+      }
+      nav {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      nav button {
+        font-size: 0.95em;
+        border: 1px solid var(--border-color);
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border-radius: var(--radius-md);
+        padding: 10px 18px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 500;
+      }
+      nav button.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      nav button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px var(--shadow);
+      }
+      nav button.primary:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+      }
+      nav button:active {
+        transform: translateY(0);
+      }
+      main {
+        text-align: center;
+      }
+      main p {
+        color: var(--text-secondary);
+        margin: 0;
+        font-size: 1em;
+        line-height: 1.8;
+      }
+      .overlay-hidden {
+        display: none !important;
+      }
+      .overlay-content {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 32px;
+        box-shadow: 0 20px 60px var(--shadow);
+        min-width: 320px;
+        max-width: 520px;
+        text-align: center;
+        position: relative;
+        pointer-events: auto;
+        animation: slideDown 0.3s ease-out;
+        display: flex;
+        flex-direction: column;
+      }
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      #settingsPanel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 2100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        padding: 32px;
+        backdrop-filter: blur(4px);
+      }
+      #settingsPanel.active {
+        pointer-events: auto;
+      }
+      .close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: transparent;
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        padding: 6px 10px;
+        font-size: 1.1em;
+        cursor: pointer;
+        pointer-events: auto;
+        transition: all 0.2s ease;
+      }
+      .close:hover {
+        background: var(--bg-tertiary);
+        color: var(--accent);
+      }
+      .settings-wide {
+        min-width: 320px;
+        max-width: 520px;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 32px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 20px 60px var(--shadow);
+      }
+      .settings-section {
+        margin-bottom: 24px;
+        padding: 20px;
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
+      }
+      .settings-section h3 {
+        margin: 0 0 18px 0;
+        font-size: 1.1em;
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .setting-item {
+        margin-bottom: 16px;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 12px;
+      }
+      .setting-item:last-child {
+        margin-bottom: 0;
+      }
+      .setting-item label {
+        font-size: 0.95em;
+        text-align: left;
+        white-space: nowrap;
+        font-weight: 500;
+      }
+      .setting-item input[type="text"],
+      .setting-item input[type="password"],
+      .setting-item input[type="number"],
+      .setting-item input[type="range"],
+      .setting-item select {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        padding: 10px 12px;
+        color: var(--text-primary);
+        font-size: 0.95em;
+        width: 100%;
+        box-sizing: border-box;
+        transition: all 0.2s ease;
+      }
+      .setting-item input[type="text"]:focus,
+      .setting-item input[type="password"]:focus,
+      .setting-item input[type="number"]:focus,
+      .setting-item select:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent)20;
+      }
+      .setting-item input[type="range"] {
+        padding: 0;
+        border: none;
+        background: transparent;
+        width: 100%;
+        height: 24px;
+        cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      .setting-item input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        background: var(--accent);
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 2px 8px var(--shadow);
+        transition: all 0.2s ease;
+        margin-top: -7px;
+      }
+      .setting-item input[type="range"]::-webkit-slider-thumb:hover {
+        background: var(--accent-hover);
+        transform: scale(1.15);
+        box-shadow: 0 4px 12px rgba(91, 158, 255, 0.4);
+      }
+      .setting-item input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 6px;
+        background: var(--bg-secondary);
+        border-radius: 3px;
+        border: 1px solid var(--border-color);
+      }
+      .setting-item input[type="range"]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        background: var(--accent);
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 2px 8px var(--shadow);
+        transition: all 0.2s ease;
+        margin-top: -7px;
+      }
+      .setting-item input[type="range"]::-moz-range-thumb:hover {
+        background: var(--accent-hover);
+        transform: scale(1.15);
+        box-shadow: 0 4px 12px rgba(91, 158, 255, 0.4);
+      }
+      .setting-item input[type="range"]::-moz-range-track {
+        background: transparent;
+        border: none;
+      }
+      .setting-item input[type="range"]::-moz-range-progress {
+        background: var(--accent);
+        border-radius: 3px;
+        height: 6px;
+      }
+      .setting-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin-right: 8px;
+        justify-self: start;
+        cursor: pointer;
+        accent-color: var(--accent);
+      }
+      .range-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+        min-width: 0;
+      }
+      .range-container input[type="range"] {
+        flex: 1;
+        min-width: 0;
+      }
+      .setting-item label:has(input[type="checkbox"]) {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .small-btn {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        padding: 8px 12px;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 0.9em;
+        transition: all 0.2s ease;
+      }
+      .small-btn:hover {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .settings-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 28px;
+        flex-shrink: 0;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+      }
+      .settings-actions button {
+        padding: 12px 28px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        font-size: 0.95em;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+        font-weight: 500;
+      }
+      .settings-actions button.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .settings-actions button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--shadow);
+      }
+      .settings-actions button.primary:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+      }
+      .settings-actions button:active {
+        transform: translateY(0);
+      }
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 3000;
+        backdrop-filter: blur(4px);
+      }
+      .modal-content {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 32px;
+        min-width: 320px;
+        max-width: 400px;
+        text-align: center;
+        box-shadow: 0 20px 60px var(--shadow);
+        animation: scaleIn 0.3s ease-out;
+      }
+      @keyframes scaleIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      .modal-content h3 {
+        margin: 0 0 16px 0;
+        font-size: 1.3em;
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+      .modal-content p {
+        margin: 0 0 28px 0;
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+      }
+      .modal-actions button {
+        padding: 12px 24px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        font-size: 0.95em;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+        font-weight: 500;
+      }
+      .modal-actions button.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .modal-actions button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px var(--shadow);
+      }
+      .modal-actions button.primary:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+      }
+      .modal-actions button:active {
+        transform: translateY(0);
+      }
+      
+      /* Alert Modal specifikus stílusok */
+      .alert-modal {
+        min-width: 300px;
+        max-width: 380px;
+      }
+      .alert-modal p {
+        font-size: 1em;
+        line-height: 1.7;
+        margin: 0;
+      }
+      .alert-modal .modal-actions {
+        margin-top: 24px;
+      }
+      .alert-modal .modal-actions button {
+        min-width: 120px;
+      }
+    </style>
+    <script>
+      // Fordítások
+      const translations = {
+        hu: {
+          // Titlebar
+          minimize: 'Kicsinyítés',
+          maximize: 'Nagyítás/Visszaállítás',
+          close: 'Bezárás',
+          // Főmenü
+          appTitle: 'AI Játék Asszisztens',
+          overlayBtn: '🎮 Rátét',
+          settingsBtn: '⚙️ Beállítások',
+          welcomeText: 'Üdvözöl az AI Játék Asszisztens!<br>Válassz funkciót a fenti menüből.',
+          // Overlay
+          voiceAssistant: '🎤 Hangos AI Segéd',
+          micBtn: '🎤 Mikrofon',
+          micBtnStop: '⏹️ Leállítás',
+          recordingStarted: 'Hangrögzítés indult... (max {duration} mp)',
+          recordingComplete: 'Rögzítés kész!',
+          readyToPlay: 'Lejátszásra kész!',
+          browserNotSupported: 'A böngésző nem támogatja a hangrögzítést.',
+          recordingError: 'Hiba a hangrögzítésnél: ',
+          // Settings
+          settingsTitle: '⚙️ Beállítások',
+          generalSection: '🎯 Általános',
+          language: 'Nyelv:',          theme: 'Téma:',
+          themeDark: 'Sötét mód',
+          themeLight: 'Világos mód',          autoStart: 'Windows indításkor automatikus start',
+          hotkeysSection: '⌨️ Billentyűparancsok',
+          overlayHotkey: 'Overlay hotkey:',
+          hotkeyDescription: 'Globális hotkey - működik játék közben.',
+          audioSection: '🎤 Hang',
+          micDevice: 'Mikrofon eszköz:',
+          defaultDevice: 'Alaphelyzet',
+          recordDuration: 'Rögzítési idő (mp):',
+          speechRate: 'Beszéd hangereje:',
+          openaiSectionTitle: '🤖 OpenAI API',
+          openaiApiKeyLabel: 'API Kulcs:',
+          openaiStorageNote: '🔒 Biztonságosan tárolódik az OS-ben (Windows Credential Manager).',
+          openaiStatusLabel: 'Status:',
+          openaiStatusChecking: 'Ellenőrzés...',
+          openaiStatusConfigured: '✅ Konfigurálva',
+          openaiStatusMissing: '⚠️ Nincs beállítva',
+          openaiDeleteTitle: 'Kulcs törlése',
+          openaiDeleteConfirm: 'Biztosan törölni szeretnéd az OpenAI API kulcsot?',
+          openaiDeleteSuccess: '✅ API kulcs törölve!',
+          openaiDeleteErrorPrefix: '❌ Hiba a törlés során: ',
+          saveBtn: '💾 Mentés',
+          resetBtn: '🔄 Alaphelyzet',
+          // Alert üzenetek
+          settingsSaved: 'Beállítások mentve! ✓',
+          resetConfirm: 'Biztosan visszaállítod az alaphelyzetet?',
+          settingsReset: 'Alaphelyzet visszaállítva! ✓',
+          // Exit modal
+          exitTitle: '❓ Megerősítés',
+          exitMessage: 'Biztosan ki akarsz lépni?',
+          exitConfirm: '✓ Igen',
+          exitCancel: '✕ Mégsem',
+          alertOk: 'OK',
+          confirmYes: '✓ Igen',
+          confirmNo: '✕ Mégsem'
+        },
+        en: {
+          // Titlebar
+          minimize: 'Minimize',
+          maximize: 'Maximize/Restore',
+          close: 'Close',
+          // Főmenü
+          appTitle: 'AI Game Assistant',
+          overlayBtn: '🎮 Overlay',
+          settingsBtn: '⚙️ Settings',
+          welcomeText: 'Welcome to AI Game Assistant!<br>Choose a function from the menu above.',
+          // Overlay
+          voiceAssistant: '🎤 Voice AI Assistant',
+          micBtn: '🎤 Microphone',
+          micBtnStop: '⏹️ Stop',
+          recordingStarted: 'Recording started... (max {duration} sec)',
+          recordingComplete: 'Recording complete!',
+          readyToPlay: 'Ready to play!',
+          browserNotSupported: 'Browser does not support audio recording.',
+          recordingError: 'Recording error: ',
+          // Settings
+          settingsTitle: '⚙️ Settings',
+          generalSection: '🎯 General',
+          language: 'Language:',
+          theme: 'Theme:',
+          themeDark: 'Dark Mode',
+          themeLight: 'Light Mode',
+          autoStart: 'Auto-start with Windows',
+          hotkeysSection: '⌨️ Hotkeys',
+          overlayHotkey: 'Overlay hotkey:',
+          hotkeyDescription: 'Global hotkey - works in-game.',
+          audioSection: '🎤 Audio',
+          micDevice: 'Microphone device:',
+          defaultDevice: 'Default',
+          recordDuration: 'Recording duration (sec):',
+          speechRate: 'Speech volume:',
+          openaiSectionTitle: '🤖 OpenAI API',
+          openaiApiKeyLabel: 'API Key:',
+          openaiStorageNote: '🔒 Safely stored in the OS (Windows Credential Manager).',
+          openaiStatusLabel: 'Status:',
+          openaiStatusChecking: 'Checking...',
+          openaiStatusConfigured: '✅ Configured',
+          openaiStatusMissing: '⚠️ Not configured',
+          openaiDeleteTitle: 'Delete key',
+          openaiDeleteConfirm: 'Are you sure you want to delete the OpenAI API key?',
+          openaiDeleteSuccess: '✅ API key deleted!',
+          openaiDeleteErrorPrefix: '❌ Error while deleting: ',
+          saveBtn: '💾 Save',
+          resetBtn: '🔄 Reset to Defaults',
+          // Alert üzenetek
+          settingsSaved: 'Settings saved! ✓',
+          resetConfirm: 'Are you sure you want to reset to default settings?',
+          settingsReset: 'Default settings restored! ✓',
+          // Exit modal
+          exitTitle: '❓ Confirmation',
+          exitMessage: 'Are you sure you want to exit?',
+          exitConfirm: '✓ Yes',
+          exitCancel: '✕ Cancel',
+          alertOk: 'OK',
+          confirmYes: '✓ Yes',
+          confirmNo: '✕ Cancel'
+        },
+        de: {
+          // Titlebar
+          minimize: 'Minimieren',
+          maximize: 'Maximieren/Wiederherstellen',
+          close: 'Schließen',
+          // Főmenü
+          appTitle: 'KI-Spielassistent',
+          overlayBtn: '🎮 Überlagerung',
+          settingsBtn: '⚙️ Einstellungen',
+          welcomeText: 'Willkommen beim KI-Spielassistenten!<br>Wählen Sie eine Funktion aus dem obigen Menü.',
+          // Overlay
+          voiceAssistant: '🎙️ Sprach-KI-Assistent',
+          micBtn: '🎙️ Mikrofon',
+          micBtnStop: '⏹️ Stopp',
+          recordingStarted: 'Aufnahme gestartet... (max {duration} Sek.)',
+          recordingComplete: 'Aufnahme abgeschlossen!',
+          readyToPlay: 'Bereit zum Abspielen!',
+          browserNotSupported: 'Browser unterstützt keine Audioaufnahme.',
+          recordingError: 'Aufnahmefehler: ',
+          // Settings
+          settingsTitle: '⚙️ Einstellungen',
+          generalSection: '🎯 Allgemein',
+          language: 'Sprache:',
+          theme: 'Design:',
+          themeDark: 'Dunkler Modus',
+          themeLight: 'Heller Modus',
+          autoStart: 'Autostart mit Windows',
+          hotkeysSection: '⌨️ Tastenkombinationen',
+          overlayHotkey: 'Overlay-Hotkey:',
+          hotkeyDescription: 'Globaler Hotkey - funktioniert im Spiel.',
+          audioSection: '🎙️ Audio',
+          micDevice: 'Mikrofon:',
+          defaultDevice: 'Standard',
+          recordDuration: 'Aufnahmedauer (Sek.):',
+          speechRate: 'Sprachlautstärke:',
+          openaiSectionTitle: '🤖 OpenAI API',
+          openaiApiKeyLabel: 'API-Schlüssel:',
+          openaiStorageNote: '🔒 Sicher im Betriebssystem gespeichert (Windows Credential Manager).',
+          openaiStatusLabel: 'Status:',
+          openaiStatusChecking: 'Prüfung...',
+          openaiStatusConfigured: '✅ Konfiguriert',
+          openaiStatusMissing: '⚠️ Nicht konfiguriert',
+          openaiDeleteTitle: 'Schlüssel löschen',
+          openaiDeleteConfirm: 'Möchten Sie den OpenAI-API-Schlüssel wirklich löschen?',
+          openaiDeleteSuccess: '✅ API-Schlüssel gelöscht!',
+          openaiDeleteErrorPrefix: '❌ Fehler beim Löschen: ',
+          saveBtn: '💾 Speichern',
+          resetBtn: '🔄 Zurücksetzen',
+          // Alert üzenetek
+          settingsSaved: 'Einstellungen gespeichert! ✓',
+          resetConfirm: 'Möchten Sie wirklich die Standardeinstellungen wiederherstellen?',
+          settingsReset: 'Standardeinstellungen wiederhergestellt! ✓',
+          // Exit modal
+          exitTitle: '❓ Bestätigung',
+          exitMessage: 'Möchten Sie wirklich beenden?',
+          exitConfirm: '✓ Ja',
+          exitCancel: '✕ Abbrechen',
+          alertOk: 'OK',
+          confirmYes: '✓ Ja',
+          confirmNo: '✕ Abbrechen'
+        },
+        ru: {
+          // Titlebar
+          minimize: 'Свернуть',
+          maximize: 'Развернуть/Восстановить',
+          close: 'Закрыть',
+          // Főmenü
+          appTitle: 'ИИ Игровой Помощник',
+          overlayBtn: '🎮 Наложение',
+          settingsBtn: '⚙️ Настройки',
+          welcomeText: 'Добро пожаловать в ИИ Игровой Помощник!<br>Выберите функцию из меню выше.',
+          // Overlay
+          voiceAssistant: '🎙️ Голосовой ИИ Помощник',
+          micBtn: '🎙️ Микрофон',
+          micBtnStop: '⏹️ Стоп',
+          recordingStarted: 'Запись началась... (макс {duration} сек)',
+          recordingComplete: 'Запись завершена!',
+          readyToPlay: 'Готово к воспроизведению!',
+          browserNotSupported: 'Браузер не поддерживает запись аудио.',
+          recordingError: 'Ошибка записи: ',
+          // Settings
+          settingsTitle: '⚙️ Настройки',
+          generalSection: '🎯 Основные',
+          language: 'Язык:',
+          theme: 'Тема:',
+          themeDark: 'Тёмный режим',
+          themeLight: 'Светлый режим',
+          autoStart: 'Автозапуск с Windows',
+          hotkeysSection: '⌨️ Горячие клавиши',
+          overlayHotkey: 'Горячая клавиша наложения:',
+          hotkeyDescription: 'Глобальная горячая клавиша - работает в игре.',
+          audioSection: '🎙️ Аудио',
+          micDevice: 'Микрофон:',
+          defaultDevice: 'По умолчанию',
+          recordDuration: 'Длительность записи (сек):',
+          speechRate: 'Громкость речи:',
+          openaiSectionTitle: '🤖 OpenAI API',
+          openaiApiKeyLabel: 'API ключ:',
+          openaiStorageNote: '🔒 Безопасно хранится в ОС (Windows Credential Manager).',
+          openaiStatusLabel: 'Статус:',
+          openaiStatusChecking: 'Проверка...',
+          openaiStatusConfigured: '✅ Настроено',
+          openaiStatusMissing: '⚠️ Не настроено',
+          openaiDeleteTitle: 'Удалить ключ',
+          openaiDeleteConfirm: 'Вы уверены, что хотите удалить ключ OpenAI API?',
+          openaiDeleteSuccess: '✅ Ключ API удален!',
+          openaiDeleteErrorPrefix: '❌ Ошибка при удалении: ',
+          saveBtn: '💾 Сохранить',
+          resetBtn: '🔄 Сбросить',
+          // Alert üzenetek
+          settingsSaved: 'Настройки сохранены! ✓',
+          resetConfirm: 'Вы уверены, что хотите сбросить настройки?',
+          settingsReset: 'Настройки по умолчанию восстановлены! ✓',
+          // Exit modal
+          exitTitle: '❓ Подтверждение',
+          exitMessage: 'Вы действительно хотите выйти?',
+          exitConfirm: '✓ Да',
+          exitCancel: '✕ Отмена',
+          alertOk: 'OK',
+          confirmYes: '✓ Да',
+          confirmNo: '✕ Отмена'
+        },
+        fr: {
+          // Titlebar
+          minimize: 'Réduire',
+          maximize: 'Maximiser/Restaurer',
+          close: 'Fermer',
+          // Főmenü
+          appTitle: 'Assistant de Jeu IA',
+          overlayBtn: '🎮 Superposition',
+          settingsBtn: '⚙️ Paramètres',
+          welcomeText: 'Bienvenue dans l\'Assistant de Jeu IA!<br>Choisissez une fonction dans le menu ci-dessus.',
+          // Overlay
+          voiceAssistant: '🎙️ Assistant IA Vocal',
+          micBtn: '🎙️ Microphone',
+          micBtnStop: '⏹️ Arrêter',
+          recordingStarted: 'Enregistrement démarré... (max {duration} sec)',
+          recordingComplete: 'Enregistrement terminé!',
+          readyToPlay: 'Prêt à jouer!',
+          browserNotSupported: 'Le navigateur ne prend pas en charge l\'enregistrement audio.',
+          recordingError: 'Erreur d\'enregistrement: ',
+          // Settings
+          settingsTitle: '⚙️ Paramètres',
+          generalSection: '🎯 Général',
+          language: 'Langue:',
+          theme: 'Thème:',
+          themeDark: 'Mode Sombre',
+          themeLight: 'Mode Clair',
+          autoStart: 'Démarrage automatique avec Windows',
+          hotkeysSection: '⌨️ Raccourcis',
+          overlayHotkey: 'Raccourci de superposition:',
+          hotkeyDescription: 'Raccourci global - fonctionne en jeu.',
+          audioSection: '🎙️ Audio',
+          micDevice: 'Microphone:',
+          defaultDevice: 'Par défaut',
+          recordDuration: 'Durée d\'enregistrement (sec):',
+          speechRate: 'Volume de la parole:',
+          openaiSectionTitle: '🤖 OpenAI API',
+          openaiApiKeyLabel: 'Clé API :',
+          openaiStorageNote: '🔒 Stockée en toute sécurité dans l\'OS (Windows Credential Manager).',
+          openaiStatusLabel: 'Statut :',
+          openaiStatusChecking: 'Vérification...',
+          openaiStatusConfigured: '✅ Configuré',
+          openaiStatusMissing: '⚠️ Non configuré',
+          openaiDeleteTitle: 'Supprimer la clé',
+          openaiDeleteConfirm: 'Êtes-vous sûr de vouloir supprimer la clé API OpenAI ?',
+          openaiDeleteSuccess: '✅ Clé API supprimée !',
+          openaiDeleteErrorPrefix: '❌ Erreur lors de la suppression : ',
+          saveBtn: '💾 Enregistrer',
+          resetBtn: '🔄 Réinitialiser',
+          // Alert üzenetek
+          settingsSaved: 'Paramètres enregistrés! ✓',
+          resetConfirm: 'Êtes-vous sûr de vouloir réinitialiser les paramètres?',
+          settingsReset: 'Paramètres par défaut restaurés! ✓',
+          // Exit modal
+          exitTitle: '❓ Confirmation',
+          exitMessage: 'Voulez-vous vraiment quitter?',
+          exitConfirm: '✓ Oui',
+          exitCancel: '✕ Annuler',
+          alertOk: 'OK',
+          confirmYes: '✓ Oui',
+          confirmNo: '✕ Annuler'
+        },
+        zh: {
+          // Titlebar
+          minimize: '最小化',
+          maximize: '最大化/还原',
+          close: '关闭',
+          // Főmenü
+          appTitle: 'AI游戏助手',
+          overlayBtn: '🎮 覆盖层',
+          settingsBtn: '⚙️ 设置',
+          welcomeText: '欢迎使用AI游戏助手！<br>请从上方菜单中选择功能。',
+          // Overlay
+          voiceAssistant: '🎙️ 语音AI助手',
+          micBtn: '🎙️ 麦克风',
+          micBtnStop: '⏹️ 停止',
+          recordingStarted: '开始录音... (最长 {duration} 秒)',
+          recordingComplete: '录音完成！',
+          readyToPlay: '准备播放！',
+          browserNotSupported: '浏览器不支持音频录制。',
+          recordingError: '录音错误：',
+          // Settings
+          settingsTitle: '⚙️ 设置',
+          generalSection: '🎯 常规',
+          language: '语言：',
+          theme: '主题：',
+          themeDark: '深色模式',
+          themeLight: '浅色模式',
+          autoStart: 'Windows启动时自动运行',
+          hotkeysSection: '⌨️ 快捷键',
+          overlayHotkey: '覆盖层快捷键：',
+          hotkeyDescription: '全局快捷键 - 在游戏中工作。',
+          audioSection: '🎙️ 音频',
+          micDevice: '麦克风设备：',
+          defaultDevice: '默认',
+          recordDuration: '录音时长（秒）：',
+          speechRate: '语音音量：',
+          openaiSectionTitle: '🤖 OpenAI API',
+          openaiApiKeyLabel: 'API 密钥：',
+          openaiStorageNote: '🔒 安全存储在操作系统中（Windows Credential Manager）。',
+          openaiStatusLabel: '状态：',
+          openaiStatusChecking: '检查中...',
+          openaiStatusConfigured: '✅ 已配置',
+          openaiStatusMissing: '⚠️ 未配置',
+          openaiDeleteTitle: '删除密钥',
+          openaiDeleteConfirm: '确定要删除 OpenAI API 密钥吗？',
+          openaiDeleteSuccess: '✅ API 密钥已删除！',
+          openaiDeleteErrorPrefix: '❌ 删除时出错：',
+          saveBtn: '💾 保存',
+          resetBtn: '🔄 重置',
+          // Alert üzenetek
+          settingsSaved: '设置已保存！✓',
+          resetConfirm: '确定要重置为默认设置吗？',
+          settingsReset: '默认设置已恢复！✓',
+          // Exit modal
+          exitTitle: '❓ 确认',
+          exitMessage: '确定要退出吗？',
+          exitConfirm: '✓ 是',
+          exitCancel: '✕ 取消',
+          alertOk: 'OK',
+          confirmYes: '✓ 是',
+          confirmNo: '✕ 取消'
+        }
+      };
+
+      let currentLang = 'en';
+
+      // UI frissítése a kiválasztott nyelvvel
+      function updateLanguage(lang) {
+        currentLang = lang;
+        const t = translations[lang];
+        
+        // Titlebar
+        document.getElementById('minBtn').title = t.minimize;
+        document.getElementById('maxBtn').title = t.maximize;
+        document.getElementById('closeBtn').title = t.close;
+        
+        // Főmenü
+        document.querySelector('header h1').textContent = t.appTitle;
+        document.getElementById('openOverlayBtn').innerHTML = t.overlayBtn;
+        document.getElementById('settingsBtn').innerHTML = t.settingsBtn;
+        document.querySelector('main p').innerHTML = t.welcomeText;
+        
+        // Settings
+        document.querySelector('#settingsPanel h2').textContent = t.settingsTitle;
+        document.querySelector('.settings-section:nth-child(1) h3').textContent = t.generalSection;
+        document.querySelector('label[for="languageSelect"]').textContent = t.language;
+        document.querySelector('label[for="themeSelect"]').textContent = t.theme;
+        document.querySelector('#themeSelect option[value="dark"]').textContent = t.themeDark;
+        document.querySelector('#themeSelect option[value="light"]').textContent = t.themeLight;
+        document.querySelector('label[for="autoStartCheck"]').childNodes[2].textContent = ' ' + t.autoStart;
+        
+        document.querySelector('.settings-section:nth-child(2) h3').textContent = t.hotkeysSection;
+        document.getElementById('overlayHotkeyLabel').textContent = t.overlayHotkey;
+        document.getElementById('hotkeyDescription').textContent = t.hotkeyDescription;
+        
+        document.querySelector('.settings-section:nth-child(3) h3').textContent = t.audioSection;
+        document.querySelector('label[for="micSelect"]').textContent = t.micDevice;
+        document.querySelector('#micSelect option[value="default"]').textContent = t.defaultDevice;
+        document.querySelector('label[for="recordDuration"]').textContent = t.recordDuration;
+        document.querySelector('label[for="speechRate"]').textContent = t.speechRate;
+
+        const openaiSectionTitle = document.getElementById('openaiSectionTitle');
+        if (openaiSectionTitle) openaiSectionTitle.textContent = t.openaiSectionTitle;
+        const openaiApiKeyLabel = document.getElementById('openaiApiKeyLabel');
+        if (openaiApiKeyLabel) openaiApiKeyLabel.textContent = t.openaiApiKeyLabel;
+        const deleteApiKeyBtn = document.getElementById('deleteApiKeyBtn');
+        if (deleteApiKeyBtn) deleteApiKeyBtn.title = t.openaiDeleteTitle;
+        const openaiStorageNote = document.getElementById('openaiStorageNote');
+        if (openaiStorageNote) openaiStorageNote.textContent = t.openaiStorageNote;
+        const openaiStatusLabel = document.getElementById('openaiStatusLabel');
+        if (openaiStatusLabel) openaiStatusLabel.textContent = t.openaiStatusLabel;
+        const openaiStatusText = document.getElementById('openaiStatusText');
+        if (openaiStatusText) openaiStatusText.textContent = t.openaiStatusChecking;
+        
+        document.getElementById('saveSettingsBtn').innerHTML = t.saveBtn;
+        document.getElementById('resetSettingsBtn').innerHTML = t.resetBtn;
+        
+        // Exit modal
+        document.querySelector('#exitModal h3').textContent = t.exitTitle;
+        document.getElementById('exitModalText').textContent = t.exitMessage;
+        document.getElementById('confirmExitBtn').innerHTML = t.exitConfirm;
+        document.getElementById('cancelExitBtn').innerHTML = t.exitCancel;
+
+        const alertOkBtn = document.getElementById('alertOkBtn');
+        if (alertOkBtn) alertOkBtn.textContent = t.alertOk;
+        const confirmYesBtn = document.getElementById('confirmYesBtn');
+        if (confirmYesBtn) confirmYesBtn.textContent = t.confirmYes;
+        const confirmNoBtn = document.getElementById('confirmNoBtn');
+        if (confirmNoBtn) confirmNoBtn.textContent = t.confirmNo;
+
+        checkOpenAIStatus();
+      }      
+      // Theme alkalmazása
+      function applyTheme(theme) {
+        document.body.classList.remove('light-mode', 'gaming-mode');
+        if (theme === 'light') {
+          document.body.classList.add('light-mode');
+        } else if (theme === 'gaming') {
+          document.body.classList.add('gaming-mode');
+        }
+      }
+      // Ablakvezérlő gombok (Electron IPC)
+      const { ipcRenderer } = require('electron');
+      const { IPC_CHANNELS } = require('./src/shared/ipc-channels');
+      const { STORAGE_KEYS } = require('./src/shared/storage-keys');
+      const invokeMain = (channel, ...args) => ipcRenderer.invoke(channel, ...args);
+      const fireAndForget = (channel, ...args) => {
+        invokeMain(channel, ...args).catch(err => console.error(`[IPC] ${channel} failed:`, err));
+      };
+      const minBtn = document.getElementById('minBtn');
+      const maxBtn = document.getElementById('maxBtn');
+      const closeBtn = document.getElementById('closeBtn');
+      
+      // Custom alert modal függvény
+      function showAlert(message) {
+        document.getElementById('alertMessage').textContent = message;
+        document.getElementById('alertModal').classList.remove('overlay-hidden');
+      }
+      
+      document.getElementById('alertOkBtn').onclick = () => {
+        document.getElementById('alertModal').classList.add('overlay-hidden');
+      };
+      
+      // Custom confirmation modal függvény
+      let confirmCallback = null;
+      function showConfirm(message, callback) {
+        confirmCallback = callback;
+        document.getElementById('confirmMessage').textContent = message;
+        document.getElementById('confirmModal').classList.remove('overlay-hidden');
+      }
+      
+      document.getElementById('confirmYesBtn').onclick = () => {
+        document.getElementById('confirmModal').classList.add('overlay-hidden');
+        if (confirmCallback) confirmCallback(true);
+        confirmCallback = null;
+      };
+      
+      document.getElementById('confirmNoBtn').onclick = () => {
+        document.getElementById('confirmModal').classList.add('overlay-hidden');
+        if (confirmCallback) confirmCallback(false);
+        confirmCallback = null;
+      };
+      if (minBtn && maxBtn && closeBtn) {
+        minBtn.onclick = () => fireAndForget(IPC_CHANNELS.WINDOW_CONTROL, 'minimize');
+        maxBtn.onclick = () => fireAndForget(IPC_CHANNELS.WINDOW_CONTROL, 'maximize');
+        closeBtn.onclick = () => {
+          document.getElementById('exitModal').classList.remove('overlay-hidden');
+        };
+      }
+      
+      // Overlay gomb - külön ablakot nyit
+      const openOverlayBtn = document.getElementById('openOverlayBtn');
+      openOverlayBtn.onclick = () => {
+        fireAndForget(IPC_CHANNELS.OPEN_OVERLAY);
+      };
+      
+      // Settings panel megjelenítés
+      const settingsBtn = document.getElementById('settingsBtn');
+      const settingsPanel = document.getElementById('settingsPanel');
+      settingsBtn.onclick = () => {
+        settingsPanel.classList.remove('overlay-hidden');
+        settingsPanel.classList.add('active');
+        fireAndForget(IPC_CHANNELS.SET_CLICK_THROUGH, false); // settings aktív: ne legyen click-through
+        // Felső menü gombok mindig kattinthatók legyenek
+        const titlebar = document.querySelector('.titlebar');
+        const windowControls = document.querySelector('.window-controls');
+        if (titlebar) titlebar.style.pointerEvents = 'auto';
+        if (windowControls) windowControls.style.pointerEvents = 'auto';
+        if (settingsBtn) {
+          settingsBtn.disabled = false;
+          settingsBtn.style.pointerEvents = 'auto';
+        }
+      };
+      
+      // Robust close button event binding (delegation)
+      document.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'closeSettingsBtn') {
+          closeSettings();
+        }
+      });
+      
+      // Settings panel bezárás
+      function closeSettings() {
+        settingsPanel.classList.add('overlay-hidden');
+        settingsPanel.classList.remove('active');
+        // Felső menü gombok mindig kattinthatók legyenek
+        const titlebar = document.querySelector('.titlebar');
+        const windowControls = document.querySelector('.window-controls');
+        if (titlebar) titlebar.style.pointerEvents = 'auto';
+        if (windowControls) windowControls.style.pointerEvents = 'auto';
+        // Settings gomb is azonnal kattintható
+        if (settingsBtn) {
+          settingsBtn.disabled = false;
+          settingsBtn.style.pointerEvents = 'auto';
+        }
+      }
+
+      // Settings kezelés
+      const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+      const resetSettingsBtn = document.getElementById('resetSettingsBtn');
+      const micSelect = document.getElementById('micSelect');
+      const recordDurationSlider = document.getElementById('recordDuration');
+      const recordDurationValue = document.getElementById('recordDurationValue');
+      const speechRateSlider = document.getElementById('speechRate');
+      const speechRateValue = document.getElementById('speechRateValue');
+      
+      // Record duration slider dinamikus érték frissítés
+      recordDurationSlider.addEventListener('input', () => {
+        recordDurationValue.textContent = recordDurationSlider.value;
+      });
+      
+      // Speech rate slider dinamikus érték frissítés
+      speechRateSlider.addEventListener('input', () => {
+        speechRateValue.textContent = speechRateSlider.value;
+        fireAndForget(IPC_CHANNELS.SET_SPEECH_RATE, parseInt(speechRateSlider.value));
+      });
+      
+      // Alapértelmezett beállítások
+      const defaultSettings = {
+        language: 'en',
+        theme: 'dark',
+        autoStart: false,
+        recordDuration: 10,
+        speechRate: 100
+      };
+
+      // Beállítások betöltése localStorage-ból
+      async function loadSettings() {
+        const settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.APP_SETTINGS) || '{}');
+        const lang = settings.language || 'en';
+        const theme = settings.theme || 'dark';
+        const hotkey = settings.hotkey || 'CommandOrControl+Shift+K';
+        
+        document.getElementById('languageSelect').value = lang;
+        document.getElementById('themeSelect').value = theme;
+
+        // Nyelv továbbítása a main processnek (overlay-hez)
+        fireAndForget(IPC_CHANNELS.SET_LANGUAGE, lang);
+        
+        // Csak a főbillentyűt jelenítjük meg
+        const mainKey = hotkey.split('+').pop();
+        document.getElementById('hotkeyInput').value = mainKey;
+        
+        // AutoStart állapot lekérdezése Electronból
+        try {
+          const autoStartEnabled = await ipcRenderer.invoke(IPC_CHANNELS.GET_AUTO_START);
+          document.getElementById('autoStartCheck').checked = autoStartEnabled;
+        } catch (e) {
+          document.getElementById('autoStartCheck').checked = settings.autoStart || false;
+        }
+        
+        document.getElementById('recordDuration').value = settings.recordDuration || 10;
+        document.getElementById('recordDurationValue').textContent = settings.recordDuration || 10;
+        
+        document.getElementById('speechRate').value = settings.speechRate || 100;
+        document.getElementById('speechRateValue').textContent = settings.speechRate || 100;
+        fireAndForget(IPC_CHANNELS.SET_SPEECH_RATE, parseInt(document.getElementById('speechRate').value));
+        
+        // Mikrofon eszköz kiválasztása ha van elmentve
+        if (settings.micDeviceId) {
+          document.getElementById('micSelect').value = settings.micDeviceId;
+        }
+        
+        // OpenAI status ellenőrzése induláskor
+        checkOpenAIStatus();
+        
+        applyTheme(theme);
+        updateLanguage(lang);
+      }
+
+      // Beállítások mentése localStorage-ba
+      function saveSettings() {
+        const autoStartChecked = document.getElementById('autoStartCheck').checked;
+        const language = document.getElementById('languageSelect').value;
+        const theme = document.getElementById('themeSelect').value;
+        const micDeviceId = document.getElementById('micSelect').value;
+        const mainKey = document.getElementById('hotkeyInput').value || 'K';
+        const hotkey = 'CommandOrControl+Shift+' + mainKey;
+        const openaiApiKey = document.getElementById('openaiApiKey').value;
+        
+        const settings = {
+          language: language,
+          theme: theme,
+          autoStart: autoStartChecked,
+          recordDuration: parseInt(document.getElementById('recordDuration').value),
+          speechRate: parseInt(document.getElementById('speechRate').value),
+          micDeviceId: micDeviceId,
+          hotkey: hotkey
+        };
+        localStorage.setItem(STORAGE_KEYS.APP_SETTINGS, JSON.stringify(settings));
+
+        // Nyelv továbbítása a main processnek (overlay-hez)
+        fireAndForget(IPC_CHANNELS.SET_LANGUAGE, language);
+        
+        // Speech rate továbbítása az overlay-hez
+        fireAndForget(IPC_CHANNELS.SET_SPEECH_RATE, parseInt(document.getElementById('speechRate').value));
+        
+        // AutoStart beállítás küldése Electronnak
+        fireAndForget(IPC_CHANNELS.SET_AUTO_START, autoStartChecked);
+        
+        // OpenAI API kulcs mentése (keytar-hoz)
+        if (openaiApiKey.trim()) {
+          ipcRenderer.invoke(IPC_CHANNELS.SET_OPENAI_KEY, openaiApiKey).then(result => {
+            if (result.success) {
+              console.log('[SECURITY] API kulcs biztonságosan mentve');
+              document.getElementById('openaiApiKey').value = ''; // Clear field
+              checkOpenAIStatus();
+            }
+          });
+        }
+        
+        // MEGJEGYZÉS: Hotkey csak restart után aktiválódik
+        // (a beállítás localStorage-ba mentettünk, a siguiente induláskor töltődik be)
+        
+        // Theme alkalmazása
+        applyTheme(theme);
+        
+        // Nyelv frissítése
+        updateLanguage(language);
+        
+        showAlert(translations[currentLang].settingsSaved);
+      }
+      
+      // OpenAI status ellenőrzése
+      async function checkOpenAIStatus() {
+        try {
+          const status = await ipcRenderer.invoke(IPC_CHANNELS.GET_OPENAI_STATUS);
+          const statusEl = document.getElementById('openaiStatusText');
+          const t = translations[currentLang] || translations.en;
+          if (status.configured) {
+            statusEl.textContent = t.openaiStatusConfigured;
+            statusEl.style.color = '#4ade80';
+          } else {
+            statusEl.textContent = t.openaiStatusMissing;
+            statusEl.style.color = '#fbbf24';
+          }
+        } catch (err) {
+          console.error('Status check hiba:', err);
+        }
+      }
+      
+      // API kulcs törlése
+      document.getElementById('deleteApiKeyBtn').addEventListener('click', async () => {
+        showConfirm(translations[currentLang].openaiDeleteConfirm, async (confirmed) => {
+          if (!confirmed) return;
+          try {
+            await ipcRenderer.invoke(IPC_CHANNELS.DELETE_OPENAI_KEY);
+            document.getElementById('openaiApiKey').value = '';
+            await checkOpenAIStatus();
+            showAlert(translations[currentLang].openaiDeleteSuccess);
+          } catch (err) {
+            showAlert(translations[currentLang].openaiDeleteErrorPrefix + err.message);
+          }
+        });
+      });
+
+      // Alapértelmezett beállítások visszaállítása
+      function resetSettings() {
+        showConfirm(translations[currentLang].resetConfirm, (confirmed) => {
+          if (confirmed) {
+            // Alapértelmezett értékek beállítása a UI-ban
+            document.getElementById('languageSelect').value = defaultSettings.language;
+            document.getElementById('themeSelect').value = defaultSettings.theme;
+            document.getElementById('autoStartCheck').checked = defaultSettings.autoStart;
+            document.getElementById('recordDuration').value = defaultSettings.recordDuration;
+            document.getElementById('recordDurationValue').textContent = defaultSettings.recordDuration;
+            document.getElementById('speechRate').value = defaultSettings.speechRate;
+            document.getElementById('speechRateValue').textContent = defaultSettings.speechRate;
+            
+            // Mentés localStorage-ba
+            localStorage.setItem(STORAGE_KEYS.APP_SETTINGS, JSON.stringify(defaultSettings));
+            
+            // AutoStart kikapcsolása Electronban
+            fireAndForget(IPC_CHANNELS.SET_AUTO_START, false);
+            
+            // Theme visszaállítása
+            applyTheme(defaultSettings.theme);
+            
+            // Nyelv visszaállítása
+            updateLanguage(defaultSettings.language);
+            
+            showAlert(translations[currentLang].settingsReset);
+          }
+        });
+      }
+
+      // Mikrofon eszközök betöltése
+      async function loadMicrophones() {
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const audioInputs = devices.filter(device => device.kind === 'audioinput');
+          micSelect.innerHTML = `<option value="default">${translations[currentLang].defaultDevice}</option>`;
+          audioInputs.forEach(device => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.textContent = device.label || `Microphone ${micSelect.options.length}`;
+            micSelect.appendChild(option);
+          });
+        } catch (err) {
+          console.error('Hiba a mikrofon eszközök betöltésekor:', err);
+        }
+      }
+
+      // Beállítások gombok
+      saveSettingsBtn.onclick = saveSettings;
+      resetSettingsBtn.onclick = resetSettings;
+      
+      // Exit modal gombok
+      document.getElementById('confirmExitBtn').onclick = () => {
+        fireAndForget(IPC_CHANNELS.WINDOW_CONTROL, 'close');
+      };
+      
+      document.getElementById('cancelExitBtn').onclick = () => {
+        document.getElementById('exitModal').classList.add('overlay-hidden');
+      };
+
+      // Hotkey input kezelése
+      const hotkeyInput = document.getElementById('hotkeyInput');
+      let recordingHotkey = false;
+      
+      hotkeyInput.addEventListener('click', () => {
+        if (!recordingHotkey) {
+          recordingHotkey = true;
+          hotkeyInput.value = '...';
+          hotkeyInput.style.background = 'rgba(91, 158, 255, 0.2)';
+        }
+      });
+      
+      hotkeyInput.addEventListener('keydown', (e) => {
+        if (!recordingHotkey) return;
+        
+        e.preventDefault();
+        
+        // Főbillentyű (csak betű vagy szám vagy F-billentyűk)
+        const mainKey = e.key.toUpperCase();
+        let validKey = null;
+        
+        if (mainKey.length === 1 && mainKey.match(/[A-Z0-9]/)) {
+          validKey = mainKey;
+        } else if (['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12'].includes(e.key)) {
+          validKey = e.key;
+        }
+        
+        if (validKey) {
+          hotkeyInput.value = validKey;
+          hotkeyInput.style.background = '';
+          recordingHotkey = false;
+          
+          // Mentés localStorage-ba (mindig Ctrl+Shift+ előtaggal)
+          const hotkeyString = 'CommandOrControl+Shift+' + validKey;
+          const settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.APP_SETTINGS) || '{}');
+          settings.hotkey = hotkeyString;
+          localStorage.setItem(STORAGE_KEYS.APP_SETTINGS, JSON.stringify(settings));
+        }
+      });
+      
+      hotkeyInput.addEventListener('blur', () => {
+        if (recordingHotkey) {
+          recordingHotkey = false;
+          hotkeyInput.style.background = '';
+          // Visszaállítjuk a régi értéket
+          const settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.APP_SETTINGS) || '{}');
+          const hotkey = settings.hotkey || 'CommandOrControl+Shift+K';
+          const mainKey = hotkey.split('+').pop();
+          hotkeyInput.value = mainKey;
+        }
+      });
+
+      // Beállítások betöltése oldal indulásakor
+      loadSettings();
+      loadMicrophones();
+    </script>
+  </body>
+</html>

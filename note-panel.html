@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Note</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+      user-select: none;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: #f5f7fa;
+    }
+
+    #root {
+      position: fixed;
+      inset: 0;
+      pointer-events: auto;
+      display: flex;
+    }
+
+    .panel {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      background: rgba(26, 31, 46, 0.58);
+      border: 1px solid rgba(91, 158, 255, 0.3);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      background: rgba(91, 158, 255, 0.08);
+      border-bottom: 1px solid rgba(91, 158, 255, 0.2);
+      cursor: grab;
+    }
+
+    .header:active {
+      cursor: grabbing;
+    }
+
+    .title {
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.2px;
+      opacity: 0.95;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .close-btn {
+      appearance: none;
+      background: transparent;
+      color: #f5f7fa;
+      border: 1px solid rgba(91, 158, 255, 0.3);
+      border-radius: 6px;
+      width: 32px;
+      height: 28px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .close-btn:hover {
+      background: #252d3d;
+      color: #5b9eff;
+    }
+
+    .body {
+      flex: 1 1 auto;
+      padding: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    textarea {
+      flex: 1 1 auto;
+      width: 100%;
+      resize: none;
+      outline: none;
+      border-radius: 10px;
+      border: 1px solid rgba(91, 158, 255, 0.35);
+      background: rgba(255, 255, 255, 0.06);
+      color: #f5f7fa;
+      padding: 10px;
+      font-size: 13px;
+      line-height: 1.45;
+      user-select: text;
+    }
+
+    textarea::placeholder {
+      color: rgba(245, 247, 250, 0.55);
+    }
+
+    .resize-handle {
+      position: absolute;
+      background: transparent;
+      z-index: 10;
+      pointer-events: auto;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .resize-handle:hover {
+      background: transparent;
+    }
+
+    .resize-handle-left {
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      cursor: ew-resize;
+    }
+
+    .resize-handle-left::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 32px;
+      border-radius: 2px;
+      background: rgba(91, 158, 255, 0.18);
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    .resize-handle-left:hover::before {
+      background: rgba(91, 158, 255, 0.18);
+    }
+
+    .resize-handle-right {
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      cursor: ew-resize;
+    }
+
+    .resize-handle-right::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 32px;
+      border-radius: 2px;
+      background: rgba(91, 158, 255, 0.18);
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    .resize-handle-right:hover::before {
+      background: rgba(91, 158, 255, 0.18);
+    }
+
+    .resize-handle-bottom {
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 10px;
+      cursor: ns-resize;
+    }
+
+    .resize-handle-bottom::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 34px;
+      height: 2px;
+      border-radius: 2px;
+      background: rgba(91, 158, 255, 0.18);
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    .resize-handle-bottom:hover::before {
+      background: rgba(91, 158, 255, 0.18);
+    }
+
+    .resize-handle-corner {
+      right: 0;
+      bottom: 0;
+      width: 16px;
+      height: 16px;
+      cursor: nwse-resize;
+    }
+
+    .resize-handle-corner::before {
+      content: '';
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      background: repeating-linear-gradient(
+        135deg,
+        rgba(91, 158, 255, 0.16) 0px,
+        rgba(91, 158, 255, 0.16) 2px,
+        rgba(91, 158, 255, 0.00) 2px,
+        rgba(91, 158, 255, 0.00) 4px
+      );
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    .resize-handle-corner:hover::before {
+      background: repeating-linear-gradient(
+        135deg,
+        rgba(91, 158, 255, 0.16) 0px,
+        rgba(91, 158, 255, 0.16) 2px,
+        rgba(91, 158, 255, 0.00) 2px,
+        rgba(91, 158, 255, 0.00) 4px
+      );
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div class="panel">
+      <div class="header" id="dragHeader">
+        <div class="title" id="title">📝 Note</div>
+        <div class="header-actions">
+          <button class="close-btn" id="closeBtn" title="Close" aria-label="Close">✕</button>
+        </div>
+      </div>
+
+      <div class="resize-handle resize-handle-left" id="resizeLeft"></div>
+      <div class="resize-handle resize-handle-right" id="resizeRight"></div>
+      <div class="resize-handle resize-handle-bottom" id="resizeBottom"></div>
+      <div class="resize-handle resize-handle-corner" id="resizeCorner"></div>
+
+      <div class="body">
+        <textarea id="noteText" placeholder="Write a note..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    const { IPC_CHANNELS } = require('./src/shared/ipc-channels');
+    const { STORAGE_KEYS } = require('./src/shared/storage-keys');
+
+    const titleEl = document.getElementById('title');
+    const closeBtn = document.getElementById('closeBtn');
+    const dragHeader = document.getElementById('dragHeader');
+    const noteText = document.getElementById('noteText');
+
+    const resizeLeft = document.getElementById('resizeLeft');
+    const resizeRight = document.getElementById('resizeRight');
+    const resizeBottom = document.getElementById('resizeBottom');
+    const resizeCorner = document.getElementById('resizeCorner');
+
+    const NOTE_TEXT_KEY = STORAGE_KEYS.NOTE_PANEL_TEXT;
+
+    function syncClickThrough(allowThrough) {
+      ipcRenderer.invoke(IPC_CHANNELS.SET_CLICK_THROUGH, !!allowThrough).catch(() => {});
+    }
+
+    function isInteractiveTarget(target) {
+      return !!(target && document.body.contains(target));
+    }
+
+    let hovered = false;
+    let forceInteractiveCount = 0;
+    let lastPointerClientX = 0;
+    let lastPointerClientY = 0;
+    let hoverEvalFrame = null;
+
+    function pushForceInteractive() {
+      forceInteractiveCount += 1;
+      hovered = true;
+      syncClickThrough(false);
+    }
+
+    function popForceInteractive() {
+      forceInteractiveCount = Math.max(0, forceInteractiveCount - 1);
+      if (forceInteractiveCount > 0) return;
+      syncClickThrough(!hovered);
+    }
+
+    document.addEventListener('pointerover', (ev) => {
+      if (hovered) return;
+      if (isInteractiveTarget(ev.target)) {
+        hovered = true;
+        syncClickThrough(false);
+      }
+    }, true);
+
+    document.addEventListener('pointerout', (ev) => {
+      if (forceInteractiveCount > 0) return;
+      if (!hovered) return;
+      if (!isInteractiveTarget(ev.target)) return;
+      if (isInteractiveTarget(ev.relatedTarget)) return;
+      hovered = false;
+      syncClickThrough(true);
+    }, true);
+
+    function evaluateHoverFromPoint(clientX, clientY) {
+      if (forceInteractiveCount > 0) return;
+      const el = document.elementFromPoint(clientX, clientY);
+      hovered = isInteractiveTarget(el);
+      syncClickThrough(!hovered);
+    }
+
+    function scheduleHoverEvaluation() {
+      if (hoverEvalFrame) return;
+      hoverEvalFrame = requestAnimationFrame(() => {
+        hoverEvalFrame = null;
+        evaluateHoverFromPoint(lastPointerClientX, lastPointerClientY);
+      });
+    }
+
+    document.addEventListener('pointermove', (ev) => {
+      lastPointerClientX = ev.clientX;
+      lastPointerClientY = ev.clientY;
+      scheduleHoverEvaluation();
+    }, true);
+
+    function applyPayload(payload) {
+      if (!payload) return;
+      const labels = payload.labels || {};
+      if (labels.title) titleEl.textContent = labels.title;
+      if (labels.placeholder) noteText.placeholder = labels.placeholder;
+    }
+
+    ipcRenderer.on(IPC_CHANNELS.NOTE_PANEL_INIT, (_event, payload) => {
+      applyPayload(payload);
+    });
+
+    function loadText() {
+      try {
+        const raw = localStorage.getItem(NOTE_TEXT_KEY);
+        if (raw != null) noteText.value = raw;
+      } catch (_) {}
+    }
+
+    let saveTimer = null;
+    function scheduleSave() {
+      if (saveTimer) clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        saveTimer = null;
+        try { localStorage.setItem(NOTE_TEXT_KEY, String(noteText.value || '')); } catch (_) {}
+      }, 150);
+    }
+
+    loadText();
+
+    noteText.addEventListener('input', () => {
+      scheduleSave();
+    });
+
+    closeBtn.addEventListener('pointerdown', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
+
+    closeBtn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      ipcRenderer.invoke(IPC_CHANNELS.NOTE_PANEL_CLOSE).catch(() => {});
+    });
+
+    let pendingMove = null;
+    let moveRaf = null;
+
+    function requestMoveWindow(x, y) {
+      pendingMove = { x, y };
+      if (moveRaf) return;
+      moveRaf = requestAnimationFrame(() => {
+        moveRaf = null;
+        const next = pendingMove;
+        pendingMove = null;
+        if (!next) return;
+        ipcRenderer.send(IPC_CHANNELS.NOTE_PANEL_MOVE, { x: next.x, y: next.y });
+      });
+    }
+
+    let pendingBounds = null;
+    let boundsRaf = null;
+
+    function requestSetBounds(bounds) {
+      pendingBounds = bounds;
+      if (boundsRaf) return;
+      boundsRaf = requestAnimationFrame(() => {
+        boundsRaf = null;
+        const next = pendingBounds;
+        pendingBounds = null;
+        if (!next) return;
+        ipcRenderer.send(IPC_CHANNELS.NOTE_PANEL_SET_BOUNDS, next);
+      });
+    }
+
+    function getPointerScreen(ev) {
+      const screenX = (typeof ev.screenX === 'number') ? ev.screenX : (window.screenX + ev.clientX);
+      const screenY = (typeof ev.screenY === 'number') ? ev.screenY : (window.screenY + ev.clientY);
+      return { x: Math.round(screenX), y: Math.round(screenY) };
+    }
+
+    let dragState = null;
+
+    dragHeader.addEventListener('pointerdown', (ev) => {
+      if (ev.button !== 0) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      pushForceInteractive();
+      const pt = getPointerScreen(ev);
+      dragState = {
+        pointerId: ev.pointerId,
+        offsetX: Math.round(pt.x - window.screenX),
+        offsetY: Math.round(pt.y - window.screenY)
+      };
+
+      try { dragHeader.setPointerCapture(dragState.pointerId); } catch (_) {}
+    });
+
+    dragHeader.addEventListener('pointermove', (ev) => {
+      if (!dragState || ev.pointerId !== dragState.pointerId) return;
+      ev.preventDefault();
+      const pt = getPointerScreen(ev);
+      const nextX = Math.round(pt.x - dragState.offsetX);
+      const nextY = Math.round(pt.y - dragState.offsetY);
+      requestMoveWindow(nextX, nextY);
+    });
+
+    dragHeader.addEventListener('pointerup', (ev) => {
+      if (!dragState || ev.pointerId !== dragState.pointerId) return;
+      ev.preventDefault();
+      try { dragHeader.releasePointerCapture(dragState.pointerId); } catch (_) {}
+      dragState = null;
+      popForceInteractive();
+
+      ipcRenderer.send(IPC_CHANNELS.NOTE_PANEL_COMMIT_BOUNDS);
+    });
+
+    dragHeader.addEventListener('pointercancel', (ev) => {
+      if (!dragState || ev.pointerId !== dragState.pointerId) return;
+      try { dragHeader.releasePointerCapture(dragState.pointerId); } catch (_) {}
+      dragState = null;
+      popForceInteractive();
+    });
+
+    const MIN_WIDTH = 240;
+    const MIN_HEIGHT = 140;
+
+    let resizeState = null;
+
+    function beginResize(ev, edge) {
+      if (ev.button !== 0) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      pushForceInteractive();
+      const pt = getPointerScreen(ev);
+      resizeState = {
+        pointerId: ev.pointerId,
+        edge,
+        startScreenX: pt.x,
+        startScreenY: pt.y,
+        startBounds: { x: window.screenX, y: window.screenY, width: window.innerWidth, height: window.innerHeight }
+      };
+
+      try { ev.currentTarget.setPointerCapture(resizeState.pointerId); } catch (_) {}
+    }
+
+    function onResizeMove(ev) {
+      if (!resizeState || ev.pointerId !== resizeState.pointerId) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      const pt = getPointerScreen(ev);
+      const dx = pt.x - resizeState.startScreenX;
+      const dy = pt.y - resizeState.startScreenY;
+      const b = resizeState.startBounds;
+
+      let nextX = b.x;
+      let nextY = b.y;
+      let nextW = b.width;
+      let nextH = b.height;
+
+      if (resizeState.edge === 'right') {
+        nextW = b.width + dx;
+      } else if (resizeState.edge === 'left') {
+        nextW = b.width - dx;
+        nextX = b.x + dx;
+      } else if (resizeState.edge === 'bottom') {
+        nextH = b.height + dy;
+      } else if (resizeState.edge === 'corner') {
+        nextW = b.width + dx;
+        nextH = b.height + dy;
+      }
+
+      // If we hit min size while resizing from the left, preserve the right edge.
+      if (resizeState.edge === 'left') {
+        const rawW = Math.round(nextW);
+        if (rawW < MIN_WIDTH) {
+          nextW = MIN_WIDTH;
+          nextX = b.x + (b.width - MIN_WIDTH);
+        }
+      }
+
+      nextW = Math.max(MIN_WIDTH, Math.round(nextW));
+      nextH = Math.max(MIN_HEIGHT, Math.round(nextH));
+
+      requestSetBounds({ x: Math.round(nextX), y: Math.round(nextY), width: nextW, height: nextH });
+    }
+
+    function endResize(ev) {
+      if (!resizeState || ev.pointerId !== resizeState.pointerId) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      try { ev.currentTarget.releasePointerCapture(resizeState.pointerId); } catch (_) {}
+      resizeState = null;
+      popForceInteractive();
+
+      ipcRenderer.send(IPC_CHANNELS.NOTE_PANEL_COMMIT_BOUNDS);
+    }
+
+    function cancelResize(ev) {
+      if (!resizeState || ev.pointerId !== resizeState.pointerId) return;
+      try { ev.currentTarget.releasePointerCapture(resizeState.pointerId); } catch (_) {}
+      resizeState = null;
+      popForceInteractive();
+    }
+
+    const resizeHandles = [
+      { el: resizeLeft, edge: 'left' },
+      { el: resizeRight, edge: 'right' },
+      { el: resizeBottom, edge: 'bottom' },
+      { el: resizeCorner, edge: 'corner' }
+    ];
+
+    resizeHandles.forEach(({ el, edge }) => {
+      if (!el) return;
+      el.addEventListener('pointerdown', (ev) => beginResize(ev, edge));
+      el.addEventListener('pointermove', onResizeMove);
+      el.addEventListener('pointerup', endResize);
+      el.addEventListener('pointercancel', cancelResize);
+    });
+
+    // Start click-through by default; hover/capture will enable interactivity.
+    syncClickThrough(true);
+  </script>
+</body>
+</html>

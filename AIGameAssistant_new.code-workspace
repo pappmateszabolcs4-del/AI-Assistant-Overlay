@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"explorer.fileNesting.expand": false,
+		"explorer.sortOrder": "type"
+	}
+}

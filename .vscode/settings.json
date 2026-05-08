@@ -1,0 +1,28 @@
+{
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "*.js": "${capture}.js.backup, ${capture}.js.backup.v*, ${capture}.js.bak, ${capture}.js.old",
+    "*.html": "${capture}.html.backup, ${capture}.html.backup.v*, ${capture}.html.bak, ${capture}.html.old",
+    "*.css": "${capture}.css.backup, ${capture}.css.backup.v*, ${capture}.css.bak, ${capture}.css.old",
+    "*.json": "${capture}.json.backup, ${capture}.json.backup.v*, ${capture}.json.bak, ${capture}.json.old",
+    "package.json": "package-lock.json, node_modules",
+    "README.md": "LEARNINGS.md, LICENSE, .gitignore"
+  },
+  "explorer.sortOrder": "type",
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "backups/**": true,
+    "**/*.backup*": true
+  },
+  "search.exclude": {
+    "**/node_modules/**": true,
+    "backups/**": true,
+    "**/*.backup*": true
+  }
+}

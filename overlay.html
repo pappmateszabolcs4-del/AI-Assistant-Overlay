@@ -1,0 +1,4934 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Overlay</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    body {
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow: hidden;
+      -webkit-app-region: no-drag;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: flex-start; /* Anchor to top to prevent vertical jitter during resize */
+      justify-content: center;
+    }
+    
+    #overlay-container {
+      background: rgba(26, 31, 46, 0.58);
+      border: 1px solid rgba(91, 158, 255, 0.3);
+      border-radius: 16px;
+      padding: 20px;
+      padding-bottom: 20px; /* reserve grab area for bottom resize */
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+      width: 100%;
+      height: auto;
+      min-width: 380px;
+      min-height: 60px;
+      max-height: none;
+      backdrop-filter: blur(10px);
+      position: relative;
+      resize: none;
+      overflow: visible;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+    }
+
+    #overlay-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #overlay-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #overlay-container::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 3px;
+    }
+
+    #overlay-container::-webkit-scrollbar-thumb:hover {
+      background: rgba(91, 158, 255, 0.6);
+    }
+
+    /* Floating panels host to render dropdowns outside layout */
+    #floating-panels {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    /* Drag handle */
+    .drag-handle {
+      position: relative;
+      /* Reserve room for the top-left info button + top-right close button so the pill stays centered. */
+      width: min(380px, calc(100% - 160px));
+      height: 28px;
+      margin: 0 auto 4px;
+      cursor: grab;
+      background: transparent;
+      border: none;
+      transition: all 0.2s ease;
+      -webkit-app-region: no-drag; /* Allow JS to capture pointer events for manual dragging */
+      pointer-events: auto;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .drag-handle::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 20, 32, 0.62);
+      border-radius: 999px;
+      border: 1px solid rgba(91, 158, 255, 0.4);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+      transition: inherit;
+      pointer-events: none;
+    }
+
+    .drag-handle::after {
+      content: attr(data-label);
+      position: relative;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.88);
+      letter-spacing: 0.04em;
+      pointer-events: none;
+      text-transform: none;
+    }
+
+    .drag-handle:hover::before {
+      border-color: rgba(91, 158, 255, 0.85);
+      background: rgba(24, 31, 49, 0.78);
+    }
+
+    .drag-handle:hover::after {
+      color: #f5f7fa;
+    }
+
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .drag-handle.flush-top {
+      margin-top: 0;
+      box-shadow: none;
+    }
+
+    .drag-handle.flush-top::before {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.20);
+    }
+
+    @media (max-width: 560px) {
+      .drag-handle {
+        width: calc(100% - 160px);
+        margin: 0 auto 8px;
+      }
+    }
+    
+    .resize-handle {
+      position: absolute;
+      background: transparent;
+      pointer-events: auto;
+    }
+    
+    .resize-handle-left {
+      left: 0;
+      top: 0;
+      width: 8px;
+      height: 100%;
+      cursor: col-resize;
+    }
+    
+    .resize-handle-right {
+      right: 0;
+      top: 0;
+      width: 8px;
+      height: 100%;
+      cursor: col-resize;
+    }
+
+    .resize-handle-bottom {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 20px;
+      cursor: row-resize;
+      z-index: 10;
+      pointer-events: none;
+      display: none; /* bottom resize removed from main header */
+    }
+    
+    .resize-handle-left:hover,
+    .resize-handle-right:hover,
+    .resize-handle-bottom:hover {
+      background: transparent;
+    }
+
+    /* Subtle resize affordance: faint grip lines on edges */
+    .resize-handle-left::before,
+    .resize-handle-right::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 34px;
+      border-radius: 2px;
+      background: rgba(91, 158, 255, 0.18);
+      opacity: 0.95;
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    .resize-handle-left:hover::before,
+    .resize-handle-right:hover::before {
+      background: rgba(91, 158, 255, 0.18);
+    }
+    
+    .close-btn {
+      background: transparent;
+      color: #f5f7fa;
+      border: 1px solid rgba(91, 158, 255, 0.3);
+      border-radius: 6px;
+      padding: 0;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .close-btn:hover {
+      background: #252d3d;
+      color: #5b9eff;
+    }
+
+    .close-btn-container {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      z-index: 20;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .info-btn-container {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      z-index: 20;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .clear-all-btn {
+      position: absolute;
+      top: 12px;
+      right: 50px;
+      background: transparent;
+      color: #f5f7fa;
+      border: 1px solid rgba(91, 158, 255, 0.3);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .clear-all-btn:hover {
+      background: rgba(255, 100, 100, 0.2);
+      color: #ff6464;
+      border-color: rgba(255, 100, 100, 0.5);
+    }
+    
+    h2 {
+      font-size: 1.35em;
+      margin: 0 0 16px 0;
+      color: #f5f7fa;
+      text-align: center;
+    }
+    
+    #micBtn {
+      width: 100%;
+      font-size: 1.05em;
+      padding: 12px 20px;
+      background: #5b9eff;
+      border-radius: 12px;
+      border: 1px solid #5b9eff;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+    
+    #micBtn:hover {
+      background: #4a8ae8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(91, 158, 255, 0.18);
+    }
+    
+    #status {
+      margin-top: 10px;
+      text-align: center;
+      color: #c4cdd9;
+      font-size: 0.95em;
+      min-height: 24px;
+    }
+    
+    audio {
+      margin-top: 20px;
+      width: 100%;
+    }
+    
+    #responseContainer {
+      margin-top: 12px;
+      padding: 16px;
+      background: rgba(91, 158, 255, 0.1);
+      border-radius: 8px;
+      border-left: 3px solid rgba(91, 158, 255, 0.5);
+      max-height: none;
+      min-height: 250px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+      flex: 1;
+    }
+
+    #responseContainer::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #responseContainer::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #responseContainer::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 3px;
+    }
+
+    #responseContainer::-webkit-scrollbar-thumb:hover {
+      background: rgba(91, 158, 255, 0.6);
+    }
+    
+    #responseContainer p:first-child {
+      font-size: 0.9em;
+      color: #8ba3c0;
+      margin: 0 0 8px 0;
+    }
+    
+    #aiResponse {
+      margin: 0;
+      color: #f5f7fa;
+      font-size: 1.05em;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    #questionInput {
+      width: 100%;
+      padding: 10px 12px;
+      margin-top: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(91, 158, 255, 0.35);
+      border-radius: 10px;
+      color: #f5f7fa;
+      font-size: 0.95em;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    #questionInput:focus {
+      border-color: rgba(91, 158, 255, 0.8);
+      box-shadow: 0 0 0 2px rgba(91, 158, 255, 0.12);
+    }
+
+    #questionInput::placeholder {
+      color: rgba(245, 247, 250, 0.45);
+    }
+
+    /* CRITICAL: Disable drag-region for interactive inputs */
+    /* Without this, slider/checkbox drag interferes with Electron window dragging */
+    input[type="range"],
+    input[type="checkbox"],
+    input[type="text"],
+    textarea,
+    button {
+      -webkit-app-region: no-drag;
+      cursor: auto;
+    }
+
+    #askBtn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px 14px;
+      background: #5b9eff;
+      border-radius: 10px;
+      border: 1px solid #5b9eff;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 600;
+    }
+
+    #askBtn:hover {
+      background: #4a8ae8;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(91, 158, 255, 0.16);
+    }
+
+    .vision-controls {
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(91, 158, 255, 0.08);
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.2);
+      display: flex;
+      gap: 8px;
+    }
+
+    .vision-btn {
+      flex: 1;
+      padding: 8px 12px;
+      background: rgba(91, 158, 255, 0.2);
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.4);
+      color: #f5f7fa;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+
+    .vision-btn:hover {
+      background: rgba(91, 158, 255, 0.35);
+      border-color: rgba(91, 158, 255, 0.6);
+    }
+
+    .vision-btn.active {
+      background: #5b9eff;
+      border-color: #5b9eff;
+    }
+
+    #screenshotPreview {
+      margin-top: 8px;
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 8px;
+      display: none;
+      border: 2px solid rgba(91, 158, 255, 0.4);
+    }
+
+    .screenshot-info {
+      margin-top: 6px;
+      font-size: 0.85em;
+      color: #8ba3c0;
+      text-align: center;
+    }
+
+    .history-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(91, 158, 255, 0.15);
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.3);
+      color: #f5f7fa;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+
+    .history-btn:hover {
+      background: rgba(91, 158, 255, 0.25);
+      border-color: rgba(91, 158, 255, 0.5);
+    }
+
+    /* Hide width counter display */
+    #widthDisplay {
+      display: none;
+    }
+
+    #historyPanel {
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(91, 158, 255, 0.08);
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.2);
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+    }
+
+    #historyPanel::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #historyPanel::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #historyPanel::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 3px;
+    }
+
+    .history-item {
+      margin-bottom: 12px;
+      padding: 10px;
+      background: rgba(26, 31, 46, 0.6);
+      border-radius: 6px;
+      border-left: 3px solid rgba(91, 158, 255, 0.5);
+      cursor: pointer;
+      transition: background 0.2s ease, border-left-color 0.2s ease;
+    }
+
+    .history-item:hover {
+      background: rgba(26, 31, 46, 0.8);
+      border-left-color: #5b9eff;
+    }
+
+    .history-item.active {
+      background: rgba(26, 31, 46, 0.92);
+      border-left-color: #ffd666;
+    }
+
+    .history-question {
+      font-size: 0.9em;
+      color: #8ba3c0;
+      margin-bottom: 6px;
+    }
+
+    .history-preview {
+      font-size: 0.85em;
+      color: #f5f7fa;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-meta {
+      font-size: 0.78em;
+      color: #6b7c93;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .history-time {
+      font-size: 0.78em;
+      color: #8ba3c0;
+    }
+
+    .history-toggle {
+      color: #5b9eff;
+      font-weight: 600;
+      font-size: 0.78em;
+      user-select: none;
+      transition: color 0.2s ease;
+    }
+
+    .history-item.active .history-toggle {
+      color: #ffd666;
+    }
+
+    .history-full {
+      border-top: 1px solid rgba(91, 158, 255, 0.2);
+      margin-top: 10px;
+      padding-top: 10px;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.25s ease, opacity 0.2s ease;
+    }
+
+    .history-item.active .history-full {
+      max-height: 600px;
+      opacity: 1;
+    }
+
+    body.pulling-history, body.pulling-history * {
+      user-select: none !important;
+      -webkit-user-select: none !important;
+    }
+
+    .history-full-label {
+      font-size: 0.78em;
+      color: #8ba3c0;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .history-full-block {
+      font-size: 0.85em;
+      color: #f5f7fa;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-bottom: 10px;
+    }
+
+    .history-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 12px;
+      padding-bottom: 4px;
+    }
+
+    .history-clear-btn {
+      flex: 1;
+      padding: 10px 12px;
+      background: rgba(255, 100, 100, 0.2);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 100, 100, 0.4);
+      color: #ff6464;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.85em;
+    }
+
+    .history-clear-btn:hover {
+      background: rgba(255, 100, 100, 0.3);
+      border-color: rgba(255, 100, 100, 0.6);
+    }
+
+    .section-content.history-section .section-content-inner {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+      padding-bottom: 4px;
+    }
+
+    .section-content.history-section #historyList {
+      flex: 1 1 auto;
+      min-height: 200px;
+      overflow-y: auto;
+      padding-right: 4px;
+      padding-bottom: 4px;
+    }
+
+
+    /* Custom Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: rgba(26, 31, 46, 0.95);
+      border: 1px solid rgba(91, 158, 255, 0.4);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 400px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+    }
+
+    .modal-title {
+      font-size: 1.2em;
+      font-weight: 600;
+      color: #f5f7fa;
+      margin-bottom: 12px;
+    }
+
+    .modal-message {
+      color: #8ba3c0;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      white-space: pre-line;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .modal-btn-confirm {
+      background: rgba(255, 100, 100, 0.3);
+      color: #ff6464;
+      border: 1px solid rgba(255, 100, 100, 0.5);
+    }
+
+    .modal-btn-confirm:hover {
+      background: rgba(255, 100, 100, 0.5);
+    }
+
+    .modal-btn-cancel {
+      background: rgba(91, 158, 255, 0.2);
+      color: #5b9eff;
+      border: 1px solid rgba(91, 158, 255, 0.4);
+    }
+
+    .modal-btn-cancel:hover {
+      background: rgba(91, 158, 255, 0.35);
+    }
+
+    /* Tabs System */
+    .tabs-container {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      border-bottom: 2px solid rgba(91, 158, 255, 0.2);
+      padding-bottom: 8px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px 12px;
+      background: rgba(91, 158, 255, 0.1);
+      border: 1px solid rgba(91, 158, 255, 0.2);
+      border-radius: 8px 8px 0 0;
+      color: #8ba3c0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.9em;
+      font-weight: 500;
+      position: relative;
+    }
+
+    .tab-btn:hover {
+      background: rgba(91, 158, 255, 0.2);
+      color: #f5f7fa;
+    }
+
+    .tab-btn.active {
+      background: rgba(91, 158, 255, 0.3);
+      border-color: #5b9eff;
+      color: #f5f7fa;
+      font-weight: 600;
+    }
+
+    .tab-btn .pin-icon {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 0.7em;
+      opacity: 0.5;
+    }
+
+    .tab-btn.pinned .pin-icon {
+      opacity: 1;
+      color: #5b9eff;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.2s ease;
+    }
+
+    /* Detached panel windows should appear instantly (undock should not “fade in”). */
+    body.panel-mode .tab-content.active {
+      animation: none !important;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .pinned-sections {
+      margin-bottom: 16px;
+      padding: 12px;
+      background: rgba(91, 158, 255, 0.05);
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.15);
+      max-height: 200px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+    }
+
+    .pinned-sections:empty {
+      display: none;
+    }
+
+    .pinned-section {
+      padding: 8px;
+      background: rgba(26, 31, 46, 0.6);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 3px solid #5b9eff;
+    }
+
+    .pinned-section:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Floating pinned history boxes (drag out from History list) */
+    .pinned-history-box {
+      position: fixed;
+      left: 12px;
+      top: 72px;
+      width: min(420px, calc(100vw - 24px));
+      max-height: min(60vh, calc(100vh - 24px));
+      display: flex;
+      flex-direction: column;
+      background: rgba(26, 31, 46, 0.72);
+      border: 1px solid rgba(91, 158, 255, 0.4);
+      border-radius: 14px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+      pointer-events: auto;
+      z-index: 150;
+      overflow: hidden;
+    }
+
+    .pinned-history-box.ghost {
+      opacity: 0.85;
+    }
+
+    .pinned-history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: rgba(91, 158, 255, 0.08);
+      color: #f5f7fa;
+      font-weight: 600;
+      font-size: 0.85em;
+      user-select: none;
+      cursor: grab;
+      gap: 10px;
+    }
+
+    .pinned-history-header:active {
+      cursor: grabbing;
+    }
+
+    .pinned-history-header .meta {
+      color: #8ba3c0;
+      font-weight: 500;
+      font-size: 0.9em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .pinned-history-body {
+      padding: 10px 12px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+    }
+
+    .pinned-history-body::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .pinned-history-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .pinned-history-body::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.35);
+      border-radius: 3px;
+    }
+
+    .pinned-history-body::-webkit-scrollbar-thumb:hover {
+      background: rgba(91, 158, 255, 0.55);
+    }
+
+    .section-title {
+      font-size: 0.85em;
+      color: #5b9eff;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .specialization-container {
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(91, 158, 255, 0.08);
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.2);
+    }
+
+    .specialization-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.9em;
+      color: #8ba3c0;
+    }
+
+    #specializationLevel {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(91, 158, 255, 0.2);
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    #specializationLevel::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #5b9eff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 6px rgba(91, 158, 255, 0.35);
+    }
+
+    #specializationLevel::-webkit-slider-thumb:hover {
+      background: #7cb4ff;
+      box-shadow: 0 0 8px rgba(91, 158, 255, 0.55);
+    }
+
+    #specializationLevel::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #5b9eff;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 6px rgba(91, 158, 255, 0.35);
+    }
+
+    #specializationLevel::-moz-range-thumb:hover {
+      background: #7cb4ff;
+      box-shadow: 0 0 8px rgba(91, 158, 255, 0.55);
+    }
+
+    .specialization-value {
+      font-weight: 600;
+      color: #5b9eff;
+    }
+
+    .reset-layout-btn {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      background: rgba(91, 158, 255, 0.15);
+      border: 1px solid rgba(91, 158, 255, 0.3);
+      border-radius: 8px;
+      color: #5b9eff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      font-size: 0.9em;
+    }
+
+    .reset-layout-btn:hover {
+      background: rgba(91, 158, 255, 0.25);
+      border-color: rgba(91, 158, 255, 0.5);
+    }
+
+    /* Collapsible Sections Container */
+    .sections-wrapper {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+    }
+
+    /* Collapsible Sections */
+    .collapsible-section {
+      flex: 1;
+      border: 1px solid rgba(91, 158, 255, 0.2);
+      border-radius: 8px;
+      background: rgba(26, 31, 46, 0.4);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      position: relative;
+      overflow: visible; /* allow dropdown content to float without reflow */
+      z-index: 1;
+    }
+    
+      /* When a panel is detached into its own window, keep its slot in the header
+         layout (so it can be used as a docking target) but make it invisible and
+         non-interactive to avoid “ghost originals” in the header. */
+      .collapsible-section.panel-detached {
+        opacity: 0;
+        pointer-events: none;
+        /* Collapse so it doesn't consume vertical space. */
+        height: 0;
+        min-height: 0;
+        border: 0;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        flex: 0 0 auto;
+      }
+
+      .collapsible-section.panel-detached .section-header {
+        display: none !important;
+      }
+
+      /* Never render dropdown content for detached slots in the main overlay.
+         This avoids showing stale History/Settings content during dock preview / header-only resizing. */
+      .collapsible-section.panel-detached .section-content {
+        display: none !important;
+      }
+
+      /* While dragging a detached panel to dock back, temporarily show docking targets. */
+      body.dock-preview .collapsible-section.panel-detached {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* Dock preview should be functional-only (no visible indicators). */
+      body.dock-preview .sections-container {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* During renderer boot/reload, never show header slots that may be transient
+         before detached-state sync arrives (prevents Ctrl+R flicker). */
+      body.booting .sections-container {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* When all panels are detached, collapse the main overlay to a compact header-only bar.
+         (The BrowserWindow height is also resized via IPC in JS.) */
+      body.header-only #overlay-container {
+        /* Keep top/side spacing consistent; remove extra space from the bottom. */
+        padding: 6px 12px 4px 12px;
+        gap: 8px;
+        /* Override the global min-height so header-only can shrink further. */
+        min-height: 0;
+      }
+
+      body.header-only .sections-container {
+        display: none;
+      }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      cursor: pointer;
+      background: rgba(91, 158, 255, 0.08);
+      border: none;
+      width: 100%;
+      color: #f5f7fa;
+      font-weight: 600;
+      font-size: 0.9em;
+      transition: all 0.2s ease;
+      user-select: none;
+      gap: 6px;
+      flex-shrink: 0;
+      min-width: 0;
+    }
+    
+    .section-header span {
+      pointer-events: none;
+    }
+
+    /* Prevent label wrapping/squish (keep emoji + text on one line) */
+    .section-header span:first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .section-header:hover {
+      background: rgba(91, 158, 255, 0.12);
+    }
+
+    .section-toggle {
+      font-size: 0.7em;
+      transition: transform 0.3s ease;
+      color: #5b9eff;
+      flex-shrink: 0;
+    }
+
+    .section-toggle.open {
+      transform: rotate(180deg);
+    }
+
+    .section-content {
+      position: fixed;
+      background: rgba(26, 31, 46, 0.72);
+      border: 1px solid rgba(91, 158, 255, 0.4);
+      border-radius: 16px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+      padding: 12px;
+      display: none;
+      max-height: calc(100vh - 24px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+      pointer-events: auto;
+      z-index: 100;
+      transform-origin: top left;
+      height: auto;
+    }
+
+    .section-content.open {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .section-content::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .section-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .section-content::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 3px;
+    }
+
+    .section-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(91, 158, 255, 0.6);
+    }
+
+    .popup-resize-handle {
+      margin-top: auto;
+      height: 12px;
+      min-height: 12px;
+      flex: 0 0 12px;
+      cursor: row-resize;
+      border-radius: 6px;
+      background: rgba(91, 158, 255, 0.1);
+      border: 1px solid rgba(91, 158, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .popup-resize-handle:hover {
+      background: rgba(91, 158, 255, 0.1);
+      border-color: rgba(91, 158, 255, 0.2);
+    }
+
+    .popup-resize-handle::before {
+      content: '';
+      width: 40px;
+      height: 3px;
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 3px;
+      opacity: 0.9;
+    }
+
+    .section-content-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    body.panel-mode .section-content-inner {
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    /* Container layout: compact header row only */
+    #overlay-container {
+      padding: 6px 12px 16px 12px;
+      gap: 8px;
+    }
+
+    /* Drag handle spans majority width at top */
+    #overlay-container > .drag-handle {
+      width: min(380px, calc(100% - 160px));
+      align-self: center;
+    }
+
+    /* Pinned sections keep full width but collapse when empty */
+    #overlay-container > .pinned-sections {
+      width: 100%;
+    }
+
+    /* The 3 main sections as header pills */
+    #overlay-container > .collapsible-section {
+      flex: 1 1 0;
+      min-width: 120px;
+      align-self: flex-start;
+    }
+
+    /* Sections wrapper - horizontal row, no wrapping */
+    .sections-container {
+      display: grid;
+      gap: 10px;
+      width: 100%;
+      align-items: start;
+      margin-top: 2px;
+      position: relative;
+    }
+
+    /* Manual layout modes (default stays horizontal; toggled via button in Settings) */
+    body.layout-horizontal .sections-container {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    body.layout-compact .sections-container {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    body.layout-compact .sections-container > .collapsible-section:nth-child(3) {
+      grid-column: 1 / -1;
+    }
+
+    body.layout-stacked .sections-container {
+      grid-template-columns: 1fr;
+    }
+    body.layout-stacked .sections-container > .collapsible-section:nth-child(3) {
+      grid-column: auto;
+    }
+
+    /* Detached panel window mode (separate BrowserWindow) */
+    body.panel-mode {
+      justify-content: flex-start;
+      align-items: stretch;
+    }
+
+    body.panel-mode #overlay-container {
+      min-width: 0;
+      min-height: 0;
+      width: 100%;
+      height: 100%;
+      position: fixed;
+      inset: 0;
+      margin: 0;
+      padding: 0;
+      gap: 0;
+
+      /* Detached windows: make the OUTER container the panel chrome so resizing
+        can never reveal transparent window area outside the border. */
+      background: rgba(26, 31, 46, 0.72);
+      border: 1px solid rgba(91, 158, 255, 0.3);
+      border-radius: 14px;
+      box-shadow: none;
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    body.panel-mode .drag-handle,
+    body.panel-mode .resize-handle,
+    body.panel-mode .close-btn-container,
+    body.panel-mode .info-btn-container,
+    body.panel-mode .pinned-sections,
+    body.panel-mode #floating-panels {
+      display: none !important;
+    }
+
+    body.panel-mode .sections-container {
+      /* In detached mode there is only one active panel.
+         Use flex instead of grid to ensure the bordered panel always stretches
+         with the BrowserWindow height (grid auto-rows can leave unused space). */
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      align-items: stretch;
+    }
+
+    body.panel-mode .collapsible-section {
+      display: none;
+    }
+
+    body.panel-mode .collapsible-section.panel-active {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      flex: 1;
+      min-height: 0;
+      height: 100%;
+      align-self: stretch;
+
+      /* Avoid double border/background: outer container already draws chrome. */
+      background: transparent;
+      border: none;
+      border-radius: 0;
+    }
+
+    body.panel-mode .section-content {
+      position: relative;
+      left: auto;
+      top: auto;
+      width: 100%;
+      max-height: none;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      /* Detached windows should behave like a single frame.
+        Remove the inner popup frame so window resize can't "separate" outer/inner chrome. */
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      /* Detached mode: scroll only the inner content so the resize handle
+        can live in a fixed footer area without overlapping content cards. */
+      overflow: hidden;
+    }
+
+    body.panel-mode .popup-resize-handle {
+      margin-top: 12px;
+      height: 14px;
+    }
+
+    body.panel-mode .section-content.open {
+      display: flex;
+      flex-direction: column;
+    }
+
+    body.panel-mode .section-header {
+      cursor: grab;
+      user-select: none;
+      position: relative;
+      z-index: 20;
+    }
+
+    body.panel-mode .section-header *:not(.dock-btn) {
+      cursor: inherit;
+    }
+
+    body.panel-mode .section-header:active {
+      cursor: grabbing;
+    }
+
+    body.panel-mode .section-toggle {
+      display: none;
+    }
+
+    body.panel-mode .dock-btn {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid rgba(91, 158, 255, 0.35);
+      color: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      padding: 4px 8px;
+      cursor: pointer;
+      pointer-events: auto;
+      font-weight: 700;
+      line-height: 1;
+      position: relative;
+      z-index: 21;
+    }
+
+    body.panel-mode .dock-btn:hover {
+      background: rgba(91, 158, 255, 0.12);
+    }
+
+    /* Detached panel window resize handles (like Note/Info panels) */
+    body.panel-mode .detached-resize-handle {
+      position: absolute;
+      background: transparent;
+      z-index: 12;
+      pointer-events: auto;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body.panel-mode .detached-resize-handle-left {
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      cursor: ew-resize;
+    }
+
+    body.panel-mode .detached-resize-handle-right {
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      cursor: ew-resize;
+    }
+
+    body.panel-mode .detached-resize-handle-corner {
+      right: 0;
+      bottom: 0;
+      width: 18px;
+      height: 18px;
+      cursor: nwse-resize;
+    }
+
+    /* Subtle resize affordance in detached windows */
+    body.panel-mode .detached-resize-handle-left:hover,
+    body.panel-mode .detached-resize-handle-right:hover,
+    body.panel-mode .detached-resize-handle-corner:hover {
+      background: transparent;
+    }
+
+    body.panel-mode .detached-resize-handle-left::before,
+    body.panel-mode .detached-resize-handle-right::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 32px;
+      border-radius: 2px;
+      background: rgba(91, 158, 255, 0.18);
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    body.panel-mode .detached-resize-handle-left:hover::before,
+    body.panel-mode .detached-resize-handle-right:hover::before {
+      background: rgba(91, 158, 255, 0.18);
+    }
+
+    body.panel-mode .detached-resize-handle-corner::before {
+      content: '';
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      background: repeating-linear-gradient(
+        135deg,
+        rgba(91, 158, 255, 0.16) 0px,
+        rgba(91, 158, 255, 0.16) 2px,
+        rgba(91, 158, 255, 0.00) 2px,
+        rgba(91, 158, 255, 0.00) 4px
+      );
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    body.panel-mode .detached-resize-handle-corner:hover::before {
+      background: repeating-linear-gradient(
+        135deg,
+        rgba(91, 158, 255, 0.16) 0px,
+        rgba(91, 158, 255, 0.16) 2px,
+        rgba(91, 158, 255, 0.00) 2px,
+        rgba(91, 158, 255, 0.00) 4px
+      );
+    }
+  </style>
+</head>
+<body>
+  <div id="overlay-container">
+    <!-- Drag handle for moving overlay -->
+    <div class="drag-handle" id="dragHandle" data-label="⇕ Move overlay" title="Move overlay"></div>
+    
+    <div class="resize-handle resize-handle-left"></div>
+    <div class="resize-handle resize-handle-right"></div>
+    
+    <!-- Floating close button (keeps layout stable while resizing) -->
+    <div class="info-btn-container">
+      <button class="close-btn" id="infoBtn" title="Info">ℹ</button>
+    </div>
+    <div class="close-btn-container">
+      <button class="close-btn" id="closeBtn">✕</button>
+    </div>
+    
+    <!-- Pinned Sections Area -->
+    <div class="pinned-sections" id="pinnedSections"></div>
+    
+    <!-- Sections Container - 3 columns -->
+    <div class="sections-container">
+    
+    <!-- Ask Section -->
+    <div class="collapsible-section" data-panel="ask">
+      <button class="section-header" onclick="toggleSection(event, this)">
+        <span id="askHeaderLabel">💬 Kérdezz</span>
+        <span class="section-toggle">▼</span>
+      </button>
+      <div class="section-content">
+        <div class="section-content-inner">
+          <button id="micBtn">🎤 Mikrofon</button>
+          <input type="text" id="questionInput" placeholder="Írj ide kérdést..." onclick="event.stopPropagation()" />
+          <button id="askBtn">💬 Kérdés küldése</button>
+          
+          <!-- Vision Controls -->
+          <div class="vision-controls">
+            <button class="vision-btn" id="screenshotBtn">📸 Screenshot</button>
+            <button class="vision-btn" id="clearImageBtn" style="display: none;">🗑️ Törlés</button>
+          </div>
+          <img id="screenshotPreview" alt="Screenshot preview" />
+          <p class="screenshot-info" id="screenshotInfo"></p>
+          
+          <p id="status"></p>
+          <div id="responseContainer" style="display: none;">
+            <p id="answerLabel">🤖 AI Válasz:</p>
+            <p id="aiResponse"></p>
+          </div>
+        </div>
+        <div class="popup-resize-handle"></div>
+      </div>
+    </div>
+    
+    <!-- History Section -->
+    <div class="collapsible-section" data-panel="history">
+      <button class="section-header" id="historyHeaderBtn" onclick="toggleSection(event, this)">
+        <span id="historyHeaderLabel">📜 Előzmények</span>
+        <span class="section-toggle">▼</span>
+      </button>
+      <div class="section-content history-section">
+        <div class="section-content-inner">
+          <div id="historyList"></div>
+          <div class="history-controls">
+            <button class="history-clear-btn" id="clearHistoryBtn">🗑️ Előzmények törlése</button>
+          </div>
+        </div>
+        <div class="popup-resize-handle"></div>
+      </div>
+    </div>
+    
+    <!-- Settings Section -->
+    <div class="collapsible-section" data-panel="settings">
+      <button class="section-header" onclick="toggleSection(event, this)">
+        <span id="settingsHeaderLabel">⚙️ Beállítások</span>
+        <span class="section-toggle">▼</span>
+      </button>
+      <div class="section-content">
+        <div class="section-content-inner">
+          <div class="specialization-container">
+            <div class="specialization-label">
+              <span id="specLabel">🎯 Játék Specifikusság:</span>
+              <span class="specialization-value"><span id="specValue">3</span>/5</span>
+            </div>
+            <input type="range" id="specializationLevel" min="1" max="5" value="3" onclick="event.stopPropagation()">
+            <p id="specDetail" style="font-size: 0.8em; color: #8ba3c0; margin-top: 8px; line-height: 1.4;">
+              1 = Rövid válaszok | 3 = Részletes | 5 = Maximális részletesség
+            </p>
+          </div>
+          
+          <div class="specialization-container" style="margin-top: 12px;">
+            <div class="specialization-label">
+              <span id="ttsLabel">🔊 Hangos válaszok:</span>
+            </div>
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #f5f7fa;">
+              <input type="checkbox" id="enableTTS" checked style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
+              <span id="askTtsLabel">AI válasz felolvasása</span>
+            </label>
+          </div>
+          
+          <div class="specialization-container" style="margin-top: 12px;">
+            <div class="specialization-label">
+              <span id="overlaySizeLabel">📏 Overlay méret:</span>
+            </div>
+            <p id="widthDisplay" style="font-size: 0.85em; color: #8ba3c0; margin-bottom: 8px;">
+              <span id="widthLabel">Szélesség:</span> <span id="widthValue">650</span><span id="widthUnit">px</span>
+            </p>
+            <input type="range" id="overlayWidth" min="450" max="900" value="650" style="width: 100%;" onclick="event.stopPropagation()">
+          </div>
+          
+          <div class="specialization-container" style="margin-top: 12px;">
+            <div class="specialization-label">
+              <span id="dataLabel">💾 Adatok:</span>
+            </div>
+            <button id="exportHistoryBtn" onclick="exportHistory()" style="width: 100%; margin-bottom: 8px; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
+              📥 Előzmények exportálása
+            </button>
+            <button id="clearAllBtn" onclick="clearAllData()" style="width: 100%; padding: 8px; background: rgba(255, 100, 100, 0.2); border: 1px solid rgba(255, 100, 100, 0.4); border-radius: 6px; color: #ff6464; cursor: pointer; font-size: 0.9em;">
+              🗑️ Minden adat törlése
+            </button>
+          </div>
+          
+          <div class="specialization-container" style="margin-top: 12px;">
+            <div class="specialization-label">
+              <span id="layoutLabel">🧩 Layout:</span>
+            </div>
+            <button class="reset-layout-btn" id="toggleLayoutBtn"></button>
+            <button class="reset-layout-btn" id="notePanelBtn"></button>
+            <button class="reset-layout-btn" id="resetLayoutBtn">
+              🔄 Alapértelmezett elrendezés visszaállítása
+            </button>
+          </div>
+          
+          <div class="specialization-container" style="margin-top: 12px;">
+            <div class="specialization-label">
+              <span id="versionLabel">ℹ️ Verzió:</span>
+            </div>
+            <p style="font-size: 0.85em; color: #8ba3c0;">
+              AI Game Assistant v1.0.0<br>
+              © 2026 - Gaming AI Helper
+            </p>
+          </div>
+        </div>
+        <div class="popup-resize-handle"></div>
+      </div>
+    </div>
+    
+    </div><!-- Close sections-container -->
+  </div><!-- Close overlay-container -->
+
+  <!-- Floating host for dropdown panels -->
+  <div id="floating-panels"></div>
+  
+  <!-- Custom Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal-content">
+      <div class="modal-title" id="modalTitle">⚠️ Megerősítés</div>
+      <div class="modal-message" id="modalMessage"></div>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-cancel" id="modalCancel">Mégse</button>
+        <button class="modal-btn modal-btn-confirm" id="modalConfirm">Törlés</button>
+      </div>
+    </div>
+  </div>
+
+  
+  
+  <script src="./src/renderer/overlay/ipc-helpers.js"></script>
+  <script src="./src/renderer/overlay/boot.js"></script>
+  <script src="./src/renderer/overlay/panel-order.js"></script>
+  <script src="./src/renderer/overlay/window-resize.js"></script>
+  <script>
+
+    // Global: main overlay can temporarily show docking targets while dragging a detached panel.
+    let dockPreviewActive = false;
+
+    
+    
+    // Specialization level csúszka
+    const specializationSlider = document.getElementById('specializationLevel');
+    const specValue = document.getElementById('specValue');
+    
+    on(specializationSlider, 'input', () => {
+      specValue.textContent = specializationSlider.value;
+      localStorage.setItem(STORAGE_KEYS.OVERLAY_SPECIALIZATION_LEVEL, specializationSlider.value);
+    });
+    
+    // Specialization level betöltése
+    const savedSpecLevel = localStorage.getItem(STORAGE_KEYS.OVERLAY_SPECIALIZATION_LEVEL) || '3';
+    specializationSlider.value = savedSpecLevel;
+    specValue.textContent = savedSpecLevel;
+    
+    // Hotkey-t global szinten blokkoljuk az overlay-ben
+    on(document, 'keydown', (e) => {
+      // Ctrl+Shift+K - blokkoljuk az overlay-ben
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'K') {
+        e.preventDefault();
+        e.stopPropagation();
+        // If the user is currently holding a panel header (pending detach gesture),
+        // cancel it before hiding the overlay. Otherwise the stale state can cause
+        // an unintended detach when the overlay is shown again.
+        try { window.__cancelAnyDetachGesture && window.__cancelAnyDetachGesture(); } catch (_) {}
+        cleanupOverlay();
+        fireAndForget(IPC_CHANNELS.CLOSE_OVERLAY);
+        return false;
+      }
+    }, true);  // Capture phase, hogy biztosan fogja el
+    
+    // Mikrofon funkció
+    const micBtn = document.getElementById('micBtn');
+    const status = document.getElementById('status');
+    const questionInput = document.getElementById('questionInput');
+    const askBtn = document.getElementById('askBtn');
+    let currentLanguage = 'en';
+    let currentSpeechRate = 100;
+    let selectedVoice = null;
+
+    const uiText = {
+      hu: {
+        title: '🎤 Hangos AI Segéd',
+        dragHandleLabel: '⇕ Ablak mozgatása',
+        infoBtnTitle: 'ℹ️ Infó',
+        infoTitle: 'ℹ️ Infó',
+        infoBody: '• Hotkey: Ctrl+Shift+K – overlay megnyit/zár\n' +
+          '• Mozgatás: húzd a felső Ablak mozgatása sávot\n' +
+          '• Panelek: Külön ablak → külön ablak; visszadokkolás: Dokkolás vagy húzd vissza a fő overlay tetejére\n' +
+          '• Mikrofon: Whisper (OpenAI) – többnyelvű; a hang az API-n keresztül kerül feldolgozásra\n' +
+          '• Screenshot: csatolj képet → Vision elemzés\n' +
+          '• Adatok: előzmények localStorage-ben; a törlés gombok eltávolítják',
+        mic: '🎤 Mikrofon',
+        stop: '⏹️ Leállítás',
+        ask: '💬 Kérdés küldése',
+        placeholder: 'Írj ide kérdést, ha a beszédfelismerés nem megy...',
+        askTtsLabel: '🔊 AI válasz felolvasása',
+        answer: '🤖 AI Válasz:',
+        speakNow: '🎤 Beszélj most...',
+        thinking: '🤖 AI gondolkodik...',
+        typeInstead: '❌ Beszédfelismerés nem elérhető. Írd be a kérdést lent.',
+        sttError: '❌ Beszédfelismerés hiba: ',
+        typeHint: ' — írd be a kérdést lent.',
+        typeQuestion: '⚠️ Írj be egy kérdést!',
+        specializationLabel: '🎯 Játék Specifikusság:',
+        specializationDetail: '1 = Rövid válaszok | 3 = Részletes | 5 = Maximális részletesség',
+        ttsLabel: '🔊 Hangos válaszok:',
+        overlaySizeLabel: '📏 Overlay méret:',
+        overlayWidthLabel: 'Szélesség:',
+        widthUnit: 'px',
+        dataLabel: '💾 Adatok:',
+        exportHistory: '📥 Előzmények exportálása',
+        clearAllData: '🗑️ Minden adat törlése',
+        versionLabel: 'ℹ️ Verzió:',
+        screenshot: '📸 Screenshot',
+        clearImage: '🗑️ Törlés',
+        screenshotReady: '✅ Screenshot csatolva - Tedd fel a kérdést!',
+        screenshotError: '❌ Screenshot hiba: ',
+        analyzingImage: '🔍 Kép elemzése...',
+        forbiddenContent: '⚠️ Csak játékokkal kapcsolatos kérdéseket tehetsz fel!',
+        history: '📜 Előzmények',
+        clearHistory: '🗑️ Előzmények törlése',
+        noHistory: 'Nincs mentés előzmény',
+        historyCleared: '✅ Előzmények törölve',
+        historyShowDetails: 'Részletek megnyitása',
+        historyHideDetails: 'Részletek elrejtése',
+        historyPopupQuestion: '❓ Kérdés',
+        historyPopupAnswer: '💬 Válasz',
+        tabAsk: '💬 Kérdezz',
+        tabHistory: '📜 Előzmények',
+        tabSettings: '⚙️ Beállítások',
+        confirmTitle: '⚠️ Megerősítés',
+        confirmClearHistory: 'Biztosan törölni szeretnéd az összes előzményt?',
+        confirmClearAll: 'Biztosan törölni szeretnéd az ÖSSZES adatot (előzmények, beállítások, fixált tabok)?',
+        btnCancel: 'Mégse',
+        btnDelete: 'Törlés',
+        btnReset: 'Visszaállít',
+        btnClose: 'Bezár',
+        resetLayout: '🔄 Alapértelmezett elrendezés visszaállítása',
+        layoutReset: '✅ Elrendezés visszaállítva!',
+        layoutLabel: '🧩 Layout mód:',
+        layoutMode: '🧩 Layout mód',
+        layoutHorizontal: 'Vízszintes',
+        layoutCompact: 'Kompakt (2+1)',
+        layoutStacked: 'Stackelt',
+        pinnedLimitReached: '⚠️ Maximum 3 fixált doboz lehet egyszerre.',
+        pinnedHistoryTitle: '📌 Fixált előzmény',
+        notePanelBtn: '📝 Jegyzet panel',
+        notePanelTitle: '📝 Jegyzet',
+        notePanelPlaceholder: 'Írj ide jegyzetet...',
+        responseReady: '✅ Válasz megérkezett',
+        genericErrorPrefix: '❌ Hiba: ',
+        apiErrorPrefix: '❌ API hiba: ',
+        processingAudio: '⏳ Feldolgozás...',
+        statusIdle: '',
+        transcriptPreview: '📝 "{text}"',
+        transcriptionErrorPrefix: '❌ Transzkripció hiba: ',
+        audioProcessingErrorPrefix: '❌ Audio feldolgozás hiba: ',
+        microphoneErrorPrefix: '❌ Mikrofon hiba: ',
+        screenshotInProgress: '📸 Screenshot készítése...',
+        historyExported: '✅ Előzmények exportálva!',
+        allDataCleared: '✅ Minden adat törölve!'
+      },
+      en: {
+        title: '🎤 Voice AI Assistant',
+        dragHandleLabel: '⇕ Move overlay',
+        infoBtnTitle: 'ℹ️ Info',
+        infoTitle: 'ℹ️ Info',
+        infoBody: '• Hotkey: Ctrl+Shift+K – open/close the overlay\n' +
+          '• Move: drag the top Move overlay pill\n' +
+          '• Panels: use Detach to open a separate window; re-dock via Dock or drag back to the top of the main overlay\n' +
+          '• Microphone: Whisper (OpenAI) – multi-language; audio is processed via the API\n' +
+          '• Screenshot: attach an image → Vision analysis\n' +
+          '• Data: history is stored in localStorage; clear buttons remove it',
+        mic: '🎤 Microphone',
+        stop: '⏹️ Stop',
+        ask: '💬 Send question',
+        placeholder: 'Type a question here if speech recognition fails...',
+        askTtsLabel: '🔊 Read AI answer aloud',
+        answer: '🤖 AI Answer:',
+        speakNow: '🎤 Speak now...',
+        thinking: '🤖 AI is thinking...',
+        typeInstead: '❌ Speech recognition unavailable. Type your question below.',
+        sttError: '❌ Speech recognition error: ',
+        typeHint: ' — type your question below.',
+        typeQuestion: '⚠️ Please enter a question!',
+        specializationLabel: '🎯 Game Specificity:',
+        specializationDetail: '1 = Short answers | 3 = Detailed | 5 = Maximum detail',
+        ttsLabel: '🔊 Spoken answers:',
+        overlaySizeLabel: '📏 Overlay size:',
+        overlayWidthLabel: 'Width:',
+        widthUnit: 'px',
+        dataLabel: '💾 Data:',
+        exportHistory: '📥 Export history',
+        clearAllData: '🗑️ Clear all data',
+        versionLabel: 'ℹ️ Version:',
+        screenshot: '📸 Screenshot',
+        clearImage: '🗑️ Clear',
+        screenshotReady: '✅ Screenshot attached - Ask your question!',
+        screenshotError: '❌ Screenshot error: ',
+        analyzingImage: '🔍 Analyzing image...',
+        forbiddenContent: '⚠️ Only game-related questions allowed!',
+        history: '📜 History',
+        clearHistory: '🗑️ Clear History',
+        noHistory: 'No saved history',
+        historyCleared: '✅ History cleared',
+        historyShowDetails: 'Show details',
+        historyHideDetails: 'Hide details',
+        historyPopupQuestion: '❓ Question',
+        historyPopupAnswer: '💬 Answer',
+        tabAsk: '💬 Ask',
+        tabHistory: '📜 History',
+        tabSettings: '⚙️ Settings',
+        confirmTitle: '⚠️ Confirmation',
+        confirmClearHistory: 'Are you sure you want to delete all conversation history?',
+        confirmClearAll: 'Are you sure you want to delete ALL data (history, settings, pinned tabs)?',
+        btnCancel: 'Cancel',
+        btnDelete: 'Delete',
+        btnReset: 'Reset',
+        btnClose: 'Close',
+        resetLayout: '🔄 Reset to default layout',
+        layoutReset: '✅ Layout reset!',
+        layoutLabel: '🧩 Layout mode:',
+        layoutMode: '🧩 Layout mode',
+        layoutHorizontal: 'Horizontal',
+        layoutCompact: 'Compact (2+1)',
+        layoutStacked: 'Stacked',
+        pinnedLimitReached: '⚠️ Max 3 pinned boxes at once.',
+        pinnedHistoryTitle: '📌 Pinned history',
+        notePanelBtn: '📝 Note panel',
+        notePanelTitle: '📝 Note',
+        notePanelPlaceholder: 'Write a note...',
+        responseReady: '✅ Answer received',
+        genericErrorPrefix: '❌ Error: ',
+        apiErrorPrefix: '❌ API error: ',
+        processingAudio: '⏳ Processing...',
+        statusIdle: '',
+        transcriptPreview: '📝 "{text}"',
+        transcriptionErrorPrefix: '❌ Transcription error: ',
+        audioProcessingErrorPrefix: '❌ Audio processing error: ',
+        microphoneErrorPrefix: '❌ Microphone error: ',
+        screenshotInProgress: '📸 Capturing screenshot...',
+        historyExported: '✅ History exported!',
+        allDataCleared: '✅ All data cleared!'
+      },
+      de: {
+        title: '🎤 Sprach-KI Assistent',
+        dragHandleLabel: '⇕ Overlay verschieben',
+        infoBtnTitle: 'ℹ️ Info',
+        infoTitle: 'ℹ️ Info',
+        infoBody: '• Hotkey: Ctrl+Shift+K – Overlay öffnen/schließen\n' +
+          '• Bewegen: am oberen Move overlay-Pill ziehen\n' +
+          '• Panels: Detach öffnet ein separates Fenster; zurück via Dock oder oben ins Haupt-Overlay ziehen\n' +
+          '• Mikrofon: Whisper (OpenAI) – mehrsprachig; Audio wird über die API verarbeitet\n' +
+          '• Screenshot: Bild anhängen → Vision-Analyse\n' +
+          '• Daten: Verlauf in localStorage; Lösch-Buttons entfernen ihn',
+        mic: '🎤 Mikrofon',
+        stop: '⏹️ Stopp',
+        ask: '💬 Frage senden',
+        placeholder: 'Gib hier eine Frage ein, wenn die Spracherkennung nicht geht...',
+        askTtsLabel: '🔊 KI-Antwort vorlesen',
+        answer: '🤖 KI-Antwort:',
+        speakNow: '🎤 Sprich jetzt...',
+        thinking: '🤖 KI denkt nach...',
+        typeInstead: '❌ Spracherkennung nicht verfügbar. Bitte unten tippen.',
+        sttError: '❌ Spracherkennungsfehler: ',
+        typeHint: ' — bitte unten tippen.',
+        typeQuestion: '⚠️ Bitte eine Frage eingeben!',
+        specializationLabel: '🎯 Spielspezifität:',
+        specializationDetail: '1 = Kurze Antworten | 3 = Detailliert | 5 = Maximale Details',
+        ttsLabel: '🔊 Gesprochene Antworten:',
+        overlaySizeLabel: '📏 Overlay-Größe:',
+        overlayWidthLabel: 'Breite:',
+        widthUnit: 'px',
+        dataLabel: '💾 Daten:',
+        exportHistory: '📥 Verlauf exportieren',
+        clearAllData: '🗑️ Alle Daten löschen',
+        versionLabel: 'ℹ️ Version:',
+        screenshot: '📸 Bildschirmfoto',
+        clearImage: '🗑️ Löschen',
+        screenshotReady: '✅ Screenshot angehängt - Stelle deine Frage!',
+        screenshotError: '❌ Screenshot-Fehler: ',
+        analyzingImage: '🔍 Bildanalyse...',
+        forbiddenContent: '⚠️ Nur spielbezogene Fragen erlaubt!',
+        history: '📜 Verlauf',
+        clearHistory: '🗑️ Verlauf löschen',
+        noHistory: 'Kein gespeicherter Verlauf',
+        historyCleared: '✅ Verlauf gelöscht',
+        historyShowDetails: 'Details anzeigen',
+        historyHideDetails: 'Details ausblenden',
+        historyPopupQuestion: '❓ Frage',
+        historyPopupAnswer: '💬 Antwort',
+        tabAsk: '💬 Fragen',
+        tabHistory: '📜 Verlauf',
+        tabSettings: '⚙️ Einstellungen',
+        confirmTitle: '⚠️ Bestätigung',
+        confirmClearHistory: 'Sind Sie sicher, dass Sie den gesamten Verlauf löschen möchten?',
+        confirmClearAll: 'Sind Sie sicher, dass Sie ALLE Daten löschen möchten (Verlauf, Einstellungen, fixierte Tabs)?',
+        btnCancel: 'Abbrechen',
+        btnDelete: 'Löschen',
+        btnReset: 'Zurücksetzen',
+        btnClose: 'Schließen',
+        resetLayout: '🔄 Auf Standardlayout zurücksetzen',
+        layoutReset: '✅ Layout zurückgesetzt!',
+        layoutLabel: '🧩 Layout-Modus:',
+        layoutMode: '🧩 Layout-Modus',
+        layoutHorizontal: 'Horizontal',
+        layoutCompact: 'Kompakt (2+1)',
+        layoutStacked: 'Gestapelt',
+        pinnedLimitReached: '⚠️ Maximal 3 angeheftete Boxen gleichzeitig.',
+        pinnedHistoryTitle: '📌 Angehefteter Verlauf',
+        notePanelBtn: '📝 Notizfeld',
+        notePanelTitle: '📝 Notiz',
+        notePanelPlaceholder: 'Notiz schreiben...',
+        responseReady: '✅ Antwort eingetroffen',
+        genericErrorPrefix: '❌ Fehler: ',
+        apiErrorPrefix: '❌ API-Fehler: ',
+        processingAudio: '⏳ Verarbeitung...',
+        statusIdle: '',
+        transcriptPreview: '📝 "{text}"',
+        transcriptionErrorPrefix: '❌ Transkriptionsfehler: ',
+        audioProcessingErrorPrefix: '❌ Audioverarbeitungsfehler: ',
+        microphoneErrorPrefix: '❌ Mikrofonfehler: ',
+        screenshotInProgress: '📸 Screenshot wird erstellt...',
+        historyExported: '✅ Verlauf exportiert!',
+        allDataCleared: '✅ Alle Daten gelöscht!'
+      },
+      ru: {
+        title: '🎤 Голосовой ИИ помощник',
+        dragHandleLabel: '⇕ Переместить оверлей',
+        infoBtnTitle: 'ℹ️ Инфо',
+        infoTitle: 'ℹ️ Инфо',
+        infoBody: '• Горячая клавиша: Ctrl+Shift+K — открыть/закрыть оверлей\n' +
+          '• Перемещение: перетащите верхнюю плашку Move overlay\n' +
+          '• Панели: Detach — отдельное окно; обратно через Dock или перетащите к верхней части основного оверлея\n' +
+          '• Микрофон: Whisper (OpenAI) — многоязычно; аудио обрабатывается через API\n' +
+          '• Скриншот: прикрепите изображение → Vision-анализ\n' +
+          '• Данные: история хранится в localStorage; кнопки очистки удаляют её',
+        mic: '🎤 Микрофон',
+        stop: '⏹️ Стоп',
+        ask: '💬 Отправить вопрос',
+        placeholder: 'Введите вопрос, если распознавание речи не работает...',
+        askTtsLabel: '🔊 Озвучить ответ ИИ',
+        answer: '🤖 Ответ ИИ:',
+        speakNow: '🎤 Говорите сейчас...',
+        thinking: '🤖 ИИ думает...',
+        typeInstead: '❌ Распознавание речи недоступно. Введите вопрос ниже.',
+        sttError: '❌ Ошибка распознавания речи: ',
+        typeHint: ' — введите вопрос ниже.',
+        typeQuestion: '⚠️ Введите вопрос!',
+        specializationLabel: '🎯 Специфичность игры:',
+        specializationDetail: '1 = Короткие ответы | 3 = Подробно | 5 = Максимальная детализация',
+        ttsLabel: '🔊 Озвученные ответы:',
+        overlaySizeLabel: '📏 Размер оверлея:',
+        overlayWidthLabel: 'Ширина:',
+        widthUnit: 'px',
+        dataLabel: '💾 Данные:',
+        exportHistory: '📥 Экспорт истории',
+        clearAllData: '🗑️ Удалить все данные',
+        versionLabel: 'ℹ️ Версия:',
+        screenshot: '📸 Скриншот',
+        clearImage: '🗑️ Удалить',
+        screenshotReady: '✅ Скриншот прикреплён - Задайте вопрос!',
+        screenshotError: '❌ Ошибка скриншота: ',
+        analyzingImage: '🔍 Анализ изображения...',
+        forbiddenContent: '⚠️ Разрешены только вопросы об играх!',
+        history: '📜 История',
+        clearHistory: '🗑️ Очистить историю',
+        noHistory: 'Нет сохранённой истории',
+        historyCleared: '✅ История очищена',
+        historyShowDetails: 'Показать детали',
+        historyHideDetails: 'Скрыть детали',
+        historyPopupQuestion: '❓ Вопрос',
+        historyPopupAnswer: '💬 Ответ',
+        tabAsk: '💬 Спросить',
+        tabHistory: '📜 История',
+        tabSettings: '⚙️ Настройки',
+        confirmTitle: '⚠️ Подтверждение',
+        confirmClearHistory: 'Вы уверены, что хотите удалить всю историю разговоров?',
+        confirmClearAll: 'Вы уверены, что хотите удалить ВСЕ данные (история, настройки, закреплённые вкладки)?',
+        btnCancel: 'Отмена',
+        btnDelete: 'Удалить',
+        btnReset: 'Сбросить',
+        btnClose: 'Закрыть',
+        resetLayout: '🔄 Сбросить на стандартную раскладку',
+        layoutReset: '✅ Раскладка сброшена!',
+        layoutLabel: '🧩 Режим раскладки:',
+        layoutMode: '🧩 Режим раскладки',
+        layoutHorizontal: 'Горизонтально',
+        layoutCompact: 'Компактно (2+1)',
+        layoutStacked: 'Стеком',
+        pinnedLimitReached: '⚠️ Максимум 3 закреплённых блока одновременно.',
+        pinnedHistoryTitle: '📌 Закреплённая история',
+        notePanelBtn: '📝 Заметка',
+        notePanelTitle: '📝 Заметка',
+        notePanelPlaceholder: 'Напишите заметку...',
+        responseReady: '✅ Ответ получен',
+        genericErrorPrefix: '❌ Ошибка: ',
+        apiErrorPrefix: '❌ Ошибка API: ',
+        processingAudio: '⏳ Обработка...',
+        statusIdle: '',
+        transcriptPreview: '📝 «{text}»',
+        transcriptionErrorPrefix: '❌ Ошибка транскрипции: ',
+        audioProcessingErrorPrefix: '❌ Ошибка обработки аудио: ',
+        microphoneErrorPrefix: '❌ Ошибка микрофона: ',
+        screenshotInProgress: '📸 Создаю скриншот...',
+        historyExported: '✅ История экспортирована!',
+        allDataCleared: '✅ Все данные удалены!'
+      },
+      fr: {
+        title: '🎤 Assistant IA vocal',
+        dragHandleLabel: '⇕ Déplacer l\'overlay',
+        infoBtnTitle: 'ℹ️ Info',
+        infoTitle: 'ℹ️ Info',
+        infoBody: '• Raccourci : Ctrl+Shift+K — ouvrir/fermer l\'overlay\n' +
+          '• Déplacer : faites glisser la pastille Move overlay\n' +
+          '• Panneaux : Detach ouvre une fenêtre séparée ; retour via Dock ou en glissant en haut de l\'overlay principal\n' +
+          '• Micro : Whisper (OpenAI) — multi-langues ; l\'audio est traité via l\'API\n' +
+          '• Screenshot : joindre une image → analyse Vision\n' +
+          '• Données : l\'historique est dans localStorage ; les boutons de suppression l\'effacent',
+        mic: '🎤 Micro',
+        stop: '⏹️ Arrêter',
+        ask: '💬 Envoyer la question',
+        placeholder: 'Saisissez une question si la reconnaissance vocale ne marche pas...',
+        askTtsLabel: '🔊 Lire la réponse IA',
+        answer: '🤖 Réponse IA :',
+        speakNow: '🎤 Parlez maintenant...',
+        thinking: '🤖 L’IA réfléchit...',
+        typeInstead: '❌ Reconnaissance vocale indisponible. Tapez la question ci-dessous.',
+        sttError: '❌ Erreur de reconnaissance vocale : ',
+        typeHint: ' — tapez la question ci-dessous.',
+        typeQuestion: '⚠️ Veuillez saisir une question !',
+        specializationLabel: '🎯 Spécificité du jeu:',
+        specializationDetail: '1 = Réponses courtes | 3 = Détaillé | 5 = Détail maximal',
+        ttsLabel: '🔊 Réponses parlées :',
+        overlaySizeLabel: '📏 Taille de l\'overlay :',
+        overlayWidthLabel: 'Largeur :',
+        widthUnit: 'px',
+        dataLabel: '💾 Données :',
+        exportHistory: '📥 Exporter l\'historique',
+        clearAllData: '🗑️ Supprimer toutes les données',
+        versionLabel: 'ℹ️ Version :',
+        screenshot: '📸 Capture d\'écran',
+        clearImage: '🗑️ Effacer',
+        screenshotReady: '✅ Capture jointe - Posez votre question!',
+        screenshotError: '❌ Erreur de capture: ',
+        analyzingImage: '🔍 Analyse d\'image...',
+        forbiddenContent: '⚠️ Seules les questions sur les jeux sont autorisées!',
+        history: '📜 Historique',
+        clearHistory: '🗑️ Effacer l\'historique',
+        noHistory: 'Aucun historique enregistré',
+        historyCleared: '✅ Historique effacé',
+        historyShowDetails: 'Afficher les détails',
+        historyHideDetails: 'Masquer les détails',
+        historyPopupQuestion: '❓ Question',
+        historyPopupAnswer: '💬 Réponse',
+        tabAsk: '💬 Demander',
+        tabHistory: '📜 Historique',
+        tabSettings: '⚙️ Paramètres',
+        confirmTitle: '⚠️ Confirmation',
+        confirmClearHistory: 'Êtes-vous sûr de vouloir supprimer tout l\'historique des conversations ?',
+        confirmClearAll: 'Êtes-vous sûr de vouloir supprimer TOUTES les données (historique, paramètres, onglets épinglés) ?',
+        btnCancel: 'Annuler',
+        btnDelete: 'Supprimer',
+        btnReset: 'Réinitialiser',
+        btnClose: 'Fermer',
+        resetLayout: '🔄 Réinitialiser la disposition par défaut',
+        layoutReset: '✅ Disposition réinitialisée !',
+        layoutLabel: '🧩 Mode de disposition :',
+        layoutMode: '🧩 Mode de disposition',
+        layoutHorizontal: 'Horizontal',
+        layoutCompact: 'Compact (2+1)',
+        layoutStacked: 'Empilé',
+        pinnedLimitReached: '⚠️ Maximum 3 boîtes épinglées à la fois.',
+        pinnedHistoryTitle: '📌 Historique épinglé',
+        notePanelBtn: '📝 Notes',
+        notePanelTitle: '📝 Note',
+        notePanelPlaceholder: 'Écrivez une note...',
+        responseReady: '✅ Réponse reçue',
+        genericErrorPrefix: '❌ Erreur: ',
+        apiErrorPrefix: '❌ Erreur API: ',
+        processingAudio: '⏳ Traitement...',
+        statusIdle: '',
+        transcriptPreview: '📝 "{text}"',
+        transcriptionErrorPrefix: '❌ Erreur de transcription: ',
+        audioProcessingErrorPrefix: '❌ Erreur de traitement audio: ',
+        microphoneErrorPrefix: '❌ Erreur microphone: ',
+        screenshotInProgress: '📸 Capture en cours...',
+        historyExported: '✅ Historique exporté !',
+        allDataCleared: '✅ Toutes les données supprimées !'
+      },
+      zh: {
+        title: '🎤 语音AI助手',
+        dragHandleLabel: '⇕ 移动覆盖层',
+        infoBtnTitle: 'ℹ️ 信息',
+        infoTitle: 'ℹ️ 信息',
+        infoBody: '• 热键：Ctrl+Shift+K — 打开/关闭覆盖层\n' +
+          '• 移动：拖动顶部 Move overlay\n' +
+          '• 面板：使用 Detach 分离为独立窗口；通过 Dock 或拖回主覆盖层顶部重新停靠\n' +
+          '• 麦克风：Whisper（OpenAI）— 多语言；音频通过 API 处理\n' +
+          '• 截图：附加图片 → Vision 分析\n' +
+          '• 数据：历史记录存储在 localStorage；清除按钮会删除',
+        mic: '🎤 麦克风',
+        stop: '⏹️ 停止',
+        ask: '💬 发送问题',
+        placeholder: '若语音识别不可用，请在此输入问题...',
+        askTtsLabel: '🔊 朗读AI回答',
+        answer: '🤖 AI回答：',
+        speakNow: '🎤 请开始说话...',
+        thinking: '🤖 AI思考中...',
+        typeInstead: '❌ 语音识别不可用，请在下方输入问题。',
+        sttError: '❌ 语音识别错误：',
+        typeHint: ' — 请在下方输入问题。',
+        typeQuestion: '⚠️ 请输入问题！',
+        specializationLabel: '🎯 游戏特异性:',
+        specializationDetail: '1 = 简短回答 | 3 = 详细 | 5 = 最详尽',
+        ttsLabel: '🔊 语音回答：',
+        overlaySizeLabel: '📏 覆盖层大小：',
+        overlayWidthLabel: '宽度：',
+        widthUnit: 'px',
+        dataLabel: '💾 数据：',
+        exportHistory: '📥 导出历史记录',
+        clearAllData: '🗑️ 清除所有数据',
+        versionLabel: 'ℹ️ 版本：',
+        screenshot: '📸 截图',
+        clearImage: '🗑️ 清除',
+        screenshotReady: '✅ 截图已附加 - 提出问题！',
+        screenshotError: '❌ 截图错误：',
+        analyzingImage: '🔍 图像分析中...',
+        forbiddenContent: '⚠️ 仅允许与游戏相关的问题！',
+        history: '📜 历史记录',
+        clearHistory: '🗑️ 清除历史',
+        noHistory: '无保存历史',
+        historyCleared: '✅ 历史已清除',
+        historyShowDetails: '展开详情',
+        historyHideDetails: '收起详情',
+        historyPopupQuestion: '❓ 问题',
+        historyPopupAnswer: '💬 回答',
+        tabAsk: '💬 提问',
+        tabHistory: '📜 历史',
+        tabSettings: '⚙️ 设置',
+        confirmTitle: '⚠️ 确认',
+        confirmClearHistory: '您确定要删除所有对话历史吗？',
+        confirmClearAll: '您确定要删除所有数据（历史记录、设置、固定标签）吗？',
+        btnCancel: '取消',
+        btnDelete: '删除',
+        btnReset: '重置',
+        btnClose: '关闭',
+        resetLayout: '🔄 重置为默认布局',
+        layoutReset: '✅ 布局已重置！',
+        layoutLabel: '🧩 布局模式：',
+        layoutMode: '🧩 布局模式',
+        layoutHorizontal: '横向',
+        layoutCompact: '紧凑 (2+1)',
+        layoutStacked: '堆叠',
+        pinnedLimitReached: '⚠️ 最多同时固定 3 个盒子。',
+        pinnedHistoryTitle: '📌 固定历史',
+        notePanelBtn: '📝 便笺',
+        notePanelTitle: '📝 便笺',
+        notePanelPlaceholder: '写下笔记...',
+        responseReady: '✅ 已收到回答',
+        genericErrorPrefix: '❌ 错误：',
+        apiErrorPrefix: '❌ API 错误：',
+        processingAudio: '⏳ 处理中...',
+        statusIdle: '',
+        transcriptPreview: '📝 “{text}”',
+        transcriptionErrorPrefix: '❌ 转录错误：',
+        audioProcessingErrorPrefix: '❌ 音频处理错误：',
+        microphoneErrorPrefix: '❌ 麦克风错误：',
+        screenshotInProgress: '📸 正在截图...',
+        historyExported: '✅ 历史已导出！',
+        allDataCleared: '✅ 所有数据已清除！'
+      }
+    };
+
+    function t() {
+      return uiText[currentLanguage] || uiText.en;
+    }
+
+    let recording = false;
+    let recognition = null; // Web Speech API (deprecated, now using Whisper)
+    let mediaRecorder = null; // MediaRecorder for Whisper audio capture
+    let currentScreenshot = null; // Base64 image data
+    let conversationHistory = []; // History array
+    let expandedHistoryKey = null; // Currently expanded history entry timestamp
+    let pinnedTabs = new Set(); // Set of pinned tab IDs
+
+    // Pinned history boxes (drag out from history list)
+    // NOTE: these are rendered as separate always-on-top windows (not limited by overlay window size).
+    const PINNED_HISTORY_KEY = STORAGE_KEYS.PINNED_HISTORY;
+    const PINNED_HISTORY_MAX = 3;
+    let pinnedHistoryBoxes = []; // [{ ts, x, y, width, height }], screen coords
+
+    // Editable Note Panel (separate window)
+    const NOTE_PANEL_BOUNDS_KEY = STORAGE_KEYS.NOTE_PANEL_BOUNDS;
+    let notePanelBounds = null; // { x, y, width, height } in screen coords
+
+    function loadNotePanelBounds() {
+      const saved = localStorage.getItem(NOTE_PANEL_BOUNDS_KEY);
+      if (!saved) return;
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          notePanelBounds = {
+            x: typeof parsed.x === 'number' ? parsed.x : Number(parsed.x),
+            y: typeof parsed.y === 'number' ? parsed.y : Number(parsed.y),
+            width: typeof parsed.width === 'number' ? parsed.width : Number(parsed.width),
+            height: typeof parsed.height === 'number' ? parsed.height : Number(parsed.height)
+          };
+          if (!Number.isFinite(notePanelBounds.x)) notePanelBounds.x = 120;
+          if (!Number.isFinite(notePanelBounds.y)) notePanelBounds.y = 120;
+          if (!Number.isFinite(notePanelBounds.width)) notePanelBounds.width = 420;
+          if (!Number.isFinite(notePanelBounds.height)) notePanelBounds.height = 280;
+        }
+      } catch (_) {
+        notePanelBounds = null;
+      }
+    }
+
+    function saveNotePanelBounds() {
+      if (!notePanelBounds) return;
+      try {
+        localStorage.setItem(NOTE_PANEL_BOUNDS_KEY, JSON.stringify(notePanelBounds));
+      } catch (_) {}
+    }
+
+    async function openNotePanel() {
+      const labels = {
+        title: t().notePanelTitle || '📝 Note',
+        placeholder: t().notePanelPlaceholder || 'Write a note...'
+      };
+      await invokeMain(IPC_CHANNELS.NOTE_PANEL_OPEN, {
+        labels
+      });
+    }
+
+    ipcRenderer.on(IPC_CHANNELS.NOTE_PANEL_BOUNDS, (_event, payload) => {
+      if (!payload || !payload.bounds) return;
+      const b = payload.bounds;
+      if (typeof b.x !== 'number' || typeof b.y !== 'number' || typeof b.width !== 'number' || typeof b.height !== 'number') return;
+      notePanelBounds = { x: b.x, y: b.y, width: b.width, height: b.height };
+      saveNotePanelBounds();
+    });
+
+    // Ask tab TTS toggle (persistent)
+    const askEnableTTS = document.getElementById('askEnableTTS');
+    const savedAskTTS = localStorage.getItem(STORAGE_KEYS.ASK_ENABLE_TTS);
+    if (askEnableTTS) {
+      if (savedAskTTS !== null) {
+        askEnableTTS.checked = savedAskTTS === 'true';
+      }
+      on(askEnableTTS, 'change', () => {
+        localStorage.setItem(STORAGE_KEYS.ASK_ENABLE_TTS, askEnableTTS.checked ? 'true' : 'false');
+      });
+    }
+    
+    // Vision controls
+    const screenshotBtn = document.getElementById('screenshotBtn');
+    const clearImageBtn = document.getElementById('clearImageBtn');
+    const screenshotPreview = document.getElementById('screenshotPreview');
+    const screenshotInfo = document.getElementById('screenshotInfo');
+    
+    // History controls (removed - now in tab)
+    const historyList = document.getElementById('historyList');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    
+    // Tab controls (legacy - kept for pinning functionality)
+    // The tab buttons and contents are no longer in the DOM, so we skip initialization
+    const tabBtns = []; // document.querySelectorAll('.tab-btn') - no longer used
+    const tabContents = []; // document.querySelectorAll('.tab-content') - no longer used
+    const pinnedSections = document.getElementById('pinnedSections');
+
+    function clampPinnedBoxPosition(x, y, boxEl = null) {
+      // Legacy clamp for DOM-based pinned boxes; kept for the drag-ghost only.
+      // Do NOT use it to constrain pinned windows.
+      const minVisible = 56;
+      const maxW = window.innerWidth;
+      const maxH = window.innerHeight;
+      const rect = boxEl ? boxEl.getBoundingClientRect() : { width: 360, height: 220 };
+      const safeW = Math.max(1, Number(rect.width) || 360);
+      const safeH = Math.max(1, Number(rect.height) || 220);
+      const minX = -safeW + minVisible;
+      const maxX = maxW - minVisible;
+      const minY = -safeH + minVisible;
+      const maxY = maxH - minVisible;
+      const clampedX = Math.min(Math.max(Math.round(x), minX), maxX);
+      const clampedY = Math.min(Math.max(Math.round(y), minY), maxY);
+      return { x: clampedX, y: clampedY };
+    }
+
+    function loadPinnedHistoryBoxes() {
+      const saved = localStorage.getItem(PINNED_HISTORY_KEY);
+      if (!saved) return;
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          pinnedHistoryBoxes = parsed
+            .filter((it) => it && typeof it.ts === 'number')
+            .slice(0, PINNED_HISTORY_MAX)
+            .map((it) => ({
+              ts: it.ts,
+              x: Number(it.x) || 120,
+              y: Number(it.y) || 120,
+              width: Number(it.width) || 420,
+              height: Number(it.height) || 300
+            }));
+        }
+      } catch (_) {
+        pinnedHistoryBoxes = [];
+      }
+    }
+
+    function savePinnedHistoryBoxes() {
+      localStorage.setItem(PINNED_HISTORY_KEY, JSON.stringify(pinnedHistoryBoxes));
+    }
+
+    function removePinnedHistoryBox(ts) {
+      pinnedHistoryBoxes = pinnedHistoryBoxes.filter((b) => b.ts !== ts);
+      savePinnedHistoryBoxes();
+      fireAndForget(IPC_CHANNELS.PINNED_HISTORY_CLOSE, ts);
+    }
+
+    function getHistoryEntryByTimestamp(ts) {
+      return conversationHistory.find((e) => e && e.timestamp === ts) || null;
+    }
+
+    function getPinnedHistoryLabels() {
+      return {
+        title: t().pinnedHistoryTitle || '📌 Pinned history',
+        question: t().historyPopupQuestion || 'Question',
+        answer: t().historyPopupAnswer || 'Answer'
+      };
+    }
+
+    function syncPinnedHistoryWindows() {
+      const labels = getPinnedHistoryLabels();
+      pinnedHistoryBoxes.forEach((box) => {
+        const entry = getHistoryEntryByTimestamp(box.ts);
+        if (!entry) return;
+        const date = new Date(entry.timestamp);
+        const timeStr = date.toLocaleString(currentLanguage === 'hu' ? 'hu-HU' : 'en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        fireAndForget(IPC_CHANNELS.PINNED_HISTORY_OPEN, {
+          ts: box.ts,
+          question: entry.question,
+          answer: entry.answer || '',
+          meta: `🕒 ${timeStr}`,
+          labels,
+          bounds: {
+            x: Math.round(box.x),
+            y: Math.round(box.y),
+            width: Math.round(box.width || 420),
+            height: Math.round(box.height || 300)
+          }
+        });
+      });
+    }
+
+    function pinHistoryEntryAtScreen(ts, screenX, screenY) {
+      if (pinnedHistoryBoxes.some((b) => b.ts === ts)) {
+        return; // already pinned
+      }
+      if (pinnedHistoryBoxes.length >= PINNED_HISTORY_MAX) {
+        if (status) status.textContent = t().pinnedLimitReached || '⚠️ Max 3 pinned boxes at once.';
+        return;
+      }
+      pinnedHistoryBoxes.push({
+        ts,
+        x: Math.round(Number(screenX) || 0),
+        y: Math.round(Number(screenY) || 0),
+        width: 420,
+        height: 300
+      });
+      savePinnedHistoryBoxes();
+      syncPinnedHistoryWindows();
+    }
+
+    function pinHistoryEntryAt(ts, x, y) {
+      // x/y are client coords inside overlay; convert to screen coords.
+      const screenX = Math.round(window.screenX + Number(x || 0));
+      const screenY = Math.round(window.screenY + Number(y || 0));
+      pinHistoryEntryAtScreen(ts, screenX, screenY);
+    }
+
+    ipcRenderer.on(IPC_CHANNELS.PINNED_HISTORY_BOUNDS, (_event, payload) => {
+      if (!payload || typeof payload.ts !== 'number' || !payload.bounds) return;
+      const boxRef = pinnedHistoryBoxes.find((b) => b.ts === payload.ts);
+      if (!boxRef) return;
+      const b = payload.bounds;
+      if (typeof b.x === 'number') boxRef.x = b.x;
+      if (typeof b.y === 'number') boxRef.y = b.y;
+      if (typeof b.width === 'number') boxRef.width = b.width;
+      if (typeof b.height === 'number') boxRef.height = b.height;
+      savePinnedHistoryBoxes();
+    });
+
+    ipcRenderer.on(IPC_CHANNELS.PINNED_HISTORY_UNPINNED, (_event, payload) => {
+      const ts = payload && typeof payload.ts === 'number' ? payload.ts : null;
+      if (!ts) return;
+      pinnedHistoryBoxes = pinnedHistoryBoxes.filter((b) => b.ts !== ts);
+      savePinnedHistoryBoxes();
+    });
+
+    ipcRenderer.on(IPC_CHANNELS.REQUEST_HISTORY_DROP_RECTS, (_event, requestId) => {
+      const rects = [];
+      const offX = window.screenX;
+      const offY = window.screenY;
+
+      const historyHeaderBtn = document.getElementById('historyHeaderBtn');
+      if (historyHeaderBtn) {
+        const r = historyHeaderBtn.getBoundingClientRect();
+        rects.push({ left: offX + r.left, top: offY + r.top, right: offX + r.right, bottom: offY + r.bottom });
+      }
+      const historyPopup = document.querySelector('.section-content.history-section.open');
+      if (historyPopup) {
+        const r = historyPopup.getBoundingClientRect();
+        rects.push({ left: offX + r.left, top: offY + r.top, right: offX + r.right, bottom: offY + r.bottom });
+      }
+      ipcRenderer.send(IPC_CHANNELS.RESPONSE_HISTORY_DROP_RECTS, requestId, rects);
+    });
+
+    function pointInRect(clientX, clientY, rect) {
+      if (!rect) return false;
+      return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+    }
+
+    function isPointInHistoryDropZone(clientX, clientY) {
+      const historyHeaderBtn = document.getElementById('historyHeaderBtn');
+      if (historyHeaderBtn && pointInRect(clientX, clientY, historyHeaderBtn.getBoundingClientRect())) {
+        return true;
+      }
+      const historyPopup = document.querySelector('.section-content.history-section.open');
+      if (historyPopup && pointInRect(clientX, clientY, historyPopup.getBoundingClientRect())) {
+        return true;
+      }
+      return false;
+    }
+    
+    // Load pinned tabs from localStorage
+    function loadPinnedTabs() {
+      const saved = localStorage.getItem(STORAGE_KEYS.PINNED_TABS);
+      if (saved) {
+        try {
+          pinnedTabs = new Set(JSON.parse(saved));
+          updatePinnedUI();
+        } catch (e) {
+          pinnedTabs = new Set();
+        }
+      }
+    }
+
+    // Do NOT persist pinned history across app launches.
+    // Always start clean (unpinned) and close any pinned windows left open during reload.
+    // IMPORTANT: only the MAIN overlay window should do this.
+    // Detached panel windows also load overlay.html, and must NOT clear global pinned state.
+    if (!__isDetachedPanelWindow) {
+      pinnedHistoryBoxes = [];
+      try { localStorage.removeItem(PINNED_HISTORY_KEY); } catch (_) {}
+      if (typeof fireAndForget === 'function') {
+        fireAndForget(IPC_CHANNELS.PINNED_HISTORY_CLOSE_ALL);
+      }
+    }
+    
+    // Save pinned tabs to localStorage
+    function savePinnedTabs() {
+      localStorage.setItem(STORAGE_KEYS.PINNED_TABS, JSON.stringify([...pinnedTabs]));
+    }
+    
+    // Toggle pin on tab
+    function togglePin(tabId) {
+      if (pinnedTabs.has(tabId)) {
+        pinnedTabs.delete(tabId);
+      } else {
+        pinnedTabs.add(tabId);
+      }
+      savePinnedTabs();
+      updatePinnedUI();
+      renderPinnedContent();
+    }
+    
+    // Update pin UI (icons)
+    function updatePinnedUI() {
+      tabBtns.forEach(btn => {
+        const tabId = btn.getAttribute('data-tab');
+        if (pinnedTabs.has(tabId)) {
+          btn.classList.add('pinned');
+        } else {
+          btn.classList.remove('pinned');
+        }
+      });
+    }
+    
+    // Render pinned content
+    function renderPinnedContent() {
+      pinnedSections.innerHTML = '';
+      
+      pinnedTabs.forEach(tabId => {
+        const tabContent = document.getElementById(tabId);
+        if (!tabContent) return;
+        
+        const clone = tabContent.cloneNode(true);
+        clone.id = `pinned-${tabId}`;
+        clone.classList.remove('tab-content', 'active');
+        clone.classList.add('pinned-section');
+        
+        // Add title
+        const title = document.createElement('div');
+        title.className = 'section-title';
+        const tabBtn = document.querySelector(`[data-tab="${tabId}"]`);
+        title.textContent = tabBtn ? tabBtn.textContent.trim() : '';
+        
+        const wrapper = document.createElement('div');
+        wrapper.className = 'pinned-section';
+        wrapper.appendChild(title);
+        wrapper.appendChild(clone);
+        
+        pinnedSections.appendChild(wrapper);
+      });
+    }
+    
+    // Tab switching
+    function switchTab(tabId) {
+      tabBtns.forEach(btn => {
+        if (btn.getAttribute('data-tab') === tabId) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      
+      tabContents.forEach(content => {
+        if (content.id === tabId) {
+          content.classList.add('active');
+        } else {
+          content.classList.remove('active');
+        }
+      });
+    }
+
+    // Collapsible sections toggle
+    const floatingHost = document.getElementById('floating-panels');
+    // Ensure clean state after reload
+    floatingHost.innerHTML = '';
+    document.querySelectorAll('.collapsible-section').forEach((section) => {
+      section.__floatingContent = null;
+    });
+    document.querySelectorAll('.section-content').forEach((content) => {
+      content.classList.remove('open');
+      content.style.display = 'none';
+      content.style.left = '';
+      content.style.top = '';
+      content.style.height = '';
+      content.style.minWidth = '';
+      content.style.visibility = '';
+      content.style.maxHeight = `${getPopupMaxHeightPx()}px`;
+      const homeSection = content.__homeSection || content.closest('.collapsible-section');
+      if (homeSection && homeSection !== content.parentElement) {
+        homeSection.appendChild(content);
+      }
+      content.__homeSection = homeSection;
+      content.__anchorBtn = null;
+    });
+
+    let clickThroughState = null;
+    let overlayHovered = false;
+    let forceInteractiveCount = 0;
+    let interactionHoldUntil = 0;
+    let lastPointerClientX = 0;
+    let lastPointerClientY = 0;
+    let hoverEvalFrame = null;
+
+    // Main-process assist: when mouse-forwarding gets re-enabled (after cursor leaves a child window),
+    // we may not get a move event before the user clicks. Accept a pushed cursor position and
+    // re-evaluate hover/click-through immediately.
+    try {
+      ipcRenderer.on(IPC_CHANNELS.OVERLAY_CURSOR_SCREEN_POINT, (_event, payload) => {
+        try {
+          if (__isDetachedPanelWindow) return;
+          if (!payload || !payload.bounds) return;
+          const sx = Number(payload.x);
+          const sy = Number(payload.y);
+          if (!Number.isFinite(sx) || !Number.isFinite(sy)) return;
+          const b = payload.bounds;
+          const bx = Number(b.x);
+          const by = Number(b.y);
+          if (!Number.isFinite(bx) || !Number.isFinite(by)) return;
+
+          lastPointerClientX = sx - bx;
+          lastPointerClientY = sy - by;
+          // Run immediately so the next click has the right ignore-mouse state.
+          evaluateHoverFromPoint(lastPointerClientX, lastPointerClientY);
+        } catch (_) {}
+      });
+    } catch (_) {}
+
+    function getPopupMaxHeightPx() {
+      const gutter = 12;
+      return Math.max(260, window.innerHeight - gutter * 2);
+    }
+
+    function syncClickThrough(allowThrough) {
+      if (__isDetachedPanelWindow) return;
+      // After an interaction (resize/drag), keep the window interactive briefly.
+      // This prevents a common failure mode where pointerup happens outside the window
+      // (due to pointer capture), we immediately go click-through, and the next click
+      // on the handle never reaches the window unless the user moves the mouse first.
+      if (Date.now() < interactionHoldUntil) {
+        allowThrough = false;
+      }
+      if (clickThroughState === allowThrough) return;
+      clickThroughState = allowThrough;
+      fireAndForget(IPC_CHANNELS.SET_CLICK_THROUGH, allowThrough);
+    }
+
+    function holdInteractive(ms = 600) {
+      const until = Date.now() + Math.max(0, ms | 0);
+      interactionHoldUntil = Math.max(interactionHoldUntil, until);
+      overlayHovered = true;
+      syncClickThrough(false);
+    }
+
+    function pushForceInteractive() {
+      forceInteractiveCount += 1;
+      overlayHovered = true;
+      syncClickThrough(false);
+    }
+
+    function popForceInteractive() {
+      forceInteractiveCount = Math.max(0, forceInteractiveCount - 1);
+      if (forceInteractiveCount > 0) return;
+      setTimeout(() => {
+        if (forceInteractiveCount > 0) return;
+        if (Date.now() < interactionHoldUntil) {
+          overlayHovered = true;
+          syncClickThrough(false);
+          return;
+        }
+        const el = document.elementFromPoint(lastPointerClientX, lastPointerClientY);
+        overlayHovered = isInteractiveTarget(el);
+        syncClickThrough(!overlayHovered);
+      }, 0);
+    }
+
+    function isInteractiveTarget(target) {
+      if (!target) return false;
+      const el = target.nodeType === 1 ? target : target.parentElement;
+      if (!el) return false;
+
+      // Modal is always interactive when open
+      if (confirmModal && confirmModal.classList.contains('active') && confirmModal.contains(el)) {
+        return true;
+      }
+      
+
+      // Only treat specific UI elements as interactive.
+      // This prevents the whole overlay window from blocking clicks in "empty" areas.
+      const interactiveSelector = [
+        '#dragHandle',
+        '.resize-handle-left',
+        '.resize-handle-right',
+        '.resize-handle-bottom',
+        '.section-header',
+        '.section-content',
+        '.popup-resize-handle',
+        '.history-item',
+        'button',
+        'input',
+        'select',
+        'textarea',
+        'a[href]',
+        '[role="button"]'
+      ].join(',');
+
+      const hit = el.closest(interactiveSelector);
+      if (!hit) return false;
+      // Ensure it's within our overlay UI
+      if (overlayContainer && overlayContainer.contains(hit)) return true;
+      if (floatingHost && floatingHost.contains(hit)) return true;
+      if (confirmModal && confirmModal.contains(hit)) return true;
+      return false;
+    }
+
+    function evaluateHoverFromPoint(clientX, clientY) {
+      if (forceInteractiveCount > 0) return;
+      if (Date.now() < interactionHoldUntil) {
+        overlayHovered = true;
+        syncClickThrough(false);
+        return;
+      }
+      const el = document.elementFromPoint(clientX, clientY);
+      overlayHovered = isInteractiveTarget(el);
+      syncClickThrough(!overlayHovered);
+    }
+
+    function scheduleHoverEvaluation() {
+      if (hoverEvalFrame) return;
+      hoverEvalFrame = requestAnimationFrame(() => {
+        hoverEvalFrame = null;
+        evaluateHoverFromPoint(lastPointerClientX, lastPointerClientY);
+      });
+    }
+
+    on(document, 'pointerover', (event) => {
+      if (overlayHovered) return;
+      if (isInteractiveTarget(event.target)) {
+        overlayHovered = true;
+        syncClickThrough(false);
+      }
+    }, true);
+
+    on(document, 'pointerout', (event) => {
+      if (forceInteractiveCount > 0) return;
+      if (Date.now() < interactionHoldUntil) return;
+      if (!overlayHovered) return;
+      if (!isInteractiveTarget(event.target)) return;
+      if (isInteractiveTarget(event.relatedTarget)) return;
+      overlayHovered = false;
+      syncClickThrough(true);
+    }, true);
+
+    on(document, 'pointermove', (event) => {
+      lastPointerClientX = event.clientX;
+      lastPointerClientY = event.clientY;
+      scheduleHoverEvaluation();
+    }, true);
+
+    // Start click-through by default; we enable interactivity only when hovering real UI.
+    syncClickThrough(true);
+
+    function positionPopup(content, headerBtn, isReposition = false) {
+      const rect = headerBtn.getBoundingClientRect();
+      const minPopupWidth = 140;
+      const popupWidth = Math.max(rect.width, minPopupWidth);
+      content.style.minWidth = `${popupWidth}px`;
+      content.style.maxWidth = `${popupWidth}px`;
+
+      // Keep maxHeight in sync with the current overlay window size.
+      // Without this, if a popup is opened while the overlay is temporarily in a small
+      // header-only height, it can remain capped ("shrunk") even after the window expands.
+      content.style.maxHeight = `${getPopupMaxHeightPx()}px`;
+
+      if (!isReposition) {
+        content.style.visibility = 'hidden';
+        content.style.display = 'flex';
+        content.style.height = 'auto';
+        floatingHost.appendChild(content);
+        content.classList.add('open');
+      }
+
+      requestAnimationFrame(() => {
+        // If the popup was previously sized in a temporarily-small overlay height (header-only),
+        // it may have an explicit pixel height set. On resize/reposition we must release it
+        // so the popup can grow again, unless the user explicitly resized it.
+        if (isReposition && !content.__userResizedHeight) {
+          content.style.height = 'auto';
+        }
+        const popupRect = content.getBoundingClientRect();
+        const measuredWidth = popupRect.width;
+        const gutter = 12;
+        const gap = 8;
+        let left = rect.left;
+        if (left + popupRect.width > window.innerWidth - gutter) {
+          left = window.innerWidth - gutter - measuredWidth;
+        }
+        if (left < gutter) left = gutter;
+
+        const desiredTop = rect.bottom + gap;
+        const maxHeightCap = getPopupMaxHeightPx();
+        const spaceBelow = window.innerHeight - gutter - desiredTop;
+        const spaceAbove = rect.top - gutter - gap;
+        const availableBelow = Math.max(0, Math.min(spaceBelow, maxHeightCap));
+        const availableAbove = Math.max(0, Math.min(spaceAbove, maxHeightCap));
+
+        let placeBelow = true;
+        if (!availableBelow && availableAbove) {
+          placeBelow = false;
+        } else if (availableBelow && availableAbove) {
+          placeBelow = availableBelow >= availableAbove;
+        }
+
+        let top = desiredTop;
+        if (placeBelow) {
+          const maxHeight = availableBelow || Math.min(maxHeightCap, popupRect.height);
+          content.style.maxHeight = `${Math.round(maxHeight)}px`;
+          const actualHeight = Math.min(popupRect.height, maxHeight);
+          content.style.height = `${Math.round(actualHeight)}px`;
+          top = Math.max(gutter, desiredTop);
+        } else {
+          const maxHeight = availableAbove || Math.min(maxHeightCap, popupRect.height);
+          const actualHeight = Math.min(popupRect.height, maxHeight);
+          content.style.maxHeight = `${Math.round(maxHeight)}px`;
+          content.style.height = `${Math.round(actualHeight)}px`;
+          top = Math.max(gutter, rect.top - gap - actualHeight);
+        }
+
+        content.style.left = `${Math.round(left)}px`;
+        content.style.top = `${Math.round(top)}px`;
+        content.style.visibility = 'visible';
+      });
+    }
+
+    function closePopup(content, section, toggleEl) {
+      if (!content) return;
+      content.classList.remove('open');
+      content.style.left = '';
+      content.style.top = '';
+      content.style.minWidth = '';
+      content.style.visibility = '';
+      content.style.height = '';
+      content.style.maxHeight = `${getPopupMaxHeightPx()}px`;
+      content.__userResizedHeight = false;
+      content.style.display = 'none';
+      content.__anchorBtn = null;
+      if (toggleEl) toggleEl.classList.remove('open');
+      if (section) {
+        section.appendChild(content);
+        section.__floatingContent = null;
+      }
+    }
+
+    function toggleSection(event, headerBtn) {
+      event.stopPropagation();
+      event.preventDefault();
+      if (headerBtn && headerBtn.__suppressToggleOnce) {
+        headerBtn.__suppressToggleOnce = false;
+        return;
+      }
+      const section = headerBtn.parentElement;
+      if (!section) return;
+      let content = section.querySelector('.section-content');
+      if (!content && section.__floatingContent) {
+        content = section.__floatingContent;
+      }
+      const toggle = headerBtn.querySelector('.section-toggle');
+      if (!toggle || !content) return;
+      const isOpen = content.classList.contains('open');
+
+      if (isOpen) {
+        closePopup(content, section, toggle);
+        return;
+      }
+
+      // Mark home section and anchor once
+      if (!content.__homeSection) content.__homeSection = section;
+      section.__floatingContent = content;
+      content.__anchorBtn = headerBtn;
+
+      toggle.classList.add('open');
+      positionPopup(content, headerBtn);
+    }
+
+    // Provide header dock rects (screen coords) for detached panels to dock back.
+    if (!__isDetachedPanelWindow) {
+      ipcRenderer.on(IPC_CHANNELS.REQUEST_PANEL_DOCK_RECTS, (_event, requestId) => {
+        const offX = window.screenX;
+        const offY = window.screenY;
+        const rects = {};
+
+        const container = document.getElementById('overlay-container');
+        const containerRect = container ? container.getBoundingClientRect() : null;
+        const barLeft = containerRect ? (offX + containerRect.left) : offX;
+        const barTop = containerRect ? (offY + containerRect.top) : offY;
+        const barWidth = containerRect ? containerRect.width : window.innerWidth;
+        // Detached slots are collapsed; keep the synthetic dock zone tight so we don't allow
+        // docking from the large empty area between the header and the panels.
+        const zoneH = 24;
+        const dockPanelOrder = (Array.isArray(panelOrder) && panelOrder.length)
+          ? panelOrder
+          : loadPanelOrder();
+        const colW = Math.max(1, barWidth / 3);
+
+        document.querySelectorAll('.collapsible-section[data-panel]').forEach((section) => {
+          const pid = (section.getAttribute('data-panel') || '').toLowerCase();
+          if (!pid) return;
+
+          const isDetached = section.classList.contains('panel-detached');
+          const btn = isDetached ? null : section.querySelector('.section-header');
+
+          if (btn) {
+            const r = btn.getBoundingClientRect();
+            let left = r.left;
+            let top = r.top;
+            let right = r.right;
+            let bottom = r.bottom;
+
+            const openContent = section.querySelector('.section-content.open') || section.__floatingContent;
+            if (openContent) {
+              try {
+                const cr = openContent.getBoundingClientRect();
+                left = Math.min(left, cr.left);
+                top = Math.min(top, cr.top);
+                right = Math.max(right, cr.right);
+                bottom = Math.max(bottom, cr.bottom);
+              } catch (_) {}
+            }
+
+            rects[pid] = { left: offX + left, top: offY + top, right: offX + right, bottom: offY + bottom };
+            return;
+          }
+
+          // Detached slots are collapsed; provide a synthetic docking zone in the top bar.
+          const idx = dockPanelOrder.indexOf(pid);
+          if (idx === -1) return;
+          const left = barLeft + (idx * colW);
+          const right = barLeft + ((idx + 1) * colW);
+          rects[pid] = { left, top: barTop, right, bottom: barTop + zoneH };
+        });
+        ipcRenderer.send(IPC_CHANNELS.RESPONSE_PANEL_DOCK_RECTS, requestId, rects);
+      });
+    }
+
+    // Detach: drag a currently-open popup out of the header to create a separate BrowserWindow.
+    if (!__isDetachedPanelWindow) {
+      const DETACH_DRAG_THRESHOLD_PX = 2;
+      let detachDragState = null;
+
+      function __cancelDetachGestureInternal({ onlyPending } = { onlyPending: false }) {
+        try {
+          if (!detachDragState) return;
+          if (onlyPending && detachDragState.started) return;
+
+          const started = !!detachDragState.started;
+          const forcedInteractive = !!detachDragState.forcedInteractive;
+          const panelId = detachDragState.panelId;
+
+          try { detachDragState.headerBtn && detachDragState.headerBtn.releasePointerCapture(detachDragState.pointerId); } catch (_) {}
+          detachDragState = null;
+          isDetachGestureActive = false;
+          try { ipcRenderer.send(IPC_CHANNELS.OVERLAY_DETACH_GUARD, false); } catch (_) {}
+
+          if (forcedInteractive) {
+            try { popForceInteractive(); } catch (_) {}
+          }
+
+          // If we already started and created a detached window, finalize it so it becomes interactive
+          // and its bounds are persisted even if the overlay is being hidden.
+          if (started && panelId) {
+            try { fireAndForget(IPC_CHANNELS.DETACHED_PANEL_END_DRAG, panelId); } catch (_) {}
+          }
+        } catch (_) {}
+      }
+
+      // Cancel only the *pending* (not yet started) detach gesture.
+      window.__cancelPendingDetachGesture = function() {
+        __cancelDetachGestureInternal({ onlyPending: true });
+      };
+
+      // Cancel any detach gesture (pending or started). Safe to call when hiding the overlay.
+      window.__cancelAnyDetachGesture = function() {
+        __cancelDetachGestureInternal({ onlyPending: false });
+      };
+
+      // Compact header-only mode: when all three panels are detached, resize the overlay window down.
+      let headerOnlyActive = false;
+      let headerOnlyPrevHeight = null;
+      let headerOnlyMeasureRaf = null;
+
+
+      function areAllPanelsDetached() {
+        return PANEL_IDS.every((pid) => {
+          const section = document.querySelector(`.collapsible-section[data-panel="${pid}"]`);
+          return !!(section && section.classList.contains('panel-detached'));
+        });
+      }
+
+      function requestHeaderOnlyResize() {
+        if (headerOnlyMeasureRaf) return;
+        headerOnlyMeasureRaf = requestAnimationFrame(() => {
+          headerOnlyMeasureRaf = null;
+          const container = document.getElementById('overlay-container');
+          if (!container) return;
+          // Use scrollHeight (not client-rect) and keep the extra padding small.
+          // This avoids the ~88px floor caused by min-height(80) + fudge(8).
+          const measured = Math.max(60, Math.round((container.scrollHeight || container.getBoundingClientRect().height) + 2));
+          sendOverlayResizeBatched({ height: measured });
+        });
+      }
+
+      function requestDockPreviewResize() {
+        if (headerOnlyMeasureRaf) return;
+        headerOnlyMeasureRaf = requestAnimationFrame(() => {
+          headerOnlyMeasureRaf = null;
+          const container = document.getElementById('overlay-container');
+          if (!container) return;
+          // Use scrollHeight so we measure the full layout height even if the
+          // current BrowserWindow is still small (otherwise we get a clipped "sliver").
+          const measured = Math.max(110, Math.round((container.scrollHeight || container.getBoundingClientRect().height) + 8));
+          sendOverlayResizeBatched({ height: measured });
+        });
+      }
+
+      function updateHeaderOnlyMode() {
+        const should = areAllPanelsDetached();
+        const preview = !!(dockPreviewActive && should);
+
+        if (preview) {
+          // Functional-only dock preview: keep the overlay in its current
+          // compact/header-only height and avoid any BrowserWindow moves.
+          // Docking is still computed using synthetic header zones, but the
+          // user never sees a size jump while hovering near the overlay.
+          document.body.classList.add('dock-preview');
+          return;
+        }
+
+        document.body.classList.remove('dock-preview');
+
+        if (should) {
+          // Ensure header-only is applied (including after a dock-preview ends).
+          headerOnlyActive = true;
+          // See note above: don't record the small header-only height as our restore target.
+          if (headerOnlyPrevHeight == null) headerOnlyPrevHeight = (window.innerHeight >= 200 ? window.innerHeight : 500);
+          document.body.classList.add('header-only');
+          requestHeaderOnlyResize();
+          return;
+        }
+
+        // Not all detached -> ensure full layout restored.
+        if (headerOnlyActive) {
+          headerOnlyActive = false;
+          document.body.classList.remove('header-only');
+          const restore = Math.max(200, Math.round(headerOnlyPrevHeight || 500));
+          headerOnlyPrevHeight = null;
+          sendOverlayResizeBatched({ height: restore });
+        }
+      }
+
+      // IPC from main process: show docking targets while dragging detached panels.
+      ipcRenderer.on(IPC_CHANNELS.OVERLAY_DOCK_PREVIEW, (_event, payload) => {
+        dockPreviewActive = !!(payload && payload.visible);
+        try { updateHeaderOnlyMode(); } catch (_) {}
+      });
+
+      function setPanelSlotDetached(panelId, detached) {
+        const pid = (panelId || '').toString().toLowerCase();
+        if (!pid) return;
+        const section = document.querySelector(`.collapsible-section[data-panel="${pid}"]`);
+        if (!section) return;
+        section.classList.toggle('panel-detached', !!detached);
+        try { updateHeaderOnlyMode(); } catch (_) {}
+      }
+
+      // Detach UX: avoid a visible “gap” by only hiding the docked slot once the
+      // detached BrowserWindow is actually shown.
+      const pendingDetachPanels = new Set();
+
+      ipcRenderer.on(IPC_CHANNELS.DETACHED_PANEL_SHOWN, (_event, payload) => {
+        try {
+          const pid = String(payload && payload.panelId || '').toLowerCase();
+          if (!pid) return;
+          if (!pendingDetachPanels.has(pid)) return;
+          pendingDetachPanels.delete(pid);
+          setPanelSlotDetached(pid, true);
+        } catch (_) {}
+      });
+
+      // Main-process state sync: after a renderer reload (Ctrl+R), re-apply which panels are detached
+      // so we don't "resurrect" docked tabs while detached windows still exist.
+      ipcRenderer.on(IPC_CHANNELS.DETACHED_PANELS_STATE, (_event, payload) => {
+        try {
+          const detached = Array.isArray(payload && payload.detached) ? payload.detached : [];
+          const set = new Set(detached.map((x) => String(x || '').toLowerCase()));
+          PANEL_IDS.forEach((pid) => {
+            setPanelSlotDetached(pid, set.has(pid));
+          });
+          __bootDetachedReady = true;
+          __maybeFinishBoot();
+        } catch (_) {}
+      });
+
+      function getPanelIdFromHeader(headerBtn) {
+        const section = headerBtn && headerBtn.closest('.collapsible-section');
+        if (!section) return null;
+        return normalizePanelId(section.getAttribute('data-panel'));
+      }
+
+      function getOpenPopupForHeader(headerBtn) {
+        const section = headerBtn && headerBtn.closest('.collapsible-section');
+        if (!section) return { section: null, content: null, toggle: null };
+        let content = section.querySelector('.section-content');
+        if (!content && section.__floatingContent) content = section.__floatingContent;
+        const toggle = headerBtn.querySelector('.section-toggle');
+        return { section, content, toggle };
+      }
+
+      function pointerToScreen(ev) {
+        const x = (typeof ev.screenX === 'number') ? ev.screenX : (window.screenX + ev.clientX);
+        const y = (typeof ev.screenY === 'number') ? ev.screenY : (window.screenY + ev.clientY);
+        return { x: Math.round(x), y: Math.round(y) };
+      }
+
+      function beginDetachDrag(ev) {
+        if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+        const headerBtn = ev.currentTarget;
+        const panelId = getPanelIdFromHeader(headerBtn);
+        if (!panelId) return;
+
+        const { section, content, toggle } = getOpenPopupForHeader(headerBtn);
+        if (!section || !content || !toggle) return;
+        // Only detach if the popup is currently open.
+        if (!content.classList.contains('open')) return;
+
+        // From this point, treat the pointer as part of a detach gesture.
+        // This blocks any accidental/stuck window drag from moving the overlay.
+        isDetachGestureActive = true;
+        // Also guard in main (server-side): ignore any overlay x/y moves while detaching.
+        try { ipcRenderer.send(IPC_CHANNELS.OVERLAY_DETACH_GUARD, true); } catch (_) {}
+
+        // If a resize was ever left "stuck" (missed pointerup), cancel it now.
+        cancelResize();
+
+        // IMPORTANT: keep the overlay interactive immediately during the detach gesture.
+        // If click-through flips before we pass the threshold, pointer capture can be lost and
+        // another gesture (like window drag) can "steal" the movement, causing a jump.
+        pushForceInteractive();
+
+        // Drop any queued overlay move/resize updates that could flush right as we detach.
+        cancelPendingOverlayResize();
+
+        // This is a potential drag gesture; prevent any other drag logic from starting.
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        // If we ever got stuck in a main window-drag state, cancel it immediately
+        // so the overlay cannot move while detaching.
+        cancelWindowDrag();
+
+        const pt = pointerToScreen(ev);
+        const popupRect = content.getBoundingClientRect();
+        const popupScreenLeft = Math.round(window.screenX + popupRect.left);
+        const popupScreenTop = Math.round(window.screenY + popupRect.top);
+
+        // When detaching, the detached window includes the panel header.
+        // The original popupRect is only the dropdown content, so without adding the header height
+        // the bottom (incl. popup resize handle) gets clipped.
+        const headerRect = headerBtn.getBoundingClientRect();
+        const headerH = Math.max(0, Math.round(headerRect.height || 0));
+        // Safety slack: transparent always-on-top windows can clip a few pixels at the edges
+        // (DWM/compositor rounding). Give the detached window a little extra room so the
+        // bottom resize handle is fully visible.
+        const DETACHED_EXTRA_H = 10;
+        const windowScreenTop = Math.round(popupScreenTop - headerH);
+
+        detachDragState = {
+          pointerId: ev.pointerId,
+          headerBtn,
+          panelId,
+          section,
+          content,
+          toggle,
+          startScreenX: pt.x,
+          startScreenY: pt.y,
+          started: false,
+          forcedInteractive: true,
+          offsetX: Math.round(pt.x - popupScreenLeft),
+          offsetY: Math.round(pt.y - windowScreenTop),
+          bounds: {
+            x: popupScreenLeft,
+            y: windowScreenTop,
+            width: Math.round(popupRect.width),
+            height: Math.round(popupRect.height + headerH + DETACHED_EXTRA_H)
+          }
+        };
+
+        try { headerBtn.setPointerCapture(detachDragState.pointerId); } catch (_) {}
+      }
+
+      async function handleDetachMove(ev) {
+        if (!detachDragState || ev.pointerId !== detachDragState.pointerId) return;
+
+        // Belt-and-suspenders: never let window drag run while detaching.
+        cancelWindowDrag();
+
+        const pt = pointerToScreen(ev);
+        const dx = pt.x - detachDragState.startScreenX;
+        const dy = pt.y - detachDragState.startScreenY;
+
+        if (!detachDragState.started) {
+          if (Math.hypot(dx, dy) < DETACH_DRAG_THRESHOLD_PX) return;
+          detachDragState.started = true;
+          ev.preventDefault();
+          ev.stopPropagation();
+          // Already forced interactive on pointerdown.
+
+          // If the main overlay was in any kind of window-drag state, cancel it.
+          // This prevents the main overlay from being pulled briefly while detaching.
+          cancelWindowDrag();
+
+          // Prevent the header click toggle after a drag.
+          detachDragState.headerBtn.__suppressToggleOnce = true;
+
+          // Close the popup immediately so the UI doesn't fight the detach drag.
+          // But keep the header slot visible until the detached window is actually shown,
+          // otherwise there's a perceived “gap”.
+          closePopup(detachDragState.content, detachDragState.section, detachDragState.toggle);
+
+          const openRes = await invokeMain(IPC_CHANNELS.DETACHED_PANEL_OPEN, {
+            panelId: detachDragState.panelId,
+            bounds: detachDragState.bounds,
+            dragging: true
+          }).catch(() => null);
+
+          if (!openRes || openRes.success !== true) {
+            // Failed to open detached window -> restore panel slot in header.
+            detachDragState.started = false;
+            return;
+          }
+
+          // Wait for main to confirm the detached window is shown before hiding the slot.
+          pendingDetachPanels.add(detachDragState.panelId);
+        }
+
+        ev.preventDefault();
+        const nextX = Math.round(pt.x - detachDragState.offsetX);
+        const nextY = Math.round(pt.y - detachDragState.offsetY);
+        ipcRenderer.send(IPC_CHANNELS.DETACHED_PANEL_MOVE, detachDragState.panelId, nextX, nextY);
+      }
+
+      async function endDetachDrag(ev) {
+        if (!detachDragState || ev.pointerId !== detachDragState.pointerId) return;
+        try { detachDragState.headerBtn.releasePointerCapture(detachDragState.pointerId); } catch (_) {}
+        const started = !!detachDragState.started;
+        const forcedInteractive = !!detachDragState.forcedInteractive;
+        const panelId = detachDragState.panelId;
+        detachDragState = null;
+
+        isDetachGestureActive = false;
+        try { ipcRenderer.send(IPC_CHANNELS.OVERLAY_DETACH_GUARD, false); } catch (_) {}
+
+        if (started) {
+          ev.preventDefault();
+          ev.stopPropagation();
+        }
+
+        if (forcedInteractive) {
+          popForceInteractive();
+        }
+
+        if (started) {
+          await invokeMain(IPC_CHANNELS.DETACHED_PANEL_END_DRAG, panelId).catch(() => {});
+        }
+
+        try { updateHeaderOnlyMode(); } catch (_) {}
+      }
+
+      function cancelDetachDrag(ev) {
+        if (!detachDragState || ev.pointerId !== detachDragState.pointerId) return;
+        try { detachDragState.headerBtn.releasePointerCapture(detachDragState.pointerId); } catch (_) {}
+        const started = !!detachDragState.started;
+        const forcedInteractive = !!detachDragState.forcedInteractive;
+        detachDragState = null;
+        isDetachGestureActive = false;
+        try { ipcRenderer.send(IPC_CHANNELS.OVERLAY_DETACH_GUARD, false); } catch (_) {}
+        if (forcedInteractive) popForceInteractive();
+
+        try { updateHeaderOnlyMode(); } catch (_) {}
+      }
+
+      document.querySelectorAll('.collapsible-section[data-panel] .section-header').forEach((btn) => {
+        on(btn, 'pointerdown', beginDetachDrag);
+        on(btn, 'pointermove', handleDetachMove);
+        on(btn, 'pointerup', endDetachDrag);
+        on(btn, 'pointercancel', cancelDetachDrag);
+      });
+
+      // Initialize compact mode at startup.
+      try { updateHeaderOnlyMode(); } catch (_) {}
+    }
+
+    // If this window is a detached panel, show only one section and enable window dragging + docking.
+    if (__isDetachedPanelWindow) {
+      const activeSection = document.querySelector(`.collapsible-section[data-panel="${__panelId}"]`);
+      document.querySelectorAll('.collapsible-section[data-panel]').forEach((section) => {
+        if (section === activeSection) section.classList.add('panel-active');
+        else section.classList.remove('panel-active');
+      });
+
+      function getReliableScreenPoint(ev) {
+        const sx = Number(ev && ev.screenX);
+        const sy = Number(ev && ev.screenY);
+        const cx = Number(ev && ev.clientX);
+        const cy = Number(ev && ev.clientY);
+        const wx = Number(window.screenX);
+        const wy = Number(window.screenY);
+
+        const hasClient = Number.isFinite(cx) && Number.isFinite(cy) && Number.isFinite(wx) && Number.isFinite(wy);
+        const fromClient = hasClient ? { x: wx + cx, y: wy + cy } : null;
+        const fromScreen = (Number.isFinite(sx) && Number.isFinite(sy)) ? { x: sx, y: sy } : null;
+
+        if (fromClient && fromScreen) {
+          // On some Windows/Electron frameless windows, screenX/screenY can be wrong while captured.
+          // Prefer the value consistent with the window's screen position.
+          const dx = Math.abs(fromScreen.x - fromClient.x);
+          const dy = Math.abs(fromScreen.y - fromClient.y);
+          if (dx + dy > 8) return fromClient;
+          return fromScreen;
+        }
+        return fromClient || fromScreen || { x: wx, y: wy };
+      }
+
+      let dockPreviewLatestPt = null;
+      let dockPreviewInFlight = false;
+      let dockPreviewLastReqAt = 0;
+      async function requestDockPreviewUpdate(force = false) {
+        if (!dockPreviewLatestPt) return;
+        const now = Date.now();
+        if (!force && (now - dockPreviewLastReqAt) < 60) return;
+        if (dockPreviewInFlight) return;
+        dockPreviewInFlight = true;
+        dockPreviewLastReqAt = now;
+        const pt = dockPreviewLatestPt;
+        await invokeMain(IPC_CHANNELS.DETACHED_PANEL_DOCK_PREVIEW_AT, {
+          pointerScreenX: Math.round(pt.x),
+          pointerScreenY: Math.round(pt.y)
+        }).catch(() => {});
+        dockPreviewInFlight = false;
+        // If the pointer moved during the IPC, refresh once immediately.
+        if (dockPreviewLatestPt && (dockPreviewLatestPt.x !== pt.x || dockPreviewLatestPt.y !== pt.y)) {
+          requestDockPreviewUpdate(true);
+        }
+      }
+
+      if (activeSection) {
+        let headerBtn = activeSection.querySelector('.section-header');
+        const content = activeSection.querySelector('.section-content');
+        if (headerBtn) {
+          // Disable dropdown toggle in detached mode; header acts as window drag bar.
+          headerBtn.onclick = null;
+          headerBtn.removeAttribute('onclick');
+
+          // Use a plain element for the draggable header in detached windows.
+          // (Note panel uses a <div> header; keeping a <button> here can lead to cursor quirks.)
+          if (headerBtn.tagName && headerBtn.tagName.toLowerCase() === 'button') {
+            const replacement = document.createElement('div');
+            replacement.className = headerBtn.className;
+            if (headerBtn.id) replacement.id = headerBtn.id;
+            replacement.setAttribute('role', 'toolbar');
+            replacement.tabIndex = 0;
+            while (headerBtn.firstChild) {
+              replacement.appendChild(headerBtn.firstChild);
+            }
+            const parent = headerBtn.parentElement;
+            if (parent) {
+              parent.replaceChild(replacement, headerBtn);
+              headerBtn = replacement;
+            }
+          }
+        }
+        if (content) {
+          // Ensure inline (non-floating) content.
+          if (content.parentElement !== activeSection) activeSection.appendChild(content);
+          activeSection.__floatingContent = null;
+          content.__anchorBtn = null;
+          content.__homeSection = activeSection;
+          content.classList.add('open');
+          content.style.display = 'flex';
+          content.style.left = '';
+          content.style.top = '';
+          content.style.visibility = 'visible';
+          // IMPORTANT: clear any inline popup sizing constraints.
+          // The boot-time reset sets an inline maxHeight, which would override
+          // `body.panel-mode .section-content { max-height: none; }` and cap the panel.
+          content.style.maxHeight = '';
+          content.style.height = '';
+          content.style.minWidth = '';
+          content.style.maxWidth = '';
+        }
+
+        if (headerBtn) {
+          // Add a dock control (icon-only) to snap back to the main overlay header.
+          // IMPORTANT: headerBtn is a <button>. Nesting a <button> inside a <button> is invalid HTML
+          // and can cause inconsistent hover/cursor behavior. Use a non-button element instead.
+          const dockBtn = document.createElement('div');
+          dockBtn.className = 'dock-btn';
+          dockBtn.setAttribute('role', 'button');
+          dockBtn.tabIndex = 0;
+          dockBtn.textContent = t().dockBack || '↩';
+          dockBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }, true);
+          dockBtn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              invokeMain(IPC_CHANNELS.DETACHED_PANEL_DOCK, __panelId).catch(() => {});
+            }
+          });
+          dockBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            invokeMain(IPC_CHANNELS.DETACHED_PANEL_DOCK, __panelId).catch(() => {});
+          });
+          headerBtn.appendChild(dockBtn);
+
+          // Window drag: move this BrowserWindow by setting sender bounds.
+          let dragState = null;
+          headerBtn.addEventListener('pointerdown', (ev) => {
+            if (ev.button !== 0) return;
+            ev.preventDefault();
+            ev.stopPropagation();
+            pushForceInteractive();
+            const pt = getReliableScreenPoint(ev);
+            dockPreviewLatestPt = pt;
+            requestDockPreviewUpdate(true);
+            dragState = {
+              pointerId: ev.pointerId,
+              offsetX: Math.round(pt.x - window.screenX),
+              offsetY: Math.round(pt.y - window.screenY)
+            };
+            try { headerBtn.setPointerCapture(dragState.pointerId); } catch (_) {}
+          });
+
+          headerBtn.addEventListener('pointermove', (ev) => {
+            if (!dragState || ev.pointerId !== dragState.pointerId) return;
+            ev.preventDefault();
+            const pt = getReliableScreenPoint(ev);
+            dockPreviewLatestPt = pt;
+            requestDockPreviewUpdate(false);
+            const nextX = Math.round(pt.x - dragState.offsetX);
+            const nextY = Math.round(pt.y - dragState.offsetY);
+            ipcRenderer.send(IPC_CHANNELS.DETACHED_PANEL_SET_BOUNDS, { x: nextX, y: nextY });
+          });
+
+          headerBtn.addEventListener('pointerup', async (ev) => {
+            if (!dragState || ev.pointerId !== dragState.pointerId) return;
+            ev.preventDefault();
+            try { headerBtn.releasePointerCapture(dragState.pointerId); } catch (_) {}
+            dragState = null;
+            popForceInteractive();
+
+            const pt = getReliableScreenPoint(ev);
+            dockPreviewLatestPt = pt;
+            await invokeMain(IPC_CHANNELS.DETACHED_PANEL_DROP, {
+              panelId: __panelId,
+              pointerScreenX: Math.round(pt.x),
+              pointerScreenY: Math.round(pt.y),
+              winX: window.screenX,
+              winY: window.screenY,
+              width: window.innerWidth,
+              height: window.innerHeight
+            }).catch(() => {});
+
+            dockPreviewLatestPt = null;
+            await invokeMain(IPC_CHANNELS.DETACHED_PANEL_DOCK_PREVIEW_AT, { visible: false }).catch(() => {});
+          });
+
+          headerBtn.addEventListener('pointercancel', (ev) => {
+            if (!dragState || ev.pointerId !== dragState.pointerId) return;
+            try { headerBtn.releasePointerCapture(dragState.pointerId); } catch (_) {}
+            dragState = null;
+            popForceInteractive();
+            dockPreviewLatestPt = null;
+            invokeMain(IPC_CHANNELS.DETACHED_PANEL_DOCK_PREVIEW_AT, { visible: false }).catch(() => {});
+          });
+        }
+      }
+    }
+
+    // Dock event from main: restore the section back to the header dropdown.
+    if (!__isDetachedPanelWindow) {
+      ipcRenderer.on(IPC_CHANNELS.DETACHED_PANEL_DOCKED, (_event, payload) => {
+        const pid = payload && payload.panelId ? String(payload.panelId).toLowerCase() : '';
+        if (!pid) return;
+        const openOnDock = !(payload && payload.open === false);
+        const section = document.querySelector(`.collapsible-section[data-panel="${pid}"]`);
+        const headerBtn = section ? section.querySelector('.section-header') : null;
+        const content = section ? section.querySelector('.section-content') : null;
+        if (!headerBtn || !content) return;
+
+        const wasHeaderOnly = document.body.classList.contains('header-only') || document.body.classList.contains('dock-preview');
+
+        // Make the slot visible/interactable again.
+        section.classList.remove('panel-detached');
+
+        // If we were in header-only mode, expand back.
+        try { updateHeaderOnlyMode(); } catch (_) {}
+
+        // Extra safety: after Ctrl+R reloads in header-only, the BrowserWindow can stay tiny for a moment.
+        // Force a sane expanded height before opening so the popup won't be clipped / choose to open upward.
+        if (wasHeaderOnly) {
+          try {
+            if (window.innerHeight < 200) {
+              sendOverlayResizeBatched({ height: 500 });
+            }
+          } catch (_) {}
+        }
+
+        // Open if currently closed.
+        if (openOnDock && !content.classList.contains('open')) {
+          const openPopup = () => {
+            try { toggleSection(new Event('click'), headerBtn); } catch (_) {}
+          };
+
+          // If we are transitioning out of header-only/dock-preview, opening immediately makes the UI
+          // feel responsive. Popup sizing will be corrected on the upcoming window resize via the
+          // existing resize/reposition logic.
+          if (wasHeaderOnly) {
+            let opened = false;
+            const openOnce = () => {
+              if (opened) return;
+              opened = true;
+              openPopup();
+              try { scheduleRepositionPopups(); } catch (_) {}
+            };
+            try { requestAnimationFrame(openOnce); } catch (_) { setTimeout(openOnce, 0); }
+            setTimeout(openOnce, 60);
+            // Fallback: if the resize lands later than expected, retry once more.
+            setTimeout(openOnce, 140);
+          } else {
+            openPopup();
+          }
+        }
+      });
+    }
+
+    // Reposition open popups on window resize (e.g., during dragging overlay edges)
+    let repositionFrame = null;
+    function scheduleRepositionPopups() {
+      if (repositionFrame) return;
+      repositionFrame = requestAnimationFrame(() => {
+        document.querySelectorAll('.section-content.open').forEach((openEl) => {
+          const anchor = openEl.__anchorBtn;
+          if (anchor && document.body.contains(anchor)) {
+            positionPopup(openEl, anchor, true);
+          }
+        });
+        repositionFrame = null;
+      });
+    }
+    on(window, 'resize', scheduleRepositionPopups);
+
+    // Popup resize handling (vertical only)
+    let popupResizeState = null;
+
+    function startPopupResize(e) {
+      // Detached panel windows should resize the BrowserWindow itself, not the popup content.
+      // (The detached content is flex-stretched and content-height resizing feels jumpy.)
+      if (__isDetachedPanelWindow) return;
+      e.stopPropagation();
+      e.preventDefault();
+      // Keep overlay interactive during popup resize.
+      pushForceInteractive();
+      const content = e.currentTarget.parentElement;
+      if (!content || !content.classList.contains('section-content')) return;
+      const rect = content.getBoundingClientRect();
+      content.__userResizedHeight = true;
+      popupResizeState = {
+        target: content,
+        startY: e.clientY,
+        startHeight: rect.height
+      };
+      content.style.maxHeight = 'none';
+      on(document, 'mousemove', doPopupResize);
+      on(document, 'mouseup', stopPopupResize, { once: true });
+    }
+
+    function doPopupResize(e) {
+      if (!popupResizeState) return;
+      const deltaY = e.clientY - popupResizeState.startY;
+      let newHeight = popupResizeState.startHeight + deltaY;
+      const minH = 200;
+      const gutter = 12;
+      const maxH = window.innerHeight - gutter - popupResizeState.target.getBoundingClientRect().top;
+      newHeight = Math.max(minH, Math.min(maxH, newHeight));
+      popupResizeState.target.style.height = `${Math.round(newHeight)}px`;
+    }
+
+    function stopPopupResize() {
+      if (popupResizeState && popupResizeState.target) {
+        const rect = popupResizeState.target.getBoundingClientRect();
+        const gutter = 12;
+        const available = window.innerHeight - gutter - Math.max(rect.top, gutter);
+        popupResizeState.target.style.maxHeight = `${Math.max(200, Math.round(available))}px`;
+      }
+      popupResizeState = null;
+      document.removeEventListener('mousemove', doPopupResize);
+      scheduleRepositionPopups();
+      popForceInteractive();
+    }
+
+    // Attach popup resize handles
+    document.querySelectorAll('.popup-resize-handle').forEach((handle) => {
+      on(handle, 'mousedown', startPopupResize);
+    });
+
+    // Detached panel window: resize the BrowserWindow by dragging the handle.
+    if (__isDetachedPanelWindow) {
+      let detachedResizeState = null;
+
+      function evToScreenY(ev) {
+        if (typeof ev.screenY === 'number') return Math.round(ev.screenY);
+        return Math.round(window.screenY + (typeof ev.clientY === 'number' ? ev.clientY : 0));
+      }
+
+      function startDetachedWindowResize(ev) {
+        if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+        const handle = ev.currentTarget;
+        ev.preventDefault();
+        ev.stopPropagation();
+        pushForceInteractive();
+
+        detachedResizeState = {
+          pointerId: ev.pointerId,
+          startScreenY: evToScreenY(ev),
+          startX: window.screenX,
+          startY: window.screenY,
+          startWidth: window.innerWidth,
+          startHeight: window.innerHeight
+        };
+
+        try { handle.setPointerCapture(detachedResizeState.pointerId); } catch (_) {}
+      }
+
+      function moveDetachedWindowResize(ev) {
+        if (!detachedResizeState || ev.pointerId !== detachedResizeState.pointerId) return;
+        ev.preventDefault();
+        const dy = evToScreenY(ev) - detachedResizeState.startScreenY;
+        const nextHeight = Math.max(120, Math.round(detachedResizeState.startHeight + dy));
+        ipcRenderer.send(IPC_CHANNELS.DETACHED_PANEL_SET_BOUNDS, {
+          x: detachedResizeState.startX,
+          y: detachedResizeState.startY,
+          width: detachedResizeState.startWidth,
+          height: nextHeight
+        });
+      }
+
+      function endDetachedWindowResize(ev) {
+        if (!detachedResizeState || ev.pointerId !== detachedResizeState.pointerId) return;
+        const handle = ev.currentTarget;
+        try { handle.releasePointerCapture(detachedResizeState.pointerId); } catch (_) {}
+        detachedResizeState = null;
+        holdInteractive(800);
+        popForceInteractive();
+      }
+
+      function cancelDetachedWindowResize(ev) {
+        if (!detachedResizeState || ev.pointerId !== detachedResizeState.pointerId) return;
+        const handle = ev.currentTarget;
+        try { handle.releasePointerCapture(detachedResizeState.pointerId); } catch (_) {}
+        detachedResizeState = null;
+        holdInteractive(800);
+        popForceInteractive();
+      }
+
+      document.querySelectorAll('.popup-resize-handle').forEach((handle) => {
+        on(handle, 'pointerdown', startDetachedWindowResize);
+        on(handle, 'pointermove', moveDetachedWindowResize);
+        on(handle, 'pointerup', endDetachedWindowResize);
+        on(handle, 'pointercancel', cancelDetachedWindowResize);
+      });
+
+      // Add side + corner resize handles (like Note/Info windows)
+      try {
+        const host = document.getElementById('overlay-container');
+        if (host) {
+          const left = document.createElement('div');
+          left.className = 'detached-resize-handle detached-resize-handle-left';
+          const right = document.createElement('div');
+          right.className = 'detached-resize-handle detached-resize-handle-right';
+          const corner = document.createElement('div');
+          corner.className = 'detached-resize-handle detached-resize-handle-corner';
+
+          host.appendChild(left);
+          host.appendChild(right);
+          host.appendChild(corner);
+
+          // Prevent side resize handles from overlapping the draggable header.
+          // This avoids cursor/hover instability around the dock button area.
+          const headerEl = document.querySelector('.collapsible-section.panel-active .section-header');
+          const headerH = headerEl ? Math.max(0, Math.ceil(headerEl.getBoundingClientRect().height)) : 0;
+          if (headerH > 0) {
+            left.style.top = `${headerH}px`;
+            right.style.top = `${headerH}px`;
+          }
+
+          const MIN_W = 200;
+          const MIN_H = 120;
+
+          let edgeResizeState = null;
+          let pendingBounds = null;
+          let boundsRaf = null;
+
+          function requestSetBounds(bounds) {
+            pendingBounds = bounds;
+            if (boundsRaf) return;
+            boundsRaf = requestAnimationFrame(() => {
+              boundsRaf = null;
+              const next = pendingBounds;
+              pendingBounds = null;
+              if (!next) return;
+              ipcRenderer.send(IPC_CHANNELS.DETACHED_PANEL_SET_BOUNDS, next);
+            });
+          }
+
+          function beginEdgeResize(ev, edge) {
+            if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+            ev.preventDefault();
+            ev.stopPropagation();
+            pushForceInteractive();
+
+            const pt = getReliableScreenPoint(ev);
+            edgeResizeState = {
+              pointerId: ev.pointerId,
+              edge,
+              startScreenX: pt.x,
+              startScreenY: pt.y,
+              startBounds: {
+                x: window.screenX,
+                y: window.screenY,
+                width: window.innerWidth,
+                height: window.innerHeight
+              }
+            };
+            try { ev.currentTarget.setPointerCapture(edgeResizeState.pointerId); } catch (_) {}
+          }
+
+          function moveEdgeResize(ev) {
+            if (!edgeResizeState || ev.pointerId !== edgeResizeState.pointerId) return;
+            ev.preventDefault();
+            ev.stopPropagation();
+
+            const pt = getReliableScreenPoint(ev);
+            const dx = pt.x - edgeResizeState.startScreenX;
+            const dy = pt.y - edgeResizeState.startScreenY;
+            const b = edgeResizeState.startBounds;
+
+            let nextX = b.x;
+            let nextY = b.y;
+            let nextW = b.width;
+            let nextH = b.height;
+
+            if (edgeResizeState.edge === 'right') {
+              nextW = b.width + dx;
+            } else if (edgeResizeState.edge === 'left') {
+              nextW = b.width - dx;
+              nextX = b.x + dx;
+            } else if (edgeResizeState.edge === 'corner') {
+              nextW = b.width + dx;
+              nextH = b.height + dy;
+            }
+
+            // Min-size + preserve right edge when resizing from left.
+            if (edgeResizeState.edge === 'left') {
+              const rawW = Math.round(nextW);
+              if (rawW < MIN_W) {
+                nextW = MIN_W;
+                nextX = b.x + (b.width - MIN_W);
+              }
+            }
+
+            nextW = Math.max(MIN_W, Math.round(nextW));
+            nextH = Math.max(MIN_H, Math.round(nextH));
+
+            requestSetBounds({ x: Math.round(nextX), y: Math.round(nextY), width: nextW, height: nextH });
+          }
+
+          function endEdgeResize(ev) {
+            if (!edgeResizeState || ev.pointerId !== edgeResizeState.pointerId) return;
+            ev.preventDefault();
+            ev.stopPropagation();
+            try { ev.currentTarget.releasePointerCapture(edgeResizeState.pointerId); } catch (_) {}
+            edgeResizeState = null;
+            holdInteractive(800);
+            popForceInteractive();
+          }
+
+          function cancelEdgeResize(ev) {
+            if (!edgeResizeState || ev.pointerId !== edgeResizeState.pointerId) return;
+            try { ev.currentTarget.releasePointerCapture(edgeResizeState.pointerId); } catch (_) {}
+            edgeResizeState = null;
+            holdInteractive(800);
+            popForceInteractive();
+          }
+
+          const edgeHandles = [
+            { el: left, edge: 'left' },
+            { el: right, edge: 'right' },
+            { el: corner, edge: 'corner' }
+          ];
+          edgeHandles.forEach(({ el, edge }) => {
+            on(el, 'pointerdown', (ev) => beginEdgeResize(ev, edge));
+            on(el, 'pointermove', moveEdgeResize);
+            on(el, 'pointerup', endEdgeResize);
+            on(el, 'pointercancel', cancelEdgeResize);
+          });
+        }
+      } catch (_) {}
+    }
+    
+    // Tab button click handlers
+    tabBtns.forEach(btn => {
+      on(btn, 'click', (e) => {
+        const tabId = btn.getAttribute('data-tab');
+        
+        // Right-click or Ctrl+click = toggle pin
+        if (e.ctrlKey || e.button === 2) {
+          e.preventDefault();
+          togglePin(tabId);
+        } else {
+          // Normal click = switch tab
+          switchTab(tabId);
+        }
+      });
+      
+      // Prevent context menu on right-click
+      on(btn, 'contextmenu', (e) => {
+        e.preventDefault();
+        const tabId = btn.getAttribute('data-tab');
+        togglePin(tabId);
+      });
+    });
+    
+    // Load history from localStorage
+    function loadHistory() {
+      const saved = localStorage.getItem(STORAGE_KEYS.CONVERSATION_HISTORY);
+      console.log('[HISTORY] Loading from localStorage:', saved ? `${saved.length} chars, ${JSON.parse(saved).length} items` : 'NULL');
+      if (saved) {
+        try {
+          conversationHistory = JSON.parse(saved);
+          console.log('[HISTORY] Loaded successfully:', conversationHistory.length, 'items');
+        } catch (e) {
+          console.error('[HISTORY] Parse error:', e);
+          conversationHistory = [];
+        }
+      } else {
+        console.log('[HISTORY] No saved history found');
+      }
+    }
+    
+    // Save history to localStorage
+    function saveHistory() {
+      localStorage.setItem(STORAGE_KEYS.CONVERSATION_HISTORY, JSON.stringify(conversationHistory));
+      console.log('[HISTORY] Saved to localStorage:', conversationHistory.length, 'items');
+    }
+    
+    // Add to history
+    function addToHistory(question, answer, hasImage = false) {
+      const entry = {
+        question: question,
+        answer: answer,
+        timestamp: Date.now(),
+        hasImage: hasImage
+      };
+      
+      conversationHistory.unshift(entry); // Add to beginning
+      
+      // Keep max 20 items
+      if (conversationHistory.length > 20) {
+        conversationHistory = conversationHistory.slice(0, 20);
+      }
+      
+      saveHistory();
+      renderHistory();
+    }
+    
+    // Render history list
+    function renderHistory() {
+      historyList.textContent = '';
+
+      if (conversationHistory.length === 0) {
+        const empty = document.createElement('p');
+        empty.style.color = '#8ba3c0';
+        empty.style.textAlign = 'center';
+        empty.style.padding = '20px';
+        empty.textContent = t().noHistory;
+        historyList.appendChild(empty);
+        return;
+      }
+
+      conversationHistory.forEach((entry, index) => {
+        const date = new Date(entry.timestamp);
+        const timeStr = date.toLocaleString(currentLanguage === 'hu' ? 'hu-HU' : 'en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        const imageIndicator = entry.hasImage ? '📸 ' : '';
+        const normalizedAnswer = (entry.answer || '').replace(/\s+/g, ' ').trim();
+        const previewAnswer = normalizedAnswer.length > 140 ? `${normalizedAnswer.slice(0, 140)}…` : normalizedAnswer;
+        const isExpanded = expandedHistoryKey === entry.timestamp;
+
+        const item = document.createElement('div');
+        item.className = `history-item${isExpanded ? ' active' : ''}`;
+        item.dataset.index = String(index);
+
+        const questionEl = document.createElement('div');
+        questionEl.className = 'history-question';
+        const questionStrong = document.createElement('strong');
+        questionStrong.textContent = `❓ ${imageIndicator}${entry.question}`;
+        questionEl.appendChild(questionStrong);
+
+        const previewEl = document.createElement('div');
+        previewEl.className = 'history-preview';
+        previewEl.textContent = `💬 ${previewAnswer}`;
+
+        const metaEl = document.createElement('div');
+        metaEl.className = 'history-meta';
+        const timeEl = document.createElement('span');
+        timeEl.className = 'history-time';
+        timeEl.textContent = `🕒 ${timeStr}`;
+        const toggleEl = document.createElement('span');
+        toggleEl.className = 'history-toggle';
+        toggleEl.textContent = isExpanded ? t().historyHideDetails : t().historyShowDetails;
+        metaEl.appendChild(timeEl);
+        metaEl.appendChild(toggleEl);
+
+        const fullEl = document.createElement('div');
+        fullEl.className = 'history-full';
+        const fullQLabel = document.createElement('div');
+        fullQLabel.className = 'history-full-label';
+        fullQLabel.textContent = t().historyPopupQuestion;
+        const fullQBlock = document.createElement('div');
+        fullQBlock.className = 'history-full-block';
+        fullQBlock.textContent = entry.question;
+        const fullALabel = document.createElement('div');
+        fullALabel.className = 'history-full-label';
+        fullALabel.textContent = t().historyPopupAnswer;
+        const fullABlock = document.createElement('div');
+        fullABlock.className = 'history-full-block';
+        fullABlock.textContent = entry.answer || '';
+        fullEl.appendChild(fullQLabel);
+        fullEl.appendChild(fullQBlock);
+        fullEl.appendChild(fullALabel);
+        fullEl.appendChild(fullABlock);
+
+        item.appendChild(questionEl);
+        item.appendChild(previewEl);
+        item.appendChild(metaEl);
+        item.appendChild(fullEl);
+
+        // Click to expand, drag to "pull out" as pinned box
+        let pullState = null;
+        let suppressClickUntil = 0;
+
+        // When pulling a history entry out into a pinned window, keep the cursor
+        // inside the pinned window header (not outside the top-left corner).
+        const PULL_OUT_GRAB_OFFSET_X = 210;
+        const PULL_OUT_GRAB_OFFSET_Y = 18;
+
+        on(item, 'pointerdown', (ev) => {
+          if (ev.button !== 0) return;
+          pushForceInteractive();
+          pullState = {
+            pointerId: ev.pointerId,
+            startX: ev.clientX,
+            startY: ev.clientY,
+            ts: entry.timestamp,
+            moved: false,
+            pinned: false,
+            noSelect: false
+          };
+          try { item.setPointerCapture(pullState.pointerId); } catch (_) {}
+        });
+
+        on(item, 'pointermove', (ev) => {
+          if (!pullState || ev.pointerId !== pullState.pointerId) return;
+          const dx = ev.clientX - pullState.startX;
+          const dy = ev.clientY - pullState.startY;
+          const dist2 = dx * dx + dy * dy;
+
+          // Once the pointer actually moves, suppress text selection.
+          if (!pullState.noSelect && dist2 > 1) {
+            pullState.noSelect = true;
+            document.body.classList.add('pulling-history');
+            ev.preventDefault();
+          }
+
+          const threshold2 = 9 * 9;
+          if (!pullState.moved && dist2 > threshold2) {
+            pullState.moved = true;
+            suppressClickUntil = Date.now() + 400;
+
+            // Respect max pinned
+            if (pinnedHistoryBoxes.length >= PINNED_HISTORY_MAX) {
+              if (status) status.textContent = t().pinnedLimitReached || '⚠️ Max 3 pinned boxes at once.';
+              pullState = null;
+              return;
+            }
+
+            // Create the pinned WINDOW immediately (DOM ghosts are clipped by the overlay window).
+            const baseScreenX = (typeof ev.screenX === 'number') ? ev.screenX : (window.screenX + ev.clientX);
+            const baseScreenY = (typeof ev.screenY === 'number') ? ev.screenY : (window.screenY + ev.clientY);
+            const startWinX = Math.round(baseScreenX - PULL_OUT_GRAB_OFFSET_X);
+            const startWinY = Math.round(baseScreenY - PULL_OUT_GRAB_OFFSET_Y);
+            // Create pinned window in a special "dragging" mode so it can't steal the pointer.
+            if (pinnedHistoryBoxes.some((b) => b.ts === pullState.ts)) {
+              // already pinned
+            } else {
+              if (pinnedHistoryBoxes.length >= PINNED_HISTORY_MAX) {
+                if (status) status.textContent = t().pinnedLimitReached || '⚠️ Max 3 pinned boxes at once.';
+                pullState = null;
+                return;
+              }
+              pinnedHistoryBoxes.push({ ts: pullState.ts, x: startWinX, y: startWinY, width: 420, height: 300 });
+              savePinnedHistoryBoxes();
+              // Open pinned window with dragging=true so it ignores mouse until drop.
+              const entryRef = getHistoryEntryByTimestamp(pullState.ts);
+              const date = entryRef ? new Date(entryRef.timestamp) : null;
+              const timeStr = date ? date.toLocaleString(currentLanguage === 'hu' ? 'hu-HU' : 'en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : '';
+              fireAndForget(IPC_CHANNELS.PINNED_HISTORY_OPEN, {
+                ts: pullState.ts,
+                question: entry.question,
+                answer: entry.answer || '',
+                meta: timeStr ? `🕒 ${timeStr}` : '…',
+                labels: getPinnedHistoryLabels(),
+                bounds: { x: startWinX, y: startWinY, width: 420, height: 300 },
+                dragging: true
+              });
+            }
+            pullState.pinned = true;
+            try { item.setPointerCapture(pullState.pointerId); } catch (_) {}
+            ev.preventDefault();
+            ev.stopPropagation();
+          }
+
+          if (pullState && pullState.pinned) {
+            const baseScreenX = (typeof ev.screenX === 'number') ? ev.screenX : (window.screenX + ev.clientX);
+            const baseScreenY = (typeof ev.screenY === 'number') ? ev.screenY : (window.screenY + ev.clientY);
+            const nextWinX = Math.round(baseScreenX - PULL_OUT_GRAB_OFFSET_X);
+            const nextWinY = Math.round(baseScreenY - PULL_OUT_GRAB_OFFSET_Y);
+            // Move the pinned window with the cursor.
+            if (ipcRenderer && typeof ipcRenderer.send === 'function') {
+              ipcRenderer.send(IPC_CHANNELS.PINNED_HISTORY_MOVE_BY_TS, pullState.ts, nextWinX, nextWinY);
+            } else {
+              fireAndForget(IPC_CHANNELS.PINNED_HISTORY_MOVE_BY_TS, pullState.ts, nextWinX, nextWinY);
+            }
+            ev.preventDefault();
+          }
+        });
+
+        on(item, 'pointerup', (ev) => {
+          if (!pullState || ev.pointerId !== pullState.pointerId) return;
+          // If we pinned during drag, it's already created and positioned.
+          if (pullState.pinned) {
+            fireAndForget(IPC_CHANNELS.PINNED_HISTORY_END_DRAG, pullState.ts);
+          }
+          try { item.releasePointerCapture(pullState.pointerId); } catch (_) {}
+          document.body.classList.remove('pulling-history');
+          pullState = null;
+          popForceInteractive();
+        });
+
+        on(item, 'pointercancel', (ev) => {
+          if (!pullState || ev.pointerId !== pullState.pointerId) return;
+          // If cancel happens after pin creation, remove it.
+          if (pullState.pinned) {
+            removePinnedHistoryBox(pullState.ts);
+          }
+          try { item.releasePointerCapture(pullState.pointerId); } catch (_) {}
+          document.body.classList.remove('pulling-history');
+          pullState = null;
+          popForceInteractive();
+        });
+
+        on(item, 'click', () => {
+          if (Date.now() < suppressClickUntil) return;
+          toggleHistoryItem(index);
+        });
+        historyList.appendChild(item);
+      });
+    }
+
+    function toggleHistoryItem(index) {
+      const entry = conversationHistory[index];
+      if (!entry) return;
+      expandedHistoryKey = expandedHistoryKey === entry.timestamp ? null : entry.timestamp;
+      renderHistory();
+    }
+    
+    // Legacy popup state cleanup (inline history replaces external popup)
+    localStorage.removeItem(STORAGE_KEYS.HISTORY_POPUP_PINNED);
+    localStorage.removeItem(STORAGE_KEYS.HISTORY_POPUP_LAST_INDEX);
+    
+    // Cleanup funkció - cuando window hide-olódik
+    function cleanupOverlay() {
+      // Speech recognition leállítása
+      if (recognition) {
+        recognition.stop();
+        recognition = null;
+      }
+      
+      // State resetelése (csak a folyamatban lévő dolgok)
+      recording = false;
+      micBtn.textContent = t().mic;
+      status.textContent = t().statusIdle;
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      
+      // NE töröljük:
+      // - currentScreenshot - maradjon meg
+      // - screenshotPreview - látható marad
+      // - responseContainer - válasz megmarad
+      // - questionInput - kérdés szöveg megmarad
+      
+      // Így amikor újra kinyitod, látod az előző választ és screenshot-ot!
+    }
+    
+    // Cleanup IPC handler
+    ipcRenderer.on(IPC_CHANNELS.CLEANUP_OVERLAY, () => {
+      cleanupOverlay();
+    });
+    
+    // Full clear funkció - MINDEN törlése (manuális)
+    function clearAll() {
+      // Speech recognition leállítása
+      if (recognition) {
+        recognition.stop();
+        recognition = null;
+      }
+      
+      // State resetelése
+      recording = false;
+      micBtn.textContent = t().mic;
+      status.textContent = t().statusIdle;
+      questionInput.value = '';
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      
+      // Screenshot törölése
+      currentScreenshot = null;
+      screenshotPreview.style.display = 'none';
+      screenshotPreview.src = '';
+      clearImageBtn.style.display = 'none';
+      screenshotInfo.textContent = t().statusIdle;
+      
+      // Response container elrejtése
+      document.getElementById('responseContainer').style.display = 'none';
+      document.getElementById('aiResponse').textContent = t().statusIdle;
+    }
+    
+    // Bezárás
+    const closeBtn = document.getElementById('closeBtn');
+    on(closeBtn, 'click', () => {
+      // If a detach drag is in-flight, cancel it before hiding; otherwise the
+      // panel can end up in a stuck state after close/reopen.
+      try { window.__cancelAnyDetachGesture && window.__cancelAnyDetachGesture(); } catch (_) {}
+      cleanupOverlay();
+      fireAndForget(IPC_CHANNELS.CLOSE_OVERLAY);
+    });
+
+    function updateInfoButtonText() {
+      if (!infoBtn) return;
+      infoBtn.title = (t().infoBtnTitle || t().infoTitle || 'Info');
+    }
+
+    async function openInfoPanel() {
+      // Open a movable, note-panel-like window instead of a modal.
+      try {
+        await invokeMain(IPC_CHANNELS.INFO_PANEL_OPEN, {});
+      } catch (_) {}
+      holdInteractive(300);
+    }
+
+    on(infoBtn, 'click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openInfoPanel();
+    });
+    
+    function speakResponse(text) {
+      const enableTTS = document.getElementById('enableTTS');
+      if (!enableTTS || !enableTTS.checked) return;
+      const askEnableTTS = document.getElementById('askEnableTTS');
+      if (askEnableTTS && !askEnableTTS.checked) return;
+      
+      if (!window.speechSynthesis) return;
+      const utterance = new SpeechSynthesisUtterance(text);
+      const langTag = mapSpeechLang(currentLanguage);
+      utterance.lang = langTag;
+      const voice = selectedVoice || getBestVoice(langTag);
+      if (voice) {
+        utterance.voice = voice;
+      } else {
+        console.warn(`[TTS] No voice found for language: ${langTag}. Using system default.`);
+      }
+      utterance.rate = 1.0;
+      utterance.volume = Math.min(currentSpeechRate / 100, 1.0); // Fix: volume must be 0-1
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function mapSpeechLang(lang) {
+      switch (lang) {
+        case 'hu': return 'hu-HU';
+        case 'de': return 'de-DE';
+        case 'ru': return 'ru-RU';
+        case 'fr': return 'fr-FR';
+        case 'zh': return 'zh-CN';
+        case 'en':
+        default: return 'en-US';
+      }
+    }
+
+    function getBestVoice(langTag) {
+      const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+      if (!voices.length) return null;
+      
+      // 1. Exact match first (hu-HU, en-US, de-DE, etc.)
+      let match = voices.find(v => v.lang === langTag);
+      if (match) return match;
+      
+      // 2. Base language match (hu, en, de, etc.)
+      const base = langTag.split('-')[0];
+      match = voices.find(v => v.lang && v.lang.split('-')[0] === base);
+      if (match) return match;
+      
+      // 3. Fallback to English if requested language not available
+      if (langTag !== 'en-US') {
+        match = voices.find(v => v.lang === 'en-US' || v.lang.startsWith('en-'));
+        if (match) {
+          console.log(`[TTS] Fallback: Using ${match.name} (${match.lang}) instead of ${langTag}`);
+          return match;
+        }
+      }
+      
+      // 4. Last resort: use first available voice
+      return voices[0] || null;
+    }
+
+    function refreshVoices() {
+      const langTag = mapSpeechLang(currentLanguage);
+      selectedVoice = getBestVoice(langTag);
+      if (!selectedVoice) {
+        console.warn(`[TTS] No voice available for ${currentLanguage} (${langTag}). Install language pack in Windows.`);
+      } else {
+        console.log(`[TTS] Selected voice: ${selectedVoice.name} (${selectedVoice.lang})`);
+      }
+    }
+
+    function updatePlaceholder() {
+      questionInput.placeholder = t().placeholder;
+    }
+
+    // Content filter - tiltott kulcsszavak észlelése
+    function containsForbiddenContent(text) {
+      const lowerText = text.toLowerCase();
+      
+      // Tiltott kulcsszavak (minden nyelven) - CSAK NON-GAME kontextusban!
+      const forbidden = [
+        // Illegális dolgok (EN/HU/DE/RU/FR/ZH) - DE: gaming context OK!
+        'real hack', 'real crack', 'pirate software', 'real bomb', 'real weapon', 'kill real people', 'real murder', 'real drugs',
+        'valódi fegyver', 'valódi bomba', 'valódi drog', 'emberek megölése',
+        'echte waffe', 'echte bombe', 'menschen töten',
+        'настоящее оружие', 'настоящая бомба', 'убийство людей',
+        'vraie arme', 'vraie bombe', 'tuer des gens',
+        '真实武器', '真实炸弹', '杀人',
+        
+        // Szexuális tartalom (EN/HU/DE/RU/FR/ZH)
+        'porn', 'sex', 'nude', 'nsfw', 'xxx', 'adult content', 'erotic',
+        'szex', 'pornó', 'meztelen', 'erotikus',
+        'porno', 'nackt', 'erotisch',
+        'порно', 'секс', 'эротика',
+        'sexe', 'nu', 'érotique',
+        '色情', '性', '裸体',
+        
+        // Prompt injection (EN/HU/DE/RU/FR/ZH)
+        'ignore previous', 'ignore all', 'new instructions', 'forget everything',
+        'you are now', 'act as', 'pretend to be', 'roleplay as',
+        'hagyd figyelmen kívül', 'új utasítás', 'felejts el mindent',
+        'ignoriere vorherige', 'neue anweisungen',
+        'игнорируй предыдущие', 'новые инструкции',
+        'ignore précédent', 'nouvelles instructions',
+        '忽略以前', '新指令'
+      ];
+      
+      // Ellenőrzés
+      for (const word of forbidden) {
+        if (lowerText.includes(word)) {
+          return true;
+        }
+      }
+      
+      return false;
+    }
+
+    function updateOverlayText() {
+      const titleEl = document.querySelector('h2');
+      if (titleEl) {
+        titleEl.textContent = t().title;
+      }
+      if (dragHandle) {
+        const dragLabel = t().dragHandleLabel || '⇕ Move overlay';
+        dragHandle.dataset.label = dragLabel;
+        dragHandle.title = dragLabel;
+      }
+      updateInfoButtonText();
+      const askHeaderLabel = document.getElementById('askHeaderLabel');
+      if (askHeaderLabel) askHeaderLabel.textContent = t().tabAsk;
+      const historyHeaderLabel = document.getElementById('historyHeaderLabel');
+      if (historyHeaderLabel) historyHeaderLabel.textContent = t().tabHistory;
+      const settingsHeaderLabel = document.getElementById('settingsHeaderLabel');
+      if (settingsHeaderLabel) settingsHeaderLabel.textContent = t().tabSettings;
+      micBtn.textContent = t().mic;
+      askBtn.textContent = t().ask;
+      screenshotBtn.textContent = t().screenshot;
+      clearImageBtn.textContent = t().clearImage;
+      clearHistoryBtn.textContent = t().clearHistory;
+      // Tab buttons removed - now using collapsible sections
+      const answerLabel = document.getElementById('answerLabel');
+      if (answerLabel) answerLabel.textContent = t().answer;
+      const askTtsLabel = document.getElementById('askTtsLabel');
+      if (askTtsLabel) askTtsLabel.textContent = t().askTtsLabel;
+      document.getElementById('specLabel').textContent = t().specializationLabel;
+      const specDetail = document.getElementById('specDetail');
+      if (specDetail) specDetail.textContent = t().specializationDetail || specDetail.textContent;
+      const ttsLabel = document.getElementById('ttsLabel');
+      if (ttsLabel) ttsLabel.textContent = t().ttsLabel || ttsLabel.textContent;
+      const overlaySizeLabel = document.getElementById('overlaySizeLabel');
+      if (overlaySizeLabel) overlaySizeLabel.textContent = t().overlaySizeLabel || overlaySizeLabel.textContent;
+      const widthLabel = document.getElementById('widthLabel');
+      if (widthLabel) widthLabel.textContent = t().overlayWidthLabel || widthLabel.textContent;
+      const widthUnit = document.getElementById('widthUnit');
+      if (widthUnit) widthUnit.textContent = t().widthUnit || 'px';
+      const dataLabel = document.getElementById('dataLabel');
+      if (dataLabel) dataLabel.textContent = t().dataLabel || dataLabel.textContent;
+      const exportHistoryBtn = document.getElementById('exportHistoryBtn');
+      if (exportHistoryBtn) exportHistoryBtn.textContent = t().exportHistory || exportHistoryBtn.textContent;
+      const clearAllBtn = document.getElementById('clearAllBtn');
+      if (clearAllBtn) clearAllBtn.textContent = t().clearAllData || clearAllBtn.textContent;
+      const versionLabel = document.getElementById('versionLabel');
+      if (versionLabel) versionLabel.textContent = t().versionLabel || versionLabel.textContent;
+      const layoutLabel = document.getElementById('layoutLabel');
+      if (layoutLabel) layoutLabel.textContent = t().layoutLabel || '🧩 Layout mode:';
+      document.getElementById('resetLayoutBtn').textContent = t().resetLayout;
+      const notePanelBtn = document.getElementById('notePanelBtn');
+      if (notePanelBtn) notePanelBtn.textContent = t().notePanelBtn || '📝 Note panel';
+      updateLayoutToggleText();
+      updatePlaceholder();
+      renderHistory(); // Re-render history with new language
+      updatePinnedUI();
+      syncPinnedHistoryWindows();
+    }
+
+    ipcRenderer.on(IPC_CHANNELS.SET_LANGUAGE, (event, lang) => {
+      currentLanguage = lang || 'en';
+      try {
+        localStorage.setItem(STORAGE_KEYS.OVERLAY_LANGUAGE, currentLanguage);
+      } catch (_) {}
+      updateOverlayText();
+      refreshVoices();
+      __bootLangReady = true;
+      __maybeFinishBoot();
+      
+      // Retry a few times if voices aren't loaded yet (Web Speech API async loading)
+      let retryCount = 0;
+      const retryInterval = setInterval(() => {
+        if (!selectedVoice && retryCount < 5) {
+          refreshVoices();
+          retryCount++;
+        } else {
+          clearInterval(retryInterval);
+        }
+      }, 100); // retry every 100ms
+    });
+
+    ipcRenderer.on(IPC_CHANNELS.SET_SPEECH_RATE, (event, rate) => {
+      currentSpeechRate = rate || 100;
+    });
+
+    // Játék kontextus fogadása
+    let currentGameContext = null;
+    ipcRenderer.on(IPC_CHANNELS.SET_GAME_CONTEXT, (event, gameName) => {
+      currentGameContext = gameName;
+      console.log(`Game context set: ${gameName}`);
+    });
+
+    async function askQuestion() {
+      const text = questionInput.value.trim();
+      if (!text) {
+        status.textContent = t().typeQuestion;
+        return;
+      }
+
+      if (!currentGameContext) {
+        await requestGameContext();
+      }
+      
+      // Content filter ellenőrzés
+      if (containsForbiddenContent(text)) {
+        status.textContent = t().forbiddenContent;
+        return;
+      }
+      
+      if (currentScreenshot) {
+        status.textContent = t().analyzingImage;
+      } else {
+        status.textContent = t().thinking;
+      }
+      
+      askBtn.disabled = true;
+      try {
+        const result = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, text, currentLanguage, parseInt(specializationSlider.value), currentScreenshot, currentGameContext);
+        if (result.success) {
+          status.textContent = t().responseReady;
+          document.getElementById('aiResponse').textContent = result.response;
+          document.getElementById('responseContainer').style.display = 'block';
+          speakResponse(result.response);
+          
+          // Add to history
+          addToHistory(text, result.response, !!currentScreenshot);
+        } else {
+          status.textContent = t().genericErrorPrefix + result.error;
+        }
+      } catch (err) {
+        status.textContent = t().apiErrorPrefix + err.message;
+      } finally {
+        askBtn.disabled = false;
+      }
+    }
+    
+    // Mikrofon gomb click handler
+    on(micBtn, 'click', async () => {
+      if (recording) {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+          recording = false;  // Immediately mark as not recording
+          micBtn.textContent = t().mic;
+          status.textContent = t().processingAudio;
+        }
+        return;
+      }
+      
+      // Request microphone permission
+      try {
+        status.textContent = t().speakNow;
+        micBtn.textContent = t().stop;
+        recording = true;
+        
+        // Capture audio from microphone
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: { 
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          } 
+        });
+        
+        const audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        
+        mediaRecorder.ondataavailable = (event) => {
+          audioChunks.push(event.data);
+        };
+        
+        mediaRecorder.onstop = async () => {
+          // Stop microphone
+          stream.getTracks().forEach(track => track.stop());
+          
+          // Create audio blob
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          
+          status.textContent = t().processingAudio;
+          
+          try {
+            // Send to Whisper API via main process
+            const arrayBuffer = await audioBlob.arrayBuffer();
+            const audioBuffer = Array.from(new Uint8Array(arrayBuffer));
+            
+            const result = await invokeMain(IPC_CHANNELS.PROCESS_AUDIO, audioBuffer, currentLanguage, parseInt(specializationSlider.value));
+            
+            if (result.success) {
+              const transcript = result.transcript;
+              status.textContent = t().transcriptPreview.replace('{text}', transcript);
+              micBtn.textContent = t().mic;
+              recording = false;
+              
+              // Content filter ellenőrzés
+              if (containsForbiddenContent(transcript)) {
+                status.textContent = t().forbiddenContent;
+                return;
+              }
+              
+              // Process the transcript as question
+              if (currentScreenshot) {
+                status.textContent = t().analyzingImage;
+              } else {
+                status.textContent = t().thinking;
+              }
+
+              if (!currentGameContext) {
+                await requestGameContext();
+              }
+              
+              try {
+                const processResult = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, transcript, currentLanguage, parseInt(specializationSlider.value), currentScreenshot, currentGameContext);
+                
+                if (processResult.success) {
+                  document.getElementById('aiResponse').textContent = processResult.response;
+                  document.getElementById('responseContainer').style.display = 'block';
+                  speakResponse(processResult.response);
+                  
+                  // Add to history
+                  addToHistory(transcript, processResult.response, !!currentScreenshot);
+                } else {
+                  status.textContent = t().genericErrorPrefix + processResult.error;
+                }
+              } catch (err) {
+                status.textContent = t().apiErrorPrefix + err.message;
+              }
+            } else {
+              status.textContent = t().transcriptionErrorPrefix + result.error;
+            }
+          } catch (err) {
+            status.textContent = t().audioProcessingErrorPrefix + err.message;
+            console.error('[MIC] Error:', err);
+          } finally {
+            micBtn.textContent = t().mic;
+            recording = false;
+          }
+        };
+        
+        mediaRecorder.start();
+        
+      } catch (err) {
+        status.textContent = t().microphoneErrorPrefix + err.message;
+        micBtn.textContent = t().mic;
+        recording = false;
+        console.error('[MIC] Permission error:', err);
+      }
+    });
+
+    on(askBtn, 'click', askQuestion);
+    on(questionInput, 'keydown', (e) => {
+      if (e.key === 'Enter') {
+        askQuestion();
+      }
+    });
+
+    // Screenshot button
+    on(screenshotBtn, 'click', async () => {
+      try {
+        status.textContent = t().screenshotInProgress;
+        const result = await invokeMain(IPC_CHANNELS.CAPTURE_SCREENSHOT);
+        if (result.success) {
+          currentScreenshot = result.imageData;
+          screenshotPreview.src = result.imageData;
+          screenshotPreview.style.display = 'block';
+          clearImageBtn.style.display = 'block';
+          screenshotInfo.textContent = t().screenshotReady;
+          status.textContent = t().statusIdle;
+        } else {
+          status.textContent = t().screenshotError + result.error;
+        }
+      } catch (err) {
+        status.textContent = t().screenshotError + err.message;
+      }
+    });
+
+    // Clear image button
+    on(clearImageBtn, 'click', () => {
+      currentScreenshot = null;
+      screenshotPreview.style.display = 'none';
+      screenshotPreview.src = '';
+      clearImageBtn.style.display = 'none';
+      screenshotInfo.textContent = t().statusIdle;
+      status.textContent = t().statusIdle;
+    });
+    
+    // Tab buttons - már inicializálva fent
+    
+    // Clear history button
+    on(clearHistoryBtn, 'click', () => {
+      showConfirmModal(
+        t().confirmTitle,
+        t().confirmClearHistory,
+        () => {
+          conversationHistory = [];
+          expandedHistoryKey = null;
+          saveHistory();
+          renderHistory();
+          status.textContent = t().historyCleared;
+        }
+      );
+    });
+
+    // Start with the correct language immediately on first paint.
+    // Main sends the persisted language via `set-language` right after load,
+    // but we also resolve it eagerly here so there is no brief English flash
+    // before the IPC arrives.
+    try {
+      const storedLang = localStorage.getItem(STORAGE_KEYS.OVERLAY_LANGUAGE);
+      if (storedLang && uiText[storedLang]) {
+        currentLanguage = storedLang;
+      }
+    } catch (_) {}
+    updateOverlayText();
+
+    // Eager language init counts as "language ready" for boot gating.
+    // Detached-state still needs to arrive from main before we unhide.
+    __bootLangReady = true;
+    __maybeFinishBoot();
+
+    // Load conversation history (renderHistory is already called from updateOverlayText)
+    loadHistory();
+    
+    async function requestGameContext() {
+      try {
+        const detectedGame = await invokeMain(IPC_CHANNELS.GET_GAME_CONTEXT);
+        if (detectedGame) {
+          currentGameContext = detectedGame;
+          console.log(`[GAME] Context resolved: ${detectedGame}`);
+        }
+      } catch (err) {
+        console.error('[IPC] get-game-context failed:', err);
+      }
+    }
+
+    // Request current game context on startup (with retry)
+    requestGameContext();
+    
+    // Retry after a short delay if not set
+    setTimeout(() => {
+      if (!currentGameContext) {
+        console.log('[GAME] No game context yet, retrying...');
+        requestGameContext();
+      }
+    }, 500);
+
+    
+    // Load pinned tabs
+    loadPinnedTabs();
+
+    // Load note panel persisted bounds (separate window)
+    loadNotePanelBounds();
+
+    // Sync pinned history windows
+    syncPinnedHistoryWindows();
+    
+    // Settings: TTS toggle
+    const enableTTS = document.getElementById('enableTTS');
+    const savedTTS = localStorage.getItem(STORAGE_KEYS.ENABLE_TTS);
+    if (savedTTS !== null) {
+      enableTTS.checked = savedTTS === 'true';
+    }
+    on(enableTTS, 'change', () => {
+      localStorage.setItem(STORAGE_KEYS.ENABLE_TTS, enableTTS.checked);
+    });
+    
+    // Export history
+    window.exportHistory = function() {
+      const dataStr = JSON.stringify(conversationHistory, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `game-assistant-history-${Date.now()}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      status.textContent = t().historyExported;
+    };
+    
+    // Clear all data
+    // Custom modal functions
+    let pendingConfirmAction = null;
+
+    const closeConfirmModal = () => {
+      if (!confirmModal.classList.contains('active')) {
+        pendingConfirmAction = null;
+        return;
+      }
+      confirmModal.classList.remove('active');
+      fireAndForget(IPC_CHANNELS.WINDOW_ACTION, 'restore-temp');
+      pendingConfirmAction = null;
+    };
+
+    on(modalConfirm, 'click', () => {
+      const action = pendingConfirmAction;
+      closeConfirmModal();
+      if (action) {
+        action();
+      }
+    });
+
+    on(modalCancel, 'click', closeConfirmModal);
+
+    on(confirmModal, 'click', (e) => {
+      if (e.target === confirmModal) {
+        closeConfirmModal();
+      }
+    });
+
+    function showConfirmModal(title, message, onConfirm, confirmBtnText = null) {
+      modalTitle.textContent = title;
+      modalMessage.textContent = message;
+      modalCancel.textContent = t().btnCancel;
+      modalConfirm.textContent = confirmBtnText || t().btnDelete;
+      pendingConfirmAction = onConfirm;
+      fireAndForget(IPC_CHANNELS.WINDOW_ACTION, 'maximize-temp');
+      confirmModal.classList.add('active');
+    }
+
+    window.clearAllData = function() {
+      showConfirmModal(
+        t().confirmTitle,
+        t().confirmClearAll,
+        () => {
+          localStorage.clear();
+          conversationHistory = [];
+          expandedHistoryKey = null;
+          pinnedTabs.clear();
+          pinnedHistoryBoxes = [];
+          fireAndForget(IPC_CHANNELS.PINNED_HISTORY_CLOSE_ALL);
+          updatePinnedUI();
+          renderPinnedContent();
+          renderHistory();
+          status.textContent = t().allDataCleared;
+        }
+      );
+    };
+
+    // Drag handle delegates to OS via -webkit-app-region; track and persist native window position
+    // IMPORTANT: Only the MAIN overlay window is allowed to persist `overlayPositionX/Y`.
+    // Detached panel windows use the same origin/localStorage, so if they write these keys,
+    // the main overlay can "jump" to the detached window position after Ctrl+R/reset.
+
+    let suppressOverlayPositionPersistence = false;
+
+    function suppressOverlayPositionPersistenceNow() {
+      suppressOverlayPositionPersistence = true;
+    }
+
+    function applySavedOverlayPosition() {
+      if (__isDetachedPanelWindow) return;
+      const rawX = localStorage.getItem(STORAGE_KEYS.OVERLAY_POSITION_X);
+      const rawY = localStorage.getItem(STORAGE_KEYS.OVERLAY_POSITION_Y);
+      if (rawX === null || rawY === null) return;
+      const savedX = Number(rawX);
+      const savedY = Number(rawY);
+      if (!Number.isNaN(savedX) && !Number.isNaN(savedY) && Number.isFinite(savedX) && Number.isFinite(savedY)) {
+        const viewportWidth = window.screen.availWidth || window.innerWidth;
+        const viewportHeight = window.screen.availHeight || window.innerHeight;
+        const clampedX = Math.min(Math.max(savedX, 0), Math.max(0, viewportWidth - window.innerWidth));
+        const clampedY = Math.min(Math.max(savedY, 0), Math.max(0, viewportHeight - window.innerHeight));
+        // Apply immediately so the window doesn't visibly "jump" after showing.
+        sendOverlayResizeBatched({ x: clampedX, y: clampedY });
+      }
+    }
+
+    if (!__isDetachedPanelWindow) {
+      applySavedOverlayPosition();
+    }
+
+    let lastWindowX = window.screenX;
+    let lastWindowY = window.screenY;
+
+    function trackWindowPosition() {
+      if (!__isDetachedPanelWindow && !suppressOverlayPositionPersistence) {
+        if (window.screenX !== lastWindowX || window.screenY !== lastWindowY) {
+          lastWindowX = window.screenX;
+          lastWindowY = window.screenY;
+          localStorage.setItem(STORAGE_KEYS.OVERLAY_POSITION_X, lastWindowX);
+          localStorage.setItem(STORAGE_KEYS.OVERLAY_POSITION_Y, lastWindowY);
+        }
+      }
+      requestAnimationFrame(trackWindowPosition);
+    }
+
+    trackWindowPosition();
+
+    const dragHandleFlushThreshold = 32; // px from top of monitor where the grip should compress
+
+    function monitorDragHandlePosition() {
+      if (!dragHandle) return;
+      const isFlushTop = window.screenY <= dragHandleFlushThreshold;
+      dragHandle.classList.toggle('flush-top', isFlushTop);
+      requestAnimationFrame(monitorDragHandlePosition);
+    }
+
+    monitorDragHandlePosition();
+
+    // Note panel (separate overlay element)
+    const notePanelBtn = document.getElementById('notePanelBtn');
+    if (notePanelBtn) {
+      on(notePanelBtn, 'click', (ev) => {
+        if (ev) ev.stopPropagation();
+        openNotePanel().catch((err) => {
+          console.error('[NOTE] Failed to open note panel:', err);
+        });
+      });
+    }
+
+    // Reset layout function
+    const resetLayoutBtn = document.getElementById('resetLayoutBtn');
+    on(resetLayoutBtn, 'click', () => {
+      showConfirmModal(
+        t().confirmTitle,
+        t().resetLayout,
+        () => {
+          // Prevent any rAF-based window position tracking from re-saving x/y
+          // after we clear the stored layout keys.
+          suppressOverlayPositionPersistenceNow();
+
+          // Cancel any in-flight move/resize batching so no late x/y updates can
+          // flush right as we reset/reload.
+          try { cancelResize && cancelResize(); } catch (_) {}
+          try { cancelWindowDrag && cancelWindowDrag(); } catch (_) {}
+          try { cancelPendingOverlayResize && cancelPendingOverlayResize(); } catch (_) {}
+
+          // Visually hide the overlay immediately so header slots or layout jumps
+          // during reset are never seen by the user.
+          try {
+            document.body.style.opacity = '0';
+          } catch (_) {}
+
+          // Belt-and-suspenders: hide the main overlay container and sections
+          // immediately so no header/dockable area can flash during reset.
+          try {
+            const container = document.getElementById('overlay-container');
+            if (container) container.style.display = 'none';
+          } catch (_) {}
+          try {
+            const sections = document.querySelector('.sections-container');
+            if (sections) sections.style.display = 'none';
+          } catch (_) {}
+
+          // Also ask main to hide the overlay window itself (virtual visibility off)
+          // so any BrowserWindow size/position changes happen fully off-screen.
+          // NOTE: do not toggle virtual visibility here; otherwise after reload the
+          // overlay can remain hidden until the user re-opens it.
+
+          // Clear all layout-related localStorage
+          localStorage.removeItem(STORAGE_KEYS.OVERLAY_POSITION_X);
+          localStorage.removeItem(STORAGE_KEYS.OVERLAY_POSITION_Y);
+          localStorage.removeItem(STORAGE_KEYS.OVERLAY_WIDTH);
+          localStorage.removeItem(LAYOUT_STORAGE_KEY);
+          localStorage.removeItem(STORAGE_KEYS.PINNED_TABS);
+          localStorage.removeItem(PINNED_HISTORY_KEY);
+          localStorage.removeItem(NOTE_PANEL_BOUNDS_KEY);
+          
+          // Unpin all tabs
+          pinnedTabs.clear();
+          pinnedHistoryBoxes = [];
+
+          // Close any pinned windows
+          fireAndForget(IPC_CHANNELS.PINNED_HISTORY_CLOSE_ALL);
+          fireAndForget(IPC_CHANNELS.NOTE_PANEL_CLOSE);
+          fireAndForget(IPC_CHANNELS.DETACHED_PANEL_CLOSE_ALL);
+          
+          // Send reset position to main process
+          fireAndForget(IPC_CHANNELS.WINDOW_ACTION, 'reset-position');
+          
+          // Reload window to reset everything
+          setTimeout(() => {
+            location.reload();
+          }, 100);
+        },
+        t().btnReset  // Custom button text for reset
+      );
+    });
+
+    // Ensure voices are loaded (some engines load async)
+    if (window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        refreshVoices();
+      };
+      window.speechSynthesis.getVoices();
+    }
+
+    // Dev reload hardening: intercept Ctrl+R / F5 so we can hide the overlay
+    // before navigation begins (prevents any single-frame header flicker).
+    if (!__isDetachedPanelWindow) {
+      try {
+        on(window, 'keydown', (e) => {
+          const key = String(e && e.key || '').toLowerCase();
+          const wantsReload = (key === 'r' && (e.ctrlKey || e.metaKey)) || key === 'f5';
+          if (!wantsReload) return;
+          try {
+            e.preventDefault();
+            e.stopPropagation();
+          } catch (_) {}
+
+          // Freeze position persistence during reload. This avoids any late writes
+          // from transient states right before navigation.
+          suppressOverlayPositionPersistenceNow();
+
+          // Drop any queued move/resize updates before navigation begins.
+          try { cancelResize && cancelResize(); } catch (_) {}
+          try { cancelWindowDrag && cancelWindowDrag(); } catch (_) {}
+          try { cancelPendingOverlayResize && cancelPendingOverlayResize(); } catch (_) {}
+
+          try {
+            document.body.style.opacity = '0';
+          } catch (_) {}
+          try {
+            const container = document.getElementById('overlay-container');
+            if (container) container.style.display = 'none';
+          } catch (_) {}
+          try {
+            const sections = document.querySelector('.sections-container');
+            if (sections) sections.style.display = 'none';
+          } catch (_) {}
+          setTimeout(() => {
+            try { location.reload(); } catch (_) {}
+          }, 0);
+        }, true);
+      } catch (_) {}
+    }
+  </script>
+
+  <script src="./src/renderer/overlay/settings-controls.js"></script>
+
+</body>
+</html>

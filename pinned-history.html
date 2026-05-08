@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pinned</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    #root {
+      position: fixed;
+      inset: 0;
+      pointer-events: auto;
+      display: flex;
+    }
+
+    .panel {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: rgba(26, 31, 46, 0.72);
+      border: 1px solid rgba(91, 158, 255, 0.4);
+      border-radius: 14px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+      overflow: hidden;
+    }
+
+    .resize-handle {
+      position: absolute;
+      background: transparent;
+      z-index: 10;
+      pointer-events: auto;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .resize-handle:hover {
+      background: transparent;
+    }
+
+    .resize-handle-left {
+      left: 0;
+      top: 0;
+      width: 10px;
+      height: 100%;
+      cursor: ew-resize;
+    }
+
+    .resize-handle-left::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 32px;
+      border-radius: 2px;
+      background: rgba(91, 158, 255, 0.18);
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    .resize-handle-left:hover::before {
+      background: rgba(91, 158, 255, 0.18);
+    }
+
+    .resize-handle-right {
+      right: 0;
+      top: 0;
+      width: 10px;
+      height: 100%;
+      cursor: ew-resize;
+    }
+
+    .resize-handle-right::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 32px;
+      border-radius: 2px;
+      background: rgba(91, 158, 255, 0.18);
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    .resize-handle-right:hover::before {
+      background: rgba(91, 158, 255, 0.18);
+    }
+
+    .resize-handle-bottom {
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 10px;
+      cursor: ns-resize;
+    }
+
+    .resize-handle-bottom::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 34px;
+      height: 2px;
+      border-radius: 2px;
+      background: rgba(91, 158, 255, 0.18);
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    .resize-handle-bottom:hover::before {
+      background: rgba(91, 158, 255, 0.18);
+    }
+
+    .resize-handle-corner {
+      right: 0;
+      bottom: 0;
+      width: 16px;
+      height: 16px;
+      cursor: nwse-resize;
+    }
+
+    .resize-handle-corner::before {
+      content: '';
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      background: repeating-linear-gradient(
+        135deg,
+        rgba(91, 158, 255, 0.16) 0px,
+        rgba(91, 158, 255, 0.16) 2px,
+        rgba(91, 158, 255, 0.00) 2px,
+        rgba(91, 158, 255, 0.00) 4px
+      );
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    .resize-handle-corner:hover::before {
+      background: repeating-linear-gradient(
+        135deg,
+        rgba(91, 158, 255, 0.16) 0px,
+        rgba(91, 158, 255, 0.16) 2px,
+        rgba(91, 158, 255, 0.00) 2px,
+        rgba(91, 158, 255, 0.00) 4px
+      );
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: rgba(91, 158, 255, 0.08);
+      color: #f5f7fa;
+      font-weight: 600;
+      font-size: 0.85em;
+      user-select: none;
+      cursor: grab;
+      gap: 10px;
+    }
+
+    .header:active {
+      cursor: grabbing;
+    }
+
+    .meta {
+      color: #8ba3c0;
+      font-weight: 500;
+      font-size: 0.9em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .body {
+      padding: 10px 12px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+    }
+
+    .body::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .body::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 6px;
+    }
+
+    .label {
+      font-size: 0.72em;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #8ba3c0;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .block {
+      padding: 8px;
+      background: rgba(15, 23, 42, 0.45);
+      border-radius: 10px;
+      color: #f5f7fa;
+      line-height: 1.35;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid rgba(91, 158, 255, 0.16);
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div class="panel">
+      <div class="header" id="dragHeader">
+        <div id="title">📌 Pinned history</div>
+        <div class="meta" id="meta">…</div>
+      </div>
+      <div class="resize-handle resize-handle-left" id="resizeLeft"></div>
+      <div class="resize-handle resize-handle-right" id="resizeRight"></div>
+      <div class="resize-handle resize-handle-bottom" id="resizeBottom"></div>
+      <div class="resize-handle resize-handle-corner" id="resizeCorner"></div>
+      <div class="body" id="content">
+        <div class="label" id="qLabel">Question</div>
+        <div class="block" id="qText"></div>
+        <div class="label" id="aLabel">Answer</div>
+        <div class="block" id="aText"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    const { IPC_CHANNELS } = require('./src/shared/ipc-channels');
+
+    const dragHeader = document.getElementById('dragHeader');
+    const titleEl = document.getElementById('title');
+    const metaEl = document.getElementById('meta');
+    const qLabelEl = document.getElementById('qLabel');
+    const aLabelEl = document.getElementById('aLabel');
+    const qTextEl = document.getElementById('qText');
+    const aTextEl = document.getElementById('aText');
+
+    const resizeLeft = document.getElementById('resizeLeft');
+    const resizeRight = document.getElementById('resizeRight');
+    const resizeBottom = document.getElementById('resizeBottom');
+    const resizeCorner = document.getElementById('resizeCorner');
+
+    let pinnedTs = null;
+    let dragState = null;
+    let dragOutMode = false;
+
+    function syncClickThrough(allowThrough) {
+      ipcRenderer.invoke(IPC_CHANNELS.SET_CLICK_THROUGH, !!allowThrough).catch(() => {});
+    }
+
+    function isInteractiveTarget(target) {
+      return !!(target && document.body.contains(target));
+    }
+
+    let hovered = false;
+    let forceInteractiveCount = 0;
+
+    function pushForceInteractive() {
+      forceInteractiveCount += 1;
+      hovered = true;
+      syncClickThrough(false);
+    }
+
+    function popForceInteractive() {
+      forceInteractiveCount = Math.max(0, forceInteractiveCount - 1);
+      if (forceInteractiveCount > 0) return;
+      syncClickThrough(!hovered);
+    }
+
+    document.addEventListener('pointerover', (ev) => {
+      if (dragOutMode) return;
+      if (hovered) return;
+      if (isInteractiveTarget(ev.target)) {
+        hovered = true;
+        syncClickThrough(false);
+      }
+    }, true);
+
+    document.addEventListener('pointerout', (ev) => {
+      if (dragOutMode) return;
+      if (forceInteractiveCount > 0) return;
+      if (!hovered) return;
+      if (!isInteractiveTarget(ev.target)) return;
+      if (isInteractiveTarget(ev.relatedTarget)) return;
+      hovered = false;
+      syncClickThrough(true);
+    }, true);
+
+    function applyPayload(payload) {
+      if (!payload) return;
+      pinnedTs = typeof payload.ts === 'number' ? payload.ts : pinnedTs;
+
+      // If this window was created during overlay drag-out, keep it click-through so it can't steal the pointer.
+      // The overlay/main ends this mode on pointerup.
+      const nextDragOutMode = !!payload.dragging;
+      const exitingDragOut = dragOutMode && !nextDragOutMode;
+      dragOutMode = nextDragOutMode;
+      if (dragOutMode || exitingDragOut) {
+        hovered = false;
+        forceInteractiveCount = 0;
+        // Start in click-through mode and let hover/capture make it interactive.
+        syncClickThrough(true);
+      }
+
+      const labels = payload.labels || {};
+      if (labels.title) titleEl.textContent = labels.title;
+      if (labels.question) qLabelEl.textContent = labels.question;
+      if (labels.answer) aLabelEl.textContent = labels.answer;
+
+      if (Object.prototype.hasOwnProperty.call(payload, 'meta')) {
+        metaEl.textContent = payload.meta || '';
+      }
+      if (Object.prototype.hasOwnProperty.call(payload, 'question')) {
+        qTextEl.textContent = payload.question || '';
+      }
+      if (Object.prototype.hasOwnProperty.call(payload, 'answer')) {
+        aTextEl.textContent = payload.answer || '';
+      }
+    }
+
+    ipcRenderer.on(IPC_CHANNELS.PINNED_HISTORY_INIT, (_event, payload) => {
+      applyPayload(payload);
+    });
+
+    ipcRenderer.on(IPC_CHANNELS.PINNED_HISTORY_UPDATE, (_event, payload) => {
+      applyPayload(payload);
+    });
+
+    function pointerToScreen(ev) {
+      // window.screenX/screenY represent top-left of this BrowserWindow.
+      return {
+        x: Math.round(window.screenX + ev.clientX),
+        y: Math.round(window.screenY + ev.clientY)
+      };
+    }
+
+    let pendingMove = null;
+    let moveRaf = null;
+
+    function requestMoveWindow(x, y) {
+      pendingMove = { x, y };
+      if (moveRaf) return;
+      moveRaf = requestAnimationFrame(() => {
+        moveRaf = null;
+        const next = pendingMove;
+        pendingMove = null;
+        if (!next) return;
+        // Fire-and-forget to avoid main-process IPC backlog and lag.
+        ipcRenderer.send(IPC_CHANNELS.PINNED_HISTORY_MOVE, { x: next.x, y: next.y });
+      });
+    }
+
+    let pendingBounds = null;
+    let boundsRaf = null;
+
+    function requestSetBounds(bounds) {
+      pendingBounds = bounds;
+      if (boundsRaf) return;
+      boundsRaf = requestAnimationFrame(() => {
+        boundsRaf = null;
+        const next = pendingBounds;
+        pendingBounds = null;
+        if (!next) return;
+        ipcRenderer.send(IPC_CHANNELS.PINNED_HISTORY_SET_BOUNDS, next);
+      });
+    }
+
+    function getPointerScreen(ev) {
+      const screenX = (typeof ev.screenX === 'number') ? ev.screenX : (window.screenX + ev.clientX);
+      const screenY = (typeof ev.screenY === 'number') ? ev.screenY : (window.screenY + ev.clientY);
+      return { x: Math.round(screenX), y: Math.round(screenY) };
+    }
+
+    const MIN_WIDTH = 240;
+    const MIN_HEIGHT = 140;
+
+    const SNAP_WIDTHS = [320, 360, 420, 520, 640, 760];
+    const SNAP_HEIGHTS = [200, 240, 300, 380, 480, 600];
+    const SNAP_THRESHOLD_PX = 24;
+
+    function snapTo(value, candidates, thresholdPx) {
+      const current = Math.round(value);
+      let best = null;
+      let bestDist = Infinity;
+      for (const c of candidates) {
+        const dist = Math.abs(current - c);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = c;
+        }
+      }
+      if (best == null) return current;
+      return bestDist <= thresholdPx ? best : current;
+    }
+
+    let resizeState = null;
+
+    function beginResize(ev, edge) {
+      if (ev.button !== 0) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (dragOutMode) return;
+
+      pushForceInteractive();
+      const pt = getPointerScreen(ev);
+      resizeState = {
+        pointerId: ev.pointerId,
+        edge,
+        startScreenX: pt.x,
+        startScreenY: pt.y,
+        startBounds: { x: window.screenX, y: window.screenY, width: window.innerWidth, height: window.innerHeight }
+      };
+
+      try { ev.currentTarget.setPointerCapture(resizeState.pointerId); } catch (_) {}
+    }
+
+    function onResizeMove(ev) {
+      if (!resizeState || ev.pointerId !== resizeState.pointerId) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      const pt = getPointerScreen(ev);
+      const dx = pt.x - resizeState.startScreenX;
+      const dy = pt.y - resizeState.startScreenY;
+      const b = resizeState.startBounds;
+
+      let nextX = b.x;
+      let nextY = b.y;
+      let nextW = b.width;
+      let nextH = b.height;
+
+      if (resizeState.edge === 'right') {
+        nextW = b.width + dx;
+      } else if (resizeState.edge === 'bottom') {
+        nextH = b.height + dy;
+      } else if (resizeState.edge === 'corner') {
+        nextW = b.width + dx;
+        nextH = b.height + dy;
+      } else if (resizeState.edge === 'left') {
+        nextX = b.x + dx;
+        nextW = b.width - dx;
+      }
+
+      nextW = Math.max(MIN_WIDTH, Math.round(nextW));
+      nextH = Math.max(MIN_HEIGHT, Math.round(nextH));
+      nextX = Math.round(nextX);
+      nextY = Math.round(nextY);
+
+      requestSetBounds({ x: nextX, y: nextY, width: nextW, height: nextH });
+    }
+
+    function endResize(ev) {
+      if (!resizeState || ev.pointerId !== resizeState.pointerId) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      try { ev.currentTarget.releasePointerCapture(resizeState.pointerId); } catch (_) {}
+
+      // Snap on release so the resize feels natural while dragging.
+      const edge = resizeState.edge;
+      const currentRight = window.screenX + window.innerWidth;
+      const currentBottom = window.screenY + window.innerHeight;
+
+      let nextW = Math.max(MIN_WIDTH, snapTo(window.innerWidth, SNAP_WIDTHS, SNAP_THRESHOLD_PX));
+      let nextH = Math.max(MIN_HEIGHT, snapTo(window.innerHeight, SNAP_HEIGHTS, SNAP_THRESHOLD_PX));
+      let nextX = window.screenX;
+      let nextY = window.screenY;
+
+      if (edge === 'left') {
+        nextX = Math.round(currentRight - nextW);
+      }
+      // For right/bottom/corner, keep x/y fixed.
+
+      requestSetBounds({ x: Math.round(nextX), y: Math.round(nextY), width: Math.round(nextW), height: Math.round(nextH) });
+
+      resizeState = null;
+      popForceInteractive();
+
+      if (pinnedTs != null) {
+        // Commit after the snap-bound update has had a chance to apply.
+        setTimeout(() => {
+          ipcRenderer.send(IPC_CHANNELS.PINNED_HISTORY_COMMIT_BOUNDS, { ts: pinnedTs });
+        }, 0);
+      }
+    }
+
+    function cancelResize(ev) {
+      if (!resizeState || ev.pointerId !== resizeState.pointerId) return;
+      try { ev.currentTarget.releasePointerCapture(resizeState.pointerId); } catch (_) {}
+      resizeState = null;
+      popForceInteractive();
+    }
+
+    dragHeader.addEventListener('pointerdown', (ev) => {
+      if (ev.button !== 0) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      pushForceInteractive();
+      const screenX = (typeof ev.screenX === 'number') ? ev.screenX : (window.screenX + ev.clientX);
+      const screenY = (typeof ev.screenY === 'number') ? ev.screenY : (window.screenY + ev.clientY);
+      dragState = {
+        pointerId: ev.pointerId,
+        // Keep a constant grab offset from pointer to window top-left.
+        offsetX: Math.round(screenX - window.screenX),
+        offsetY: Math.round(screenY - window.screenY)
+      };
+
+      try { dragHeader.setPointerCapture(dragState.pointerId); } catch (_) {}
+    });
+
+    dragHeader.addEventListener('pointermove', (ev) => {
+      if (!dragState || ev.pointerId !== dragState.pointerId) return;
+      ev.preventDefault();
+      const screenX = (typeof ev.screenX === 'number') ? ev.screenX : (window.screenX + ev.clientX);
+      const screenY = (typeof ev.screenY === 'number') ? ev.screenY : (window.screenY + ev.clientY);
+      const nextX = Math.round(screenX - dragState.offsetX);
+      const nextY = Math.round(screenY - dragState.offsetY);
+      requestMoveWindow(nextX, nextY);
+    });
+
+    dragHeader.addEventListener('pointerup', async (ev) => {
+      if (!dragState || ev.pointerId !== dragState.pointerId) return;
+      ev.preventDefault();
+      try { dragHeader.releasePointerCapture(dragState.pointerId); } catch (_) {}
+      dragState = null;
+      popForceInteractive();
+
+      const pt = pointerToScreen(ev);
+      await ipcRenderer.invoke(IPC_CHANNELS.PINNED_HISTORY_DROP, {
+        ts: pinnedTs,
+        pointerScreenX: pt.x,
+        pointerScreenY: pt.y,
+        winX: window.screenX,
+        winY: window.screenY,
+        width: window.innerWidth,
+        height: window.innerHeight
+      }).catch(() => {});
+    });
+
+    dragHeader.addEventListener('pointercancel', (ev) => {
+      if (!dragState || ev.pointerId !== dragState.pointerId) return;
+      try { dragHeader.releasePointerCapture(dragState.pointerId); } catch (_) {}
+      dragState = null;
+      popForceInteractive();
+    });
+
+    // Resize handles
+    const resizeHandles = [
+      { el: resizeLeft, edge: 'left' },
+      { el: resizeRight, edge: 'right' },
+      { el: resizeBottom, edge: 'bottom' },
+      { el: resizeCorner, edge: 'corner' }
+    ];
+
+    resizeHandles.forEach(({ el, edge }) => {
+      if (!el) return;
+      el.addEventListener('pointerdown', (ev) => beginResize(ev, edge));
+      el.addEventListener('pointermove', onResizeMove);
+      el.addEventListener('pointerup', endResize);
+      el.addEventListener('pointercancel', cancelResize);
+    });
+  </script>
+</body>
+</html>
