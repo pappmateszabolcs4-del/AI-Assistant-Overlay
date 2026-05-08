@@ -302,15 +302,6 @@
 | Drag handle visual size | Medium | ✅ Fixed |
 | History popup focus freeze | Critical | ✅ Fixed |
 
-### 📖 Documentation Updates
-
-- **LEARNINGS.md**: Added "Feb 6, 2026 - Overlay Drag Handle & Layout Polish" section (300+ lines)
-  - Documented all 5 fixes with root causes and solutions
-  - Added "Critical Learning: CSS Context Matching After Structural Changes"
-  - Architecture patterns for manual drag, click-through, container shrink-wrap
-  - Current UI state and pending polish items
-- **LEARNINGS.md**: Added "Feb 6, 2026 - Inline History Expansion (Popup Retired)" section covering the inline UX, IPC cleanup, and historical context
-
 ### 💾 Backup Files Created
 
 - `backups/overlay.html.backup.v6` ✅ (2869 lines)
@@ -377,14 +368,13 @@
 - npm run cleanup - Code quality metrics command
 
 #### Documentation
-- README.md - User guide and feature overview
-- LEARNINGS.md - 1177 lines of technical notes and lessons
-- AUDIT_REPORT.md - Comprehensive 570-line technical audit
-- PROJECT_STATUS.md - Executive summary
-- SESSION_FINAL_REPORT.md - Session completion report
-- DEPLOYMENT_GUIDE.md - Release preparation guide
-- DOCUMENTATION_INDEX.md - Navigation and organization guide
-- COMPLETION_SUMMARY.md - Final delivery summary
+- User guide and feature overview
+- Learnings log with technical notes and lessons
+- Comprehensive technical audit
+- Executive summary
+- Session completion report
+- Release preparation guide
+- Delivery summary
 
 ### 🔧 Changed
 
@@ -405,7 +395,7 @@
 - Simplified Whisper audio handler (returns transcript directly)
 - Improved error handling with contextual messages
 - Cleaned debug logs for production release
-- Updated copilot-instructions.md with completion status
+- Updated assistant guidance with completion status
 
 #### Architecture Improvements
 - Enhanced game detection with fallback window scanning (120+ game patterns)
@@ -465,8 +455,8 @@ Known Issues: 2-3 (for v1.1)
 ### 📚 Documentation
 
 - 3,361 total lines of documentation created
-- LEARNINGS.md: 19+ identified issues documented with solutions
-- AUDIT_REPORT.md: Complete technical architecture analysis
+- 19+ identified issues documented with solutions
+- Complete technical architecture analysis
 - Comprehensive deployment and handoff guides
 - Clear roadmap for v1.1 and v2.0
 
@@ -523,17 +513,6 @@ Known Issues: 2-3 (for v1.1)
 - [ ] Automated update mechanism (electron-updater)
 - [ ] Crash reporting (Sentry)
 - [ ] Analytics (privacy-respecting)
-
----
-
-## 🔗 Related Documents
-
-- [LEARNINGS.md](LEARNINGS.md) - Detailed issue tracking and solutions
-- [AUDIT_REPORT.md](AUDIT_REPORT.md) - Complete technical audit
-- [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) - Release preparation steps
-- [PROJECT_STATUS.md](PROJECT_STATUS.md) - Current project health
-- [SESSION_FINAL_REPORT.md](SESSION_FINAL_REPORT.md) - Session outcomes
-- [COMPLETION_SUMMARY.md](COMPLETION_SUMMARY.md) - Final delivery status
 
 ---
 
@@ -603,15 +582,15 @@ Known Issues: 2-3 (for v1.1)
 ## 📞 Support & Contributing
 
 ### Getting Help
-1. Check LEARNINGS.md for known issues
-2. Review AUDIT_REPORT.md for architecture
-3. Read DEPLOYMENT_GUIDE.md for setup
+1. Check the learnings log for known issues
+2. Review the technical audit for architecture
+3. Follow the deployment guide for setup
 4. Run `npm run check` for code issues
 
 ### Contributing
-1. Review copilot-instructions.md
+1. Review assistant guidance
 2. Follow development best practices
-3. Update LEARNINGS.md with findings
+3. Update the learnings log with findings
 4. Test thoroughly in Terraria
 5. Create backups before refactoring
 

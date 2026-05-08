@@ -84,7 +84,7 @@ src/
 - All existing behavior preserved (verified by npm run check + manual smoke).
 - No build step added.
 - No circular imports introduced (simple require graph).
-- ARCHITECTURE_REFACTOR_PLAN.md updated with checked items.
+- Plan updated with checked items.
 
 ## TODO (Architecture Expansion)
 - [x] Phase 1: finish registry extraction (centralize window refs + flags).

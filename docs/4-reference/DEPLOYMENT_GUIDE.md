@@ -111,18 +111,12 @@ git push origin v1.0
 
 ## 🔑 KEY FILES TO REVIEW
 
-### For Understanding the Project
-1. **SESSION_FINAL_REPORT.md** (this file's parent) - Session summary
-2. **AUDIT_REPORT.md** - Comprehensive technical audit (3000+ lines)
-3. **PROJECT_STATUS.md** - Executive summary (quick read)
-4. **LEARNINGS.md** - Technical lessons & issues found
-
 ### For Development
 1. **main.js** - Electron main process (1290 lines)
 2. **overlay.html** - User interface (2340 lines)
 3. **bug-checker.js** - Issue detector
 4. **cleanup.js** - Code quality tool
-5. **copilot-instructions.md** - AI assistant guide
+5. **Assistant guidance** - AI usage rules
 
 ### For Operations
 1. **.env** - Configuration (API key)
@@ -136,7 +130,7 @@ git push origin v1.0
 
 ### Sacred Rules (Never Break)
 1. **Never auto-delete backup files** - They're precious
-2. **Always update LEARNINGS.md** - Keep historical record
+2. **Always update the learnings log** - Keep historical record
 3. **Test in Terraria** - Real-world validation
 4. **Keep 6-language support** - Market requirement
 5. **Document all decisions** - For future reference
@@ -198,17 +192,17 @@ Status: ✅ WORKING
 2. Run `npm run check` to detect patterns
 3. Add translations to all 6 languages
 4. Test with Terraria gameplay
-5. Document in LEARNINGS.md
+5. Document in the learnings log
 6. Create backup (vX+1)
 7. Commit with description
 
 ### Fix a Bug
 1. Create vX backup before changes
-2. Identify root cause (check LEARNINGS.md first)
+2. Identify root cause (check the learnings log first)
 3. Implement fix with defensive coding
 4. Test in Terraria (30 min minimum)
 5. Run `npm run check` for regressions
-6. Document in LEARNINGS.md
+6. Document in the learnings log
 7. Commit with reference to issue
 
 ### Optimize Performance
@@ -217,7 +211,7 @@ Status: ✅ WORKING
 3. Implement optimization
 4. Benchmark again
 5. Compare: before vs after
-6. Document improvement in LEARNINGS.md
+6. Document improvement in the learnings log
 
 ---
 

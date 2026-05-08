@@ -41,7 +41,7 @@
 | Implement game detection | ✅ COMPLETE | 3-trigger comprehensive coverage |
 | Prevent future bugs | ✅ COMPLETE | bug-checker.js created |
 | Audit full project | ✅ COMPLETE | 2,000+ line comprehensive audit |
-| Document findings | ✅ COMPLETE | LEARNINGS.md, AUDIT_REPORT.md |
+| Document findings | ✅ COMPLETE | Findings logged and summarized |
 
 **Session Result**: 7/7 OBJECTIVES ACHIEVED ✅
 
@@ -65,10 +65,10 @@
 **Lines of Code Modified**: ~600 (includes emergency fixes)
 
 ### 2. Documentation
-- ✅ PROJECT_STATUS.md - Executive summary
-- ✅ AUDIT_REPORT.md - 3,000+ line comprehensive audit
-- ✅ LEARNINGS.md extended - Added final architecture analysis
-- ✅ copilot-instructions.md - Updated with completion status
+- ✅ Executive summary updated
+- ✅ Technical audit updated
+- ✅ Learnings log extended
+- ✅ Assistant guidance updated
 
 **Documentation Written**: 6,000+ words
 
@@ -226,11 +226,11 @@ d:\AIGameAssistant_new\
 │   └── .vscode/settings.json - VS Code configuration
 │
 ├── DOCUMENTATION
-│   ├── README.md - User guide
-│   ├── LEARNINGS.md (1500+ lines) - Technical notes
-│   ├── PROJECT_STATUS.md - Executive summary
-│   ├── AUDIT_REPORT.md (3000+ lines) - Full audit
-│   └── copilot-instructions.md - AI assistant guide
+│   ├── User guide
+│   ├── Learnings log
+│   ├── Executive summary
+│   ├── Technical audit
+│   └── Assistant guidance
 │
 ├── BACKUPS
 │   ├── main.js.backup.v5 - Latest stable backup
@@ -272,7 +272,7 @@ d:\AIGameAssistant_new\
 ### Development Best Practices
 - ✅ Comprehensive backups (v1-v5) - SACRED RULE
 - ✅ Automated quality checks (bug-checker.js)
-- ✅ Detailed logging in LEARNINGS.md
+- ✅ Detailed logging in the learnings log
 - ✅ Regular documentation updates
 - ✅ Testing in realistic scenarios (Terraria gameplay)
 
@@ -306,17 +306,17 @@ d:\AIGameAssistant_new\
 ### For Next Developer
 - [x] Code is clean and documented
 - [x] All backups preserved (v1-v5)
-- [x] Comprehensive LEARNINGS captured
+- [x] Comprehensive learnings captured
 - [x] Architecture audit documented
 - [x] Tools created (bug-checker, cleanup)
 - [x] No critical issues pending
 - [x] Feature roadmap clear (v1.1, v2.0)
 
 ### Continuation Steps
-1. Review AUDIT_REPORT.md for full context
-2. Review LEARNINGS.md for specific issues found
+1. Review the technical audit for full context
+2. Review the learnings log for specific issues found
 3. Run `npm run check` to see potential improvements
-4. Read copilot-instructions.md for AI guidance
+4. Review the assistant guidance for AI usage rules
 5. Create v1.0 branch and deployment prep
 
 ---
@@ -332,15 +332,12 @@ npm test              # Run tests (none yet)
 ```
 
 ### Key Files
-- **main.js**: Main application logic
-- **overlay.html**: User interface
-- **AUDIT_REPORT.md**: Full technical audit
-- **LEARNINGS.md**: Issues & solutions documented
-- **PROJECT_STATUS.md**: Quick project overview
+- **Main application logic**: [main.js](../../main.js)
+- **User interface**: [overlay.html](../../overlay.html)
 
 ### Important Rules
 1. **Never auto-delete backups** - They're precious
-2. **Always update LEARNINGS.md** - Historical record
+2. **Always update the learnings log** - Historical record
 3. **Test in Terraria** - Real gaming scenarios
 4. **Keep 6-language support** - Universal appeal
 5. **Document decisions** - For future reference

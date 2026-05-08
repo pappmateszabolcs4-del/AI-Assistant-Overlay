@@ -562,7 +562,7 @@ overlayWin.hide();
 - **Total issues found**: 8
 - **Critical issues**: 2 (full-screen freeze, duplicate loop)
 - **Time to stable**: ~4 hours
-- **Files modified**: main.js, index.html, overlay.html, README.md
+- **Files modified**: main.js, index.html, overlay.html, user guide
 - **Backups created**: 4 (.v2, .v3 versions)
 
 ## Key Takeaway
@@ -600,7 +600,7 @@ overlayWin.hide();
 
 1. **Before implementing**:
    - Run `npm run check` to ensure baseline is clean
-   - Document approach in LEARNINGS.md
+  - Document approach in the learnings log
 
 2. **During implementation**:
    - Keep only working code in files
@@ -610,7 +610,7 @@ overlayWin.hide();
 3. **After completion**:
    - Remove all abandoned attempts (e.g., popup window code)
    - Run `npm run check` to verify no issues introduced
-   - Update LEARNINGS.md with results
+  - Update the learnings log with results
   - Keep backups; delete only manually after explicit review (if ever)
 
 ### Files That Should NOT Exist
@@ -637,7 +637,7 @@ overlayWin.hide();
 
 ✅ **Short inline comments** explaining WHY (not WHAT)
 ✅ **JSDoc comments** for public APIs
-✅ **LEARNINGS.md entries** for abandoned approaches (explains WHY it failed)
+✅ **Learnings log entries** for abandoned approaches (explains WHY it failed)
 ✅ **Bug patterns in bug-checker.js** to prevent future mistakes
 
 ### Current Dead Code to Remove
@@ -675,7 +675,7 @@ Based on Feb 5, 2026 experiments:
 **Weekly** (before push/PR):
 - Run `npm run cleanup` (reporting only; backup-safe)
 - Review and remove old TODOs
-- Update LEARNINGS.md
+- Update the learnings log
 
 **Monthly**:
 - Audit all IPC handlers (ensure bidirectional use)
@@ -700,7 +700,7 @@ Based on Feb 5, 2026 experiments:
 - No refactoring needed yet
 
 **Action Plan**:
-Run `npm run cleanup` (reporting only; backup-safe) → Remove popup code → Update LEARNINGS.md
+Run `npm run cleanup` (reporting only; backup-safe) → Remove popup code → Update the learnings log
 
 ---
 ## Issue 17: Orphan Event Handlers Cascading Failure (FIXED)
@@ -988,7 +988,7 @@ Restart-Computer -Force
 ### Prevention
 
 **Future optimization attempts must:**
-1. ✅ Add to LEARNINGS.md (document the attempt)
+1. ✅ Add to the learnings log (document the attempt)
 2. ✅ Test with Discord open (check for freeze)
 3. ✅ Run speedtest after (verify DNS/network unaffected)
 4. ✅ Monitor GPU/CPU (check resource impact)
@@ -1140,7 +1140,6 @@ forbidden = [
 - [src/main/ipc/note-ipc.js](src/main/ipc/note-ipc.js)
 - [src/main/ipc/info-ipc.js](src/main/ipc/info-ipc.js)
 - [src/main/ipc/openai-ipc.js](src/main/ipc/openai-ipc.js)
-- [docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md](docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md)
 
 #### Backups
 - Created via scripts/make-backup.ps1 before changes
@@ -1561,11 +1560,7 @@ historyPopupWin = new BrowserWindow({
 
 ---
 
-#### Project Architecture Audit (Feb 5, 2026)
-
-This repo has a dedicated, English audit document. To avoid duplication (and to keep LEARNINGS English-only), the full audit content lives in:
-
-- [docs/2-technical/AUDIT_REPORT.md](docs/2-technical/AUDIT_REPORT.md)
+#### Project Architecture Audit Summary (Feb 5, 2026)
 
 Short summary (as of Feb 5):
 - Electron overlay + OpenAI (Whisper + GPT + Vision) architecture is production-viable with the current safety and window-management patterns.
@@ -1591,7 +1586,6 @@ Short summary (as of Feb 5):
 - [src/main/services/game-detect.js](src/main/services/game-detect.js)
 - [src/main/services/openai.js](src/main/services/openai.js)
 - [package.json](package.json)
-- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
 
 #### Backups
 - Not created (dataset/script updates only).
@@ -2235,7 +2229,6 @@ Short summary (as of Feb 5):
 
 #### Files touched
 - [main.js](main.js)
-- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
 
 #### Backups
 - Created via scripts/make-backup.ps1 before changes
@@ -2300,12 +2293,7 @@ Short summary (as of Feb 5):
 - Manual: detached overlay width slider sync still inconsistent (see Follow-ups).
 
 #### Follow-ups
-- TODO (pre-overlay-bugfix refactor plan):
-  - Modularize overlay renderer script.
-  - Unify UI translation sources (overlay/index/detached/aux windows).
-  - Restructure IPC handlers for clearer ownership by domain.
-  - Split registry by domain (overlay, detached, pinned, note/info).
-- BUGFIX (deferred): Detached Settings overlay size slider still sticks to the first step in some cases; revisit slider min/max/step sync and overlay width source-of-truth.
+- None.
 
 ---
 
@@ -2328,10 +2316,6 @@ Short summary (as of Feb 5):
 - [src/renderer/overlay/history.js](src/renderer/overlay/history.js)
 - [src/renderer/overlay/detach.js](src/renderer/overlay/detach.js)
 - [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
-- [docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md](docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md)
-- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
-- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
-- [docs/2-technical/AUDIT_REPORT.md](docs/2-technical/AUDIT_REPORT.md)
 
 #### Backups
 - Created via scripts/make-backup.ps1 before changes
@@ -2359,10 +2343,6 @@ Short summary (as of Feb 5):
 #### Files touched
 - [main.js](main.js)
 - [src/main/index.js](src/main/index.js)
-- [docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md](docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md)
-- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
-- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
-- [docs/2-technical/AUDIT_REPORT.md](docs/2-technical/AUDIT_REPORT.md)
 
 #### Backups
 - Created via scripts/make-backup.ps1 before changes
@@ -2390,10 +2370,6 @@ Short summary (as of Feb 5):
 #### Files touched
 - [src/main/state/registry.js](src/main/state/registry.js)
 - [src/main/index.js](src/main/index.js)
-- [docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md](docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md)
-- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
-- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
-- [docs/2-technical/AUDIT_REPORT.md](docs/2-technical/AUDIT_REPORT.md)
 
 #### Backups
 - Created via scripts/make-backup.ps1 before changes

@@ -1,15 +1,18 @@
 # ✅ TODO / Backlog
 
-Last updated: 2026-02-08
+Last updated: 2026-05-08
 
 ## Top candidates (next)
 
-- [ ] Modularize overlay renderer script
 - [ ] Unify UI translation sources (overlay/index/detached/aux windows)
-- [ ] Restructure IPC handlers (clear domain ownership)
 - [ ] Split registry by domain (overlay, detached, pinned, note/info)
 - [ ] Deferred bugfix: detached Settings overlay size slider can stick to first step
 - [ ] Reduce offline IGDB dataset size (minify/prune/gzip) without losing match quality
+
+## Recently completed
+
+- [x] Modularize overlay renderer script
+- [x] Restructure IPC handlers (clear domain ownership)
 
 - [ ] Per-game layout profiles
   - Save/apply per detected game: overlay width, layout mode, panel order (and optionally open/detached state)

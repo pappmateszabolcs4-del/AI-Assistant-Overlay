@@ -93,15 +93,12 @@ d:\AIGameAssistant_new\
 ├── cleanup.js - Code maintenance tool
 ├── package.json - Dependencies
 ├── .env - Configuration (gitignored)
-├── .github/
-│   └── copilot-instructions.md - Custom AI instructions
+├── .github/ - GitHub configuration
 ├── .vscode/
 │   └── settings.json - File nesting config
 ├── get-active-window.ps1 - PowerShell game detection
 ├── get-window-titles.ps1 - Window scanner
-├── README.md - User documentation
-├── LEARNINGS.md - Development lessons (1500+ lines)
-├── PROJECT_STATUS.md - This file
+├── docs/ - Project documentation
 ├── backups/ - v1-v4 backup versions
 ├── node_modules/ - Dependencies
 ├── *.backup.v5 - Latest stable backups
@@ -259,7 +256,7 @@ DRY violations: 0-1 (excellent)
 - Always create v5 backups before major refactors
 - Use automated bug detection (bug-checker.js) before commits
 - Test in realistic scenarios (Terraria playtime, not just lab)
-- Document decisions in LEARNINGS.md for future reference
+- Document decisions in the learnings log for future reference
 
 ---
 
@@ -282,11 +279,6 @@ AIGameAssistant-Setup.exe  # Run installer
 ---
 
 ## 📞 Support & Feedback
-
-**Documentation**:
-- [README.md](README.md) - User guide
-- [LEARNINGS.md](LEARNINGS.md) - Technical deep-dive
-- [copilot-instructions.md](.github/copilot-instructions.md) - Development guide
 
 **Tools**:
 - `npm run check` - Find potential bugs

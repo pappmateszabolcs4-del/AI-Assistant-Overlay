@@ -94,7 +94,7 @@ Run `npm run cleanup` to:
 - Delete failed attempts same session
 - Use git history for experiments (not commented code)
 - Run `npm run check` before committing
-- Document abandoned approaches in LEARNINGS.md (with WHY it failed)
+ - Document abandoned approaches in the learnings log (with WHY it failed)
 
 ### Backup & Rollback Protocol
 - Run `powershell -ExecutionPolicy Bypass -File scripts\make-backup.ps1` before risky edits to capture timestamped copies of `main.js`, `overlay.html`, `index.html`, etc.
