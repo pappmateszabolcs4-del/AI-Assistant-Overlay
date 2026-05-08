@@ -6,6 +6,19 @@
 
 ---
 
+## [1.0.13] - 2026-05-08 (IPC Module Split)
+
+### 🔧 Changed
+
+- Split IPC handlers into focused modules (overlay, detached, pinned, note, info, OpenAI) and wired register.js to delegate.
+- Kept existing IPC behavior while improving maintainability and separation of concerns.
+
+### 🧾 Notes
+
+- Tests: `npm run validate:games`, `npm run check`.
+
+---
+
 ## [1.0.12] - 2026-05-08 (Game Detect Validation + Dataset-First Window Titles)
 
 ### 🔧 Changed

@@ -1119,6 +1119,40 @@ forbidden = [
 ]
 ```
 
+---
+
+### 2026-05-08 (Evening)
+
+#### Summary
+- What changed: Split IPC handlers into focused modules and updated the refactor plan.
+- Why: Phase 1 IPC extraction is complete and easier to maintain.
+- Impact: register.js now delegates; IPC behavior unchanged; accidental map file removed.
+
+#### Details
+- Implementation notes: register.js keeps shared helper functions and wires overlay/detached/pinned/note/info/openai IPC modules.
+- Edge cases: No functional changes intended; handler routing preserved.
+
+#### Files touched
+- [src/main/ipc/register.js](src/main/ipc/register.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/main/ipc/detached-ipc.js](src/main/ipc/detached-ipc.js)
+- [src/main/ipc/pinned-ipc.js](src/main/ipc/pinned-ipc.js)
+- [src/main/ipc/note-ipc.js](src/main/ipc/note-ipc.js)
+- [src/main/ipc/info-ipc.js](src/main/ipc/info-ipc.js)
+- [src/main/ipc/openai-ipc.js](src/main/ipc/openai-ipc.js)
+- [docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md](docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- npm run validate:games
+- npm run check
+
+#### Follow-ups
+- TODO: Continue Phase 1 window/module extraction.
+
 **Lesson**: Gaming AI assistant must distinguish between:
 - ✅ In-game mechanics: "kill zombie", "craft sword", "build bomb in Minecraft"
 - ❌ Real-world harm: "kill people", "build real bomb"
