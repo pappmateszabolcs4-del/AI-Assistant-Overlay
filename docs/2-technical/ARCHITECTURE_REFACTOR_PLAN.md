@@ -76,8 +76,8 @@ src/
 - [x] Keep overlay.html as entry, use <script src="...">.
 
 ### Phase 3: optional index entry move
-- [ ] Move root main.js logic into src/main/index.js.
-- [ ] Keep root main.js as thin delegate to preserve package.json main.
+- [x] Move root main.js logic into src/main/index.js.
+- [x] Keep root main.js as thin delegate to preserve package.json main.
 
 ## Definition of Done (Phase 1)
 - main.js reduced to an entry + orchestration layer.
@@ -91,7 +91,7 @@ src/
 - [x] Phase 1: extract windows/* modules (overlay/detached/pinned/note/info).
 - [x] Phase 1: extract ipc/* modules with pure delegation.
 - [x] Phase 1: extract services/game-detect.js and services/openai.js if clean.
-- [ ] Phase 2: renderer split (ipc/ui/history/detach/translations) without bundler.
+- [x] Phase 2: renderer split (ipc/ui/history/detach/translations) without bundler.
 
 ## TODO (AI Vision: Video Recording Recognition)
 - [ ] Define the exact flow: capture (source), sampling rate, and retention policy.

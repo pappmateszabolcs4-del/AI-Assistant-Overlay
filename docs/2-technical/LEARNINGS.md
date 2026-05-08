@@ -2342,3 +2342,34 @@ Short summary (as of Feb 5):
 
 #### Follow-ups
 - TODO: None
+
+---
+
+### 2026-05-08 (Late)
+
+#### Summary
+- What changed: Moved the main entry logic into [src/main/index.js](src/main/index.js) and kept [main.js](main.js) as a thin delegate.
+- Why: Keep the main process source under `src/main` without changing the Electron entry point.
+- Impact: No runtime behavior change; entry file stays the same.
+
+#### Details
+- Implementation notes: Updated require paths to be relative to [src/main](src/main).
+- Edge cases: None observed; [package.json](package.json) still points to [main.js](main.js).
+
+#### Files touched
+- [main.js](main.js)
+- [src/main/index.js](src/main/index.js)
+- [docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md](docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/AUDIT_REPORT.md](docs/2-technical/AUDIT_REPORT.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Not run (not requested)
+
+#### Follow-ups
+- TODO: None

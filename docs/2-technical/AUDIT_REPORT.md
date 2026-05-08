@@ -75,6 +75,10 @@ This audit was conducted on Feb 5. The following notable improvements were added
 - `overlay.html` remains the entry point with script tags (no bundler).
 - Script order corrected so detached panels render their content.
 
+### Main Entry Relocation
+- Main process entry logic moved into [src/main/index.js](src/main/index.js).
+- Root [main.js](main.js) now delegates to keep the Electron entry point stable.
+
 ---
 
 ## 📋 AUDIT METHODOLOGY

@@ -28,7 +28,7 @@ const bugPatterns = [
     name: 'Focusable Popup Window',
     severity: 'CRITICAL',
     pattern: /new BrowserWindow\([^)]*focusable:\s*true[^)]*alwaysOnTop:\s*true/s,
-    file: 'main.js',
+    types: ['main'],
     description: 'Focusable + alwaysOnTop windows steal game focus and freeze games',
     fix: 'Use inline UI expansion instead of separate popup windows. Set focusable: false for gaming overlays.'
   },
@@ -36,7 +36,7 @@ const bugPatterns = [
     name: 'Duplicate Hotkey Registration',
     severity: 'HIGH',
     pattern: /globalShortcut\.register.*\n[\s\S]*?globalShortcut\.register/,
-    file: 'main.js',
+    types: ['main'],
     description: 'Multiple hotkey registrations cause duplicate callbacks',
     fix: 'Register hotkeys only once in app.whenReady(). Remove IPC-based re-registration.'
   },
@@ -44,7 +44,7 @@ const bugPatterns = [
     name: 'Window Destroy/Recreate on Toggle',
     severity: 'HIGH',
     pattern: /overlayWin\s*=\s*new BrowserWindow.*\n[\s\S]{0,500}?overlayWin\.destroy\(\)/,
-    file: 'main.js',
+    types: ['main'],
     description: 'Creating/destroying windows on toggle causes CPU spikes',
     fix: 'Create window once, use hide()/show() for toggling.'
   },
@@ -52,7 +52,7 @@ const bugPatterns = [
     name: 'Full-Screen Overlay',
     severity: 'CRITICAL',
     pattern: /new BrowserWindow\([^)]*width:\s*screen\.getPrimaryDisplay\(\)\.workAreaSize\.width/,
-    file: 'main.js',
+    types: ['main'],
     description: 'Full-screen overlays freeze games and capture system input',
     fix: 'Use regional overlay (e.g., 650x600) instead of full-screen.'
   },
@@ -81,7 +81,7 @@ const bugPatterns = [
     name: 'IPC Listener Duplication',
     severity: 'HIGH',
     pattern: /$^/,
-    file: 'main.js',
+    types: ['main'],
     description: 'IPC listeners registered multiple times without checks',
     fix: 'Ensure each ipcMain.on/handle channel is registered only once.'
   },
@@ -97,7 +97,7 @@ const bugPatterns = [
     name: 'setIgnoreMouseEvents on webContents',
     severity: 'HIGH',
     pattern: /webContents\.setIgnoreMouseEvents/,
-    file: 'main.js',
+    types: ['main'],
     description: 'setIgnoreMouseEvents is a BrowserWindow method, not webContents',
     fix: 'Use browserWindow.setIgnoreMouseEvents() instead, or use CSS pointer-events.'
   },
@@ -122,7 +122,7 @@ const bugPatterns = [
     name: 'Large Commented Code Blocks',
     severity: 'LOW',
     pattern: /\/\*[\s\S]{200,}?\*\//,
-    file: 'main.js',
+    types: ['main'],
     description: 'Large commented code blocks clutter the codebase',
     fix: 'Remove commented code. Use git history if needed.'
   },
@@ -130,7 +130,7 @@ const bugPatterns = [
     name: 'TODO/FIXME Comments',
     severity: 'LOW',
     pattern: /\/\/\s*(TODO|FIXME|HACK|XXX)/i,
-    file: 'main.js',
+    types: ['main'],
     description: 'Unresolved TODO/FIXME comments',
     fix: 'Either implement the TODO or remove if obsolete.'
   }
@@ -147,6 +147,7 @@ function getRendererModuleFiles() {
 // Files to check
 const filesToCheck = [
   { path: 'main.js', type: 'main' },
+  { path: path.join('src', 'main', 'index.js'), type: 'main' },
   { path: 'overlay.html', type: 'renderer' },
   ...getRendererModuleFiles(),
   { path: 'index.html', type: 'app' }
@@ -234,10 +235,10 @@ function runBugChecker() {
       }
     });
 
-    // Custom scan: duplicate IPC registrations in main.js.
+    // Custom scan: duplicate IPC registrations in main entry code.
     // Goal: flag only when the same ipcMain.on(...) or ipcMain.handle(...) channel is registered
     // more than once. This avoids false positives where many distinct IPC channels are defined.
-    if (file.path === 'main.js') {
+    if (file.type === 'main') {
       const ipcRegex = /ipcMain\.(on|handle)\(\s*['"]([^'\"]+)['"]/g;
       const counts = new Map(); // key: "on:channel" | "handle:channel"
       let m;

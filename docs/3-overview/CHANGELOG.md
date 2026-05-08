@@ -6,6 +6,19 @@
 
 ---
 
+## [1.0.15] - 2026-05-08 (Main Entry Relocation)
+
+### 🔧 Changed
+
+- Moved the main process entry logic into [src/main/index.js](src/main/index.js).
+- Kept [main.js](main.js) as a thin delegate so package.json main stays unchanged.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+---
+
 ## [1.0.14] - 2026-05-08 (Overlay Renderer Split)
 
 ### 🔧 Changed
