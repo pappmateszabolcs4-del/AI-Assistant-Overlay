@@ -119,8 +119,3 @@ See `docs/` for:
 - Changelog and project status
 - Deployment and reference guides
 
----
-
-## 📄 License
-
-Add your preferred license file (e.g., MIT) in `LICENSE`.
