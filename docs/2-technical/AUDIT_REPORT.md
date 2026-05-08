@@ -62,6 +62,15 @@ This audit was conducted on Feb 5. The following notable improvements were added
 
 ---
 
+## May 8, 2026 Addendum (Delta Since Audit)
+
+### Game Detection Validation
+- Window title matching now prefers dataset-backed detection with regex fallback.
+- Added a validation script and test cases to guard against false positives (e.g., short-name matches).
+- Matching now uses whole-word checks, stopword filtering, and name-length scoring.
+
+---
+
 ## 📋 AUDIT METHODOLOGY
 
 This comprehensive audit examined:

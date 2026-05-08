@@ -6,6 +6,7 @@
   "scripts": {
     "start": "electron .",
     "build:games": "node scripts/build-igdb-dataset.js",
+    "validate:games": "node scripts/validate-game-detect.js",
     "package": "electron-forge package",
     "package:win": "electron-forge package --platform=win32 --arch=x64",
     "make": "electron-forge make",

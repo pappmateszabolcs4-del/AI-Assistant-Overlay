@@ -2050,6 +2050,34 @@ Short summary (as of Feb 5):
 
 ---
 
+### 2026-05-08 (Evening)
+
+#### Summary
+- What changed: Added game-detect validation suite and tightened dataset-backed matching; window title detection now prefers dataset matches with regex fallback.
+- Why: Prevent short-name false positives ("Fe", "Z") and make detection resilient to generic text.
+- Impact: More reliable game context inference and a repeatable validation check.
+
+#### Details
+- Implementation notes: Added `tests/game-detect-cases.json` and `scripts/validate-game-detect.js`, wired via `npm run validate:games`. Matching now uses whole-word checks, short stopword filtering, and token-length scoring. Window-title extraction calls dataset matching first.
+- Edge cases: Short aliases are ignored if they are common stopwords; alias/name matching is case-insensitive through normalization.
+
+#### Files touched
+- [src/main/services/game-detect.js](src/main/services/game-detect.js)
+- [tests/game-detect-cases.json](tests/game-detect-cases.json)
+- [scripts/validate-game-detect.js](scripts/validate-game-detect.js)
+- [package.json](package.json)
+
+#### Backups
+- Not created (logic/tests only).
+
+#### Verification
+- `npm run validate:games` → all cases passed.
+
+#### Follow-ups
+- TODO: Expand validation cases with real window-title variants.
+
+---
+
 ### 2026-02-07 (Night)
 
 #### Summary

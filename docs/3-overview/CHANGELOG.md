@@ -6,6 +6,20 @@
 
 ---
 
+## [1.0.12] - 2026-05-08 (Game Detect Validation + Dataset-First Window Titles)
+
+### 🔧 Changed
+
+- Window title detection now prefers the offline dataset and uses regex patterns only as fallback.
+- Game name matching uses whole-word checks, stopword filtering, and token-length scoring to reduce false positives.
+- Added a validation runner and test cases for game detection.
+
+### 🧾 Notes
+
+- Run `npm run validate:games` to verify matching expectations.
+
+---
+
 ## [1.0.11] - 2026-04-07 (Offline IGDB Dataset + Text Match)
 
 ### 🔧 Changed

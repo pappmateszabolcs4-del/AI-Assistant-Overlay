@@ -1,0 +1,154 @@
+{
+  "cases": [
+    {
+      "id": "NFB-01",
+      "text": "Not For Broadcast-ben mi a jatekos feladata?",
+      "expect": "Not For Broadcast"
+    },
+    {
+      "id": "NFB-02",
+      "text": "not for broadcast gameplay tips",
+      "expect": "Not For Broadcast"
+    },
+    {
+      "id": "RIM-01",
+      "text": "rimword colony tips",
+      "expect": "RimWorld"
+    },
+    {
+      "id": "RIM-02",
+      "text": "rimworld colony tips",
+      "expect": "RimWorld"
+    },
+    {
+      "id": "CS2-01",
+      "text": "Counter-Strike 2 spray pattern help",
+      "expect": "Counter-Strike 2"
+    },
+    {
+      "id": "DOTA-01",
+      "text": "dota 2 item build",
+      "expect": "Dota 2"
+    },
+    {
+      "id": "LOL-01",
+      "text": "league of legends lane tips",
+      "expect": "League of Legends"
+    },
+    {
+      "id": "ER-01",
+      "text": "elden ring bleed build",
+      "expect": "Elden Ring"
+    },
+    {
+      "id": "BG3-01",
+      "text": "baldurs gate 3 romance options",
+      "expectOneOf": ["Baldur's Gate 3", "Baldur's Gate III"]
+    },
+    {
+      "id": "MC-01",
+      "text": "minecraft redstone farm",
+      "expect": "Minecraft"
+    },
+    {
+      "id": "TER-01",
+      "text": "terraria early game guide",
+      "expect": "Terraria"
+    },
+    {
+      "id": "PZ-01",
+      "text": "project zomboid best traits",
+      "expect": "Project Zomboid"
+    },
+    {
+      "id": "PHAS-01",
+      "text": "phasmophobia ghost types",
+      "expect": "Phasmophobia"
+    },
+    {
+      "id": "HADES-01",
+      "text": "hades boon tier list",
+      "expect": "Hades"
+    },
+    {
+      "id": "STS-01",
+      "text": "slay the spire deck tips",
+      "expect": "Slay the Spire"
+    },
+    {
+      "id": "FN-01",
+      "text": "fortnite ranked tips",
+      "expect": "Fortnite"
+    },
+    {
+      "id": "WOW-01",
+      "text": "world of warcraft mythic raid",
+      "expect": "World of Warcraft"
+    },
+    {
+      "id": "HK-01",
+      "text": "hollow knight pantheon",
+      "expect": "Hollow Knight"
+    },
+    {
+      "id": "GTAV-01",
+      "text": "gta v heist setup",
+      "expectOneOf": ["GTA V", "Grand Theft Auto V"]
+    },
+    {
+      "id": "AC-01",
+      "text": "assetto corsa setup",
+      "expect": "Assetto Corsa"
+    },
+    {
+      "id": "FE-01",
+      "text": "fe tips and walkthrough",
+      "expect": "Fe"
+    },
+    {
+      "id": "NOFE-01",
+      "text": "a feladat megoldasa lepesrol lepesre",
+      "expectNull": true
+    },
+    {
+      "id": "GEN-01",
+      "text": "how to craft a sword in a game",
+      "expectNull": true
+    },
+    {
+      "id": "NON-01",
+      "text": "political news today",
+      "expectNull": true
+    },
+    {
+      "id": "BROT-01",
+      "text": "brotato build",
+      "expect": "Brotato"
+    },
+    {
+      "id": "VR-01",
+      "text": "v rising castle layouts",
+      "expect": "V Rising"
+    },
+    {
+      "id": "FFXIV-01",
+      "text": "final fantasy xiv raid",
+      "expectOneOf": ["Final Fantasy XIV", "Final Fantasy XIV Online"]
+    },
+    {
+      "id": "CODWZ-01",
+      "text": "call of duty: warzone loadout",
+      "expect": "Call of Duty: Warzone"
+    },
+    {
+      "id": "SEKIRO-01",
+      "text": "sekiro parry timing",
+      "expect": "Sekiro: Shadows Die Twice"
+    },
+    {
+      "id": "VALHEIM-01",
+      "text": "valheim base defense",
+      "expect": "Valheim"
+    }
+  ]
+}

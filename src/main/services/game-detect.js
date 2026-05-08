@@ -170,6 +170,10 @@ function createGameDetectService(deps) {
     'skill', 'skills', 'talent', 'talents', 'perk', 'perks', 'class', 'classes', 'boss', 'bosses'
   ]);
 
+  const SHORT_STOPWORDS = new Set([
+    'a', 'an', 'the', 'and', 'or', 'for', 'to', 'of', 'in', 'on', 'at', 'by', 'from', 'with'
+  ]);
+
   function normalizeText(text) {
     if (!text) return '';
     return text
@@ -194,6 +198,13 @@ function createGameDetectService(deps) {
       .split(' ')
       .map((token) => token.trim())
       .filter((token) => token.length >= 3 && !COMMON_TERMS.has(token));
+  }
+
+  function hasWholeWord(text, word) {
+    if (!text || !word) return false;
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(^|\\s)${escaped}(\\s|$)`);
+    return regex.test(text);
   }
 
   function normalizeList(items) {
@@ -261,39 +272,32 @@ function createGameDetectService(deps) {
     let score = 0;
     const shortName = (game.normalizedName || '').length <= 3;
     let hasNameSignal = false;
+    const nameTokenCount = game.normalizedName ? game.normalizedName.split(' ').length : 0;
+    let matchScore = 0;
 
-    if (game.normalizedName) {
-      if (shortName) {
-        if (textTokens.includes(game.normalizedName)) {
-          score += 10;
-          hasNameSignal = true;
-        }
-      } else if (textNormalized.includes(game.normalizedName)) {
-        score += 10;
-        hasNameSignal = true;
-      }
+    if (game.normalizedName && (!shortName || !SHORT_STOPWORDS.has(game.normalizedName)) && hasWholeWord(textNormalized, game.normalizedName)) {
+      matchScore = Math.max(matchScore, 10 + nameTokenCount);
+      hasNameSignal = true;
     }
 
     for (const alias of game.aliasPhrases) {
       if (!alias) continue;
       const aliasIsShort = alias.length <= 3;
-      if (aliasIsShort) {
-        if (textTokens.includes(alias)) {
-          score += 8;
-          hasNameSignal = true;
-          break;
-        }
-      } else if (textNormalized.includes(alias)) {
-        score += 8;
+      if (aliasIsShort && SHORT_STOPWORDS.has(alias)) continue;
+      if (hasWholeWord(textNormalized, alias)) {
+        const aliasTokenCount = alias.split(' ').length;
+        matchScore = Math.max(matchScore, 9 + aliasTokenCount);
         hasNameSignal = true;
         break;
       }
     }
 
-    if (score < 8 && allTokensPresent(textTokens, game.nameTokens)) {
-      score += 6;
+    if (matchScore < 8 && allTokensPresent(textTokens, game.nameTokens)) {
+      matchScore = Math.max(matchScore, 6 + nameTokenCount);
       hasNameSignal = true;
     }
+
+    score += matchScore;
 
     if (shortName && !hasNameSignal) {
       return 0;
@@ -395,6 +399,11 @@ function createGameDetectService(deps) {
       if (pattern.test(windowTitle)) return null;
     }
 
+    const datasetMatch = matchGameFromText(windowTitle);
+    if (datasetMatch) {
+      return datasetMatch;
+    }
+
     for (const { pattern, name } of gamePatterns) {
       if (pattern.test(windowTitle)) {
         return name;
@@ -439,11 +448,12 @@ function createGameDetectService(deps) {
       for (const game of gameIndex) {
         const score = scoreGameMatch(game, textNormalized, textTokens);
         if (score <= 0) continue;
-        if (!best || score > best.score) {
+        const nameLength = (game.normalizedName || '').length;
+        if (!best || score > best.score || (score === best.score && nameLength > best.nameLength)) {
           secondBest = best;
-          best = { name: game.name, score };
-        } else if (!secondBest || score > secondBest.score) {
-          secondBest = { name: game.name, score };
+          best = { name: game.name, score, nameLength };
+        } else if (!secondBest || score > secondBest.score || (score === secondBest.score && nameLength > secondBest.nameLength)) {
+          secondBest = { name: game.name, score, nameLength };
         }
       }
 
