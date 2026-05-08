@@ -66,9 +66,9 @@ src/
 - [x] Create folder skeleton under src/main.
 - [x] Add utils/bounds.js and move clamp helpers.
 - [x] Add state/registry.js (centralize window refs + flags).
-- [ ] Extract windows/* modules (overlay/detached/pinned/note/info).
+- [x] Extract windows/* modules (overlay/detached/pinned/note/info).
 - [x] Extract ipc/* modules (handlers delegate to windows/services).
-- [ ] Extract services/* modules (game detection, OpenAI) if cleanly separable.
+- [x] Extract services/* modules (game detection, OpenAI) if cleanly separable.
 
 ### Phase 2: renderer organization (optional, no bundler)
 - [ ] Extract overlay CSS into overlay.css.
@@ -86,13 +86,11 @@ src/
 - No circular imports introduced (simple require graph).
 - ARCHITECTURE_REFACTOR_PLAN.md updated with checked items.
 
----
-
 ## TODO (Architecture Expansion)
 - [ ] Phase 1: finish registry extraction (centralize window refs + flags).
-- [ ] Phase 1: extract windows/* modules (overlay/detached/pinned/note/info).
+- [x] Phase 1: extract windows/* modules (overlay/detached/pinned/note/info).
 - [x] Phase 1: extract ipc/* modules with pure delegation.
-- [ ] Phase 1: extract services/game-detect.js and services/openai.js if clean.
+- [x] Phase 1: extract services/game-detect.js and services/openai.js if clean.
 - [ ] Phase 2: renderer split (ipc/ui/history/detach/translations) without bundler.
 
 ## TODO (AI Vision: Video Recording Recognition)
