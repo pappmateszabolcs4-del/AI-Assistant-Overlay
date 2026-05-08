@@ -6,6 +6,24 @@
 
 ---
 
+## [1.0.14] - 2026-05-08 (Overlay Renderer Split)
+
+### 🔧 Changed
+
+- Extracted overlay CSS into `overlay.css` and linked it from `overlay.html`.
+- Split overlay renderer logic into `translations`, `history`, `detach`, `ui`, and `ipc` modules under `src/renderer/overlay`.
+- Kept `overlay.html` as the entry point with script tags (no bundler).
+
+### 🐛 Fixed
+
+- Detached panel windows now render content correctly after the refactor (script order adjustment).
+
+### 🧾 Notes
+
+- Tests: `npm run check`.
+
+---
+
 ## [1.0.13] - 2026-05-08 (IPC Module Split)
 
 ### 🔧 Changed

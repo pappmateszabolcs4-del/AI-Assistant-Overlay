@@ -2306,3 +2306,39 @@ Short summary (as of Feb 5):
   - Restructure IPC handlers for clearer ownership by domain.
   - Split registry by domain (overlay, detached, pinned, note/info).
 - BUGFIX (deferred): Detached Settings overlay size slider still sticks to the first step in some cases; revisit slider min/max/step sync and overlay width source-of-truth.
+
+---
+
+### 2026-05-08 (Evening)
+
+#### Summary
+- What changed: Extracted overlay CSS to `overlay.css` and split the inline overlay JS into renderer modules (translations, history, detach, ui, ipc).
+- Why: Improve maintainability and isolate concerns while keeping the no-bundler setup.
+- Impact: Behavior unchanged; overlay now loads external assets via script tags.
+
+#### Details
+- Implementation notes: Overlay remains the entry point; globals preserved with `var` where required; script order validated for dependencies.
+- Edge cases: Ensured no inline script remains; CSS now loaded via a single `<link>`; fixed detached-panel blank content by loading `detach.js` after `ui.js`.
+
+#### Files touched
+- [overlay.html](overlay.html)
+- [overlay.css](overlay.css)
+- [src/renderer/overlay/translations.js](src/renderer/overlay/translations.js)
+- [src/renderer/overlay/ipc.js](src/renderer/overlay/ipc.js)
+- [src/renderer/overlay/history.js](src/renderer/overlay/history.js)
+- [src/renderer/overlay/detach.js](src/renderer/overlay/detach.js)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md](docs/2-technical/ARCHITECTURE_REFACTOR_PLAN.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/AUDIT_REPORT.md](docs/2-technical/AUDIT_REPORT.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- `npm run check`
+
+#### Follow-ups
+- TODO: None

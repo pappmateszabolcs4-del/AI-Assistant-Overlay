@@ -69,6 +69,12 @@ This audit was conducted on Feb 5. The following notable improvements were added
 - Added a validation script and test cases to guard against false positives (e.g., short-name matches).
 - Matching now uses whole-word checks, stopword filtering, and name-length scoring.
 
+### Overlay Renderer Refactor
+- Overlay CSS extracted to `overlay.css` and linked from `overlay.html`.
+- Overlay renderer logic split into `translations`, `history`, `detach`, `ui`, and `ipc` modules under `src/renderer/overlay`.
+- `overlay.html` remains the entry point with script tags (no bundler).
+- Script order corrected so detached panels render their content.
+
 ---
 
 ## 📋 AUDIT METHODOLOGY

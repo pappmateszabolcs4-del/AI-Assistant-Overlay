@@ -71,9 +71,9 @@ src/
 - [x] Extract services/* modules (game detection, OpenAI) if cleanly separable.
 
 ### Phase 2: renderer organization (optional, no bundler)
-- [ ] Extract overlay CSS into overlay.css.
-- [ ] Split overlay JS into ipc/ui/history/detach/translations.
-- [ ] Keep overlay.html as entry, use <script src="...">.
+- [x] Extract overlay CSS into overlay.css.
+- [x] Split overlay JS into ipc/ui/history/detach/translations.
+- [x] Keep overlay.html as entry, use <script src="...">.
 
 ### Phase 3: optional index entry move
 - [ ] Move root main.js logic into src/main/index.js.

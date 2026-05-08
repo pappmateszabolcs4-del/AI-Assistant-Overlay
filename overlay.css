@@ -1,0 +1,1479 @@
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow: hidden;
+      -webkit-app-region: no-drag;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: flex-start; /* Anchor to top to prevent vertical jitter during resize */
+      justify-content: center;
+    }
+
+    #overlay-container {
+      background: rgba(26, 31, 46, 0.58);
+      border: 1px solid rgba(91, 158, 255, 0.3);
+      border-radius: 16px;
+      padding: 20px;
+      padding-bottom: 20px; /* reserve grab area for bottom resize */
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+      width: 100%;
+      height: auto;
+      min-width: 380px;
+      min-height: 60px;
+      max-height: none;
+      backdrop-filter: blur(10px);
+      position: relative;
+      resize: none;
+      overflow: visible;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+    }
+
+    #overlay-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #overlay-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #overlay-container::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 3px;
+    }
+
+    #overlay-container::-webkit-scrollbar-thumb:hover {
+      background: rgba(91, 158, 255, 0.6);
+    }
+
+    /* Floating panels host to render dropdowns outside layout */
+    #floating-panels {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    /* Drag handle */
+    .drag-handle {
+      position: relative;
+      /* Reserve room for the top-left info button + top-right close button so the pill stays centered. */
+      width: min(380px, calc(100% - 160px));
+      height: 28px;
+      margin: 0 auto 4px;
+      cursor: grab;
+      background: transparent;
+      border: none;
+      transition: all 0.2s ease;
+      -webkit-app-region: no-drag; /* Allow JS to capture pointer events for manual dragging */
+      pointer-events: auto;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .drag-handle::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 20, 32, 0.62);
+      border-radius: 999px;
+      border: 1px solid rgba(91, 158, 255, 0.4);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+      transition: inherit;
+      pointer-events: none;
+    }
+
+    .drag-handle::after {
+      content: attr(data-label);
+      position: relative;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.88);
+      letter-spacing: 0.04em;
+      pointer-events: none;
+      text-transform: none;
+    }
+
+    .drag-handle:hover::before {
+      border-color: rgba(91, 158, 255, 0.85);
+      background: rgba(24, 31, 49, 0.78);
+    }
+
+    .drag-handle:hover::after {
+      color: #f5f7fa;
+    }
+
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .drag-handle.flush-top {
+      margin-top: 0;
+      box-shadow: none;
+    }
+
+    .drag-handle.flush-top::before {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.20);
+    }
+
+    @media (max-width: 560px) {
+      .drag-handle {
+        width: calc(100% - 160px);
+        margin: 0 auto 8px;
+      }
+    }
+
+    .resize-handle {
+      position: absolute;
+      background: transparent;
+      pointer-events: auto;
+    }
+
+    .resize-handle-left {
+      left: 0;
+      top: 0;
+      width: 8px;
+      height: 100%;
+      cursor: col-resize;
+    }
+
+    .resize-handle-right {
+      right: 0;
+      top: 0;
+      width: 8px;
+      height: 100%;
+      cursor: col-resize;
+    }
+
+    .resize-handle-bottom {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 20px;
+      cursor: row-resize;
+      z-index: 10;
+      pointer-events: none;
+      display: none; /* bottom resize removed from main header */
+    }
+
+    .resize-handle-left:hover,
+    .resize-handle-right:hover,
+    .resize-handle-bottom:hover {
+      background: transparent;
+    }
+
+    /* Subtle resize affordance: faint grip lines on edges */
+    .resize-handle-left::before,
+    .resize-handle-right::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 34px;
+      border-radius: 2px;
+      background: rgba(91, 158, 255, 0.18);
+      opacity: 0.95;
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    .resize-handle-left:hover::before,
+    .resize-handle-right:hover::before {
+      background: rgba(91, 158, 255, 0.18);
+    }
+
+    .close-btn {
+      background: transparent;
+      color: #f5f7fa;
+      border: 1px solid rgba(91, 158, 255, 0.3);
+      border-radius: 6px;
+      padding: 0;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-btn:hover {
+      background: #252d3d;
+      color: #5b9eff;
+    }
+
+    .close-btn-container {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      z-index: 20;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .info-btn-container {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      z-index: 20;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .clear-all-btn {
+      position: absolute;
+      top: 12px;
+      right: 50px;
+      background: transparent;
+      color: #f5f7fa;
+      border: 1px solid rgba(91, 158, 255, 0.3);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .clear-all-btn:hover {
+      background: rgba(255, 100, 100, 0.2);
+      color: #ff6464;
+      border-color: rgba(255, 100, 100, 0.5);
+    }
+
+    h2 {
+      font-size: 1.35em;
+      margin: 0 0 16px 0;
+      color: #f5f7fa;
+      text-align: center;
+    }
+
+    #micBtn {
+      width: 100%;
+      font-size: 1.05em;
+      padding: 12px 20px;
+      background: #5b9eff;
+      border-radius: 12px;
+      border: 1px solid #5b9eff;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+
+    #micBtn:hover {
+      background: #4a8ae8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(91, 158, 255, 0.18);
+    }
+
+    #status {
+      margin-top: 10px;
+      text-align: center;
+      color: #c4cdd9;
+      font-size: 0.95em;
+      min-height: 24px;
+    }
+
+    audio {
+      margin-top: 20px;
+      width: 100%;
+    }
+
+    #responseContainer {
+      margin-top: 12px;
+      padding: 16px;
+      background: rgba(91, 158, 255, 0.1);
+      border-radius: 8px;
+      border-left: 3px solid rgba(91, 158, 255, 0.5);
+      max-height: none;
+      min-height: 250px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+      flex: 1;
+    }
+
+    #responseContainer::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #responseContainer::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #responseContainer::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 3px;
+    }
+
+    #responseContainer::-webkit-scrollbar-thumb:hover {
+      background: rgba(91, 158, 255, 0.6);
+    }
+
+    #responseContainer p:first-child {
+      font-size: 0.9em;
+      color: #8ba3c0;
+      margin: 0 0 8px 0;
+    }
+
+    #aiResponse {
+      margin: 0;
+      color: #f5f7fa;
+      font-size: 1.05em;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    #questionInput {
+      width: 100%;
+      padding: 10px 12px;
+      margin-top: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(91, 158, 255, 0.35);
+      border-radius: 10px;
+      color: #f5f7fa;
+      font-size: 0.95em;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    #questionInput:focus {
+      border-color: rgba(91, 158, 255, 0.8);
+      box-shadow: 0 0 0 2px rgba(91, 158, 255, 0.12);
+    }
+
+    #questionInput::placeholder {
+      color: rgba(245, 247, 250, 0.45);
+    }
+
+    /* CRITICAL: Disable drag-region for interactive inputs */
+    /* Without this, slider/checkbox drag interferes with Electron window dragging */
+    input[type="range"],
+    input[type="checkbox"],
+    input[type="text"],
+    textarea,
+    button {
+      -webkit-app-region: no-drag;
+      cursor: auto;
+    }
+
+    #askBtn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px 14px;
+      background: #5b9eff;
+      border-radius: 10px;
+      border: 1px solid #5b9eff;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 600;
+    }
+
+    #askBtn:hover {
+      background: #4a8ae8;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(91, 158, 255, 0.16);
+    }
+
+    .vision-controls {
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(91, 158, 255, 0.08);
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.2);
+      display: flex;
+      gap: 8px;
+    }
+
+    .vision-btn {
+      flex: 1;
+      padding: 8px 12px;
+      background: rgba(91, 158, 255, 0.2);
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.4);
+      color: #f5f7fa;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+
+    .vision-btn:hover {
+      background: rgba(91, 158, 255, 0.35);
+      border-color: rgba(91, 158, 255, 0.6);
+    }
+
+    .vision-btn.active {
+      background: #5b9eff;
+      border-color: #5b9eff;
+    }
+
+    #screenshotPreview {
+      margin-top: 8px;
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 8px;
+      display: none;
+      border: 2px solid rgba(91, 158, 255, 0.4);
+    }
+
+    .screenshot-info {
+      margin-top: 6px;
+      font-size: 0.85em;
+      color: #8ba3c0;
+      text-align: center;
+    }
+
+    .history-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(91, 158, 255, 0.15);
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.3);
+      color: #f5f7fa;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+
+    .history-btn:hover {
+      background: rgba(91, 158, 255, 0.25);
+      border-color: rgba(91, 158, 255, 0.5);
+    }
+
+    /* Hide width counter display */
+    #widthDisplay {
+      display: none;
+    }
+
+    #historyPanel {
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(91, 158, 255, 0.08);
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.2);
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+    }
+
+    #historyPanel::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #historyPanel::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #historyPanel::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 3px;
+    }
+
+    .history-item {
+      margin-bottom: 12px;
+      padding: 10px;
+      background: rgba(26, 31, 46, 0.6);
+      border-radius: 6px;
+      border-left: 3px solid rgba(91, 158, 255, 0.5);
+      cursor: pointer;
+      transition: background 0.2s ease, border-left-color 0.2s ease;
+    }
+
+    .history-item:hover {
+      background: rgba(26, 31, 46, 0.8);
+      border-left-color: #5b9eff;
+    }
+
+    .history-item.active {
+      background: rgba(26, 31, 46, 0.92);
+      border-left-color: #ffd666;
+    }
+
+    .history-question {
+      font-size: 0.9em;
+      color: #8ba3c0;
+      margin-bottom: 6px;
+    }
+
+    .history-preview {
+      font-size: 0.85em;
+      color: #f5f7fa;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-meta {
+      font-size: 0.78em;
+      color: #6b7c93;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .history-time {
+      font-size: 0.78em;
+      color: #8ba3c0;
+    }
+
+    .history-toggle {
+      color: #5b9eff;
+      font-weight: 600;
+      font-size: 0.78em;
+      user-select: none;
+      transition: color 0.2s ease;
+    }
+
+    .history-item.active .history-toggle {
+      color: #ffd666;
+    }
+
+    .history-full {
+      border-top: 1px solid rgba(91, 158, 255, 0.2);
+      margin-top: 10px;
+      padding-top: 10px;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.25s ease, opacity 0.2s ease;
+    }
+
+    .history-item.active .history-full {
+      max-height: 600px;
+      opacity: 1;
+    }
+
+    body.pulling-history, body.pulling-history * {
+      user-select: none !important;
+      -webkit-user-select: none !important;
+    }
+
+    .history-full-label {
+      font-size: 0.78em;
+      color: #8ba3c0;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .history-full-block {
+      font-size: 0.85em;
+      color: #f5f7fa;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-bottom: 10px;
+    }
+
+    .history-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 12px;
+      padding-bottom: 4px;
+    }
+
+    .history-clear-btn {
+      flex: 1;
+      padding: 10px 12px;
+      background: rgba(255, 100, 100, 0.2);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 100, 100, 0.4);
+      color: #ff6464;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.85em;
+    }
+
+    .history-clear-btn:hover {
+      background: rgba(255, 100, 100, 0.3);
+      border-color: rgba(255, 100, 100, 0.6);
+    }
+
+    .section-content.history-section .section-content-inner {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+      padding-bottom: 4px;
+    }
+
+    .section-content.history-section #historyList {
+      flex: 1 1 auto;
+      min-height: 200px;
+      overflow-y: auto;
+      padding-right: 4px;
+      padding-bottom: 4px;
+    }
+
+
+    /* Custom Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: rgba(26, 31, 46, 0.95);
+      border: 1px solid rgba(91, 158, 255, 0.4);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 400px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+    }
+
+    .modal-title {
+      font-size: 1.2em;
+      font-weight: 600;
+      color: #f5f7fa;
+      margin-bottom: 12px;
+    }
+
+    .modal-message {
+      color: #8ba3c0;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      white-space: pre-line;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .modal-btn-confirm {
+      background: rgba(255, 100, 100, 0.3);
+      color: #ff6464;
+      border: 1px solid rgba(255, 100, 100, 0.5);
+    }
+
+    .modal-btn-confirm:hover {
+      background: rgba(255, 100, 100, 0.5);
+    }
+
+    .modal-btn-cancel {
+      background: rgba(91, 158, 255, 0.2);
+      color: #5b9eff;
+      border: 1px solid rgba(91, 158, 255, 0.4);
+    }
+
+    .modal-btn-cancel:hover {
+      background: rgba(91, 158, 255, 0.35);
+    }
+
+    /* Tabs System */
+    .tabs-container {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      border-bottom: 2px solid rgba(91, 158, 255, 0.2);
+      padding-bottom: 8px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px 12px;
+      background: rgba(91, 158, 255, 0.1);
+      border: 1px solid rgba(91, 158, 255, 0.2);
+      border-radius: 8px 8px 0 0;
+      color: #8ba3c0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.9em;
+      font-weight: 500;
+      position: relative;
+    }
+
+    .tab-btn:hover {
+      background: rgba(91, 158, 255, 0.2);
+      color: #f5f7fa;
+    }
+
+    .tab-btn.active {
+      background: rgba(91, 158, 255, 0.3);
+      border-color: #5b9eff;
+      color: #f5f7fa;
+      font-weight: 600;
+    }
+
+    .tab-btn .pin-icon {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 0.7em;
+      opacity: 0.5;
+    }
+
+    .tab-btn.pinned .pin-icon {
+      opacity: 1;
+      color: #5b9eff;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.2s ease;
+    }
+
+    /* Detached panel windows should appear instantly (undock should not "fade in"). */
+    body.panel-mode .tab-content.active {
+      animation: none !important;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .pinned-sections {
+      margin-bottom: 16px;
+      padding: 12px;
+      background: rgba(91, 158, 255, 0.05);
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.15);
+      max-height: 200px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+    }
+
+    .pinned-sections:empty {
+      display: none;
+    }
+
+    .pinned-section {
+      padding: 8px;
+      background: rgba(26, 31, 46, 0.6);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 3px solid #5b9eff;
+    }
+
+    .pinned-section:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Floating pinned history boxes (drag out from History list) */
+    .pinned-history-box {
+      position: fixed;
+      left: 12px;
+      top: 72px;
+      width: min(420px, calc(100vw - 24px));
+      max-height: min(60vh, calc(100vh - 24px));
+      display: flex;
+      flex-direction: column;
+      background: rgba(26, 31, 46, 0.72);
+      border: 1px solid rgba(91, 158, 255, 0.4);
+      border-radius: 14px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+      pointer-events: auto;
+      z-index: 150;
+      overflow: hidden;
+    }
+
+    .pinned-history-box.ghost {
+      opacity: 0.85;
+    }
+
+    .pinned-history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: rgba(91, 158, 255, 0.08);
+      color: #f5f7fa;
+      font-weight: 600;
+      font-size: 0.85em;
+      user-select: none;
+      cursor: grab;
+      gap: 10px;
+    }
+
+    .pinned-history-header:active {
+      cursor: grabbing;
+    }
+
+    .pinned-history-header .meta {
+      color: #8ba3c0;
+      font-weight: 500;
+      font-size: 0.9em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .pinned-history-body {
+      padding: 10px 12px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+    }
+
+    .pinned-history-body::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .pinned-history-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .pinned-history-body::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.35);
+      border-radius: 3px;
+    }
+
+    .pinned-history-body::-webkit-scrollbar-thumb:hover {
+      background: rgba(91, 158, 255, 0.55);
+    }
+
+    .section-title {
+      font-size: 0.85em;
+      color: #5b9eff;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .specialization-container {
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(91, 158, 255, 0.08);
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.2);
+    }
+
+    .specialization-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.9em;
+      color: #8ba3c0;
+    }
+
+    #specializationLevel {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(91, 158, 255, 0.2);
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    #specializationLevel::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #5b9eff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 6px rgba(91, 158, 255, 0.35);
+    }
+
+    #specializationLevel::-webkit-slider-thumb:hover {
+      background: #7cb4ff;
+      box-shadow: 0 0 8px rgba(91, 158, 255, 0.55);
+    }
+
+    #specializationLevel::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #5b9eff;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 6px rgba(91, 158, 255, 0.35);
+    }
+
+    #specializationLevel::-moz-range-thumb:hover {
+      background: #7cb4ff;
+      box-shadow: 0 0 8px rgba(91, 158, 255, 0.55);
+    }
+
+    .specialization-value {
+      font-weight: 600;
+      color: #5b9eff;
+    }
+
+    .reset-layout-btn {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      background: rgba(91, 158, 255, 0.15);
+      border: 1px solid rgba(91, 158, 255, 0.3);
+      border-radius: 8px;
+      color: #5b9eff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      font-size: 0.9em;
+    }
+
+    .reset-layout-btn:hover {
+      background: rgba(91, 158, 255, 0.25);
+      border-color: rgba(91, 158, 255, 0.5);
+    }
+
+    /* Collapsible Sections Container */
+    .sections-wrapper {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+    }
+
+    /* Collapsible Sections */
+    .collapsible-section {
+      flex: 1;
+      border: 1px solid rgba(91, 158, 255, 0.2);
+      border-radius: 8px;
+      background: rgba(26, 31, 46, 0.4);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      position: relative;
+      overflow: visible; /* allow dropdown content to float without reflow */
+      z-index: 1;
+    }
+
+      /* When a panel is detached into its own window, keep its slot in the header
+         layout (so it can be used as a docking target) but make it invisible and
+         non-interactive to avoid "ghost originals" in the header. */
+      .collapsible-section.panel-detached {
+        opacity: 0;
+        pointer-events: none;
+        /* Collapse so it doesn't consume vertical space. */
+        height: 0;
+        min-height: 0;
+        border: 0;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        flex: 0 0 auto;
+      }
+
+      .collapsible-section.panel-detached .section-header {
+        display: none !important;
+      }
+
+      /* Never render dropdown content for detached slots in the main overlay.
+         This avoids showing stale History/Settings content during dock preview / header-only resizing. */
+      .collapsible-section.panel-detached .section-content {
+        display: none !important;
+      }
+
+      /* While dragging a detached panel to dock back, temporarily show docking targets. */
+      body.dock-preview .collapsible-section.panel-detached {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* Dock preview should be functional-only (no visible indicators). */
+      body.dock-preview .sections-container {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* During renderer boot/reload, never show header slots that may be transient
+         before detached-state sync arrives (prevents Ctrl+R flicker). */
+      body.booting .sections-container {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* When all panels are detached, collapse the main overlay to a compact header-only bar.
+         (The BrowserWindow height is also resized via IPC in JS.) */
+      body.header-only #overlay-container {
+        /* Keep top/side spacing consistent; remove extra space from the bottom. */
+        padding: 6px 12px 4px 12px;
+        gap: 8px;
+        /* Override the global min-height so header-only can shrink further. */
+        min-height: 0;
+      }
+
+      body.header-only .sections-container {
+        display: none;
+      }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      cursor: pointer;
+      background: rgba(91, 158, 255, 0.08);
+      border: none;
+      width: 100%;
+      color: #f5f7fa;
+      font-weight: 600;
+      font-size: 0.9em;
+      transition: all 0.2s ease;
+      user-select: none;
+      gap: 6px;
+      flex-shrink: 0;
+      min-width: 0;
+    }
+
+    .section-header span {
+      pointer-events: none;
+    }
+
+    /* Prevent label wrapping/squish (keep emoji + text on one line) */
+    .section-header span:first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .section-header:hover {
+      background: rgba(91, 158, 255, 0.12);
+    }
+
+    .section-toggle {
+      font-size: 0.7em;
+      transition: transform 0.3s ease;
+      color: #5b9eff;
+      flex-shrink: 0;
+    }
+
+    .section-toggle.open {
+      transform: rotate(180deg);
+    }
+
+    .section-content {
+      position: fixed;
+      background: rgba(26, 31, 46, 0.72);
+      border: 1px solid rgba(91, 158, 255, 0.4);
+      border-radius: 16px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+      padding: 12px;
+      display: none;
+      max-height: calc(100vh - 24px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+      pointer-events: auto;
+      z-index: 100;
+      transform-origin: top left;
+      height: auto;
+    }
+
+    .section-content.open {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .section-content::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .section-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .section-content::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 3px;
+    }
+
+    .section-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(91, 158, 255, 0.6);
+    }
+
+    .popup-resize-handle {
+      margin-top: auto;
+      height: 12px;
+      min-height: 12px;
+      flex: 0 0 12px;
+      cursor: row-resize;
+      border-radius: 6px;
+      background: rgba(91, 158, 255, 0.1);
+      border: 1px solid rgba(91, 158, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .popup-resize-handle:hover {
+      background: rgba(91, 158, 255, 0.1);
+      border-color: rgba(91, 158, 255, 0.2);
+    }
+
+    .popup-resize-handle::before {
+      content: '';
+      width: 40px;
+      height: 3px;
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 3px;
+      opacity: 0.9;
+    }
+
+    .section-content-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    body.panel-mode .section-content-inner {
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    /* Container layout: compact header row only */
+    #overlay-container {
+      padding: 6px 12px 16px 12px;
+      gap: 8px;
+    }
+
+    /* Drag handle spans majority width at top */
+    #overlay-container > .drag-handle {
+      width: min(380px, calc(100% - 160px));
+      align-self: center;
+    }
+
+    /* Pinned sections keep full width but collapse when empty */
+    #overlay-container > .pinned-sections {
+      width: 100%;
+    }
+
+    /* The 3 main sections as header pills */
+    #overlay-container > .collapsible-section {
+      flex: 1 1 0;
+      min-width: 120px;
+      align-self: flex-start;
+    }
+
+    /* Sections wrapper - horizontal row, no wrapping */
+    .sections-container {
+      display: grid;
+      gap: 10px;
+      width: 100%;
+      align-items: start;
+      margin-top: 2px;
+      position: relative;
+    }
+
+    /* Manual layout modes (default stays horizontal; toggled via button in Settings) */
+    body.layout-horizontal .sections-container {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    body.layout-compact .sections-container {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    body.layout-compact .sections-container > .collapsible-section:nth-child(3) {
+      grid-column: 1 / -1;
+    }
+
+    body.layout-stacked .sections-container {
+      grid-template-columns: 1fr;
+    }
+
+    body.layout-stacked .sections-container > .collapsible-section:nth-child(3) {
+      grid-column: auto;
+    }
+
+    /* Detached panel window mode (separate BrowserWindow) */
+    body.panel-mode {
+      justify-content: flex-start;
+      align-items: stretch;
+    }
+
+    body.panel-mode #overlay-container {
+      min-width: 0;
+      min-height: 0;
+      width: 100%;
+      height: 100%;
+      position: fixed;
+      inset: 0;
+      margin: 0;
+      padding: 0;
+      gap: 0;
+
+      /* Detached windows: make the OUTER container the panel chrome so resizing
+        can never reveal transparent window area outside the border. */
+      background: rgba(26, 31, 46, 0.72);
+      border: 1px solid rgba(91, 158, 255, 0.3);
+      border-radius: 14px;
+      box-shadow: none;
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    body.panel-mode .drag-handle,
+    body.panel-mode .resize-handle,
+    body.panel-mode .close-btn-container,
+    body.panel-mode .info-btn-container,
+    body.panel-mode .pinned-sections,
+    body.panel-mode #floating-panels {
+      display: none !important;
+    }
+
+    body.panel-mode .sections-container {
+      /* In detached mode there is only one active panel.
+         Use flex instead of grid to ensure the bordered panel always stretches
+         with the BrowserWindow height (grid auto-rows can leave unused space). */
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      align-items: stretch;
+    }
+
+    body.panel-mode .collapsible-section {
+      display: none;
+    }
+
+    body.panel-mode .collapsible-section.panel-active {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      flex: 1;
+      min-height: 0;
+      height: 100%;
+      align-self: stretch;
+
+      /* Avoid double border/background: outer container already draws chrome. */
+      background: transparent;
+      border: none;
+      border-radius: 0;
+    }
+
+    body.panel-mode .section-content {
+      position: relative;
+      left: auto;
+      top: auto;
+      width: 100%;
+      max-height: none;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      /* Detached windows should behave like a single frame.
+        Remove the inner popup frame so window resize can't "separate" outer/inner chrome. */
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      /* Detached mode: scroll only the inner content so the resize handle
+        can live in a fixed footer area without overlapping content cards. */
+      overflow: hidden;
+    }
+
+    body.panel-mode .popup-resize-handle {
+      margin-top: 12px;
+      height: 14px;
+    }
+
+    body.panel-mode .section-content.open {
+      display: flex;
+      flex-direction: column;
+    }
+
+    body.panel-mode .section-header {
+      cursor: grab;
+      user-select: none;
+      position: relative;
+      z-index: 20;
+    }
+
+    body.panel-mode .section-header *:not(.dock-btn) {
+      cursor: inherit;
+    }
+
+    body.panel-mode .section-header:active {
+      cursor: grabbing;
+    }
+
+    body.panel-mode .section-toggle {
+      display: none;
+    }
+
+    body.panel-mode .dock-btn {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid rgba(91, 158, 255, 0.35);
+      color: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      padding: 4px 8px;
+      cursor: pointer;
+      pointer-events: auto;
+      font-weight: 700;
+      line-height: 1;
+      position: relative;
+      z-index: 21;
+    }
+
+    body.panel-mode .dock-btn:hover {
+      background: rgba(91, 158, 255, 0.12);
+    }
+
+    /* Detached panel window resize handles (like Note/Info panels) */
+    body.panel-mode .detached-resize-handle {
+      position: absolute;
+      background: transparent;
+      z-index: 12;
+      pointer-events: auto;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body.panel-mode .detached-resize-handle-left {
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      cursor: ew-resize;
+    }
+
+    body.panel-mode .detached-resize-handle-right {
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      cursor: ew-resize;
+    }
+
+    body.panel-mode .detached-resize-handle-corner {
+      right: 0;
+      bottom: 0;
+      width: 18px;
+      height: 18px;
+      cursor: nwse-resize;
+    }
+
+    /* Subtle resize affordance in detached windows */
+    body.panel-mode .detached-resize-handle-left:hover,
+    body.panel-mode .detached-resize-handle-right:hover,
+    body.panel-mode .detached-resize-handle-corner:hover {
+      background: transparent;
+    }
+
+    body.panel-mode .detached-resize-handle-left::before,
+    body.panel-mode .detached-resize-handle-right::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 32px;
+      border-radius: 2px;
+      background: rgba(91, 158, 255, 0.18);
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    body.panel-mode .detached-resize-handle-left:hover::before,
+    body.panel-mode .detached-resize-handle-right:hover::before {
+      background: rgba(91, 158, 255, 0.18);
+    }
+
+    body.panel-mode .detached-resize-handle-corner::before {
+      content: '';
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      background: repeating-linear-gradient(
+        135deg,
+        rgba(91, 158, 255, 0.16) 0px,
+        rgba(91, 158, 255, 0.16) 2px,
+        rgba(91, 158, 255, 0.00) 2px,
+        rgba(91, 158, 255, 0.00) 4px
+      );
+      pointer-events: none;
+      transition: background 0.15s ease;
+    }
+
+    body.panel-mode .detached-resize-handle-corner:hover::before {
+      background: repeating-linear-gradient(
+        135deg,
+        rgba(91, 158, 255, 0.16) 0px,
+        rgba(91, 158, 255, 0.16) 2px,
+        rgba(91, 158, 255, 0.00) 2px,
+        rgba(91, 158, 255, 0.00) 4px
+      );
+    }
