@@ -63,7 +63,7 @@ const bugPatterns = [
     // This avoids false positives like clearing textContent to '' or icon-only glyphs.
     // Also ignore template literals (backticks), since they often contain dynamic interpolations.
     pattern: /textContent\s*=\s*['"][^'"]*[A-Za-z][^'"]*['"]\s*;/,
-    file: 'overlay.html',
+    types: ['renderer'],
     description: 'Hard-coded text without translation support',
     fix: 'Use t().keyName pattern for all user-facing text.'
   },
@@ -71,7 +71,7 @@ const bugPatterns = [
     name: 'Native Dialog Usage',
     severity: 'MEDIUM',
     pattern: /\b(confirm|alert|prompt)\s*\(/,
-    file: 'overlay.html',
+    types: ['renderer'],
     description: 'Native dialogs are ugly and cannot be translated',
     fix: 'Use custom modal dialogs (showConfirmModal) instead.'
   },
@@ -89,7 +89,7 @@ const bugPatterns = [
     name: 'Unsafe Content Filtering',
     severity: 'CRITICAL',
     pattern: /forbidden.*=.*\[.*['"]kill['"].*\]/,
-    file: 'overlay.html',
+    types: ['renderer'],
     description: 'Over-strict content filter blocks gaming terms',
     fix: 'Use context-aware filtering (e.g., "kill real people" vs "kill zombie").'
   },
@@ -105,7 +105,7 @@ const bugPatterns = [
     name: 'Missing Error Handling in IPC',
     severity: 'MEDIUM',
     pattern: /ipcRenderer\.invoke\(['"][^'"]+['"][^)]*\)(?!\s*\.catch)/,
-    file: 'overlay.html',
+    types: ['renderer'],
     description: 'IPC invoke without error handling can crash renderer',
     fix: 'Add .catch() or try/catch to all ipcRenderer.invoke() calls.'
   },
@@ -114,7 +114,7 @@ const bugPatterns = [
     name: 'History Popup Usage (Problematic)',
     severity: 'HIGH',
     pattern: /open-history-popup|createHistoryPopupWindow/,
-    file: 'overlay.html',
+    types: ['renderer', 'main'],
     description: 'History popup is still in use but causes game freezing (see LEARNINGS.md Issue 14)',
     fix: 'Replace popup with inline expansion in history list to avoid focus stealing.'
   },
@@ -136,10 +136,19 @@ const bugPatterns = [
   }
 ];
 
+function getRendererModuleFiles() {
+  const rendererDir = path.join(__dirname, 'src', 'renderer', 'overlay');
+  if (!fs.existsSync(rendererDir)) return [];
+  return fs.readdirSync(rendererDir)
+    .filter((file) => file.endsWith('.js'))
+    .map((file) => ({ path: path.join('src', 'renderer', 'overlay', file), type: 'renderer' }));
+}
+
 // Files to check
 const filesToCheck = [
   { path: 'main.js', type: 'main' },
   { path: 'overlay.html', type: 'renderer' },
+  ...getRendererModuleFiles(),
   { path: 'index.html', type: 'app' }
 ];
 
@@ -165,6 +174,14 @@ function runBugChecker() {
   let criticalIssues = 0;
   let highIssues = 0;
   
+  const overlayHtmlPath = path.join(__dirname, 'overlay.html');
+  const overlayHtmlContent = fs.existsSync(overlayHtmlPath)
+    ? fs.readFileSync(overlayHtmlPath, 'utf-8')
+    : null;
+  const overlayDomIds = overlayHtmlContent
+    ? new Set([...overlayHtmlContent.matchAll(/\bid\s*=\s*['"]([^'"]+)['"]/g)].map(m => m[1]))
+    : new Set();
+
   filesToCheck.forEach(file => {
     const filePath = path.join(__dirname, file.path);
     
@@ -178,7 +195,10 @@ function runBugChecker() {
     console.log(`\n${colors.bold}📄 Checking ${file.path}...${colors.reset}`);
     
     bugPatterns.forEach(bug => {
-      if (bug.file !== file.path) return;
+      const fileMatch = typeof bug.file === 'string' ? bug.file === file.path : false;
+      const filesMatch = Array.isArray(bug.files) ? bug.files.includes(file.path) : false;
+      const typeMatch = Array.isArray(bug.types) ? bug.types.includes(file.type) : false;
+      if (!fileMatch && !filesMatch && !typeMatch) return;
       
       let matches;
       if (bug.pattern.global) {
@@ -249,14 +269,12 @@ function runBugChecker() {
     }
 
     // Custom scan: orphan handlers that wire events via getElementById(...) on a missing DOM id.
-    if (file.path === 'overlay.html') {
-      const idsInDom = new Set(
-        [...content.matchAll(/\bid\s*=\s*['"]([^'"]+)['"]/g)].map(m => m[1])
-      );
+    // Scan renderer JS files and validate ids against overlay.html.
+    if (file.type === 'renderer' && file.path !== 'overlay.html') {
       const orphanWires = [];
-      for (const m of content.matchAll(/getElementById\(['"]([^'"]+)['"]\)\s*\.(?:onclick|addEventListener)\b/g)) {
+      for (const m of content.matchAll(/getElementById\(['"]([^'"]+)['"]\)/g)) {
         const id = m[1];
-        if (!idsInDom.has(id)) {
+        if (!overlayDomIds.has(id)) {
           const lineNumber = content.substring(0, m.index).split('\n').length;
           orphanWires.push({ id, lineNumber });
         }

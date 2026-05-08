@@ -93,18 +93,6 @@ ipcRenderer.on(IPC_CHANNELS.NOTE_PANEL_BOUNDS, (_event, payload) => {
   saveNotePanelBounds();
 });
 
-// Ask tab TTS toggle (persistent)
-const askEnableTTS = document.getElementById('askEnableTTS');
-const savedAskTTS = localStorage.getItem(STORAGE_KEYS.ASK_ENABLE_TTS);
-if (askEnableTTS) {
-  if (savedAskTTS !== null) {
-    askEnableTTS.checked = savedAskTTS === 'true';
-  }
-  on(askEnableTTS, 'change', () => {
-    localStorage.setItem(STORAGE_KEYS.ASK_ENABLE_TTS, askEnableTTS.checked ? 'true' : 'false');
-  });
-}
-
 // Vision controls
 const screenshotBtn = document.getElementById('screenshotBtn');
 const clearImageBtn = document.getElementById('clearImageBtn');
@@ -782,8 +770,6 @@ on(infoBtn, 'click', (e) => {
 function speakResponse(text) {
   const enableTTS = document.getElementById('enableTTS');
   if (!enableTTS || !enableTTS.checked) return;
-  const askEnableTTS = document.getElementById('askEnableTTS');
-  if (askEnableTTS && !askEnableTTS.checked) return;
 
   if (!window.speechSynthesis) return;
   const utterance = new SpeechSynthesisUtterance(text);
