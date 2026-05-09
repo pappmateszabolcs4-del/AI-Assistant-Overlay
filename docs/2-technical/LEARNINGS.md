@@ -1275,6 +1275,36 @@ Add "real" prefix to forbidden terms to preserve gaming vocabulary.
 
 ---
 
+### 2026-05-09 (Night)
+
+#### Summary
+- What changed: Pruned and minified the offline IGDB dataset; updated the build script and added a local prune script.
+- Why: Reduce dataset size and load cost while preserving match quality.
+- Impact: data/games.json is substantially smaller and quicker to load, with validation still passing.
+
+#### Details
+- Added alias/keyword caps, length filters, and common-term removal to keep signal-heavy tokens.
+- Build now drops unused summary fields and writes a minified dataset.
+- Added a local prune script for existing datasets without IGDB credentials.
+- Size delta: 6,781,184 → 1,214,098 bytes (~82% smaller).
+
+#### Files touched
+- [scripts/build-igdb-dataset.js](scripts/build-igdb-dataset.js)
+- [scripts/prune-games-dataset.js](scripts/prune-games-dataset.js)
+- [data/games.json](data/games.json)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+
+#### Backups
+- Not created (targeted edits only)
+
+#### Verification
+- npm run validate:games
+
+#### Follow-ups
+- Consider optional gzip packaging for distribution builds.
+
+---
+
 #### Issue 13: Game Context Detection (Feb 5, 2026 Evening)
 **Feature**: Auto-detect what game the user is playing and hyper-focus AI responses
 

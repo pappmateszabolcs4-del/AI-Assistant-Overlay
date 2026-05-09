@@ -4,11 +4,11 @@ Last updated: 2026-05-09
 
 ## Top candidates (next)
 
-- [ ] Reduce offline IGDB dataset size (minify/prune/gzip) without losing match quality
 - [ ] Basic unit tests (3-5 critical paths)
 
 ## Recently completed
 
+- [x] Reduce offline IGDB dataset size (minify/prune/gzip) without losing match quality
 - [x] Unify UI translation sources (overlay/index/detached/aux windows)
 - [x] Modularize overlay renderer script
 - [x] Restructure IPC handlers (clear domain ownership)

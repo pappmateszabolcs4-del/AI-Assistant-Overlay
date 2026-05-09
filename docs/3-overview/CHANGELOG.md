@@ -6,6 +6,23 @@
 
 ---
 
+## [1.0.20] - 2026-05-09 (IGDB Dataset Prune + Minify)
+
+### ✅ Added
+
+- Local dataset prune script for trimming aliases/keywords and removing common noise terms.
+
+### 🔧 Changed
+
+- IGDB dataset build now caps aliases/keywords, drops unused summary fields, and writes minified JSON.
+- Offline dataset size reduced significantly while preserving matching quality.
+
+### 🧾 Notes
+
+- Tests: `npm run validate:games`.
+
+---
+
 ## [1.0.19] - 2026-05-09 (Registry Domains + Detached Dock Fixes)
 
 ### ✅ Added

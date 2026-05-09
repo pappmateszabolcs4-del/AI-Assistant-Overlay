@@ -103,6 +103,11 @@ This audit was conducted on Feb 5. The following notable improvements were added
 - Detached panel docking now triggers only over the main header or via the dock button.
 - Fixed a first-run race where re-detach could leave duplicate header slots.
 
+### IGDB Dataset Optimization
+- Added a local prune script to trim aliases/keywords and remove common noise terms.
+- Dataset build now drops unused summary fields and writes a minified payload.
+- Offline dataset size reduced substantially without degrading match validation.
+
 ---
 
 ## 📋 AUDIT METHODOLOGY
