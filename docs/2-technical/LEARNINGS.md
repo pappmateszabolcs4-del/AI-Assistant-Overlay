@@ -1305,6 +1305,33 @@ Add "real" prefix to forbidden terms to preserve gaming vocabulary.
 
 ---
 
+### 2026-05-09 (Night)
+
+#### Summary
+- What changed: Added basic unit tests for core game detection paths and wired the Node test runner.
+- Why: Establish a minimal safety net for critical detection logic.
+- Impact: Quick regression checks are now available via `npm test`.
+
+#### Details
+- Added `node --test` runner to package scripts.
+- Covered dataset match, ignore list, regex fallback, and preferred display selection.
+
+#### Files touched
+- [package.json](package.json)
+- [tests/game-detect.test.js](tests/game-detect.test.js)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+
+#### Backups
+- Not created (targeted edits only)
+
+#### Verification
+- npm test
+
+#### Follow-ups
+- Consider adding IPC error mapping tests and dataset prune coverage.
+
+---
+
 #### Issue 13: Game Context Detection (Feb 5, 2026 Evening)
 **Feature**: Auto-detect what game the user is playing and hyper-focus AI responses
 

@@ -4,10 +4,11 @@ Last updated: 2026-05-09
 
 ## Top candidates (next)
 
-- [ ] Basic unit tests (3-5 critical paths)
+
 
 ## Recently completed
 
+- [x] Basic unit tests (3-5 critical paths)
 - [x] Reduce offline IGDB dataset size (minify/prune/gzip) without losing match quality
 - [x] Unify UI translation sources (overlay/index/detached/aux windows)
 - [x] Modularize overlay renderer script

@@ -6,6 +6,19 @@
 
 ---
 
+## [1.0.21] - 2026-05-09 (Basic Unit Tests)
+
+### ✅ Added
+
+- Node test runner wiring (`npm test`).
+- Basic unit coverage for game detection matching and ignore logic.
+
+### 🧾 Notes
+
+- Tests: `npm test`.
+
+---
+
 ## [1.0.20] - 2026-05-09 (IGDB Dataset Prune + Minify)
 
 ### ✅ Added
