@@ -4,7 +4,6 @@ Last updated: 2026-05-09
 
 ## Top candidates (next)
 
-- [ ] Split registry by domain (overlay, detached, pinned, note/info)
 - [ ] Reduce offline IGDB dataset size (minify/prune/gzip) without losing match quality
 - [ ] Basic unit tests (3-5 critical paths)
 
@@ -15,6 +14,7 @@ Last updated: 2026-05-09
 - [x] Restructure IPC handlers (clear domain ownership)
 - [x] Context-aware error messages
 - [x] Configurable game detection ignore list (UI + IPC)
+- [x] Split registry by domain (overlay, detached, pinned, note/info)
 
 - [ ] Per-game layout profiles
   - Save/apply per detected game: layout mode, panel order (and optionally open/detached state)
