@@ -8,6 +8,8 @@ Last updated: 2026-05-08
 - [ ] Split registry by domain (overlay, detached, pinned, note/info)
 - [ ] Deferred bugfix: detached Settings overlay size slider can stick to first step
 - [ ] Reduce offline IGDB dataset size (minify/prune/gzip) without losing match quality
+- [ ] Context-aware error messages
+- [ ] Basic unit tests (3-5 critical paths)
 
 ## Recently completed
 
@@ -45,3 +47,8 @@ Last updated: 2026-05-08
 - [ ] Better reload safety guard
 - [ ] Overlay performance instrumentation
 - [ ] Accessibility keyboard navigation
+- [ ] React refactor (split overlay HTML)
+- [ ] Plugin API for game-specific modules
+- [ ] Cloud sync for settings
+- [ ] Advanced game profiles (community)
+- [ ] Multi-account support

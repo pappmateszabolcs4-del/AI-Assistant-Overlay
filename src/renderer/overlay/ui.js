@@ -912,12 +912,6 @@ function updateOverlayText() {
   if (specDetail) specDetail.textContent = t().specializationDetail || specDetail.textContent;
   const ttsLabel = document.getElementById('ttsLabel');
   if (ttsLabel) ttsLabel.textContent = t().ttsLabel || ttsLabel.textContent;
-  const overlaySizeLabel = document.getElementById('overlaySizeLabel');
-  if (overlaySizeLabel) overlaySizeLabel.textContent = t().overlaySizeLabel || overlaySizeLabel.textContent;
-  const widthLabel = document.getElementById('widthLabel');
-  if (widthLabel) widthLabel.textContent = t().overlayWidthLabel || widthLabel.textContent;
-  const widthUnit = document.getElementById('widthUnit');
-  if (widthUnit) widthUnit.textContent = t().widthUnit || 'px';
   const dataLabel = document.getElementById('dataLabel');
   if (dataLabel) dataLabel.textContent = t().dataLabel || dataLabel.textContent;
   const exportHistoryBtn = document.getElementById('exportHistoryBtn');
@@ -1364,7 +1358,6 @@ on(resetLayoutBtn, 'click', () => {
       // Clear all layout-related localStorage
       localStorage.removeItem(STORAGE_KEYS.OVERLAY_POSITION_X);
       localStorage.removeItem(STORAGE_KEYS.OVERLAY_POSITION_Y);
-      localStorage.removeItem(STORAGE_KEYS.OVERLAY_WIDTH);
       localStorage.removeItem(LAYOUT_STORAGE_KEY);
       localStorage.removeItem(STORAGE_KEYS.PINNED_TABS);
       localStorage.removeItem(PINNED_HISTORY_KEY);
