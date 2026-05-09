@@ -94,8 +94,4 @@ src/
 - [x] Phase 2: renderer split (ipc/ui/history/detach/translations) without bundler.
 
 ## TODO (AI Vision: Video Recording Recognition)
-- [ ] Define the exact flow: capture (source), sampling rate, and retention policy.
-- [ ] Add a dedicated service module (services/vision-video.js) for video frame extraction.
-- [ ] Implement incremental frame-to-Vision analysis (batch or rolling window).
-- [ ] Add UI controls (start/stop recording + status) with 6-language translations.
-- [ ] Add privacy and storage notes (explicit consent, local retention limits).
+See the canonical checklist in [docs/3-overview/TODO.md](docs/3-overview/TODO.md).

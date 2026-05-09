@@ -17,6 +17,29 @@ Last updated: 2026-05-09
 - [x] Configurable game detection ignore list (UI + IPC)
 - [x] Split registry by domain (overlay, detached, pinned, note/info)
 
+## Release readiness
+
+- [ ] Remove openDevTools() from production
+- [ ] Create Windows installer (NSIS/MSI)
+- [ ] Code sign executable (EV certificate)
+- [ ] Auto-update mechanism (electron-updater)
+- [ ] Privacy policy document
+- [ ] Terms of service
+
+## Roadmap v1.1 (Next Month)
+
+- [ ] Replace history popup with inline expansion
+- [ ] Fix 11 IPC listener duplications
+- [ ] Add volume control for TTS
+- [ ] User feedback integration
+
+## Roadmap v2.0 (Q2 2026)
+
+- [ ] Refactor overlay.html → React
+- [ ] Plugin API for game mods
+- [ ] Cloud sync for settings
+- [ ] Advanced game profiles
+
 - [ ] Per-game layout profiles
   - Save/apply per detected game: layout mode, panel order (and optionally open/detached state)
 - [ ] Prompt templates per game
@@ -48,8 +71,10 @@ Last updated: 2026-05-09
 - [ ] Better reload safety guard
 - [ ] Overlay performance instrumentation
 - [ ] Accessibility keyboard navigation
-- [ ] React refactor (split overlay HTML)
-- [ ] Plugin API for game-specific modules
-- [ ] Cloud sync for settings
-- [ ] Advanced game profiles (community)
+- [ ] AI Vision: Video recording recognition
+  - [ ] Define the exact flow: capture (source), sampling rate, and retention policy
+  - [ ] Add a dedicated service module (services/vision-video.js) for video frame extraction
+  - [ ] Implement incremental frame-to-Vision analysis (batch or rolling window)
+  - [ ] Add UI controls (start/stop recording + status) with 6-language translations
+  - [ ] Add privacy and storage notes (explicit consent, local retention limits)
 - [ ] Multi-account support

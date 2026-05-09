@@ -156,12 +156,7 @@ d:\AIGameAssistant_new\
 - [x] No critical bugs
 
 ### Not Yet Ready (Minor) ⚠️
-- [ ] Remove openDevTools() from production
-- [ ] Create Windows installer (NSIS/MSI)
-- [ ] Code sign executable (EV certificate)
-- [ ] Auto-update mechanism (electron-updater)
-- [ ] Privacy policy document
-- [ ] Terms of service
+See the canonical checklist in [docs/3-overview/TODO.md](docs/3-overview/TODO.md).
 
 **Estimated deployment prep time**: 2-3 hours (installer + signing only)
 
@@ -173,16 +168,10 @@ d:\AIGameAssistant_new\
 All critical features complete
 
 ### v1.1 (Next Month)
-- [ ] Replace history popup with inline expansion
-- [ ] Fix 11 IPC listener duplications
-- [ ] Add volume control for TTS
-- [ ] User feedback integration
+See the canonical checklist in [docs/3-overview/TODO.md](docs/3-overview/TODO.md).
 
 ### v2.0 (Q2 2026)
-- [ ] Refactor overlay.html → React
-- [ ] Plugin API for game mods
-- [ ] Cloud sync for settings
-- [ ] Advanced game profiles
+See the canonical checklist in [docs/3-overview/TODO.md](docs/3-overview/TODO.md).
 
 ---
 
