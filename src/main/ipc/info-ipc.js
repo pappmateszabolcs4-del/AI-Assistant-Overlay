@@ -9,6 +9,8 @@ function registerInfoIpc(deps) {
     infoPanel
   } = deps;
 
+  const { info } = registry;
+
   // Read-only Info Panel (singleton separate overlay element)
   ipcMain.handle(IPC_CHANNELS.INFO_PANEL_OPEN, async (_event, payload) => {
     try {
@@ -33,7 +35,7 @@ function registerInfoIpc(deps) {
     const targetY = pos && typeof pos.y === 'number' ? Math.round(pos.y) : b.y;
     const clamped = clampWindowToWorkArea(targetX, targetY, b.width, b.height, 0);
     try { w.setPosition(clamped.x, clamped.y); } catch (_) {}
-    registry.infoPanelLastBounds = { x: clamped.x, y: clamped.y, width: b.width, height: b.height };
+    info.infoPanelLastBounds = { x: clamped.x, y: clamped.y, width: b.width, height: b.height };
   });
 
   ipcMain.on(IPC_CHANNELS.INFO_PANEL_SET_BOUNDS, (event, nextBounds) => {
@@ -54,7 +56,7 @@ function registerInfoIpc(deps) {
     const clampedPos = clampWindowToWorkArea(rawX, rawY, width, height, 0);
 
     try { w.setBounds({ x: clampedPos.x, y: clampedPos.y, width, height }); } catch (_) {}
-    registry.infoPanelLastBounds = { x: clampedPos.x, y: clampedPos.y, width, height };
+    info.infoPanelLastBounds = { x: clampedPos.x, y: clampedPos.y, width, height };
   });
 
   ipcMain.on(IPC_CHANNELS.INFO_PANEL_COMMIT_BOUNDS, (event) => {
@@ -65,7 +67,7 @@ function registerInfoIpc(deps) {
     const clamped = clampWindowToWorkArea(b.x, b.y, b.width, b.height, 0);
     try { w.setPosition(clamped.x, clamped.y); } catch (_) {}
     const finalBounds = w.getBounds();
-    registry.infoPanelLastBounds = { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height };
+    info.infoPanelLastBounds = { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height };
   });
 }
 

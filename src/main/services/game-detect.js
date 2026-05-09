@@ -5,6 +5,8 @@ const { execSync } = require('child_process');
 function createGameDetectService(deps) {
   const { registry, screen } = deps;
 
+  const { game } = registry;
+
   const ALWAYS_IGNORE_PATTERNS = [
     /AIGameAssistant/i,
     /AI Game Assistant/i
@@ -381,8 +383,8 @@ function createGameDetectService(deps) {
       if (pattern.test(windowTitle)) return true;
     }
 
-    const ignoreList = Array.isArray(registry.gameDetectIgnoreList)
-      ? registry.gameDetectIgnoreList
+    const ignoreList = Array.isArray(game.gameDetectIgnoreList)
+      ? game.gameDetectIgnoreList
       : [];
     if (!ignoreList.length) return false;
 
@@ -431,8 +433,8 @@ function createGameDetectService(deps) {
       const pt = screen.getCursorScreenPoint();
       const display = screen.getDisplayNearestPoint(pt);
       if (display && typeof display.id !== 'undefined') {
-        registry.lastKnownGameDisplayId = display.id;
-        registry.lastKnownGameDisplayAt = Date.now();
+        game.lastKnownGameDisplayId = display.id;
+        game.lastKnownGameDisplayAt = Date.now();
       }
     } catch (_) {}
   }
@@ -478,9 +480,9 @@ function createGameDetectService(deps) {
   function getPreferredOverlayDisplay() {
     try {
       const now = Date.now();
-      if (registry.lastKnownGameDisplayId != null && (now - registry.lastKnownGameDisplayAt) < 10 * 60 * 1000) {
+      if (game.lastKnownGameDisplayId != null && (now - game.lastKnownGameDisplayAt) < 10 * 60 * 1000) {
         const displays = screen.getAllDisplays();
-        const match = displays.find((d) => d && d.id === registry.lastKnownGameDisplayId);
+        const match = displays.find((d) => d && d.id === game.lastKnownGameDisplayId);
         if (match) return match;
       }
     } catch (_) {}
@@ -517,10 +519,10 @@ function createGameDetectService(deps) {
   function detectCurrentGame(force = false) {
     try {
       const now = Date.now();
-      if (!force && (now - registry.lastGameDetectAt) < 800) {
+      if (!force && (now - game.lastGameDetectAt) < 800) {
         return;
       }
-      registry.lastGameDetectAt = now;
+      game.lastGameDetectAt = now;
 
       let detected = false;
 
@@ -534,14 +536,14 @@ function createGameDetectService(deps) {
       if (windowTitle) {
         const gameFromActive = extractGameName(windowTitle);
         if (gameFromActive) {
-          registry.currentDetectedGame = gameFromActive;
+          game.currentDetectedGame = gameFromActive;
           rememberGameDisplayFromCursor();
           detected = true;
         }
       }
 
       // Ha az aktív ablak nem játék (pl. VS Code), akkor végigszkenneljük az összes ablak címet
-      if (!registry.currentDetectedGame) {
+      if (!game.currentDetectedGame) {
         const listScriptPath = path.join(__dirname, '..', '..', '..', 'get-window-titles.ps1');
         const titlesRaw = execSync(`powershell -NoProfile -ExecutionPolicy Bypass -File "${listScriptPath}"`, {
           encoding: 'utf8',
@@ -556,7 +558,7 @@ function createGameDetectService(deps) {
         for (const title of titles) {
           const game = extractGameName(title);
           if (game) {
-            registry.currentDetectedGame = game;
+            game.currentDetectedGame = game;
             detected = true;
             break;
           }
@@ -564,7 +566,7 @@ function createGameDetectService(deps) {
       }
 
       if (!detected) {
-        registry.currentDetectedGame = null;
+        game.currentDetectedGame = null;
       }
     } catch (error) {
       console.error('[GAME] Detection failed:', error.message);

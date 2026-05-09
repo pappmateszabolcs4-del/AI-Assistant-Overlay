@@ -2,6 +2,7 @@ const { PANEL_IDS } = require('../../shared/panels');
 
 function createDetachedVisibilityManager(deps) {
   const { registry } = deps;
+  const { detached } = registry;
 
   let bringDetachedPanelWindowsToFront = null;
   let createDetachedPanelWindow = null;
@@ -16,15 +17,15 @@ function createDetachedVisibilityManager(deps) {
 
   function startDetachedPanelPrewarm() {
     try {
-      if (registry.detachedPrewarmStarted) return;
-      registry.detachedPrewarmStarted = true;
+      if (detached.detachedPrewarmStarted) return;
+      detached.detachedPrewarmStarted = true;
       // Warm up in the background shortly after the overlay is used.
       setTimeout(() => {
         try {
           if (!createDetachedPanelWindow) return;
           PANEL_IDS.forEach((panelId) => {
             try {
-              const existing = registry.detachedPanelWindows.get(panelId);
+              const existing = detached.detachedPanelWindows.get(panelId);
               if (existing && !existing.isDestroyed()) return;
               createDetachedPanelWindow({ panelId, prewarm: true });
             } catch (_) {}
@@ -36,8 +37,8 @@ function createDetachedVisibilityManager(deps) {
 
   function reconcileDetachedPanelWindowsVisibility(reason = '') {
     try {
-      const wantVisible = !!registry.detachedWindowsDesiredVisible;
-      registry.detachedPanelWindows.forEach((w, pid) => {
+      const wantVisible = !!detached.detachedWindowsDesiredVisible;
+      detached.detachedPanelWindows.forEach((w, pid) => {
         if (!w || w.isDestroyed()) return;
         try {
           // Prewarmed windows are kept hidden until activated by a real detach.
@@ -102,13 +103,13 @@ function createDetachedVisibilityManager(deps) {
   function startDetachedSelfHealPulse(durationMs = 2500, intervalMs = 250) {
     try {
       const now = Date.now();
-      registry.detachedSelfHealUntil = Math.max(registry.detachedSelfHealUntil || 0, now + Math.max(200, durationMs));
-      if (registry.detachedSelfHealTimer) return;
-      registry.detachedSelfHealTimer = setInterval(() => {
+      detached.detachedSelfHealUntil = Math.max(detached.detachedSelfHealUntil || 0, now + Math.max(200, durationMs));
+      if (detached.detachedSelfHealTimer) return;
+      detached.detachedSelfHealTimer = setInterval(() => {
         try {
-          if (Date.now() >= registry.detachedSelfHealUntil) {
-            try { clearInterval(registry.detachedSelfHealTimer); } catch (_) {}
-            registry.detachedSelfHealTimer = null;
+          if (Date.now() >= detached.detachedSelfHealUntil) {
+            try { clearInterval(detached.detachedSelfHealTimer); } catch (_) {}
+            detached.detachedSelfHealTimer = null;
             return;
           }
           reconcileDetachedPanelWindowsVisibility('self-heal');

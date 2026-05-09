@@ -1231,6 +1231,50 @@ Add "real" prefix to forbidden terms to preserve gaming vocabulary.
 
 ---
 
+### 2026-05-09 (Night)
+
+#### Summary
+- What changed: Split main-process registry into domain buckets and updated all consumers; tightened detached dock behavior and removed a race that caused duplicate header slots.
+- Why: Improve maintainability of shared state and make dock/undock UX deterministic.
+- Impact: Registry access is consistent across windows/IPCs/services; detached panels dock only via main header or dock button; no duplicate panel slots after re-detach.
+
+#### Details
+- Registry now uses domain-scoped buckets: core/overlay/game/detached/pinned/note/info, with updates across window managers, IPC modules, and services.
+- Detached docking uses header-only dock rects and requires real pointer movement before drop.
+- Fixed DETACHED_PANEL_SHOWN race by always honoring the event, even if it arrives before pending state is set.
+
+#### Files touched
+- [src/main/state/registry.js](src/main/state/registry.js)
+- [src/main/windows/overlay.js](src/main/windows/overlay.js)
+- [src/main/windows/detached.js](src/main/windows/detached.js)
+- [src/main/windows/detached-visibility.js](src/main/windows/detached-visibility.js)
+- [src/main/windows/detached-state.js](src/main/windows/detached-state.js)
+- [src/main/windows/pinned.js](src/main/windows/pinned.js)
+- [src/main/windows/note.js](src/main/windows/note.js)
+- [src/main/windows/info.js](src/main/windows/info.js)
+- [src/main/windows/main-window.js](src/main/windows/main-window.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/main/ipc/detached-ipc.js](src/main/ipc/detached-ipc.js)
+- [src/main/ipc/pinned-ipc.js](src/main/ipc/pinned-ipc.js)
+- [src/main/ipc/note-ipc.js](src/main/ipc/note-ipc.js)
+- [src/main/ipc/info-ipc.js](src/main/ipc/info-ipc.js)
+- [src/main/ipc/register.js](src/main/ipc/register.js)
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [src/main/services/game-detect.js](src/main/services/game-detect.js)
+- [src/main/index.js](src/main/index.js)
+- [src/renderer/overlay/detach.js](src/renderer/overlay/detach.js)
+
+#### Backups
+- Not created (targeted edits only)
+
+#### Verification
+- Tests not run (not requested)
+
+#### Follow-ups
+- TODO: Run `npm run check` before release.
+
+---
+
 #### Issue 13: Game Context Detection (Feb 5, 2026 Evening)
 **Feature**: Auto-detect what game the user is playing and hyper-focus AI responses
 

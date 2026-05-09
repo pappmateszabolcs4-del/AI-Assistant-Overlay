@@ -6,6 +6,27 @@
 
 ---
 
+## [1.0.19] - 2026-05-09 (Registry Domains + Detached Dock Fixes)
+
+### ✅ Added
+
+- Domain-scoped registry buckets for core/overlay/game/detached/pinned/note/info.
+
+### 🔧 Changed
+
+- Updated main-process consumers to use the new registry domains.
+- Detached panels now dock only when dragged over the main header or via the dock button.
+
+### 🐛 Fixed
+
+- Prevented duplicate header slots after re-detaching a panel on fresh app start.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+---
+
 ## [1.0.18] - 2026-05-09 (Unified UI i18n + Runtime Fallback)
 
 ### ✅ Added

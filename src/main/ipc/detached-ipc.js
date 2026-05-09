@@ -16,6 +16,8 @@ function registerDetachedIpc(deps) {
     getDockTargetPanelIdAtScreenPoint
   } = deps;
 
+  const { core, overlay, detached } = registry;
+
   ipcMain.handle(IPC_CHANNELS.DETACHED_PANEL_OPEN, async (_event, payload) => {
     try {
       createDetachedPanelWindow(payload || {});
@@ -35,10 +37,10 @@ function registerDetachedIpc(deps) {
     const pid = normalizePanelId(payload && payload.panelId) || normalizePanelId(senderWin.__detachedPanelId);
     if (!pid) return;
 
-    const w = registry.detachedPanelWindows.get(pid);
+    const w = detached.detachedPanelWindows.get(pid);
     if (!w || w.isDestroyed() || w.id !== senderWin.id) return;
 
-    // Mark readiness first; visibility is controlled by registry.detachedWindowsDesiredVisible.
+    // Mark readiness first; visibility is controlled by detached.detachedWindowsDesiredVisible.
     w.__detachedReady = true;
 
     // Prewarmed/inactive windows should never surface until a real detach activates them.
@@ -54,7 +56,7 @@ function registerDetachedIpc(deps) {
     // Heal any transient hidden/opacity state right after readiness.
     try { startDetachedSelfHealPulse(1200, 200); } catch (_) {}
 
-    if (!registry.detachedWindowsDesiredVisible) {
+    if (!detached.detachedWindowsDesiredVisible) {
       // Overlay group is currently hidden; keep the detached window hidden until the user re-opens.
       try { w.setIgnoreMouseEvents(true); } catch (_) {}
       if (typeof w.setOpacity === 'function') {
@@ -80,8 +82,8 @@ function registerDetachedIpc(deps) {
 
     // Inform the main overlay that it can now hide the docked slot for this panel.
     try {
-      if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
-        registry.overlayWin.webContents.send(IPC_CHANNELS.DETACHED_PANEL_SHOWN, { panelId: pid });
+      if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+        core.overlayWin.webContents.send(IPC_CHANNELS.DETACHED_PANEL_SHOWN, { panelId: pid });
       }
     } catch (_) {}
 
@@ -103,9 +105,9 @@ function registerDetachedIpc(deps) {
   function setOverlayDockPreview(visible) {
     const next = !!visible;
     overlayDockPreviewVisible = next;
-    if (!registry.overlayWin || registry.overlayWin.isDestroyed()) return;
+    if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
     try {
-      registry.overlayWin.webContents.send(IPC_CHANNELS.OVERLAY_DOCK_PREVIEW, { visible: next });
+      core.overlayWin.webContents.send(IPC_CHANNELS.OVERLAY_DOCK_PREVIEW, { visible: next });
     } catch (_) {}
 
     if (next) {
@@ -133,7 +135,7 @@ function registerDetachedIpc(deps) {
       return { success: true, visible: false };
     }
 
-    if (!registry.overlayWin || registry.overlayWin.isDestroyed()) {
+    if (!core.overlayWin || core.overlayWin.isDestroyed()) {
       setOverlayDockPreview(false);
       return { success: true, visible: false };
     }
@@ -145,7 +147,7 @@ function registerDetachedIpc(deps) {
       return { success: true, visible: false };
     }
 
-    const b = registry.overlayWin.getBounds();
+    const b = core.overlayWin.getBounds();
     // Allow a small margin so it's easy to trigger while approaching.
     const M = 28;
     // Limit to the top portion of the overlay (header area). In header-only mode this is basically
@@ -166,7 +168,7 @@ function registerDetachedIpc(deps) {
   ipcMain.on(IPC_CHANNELS.DETACHED_PANEL_MOVE, (_event, panelId, x, y) => {
     const pid = normalizePanelId(panelId);
     if (!pid) return;
-    const w = registry.detachedPanelWindows.get(pid);
+    const w = detached.detachedPanelWindows.get(pid);
     if (!w || w.isDestroyed()) return;
     const b = w.getBounds();
     const nextX = typeof x === 'number' ? Math.round(x) : b.x;
@@ -182,7 +184,7 @@ function registerDetachedIpc(deps) {
   ipcMain.handle(IPC_CHANNELS.DETACHED_PANEL_END_DRAG, async (_event, panelId) => {
     const pid = normalizePanelId(panelId);
     if (!pid) return { success: false, error: 'bad-panel' };
-    const w = registry.detachedPanelWindows.get(pid);
+    const w = detached.detachedPanelWindows.get(pid);
     if (!w || w.isDestroyed()) return { success: false, error: 'window-missing' };
     try {
       // Make detached panels interactive after drag-out ends.
@@ -198,7 +200,7 @@ function registerDetachedIpc(deps) {
     const clamped = clampWindowToWorkArea(b.x, b.y, b.width, b.height, 0);
     try { w.setPosition(clamped.x, clamped.y); } catch (_) {}
     const finalBounds = w.getBounds();
-    registry.detachedPanelLastBounds.set(pid, { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height });
+    detached.detachedPanelLastBounds.set(pid, { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height });
 
     return { success: true };
   });
@@ -250,7 +252,7 @@ function registerDetachedIpc(deps) {
     }
 
     try { w.setBounds({ x, y, width, height }); } catch (_) {}
-    registry.detachedPanelLastBounds.set(pid, { x, y, width, height });
+    detached.detachedPanelLastBounds.set(pid, { x, y, width, height });
   });
 
   ipcMain.handle(IPC_CHANNELS.DETACHED_PANEL_DROP, async (event, payload) => {
@@ -289,13 +291,13 @@ function registerDetachedIpc(deps) {
     // Final fallback: if the drop happens in the overlay header zone (as described in UX),
     // dock back into the same panel even if slot rects didn't match.
     // This is more robust against click-through/forward + pointer-capture coordinate quirks.
-    if (!dockTargetPid && registry.overlayWin && !registry.overlayWin.isDestroyed() && registry.overlayVirtualVisible) {
+    if (!dockTargetPid && core.overlayWin && !core.overlayWin.isDestroyed() && overlay.overlayVirtualVisible) {
       const candidate = (Number.isFinite(screenPoint.x) && Number.isFinite(screenPoint.y))
         ? screenPoint
         : windowDerivedPoint;
       if (candidate && Number.isFinite(candidate.x) && Number.isFinite(candidate.y)) {
         try {
-          const b = registry.overlayWin.getBounds();
+          const b = core.overlayWin.getBounds();
           const M = 28;
           // Keep the fallback docking header zone tight so docking can't trigger from
           // the large empty area between header and content.
@@ -311,11 +313,11 @@ function registerDetachedIpc(deps) {
 
     if (dockTargetPid) {
       deactivateDetachedPanelWindow(pid);
-      if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
+      if (core.overlayWin && !core.overlayWin.isDestroyed()) {
         if (dockTargetPid !== pid) {
-          registry.overlayWin.webContents.send(IPC_CHANNELS.OVERLAY_PANEL_SWAP, { fromPanelId: pid, toPanelId: dockTargetPid });
+          core.overlayWin.webContents.send(IPC_CHANNELS.OVERLAY_PANEL_SWAP, { fromPanelId: pid, toPanelId: dockTargetPid });
         }
-        registry.overlayWin.webContents.send(IPC_CHANNELS.DETACHED_PANEL_DOCKED, { panelId: pid, open: true });
+        core.overlayWin.webContents.send(IPC_CHANNELS.DETACHED_PANEL_DOCKED, { panelId: pid, open: true });
       }
       sendDetachedPanelsStateToOverlay();
       return { success: true, docked: true };
@@ -326,7 +328,7 @@ function registerDetachedIpc(deps) {
     const clamped = clampWindowToWorkArea(b.x, b.y, b.width, b.height, 0);
     try { w.setPosition(clamped.x, clamped.y); } catch (_) {}
     const finalBounds = w.getBounds();
-    registry.detachedPanelLastBounds.set(pid, { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height });
+    detached.detachedPanelLastBounds.set(pid, { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height });
 
     return { success: true, docked: false };
   });
@@ -335,8 +337,8 @@ function registerDetachedIpc(deps) {
     const pid = normalizePanelId(panelId);
     if (!pid) return { success: false, error: 'bad-panel' };
     deactivateDetachedPanelWindow(pid);
-    if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
-      registry.overlayWin.webContents.send(IPC_CHANNELS.DETACHED_PANEL_DOCKED, { panelId: pid, open: true });
+    if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+      core.overlayWin.webContents.send(IPC_CHANNELS.DETACHED_PANEL_DOCKED, { panelId: pid, open: true });
     }
     sendDetachedPanelsStateToOverlay();
     return { success: true };

@@ -98,6 +98,11 @@ This audit was conducted on Feb 5. The following notable improvements were added
 - Renderer-side i18n helper adds runtime translation fallback for missing keys.
 - Legacy main-process UI label service removed; IPC payloads now send language only.
 
+### Registry Domains + Detached Dock UX
+- Main-process registry split into domain buckets (core/overlay/game/detached/pinned/note/info) and all consumers updated.
+- Detached panel docking now triggers only over the main header or via the dock button.
+- Fixed a first-run race where re-detach could leave duplicate header slots.
+
 ---
 
 ## 📋 AUDIT METHODOLOGY

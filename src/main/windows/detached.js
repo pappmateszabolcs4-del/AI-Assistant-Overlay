@@ -13,8 +13,10 @@ function createDetachedWindowsManager(deps) {
     normalizePanelId
   } = deps;
 
+  const { core, detached } = registry;
+
   function bringDetachedPanelWindowsToFront() {
-    registry.detachedPanelWindows.forEach((w) => {
+    detached.detachedPanelWindows.forEach((w) => {
       if (!w || w.isDestroyed()) return;
       try {
         // Keep detached panels above the overlay, but below pinned history windows.
@@ -27,7 +29,7 @@ function createDetachedWindowsManager(deps) {
   }
 
   function setDetachedPanelWindowsVisible(visible) {
-    registry.detachedPanelWindows.forEach((w) => {
+    detached.detachedPanelWindows.forEach((w) => {
       if (!w || w.isDestroyed()) return;
       try {
         // Prewarmed windows stay hidden until activated by a real detach.
@@ -80,19 +82,19 @@ function createDetachedWindowsManager(deps) {
   }
 
   function closeAllDetachedPanelWindows() {
-    registry.detachedPanelWindows.forEach((w) => {
+    detached.detachedPanelWindows.forEach((w) => {
       if (!w || w.isDestroyed()) return;
       try { w.destroy(); } catch (_) {}
     });
-    registry.detachedPanelWindows.clear();
+    detached.detachedPanelWindows.clear();
   }
 
   function deactivateDetachedPanelWindow(panelId) {
     const pid = normalizePanelId(panelId);
     if (!pid) return;
-    const w = registry.detachedPanelWindows.get(pid);
+    const w = detached.detachedPanelWindows.get(pid);
     if (!w || w.isDestroyed()) {
-      registry.detachedPanelWindows.delete(pid);
+      detached.detachedPanelWindows.delete(pid);
       return;
     }
 
@@ -110,7 +112,7 @@ function createDetachedWindowsManager(deps) {
     const panelId = normalizePanelId(payload && payload.panelId);
     if (!panelId) return null;
 
-    const existing = registry.detachedPanelWindows.get(panelId);
+    const existing = detached.detachedPanelWindows.get(panelId);
     if (existing && !existing.isDestroyed()) {
       const isPrewarmReq = !!(payload && payload.prewarm);
       // If this is a real detach (not prewarm), activate the prewarmed window.
@@ -133,7 +135,7 @@ function createDetachedWindowsManager(deps) {
 
         // If already ready, show immediately and notify overlay to hide the slot.
         try {
-          if (existing.__detachedReady && registry.detachedWindowsDesiredVisible) {
+          if (existing.__detachedReady && detached.detachedWindowsDesiredVisible) {
             try {
               if (typeof existing.showInactive === 'function') existing.showInactive();
               else existing.show();
@@ -144,8 +146,8 @@ function createDetachedWindowsManager(deps) {
             try { existing.setIgnoreMouseEvents(false); } catch (_) {}
             try { existing.moveTop(); } catch (_) {}
             try {
-              if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
-                registry.overlayWin.webContents.send(IPC_CHANNELS.DETACHED_PANEL_SHOWN, { panelId });
+              if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+                core.overlayWin.webContents.send(IPC_CHANNELS.DETACHED_PANEL_SHOWN, { panelId });
               }
             } catch (_) {}
           }
@@ -159,7 +161,7 @@ function createDetachedWindowsManager(deps) {
       return existing;
     }
 
-    const bounds = (payload && payload.bounds) ? payload.bounds : (registry.detachedPanelLastBounds.get(panelId) || null);
+    const bounds = (payload && payload.bounds) ? payload.bounds : (detached.detachedPanelLastBounds.get(panelId) || null);
     const defaultSizes = {
       ask: { width: 480, height: 420 },
       history: { width: 520, height: 520 },
@@ -231,7 +233,7 @@ function createDetachedWindowsManager(deps) {
     }
 
     detachedWin.__detachedPanelId = panelId;
-    registry.detachedPanelWindows.set(panelId, detachedWin);
+    detached.detachedPanelWindows.set(panelId, detachedWin);
 
     detachedWin.loadFile('overlay.html', { query: { role: 'detached', panel: panelId } });
     detachedWin.webContents.on('did-finish-load', () => {
@@ -242,8 +244,8 @@ function createDetachedWindowsManager(deps) {
       } catch (_) {}
 
       try {
-        if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
-          const b = registry.overlayWin.getBounds();
+        if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+          const b = core.overlayWin.getBounds();
           let maxWidth = null;
           let minWidth = null;
           try {
@@ -253,7 +255,7 @@ function createDetachedWindowsManager(deps) {
             }
           } catch (_) {}
           try {
-            const minSize = registry.overlayWin.getMinimumSize();
+            const minSize = core.overlayWin.getMinimumSize();
             if (Array.isArray(minSize) && typeof minSize[0] === 'number') {
               minWidth = minSize[0];
             }
@@ -291,7 +293,7 @@ function createDetachedWindowsManager(deps) {
 
           // If the overlay group is hidden, keep the detached window hidden for now;
           // it will be shown on the next open-overlay via setDetachedPanelWindowsVisible(true).
-          if (!registry.detachedWindowsDesiredVisible) {
+          if (!detached.detachedWindowsDesiredVisible) {
             try { detachedWin.setIgnoreMouseEvents(true); } catch (_) {}
             if (typeof detachedWin.setOpacity === 'function') {
               try { detachedWin.setOpacity(0); } catch (_) {}
@@ -315,8 +317,8 @@ function createDetachedWindowsManager(deps) {
           try { detachedWin.moveTop(); } catch (_) {}
 
           try {
-            if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
-              registry.overlayWin.webContents.send(IPC_CHANNELS.DETACHED_PANEL_SHOWN, { panelId });
+            if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+              core.overlayWin.webContents.send(IPC_CHANNELS.DETACHED_PANEL_SHOWN, { panelId });
             }
           } catch (_) {}
 
@@ -334,13 +336,13 @@ function createDetachedWindowsManager(deps) {
     try { detachedWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true }); } catch (_) {}
 
     detachedWin.on('closed', () => {
-      registry.detachedPanelWindows.delete(panelId);
+      detached.detachedPanelWindows.delete(panelId);
 
       // If the detached panel window is closed (e.g., Alt+F4), restore the panel slot
       // in the main overlay so it doesn't stay "missing".
-      if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
+      if (core.overlayWin && !core.overlayWin.isDestroyed()) {
         try {
-          registry.overlayWin.webContents.send(IPC_CHANNELS.DETACHED_PANEL_DOCKED, { panelId, open: false });
+          core.overlayWin.webContents.send(IPC_CHANNELS.DETACHED_PANEL_DOCKED, { panelId, open: false });
         } catch (_) {}
       }
 

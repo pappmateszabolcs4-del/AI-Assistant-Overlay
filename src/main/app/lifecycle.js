@@ -19,6 +19,8 @@ function createLifecycleManager(deps) {
     registerHotkey
   } = deps;
 
+  const { core, overlay } = registry;
+
   function setupAppLifecycle() {
     app.whenReady().then(async () => {
       await openaiService.initializeOpenAI();
@@ -28,9 +30,9 @@ function createLifecycleManager(deps) {
       createOverlayWindow();
 
       const handleDisplayChange = () => {
-        if (!registry.overlayWin || registry.overlayWin.isDestroyed()) return;
+        if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
         ensureOverlayWithinVisibleBounds();
-        if (registry.overlayVirtualVisible) {
+        if (overlay.overlayVirtualVisible) {
           reassertOverlayTopmost();
         }
       };
@@ -38,9 +40,9 @@ function createLifecycleManager(deps) {
       screen.on('display-added', handleDisplayChange);
       screen.on('display-removed', handleDisplayChange);
 
-      registry.win.webContents.once('did-finish-load', () => {
+      core.win.webContents.once('did-finish-load', () => {
         setTimeout(() => {
-          registry.win.webContents.executeJavaScript(`localStorage.getItem(${JSON.stringify(STORAGE_KEYS.APP_SETTINGS)})`)
+          core.win.webContents.executeJavaScript(`localStorage.getItem(${JSON.stringify(STORAGE_KEYS.APP_SETTINGS)})`)
             .then(settingsStr => {
               let hotkey = 'CommandOrControl+Shift+K';
               if (settingsStr) {
@@ -78,15 +80,15 @@ function createLifecycleManager(deps) {
         console.error('[Cleanup] Shortcut unregister hiba:', err);
       }
 
-      if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
+      if (core.overlayWin && !core.overlayWin.isDestroyed()) {
         try {
-          registry.overlayWin.destroy();
+          core.overlayWin.destroy();
           console.log('[Cleanup] Overlay ablak megsemmisítve');
         } catch (err) {
           console.error('[Cleanup] Overlay destroy hiba:', err);
         }
       }
-      registry.overlayWin = null;
+      core.overlayWin = null;
 
       try {
         closeAllPinnedHistoryWindows();
@@ -95,15 +97,15 @@ function createLifecycleManager(deps) {
         console.error('[Cleanup] Pinned destroy hiba:', err);
       }
 
-      if (registry.win && !registry.win.isDestroyed()) {
+      if (core.win && !core.win.isDestroyed()) {
         try {
-          registry.win.destroy();
+          core.win.destroy();
           console.log('[Cleanup] Főablak megsemmisítve');
         } catch (err) {
           console.error('[Cleanup] Főablak destroy hiba:', err);
         }
       }
-      registry.win = null;
+      core.win = null;
     }
 
     app.on('before-quit', () => {

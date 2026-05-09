@@ -55,23 +55,7 @@ if (!__isDetachedPanelWindow) {
 
       if (btn) {
         const r = btn.getBoundingClientRect();
-        let left = r.left;
-        let top = r.top;
-        let right = r.right;
-        let bottom = r.bottom;
-
-        const openContent = section.querySelector('.section-content.open') || section.__floatingContent;
-        if (openContent) {
-          try {
-            const cr = openContent.getBoundingClientRect();
-            left = Math.min(left, cr.left);
-            top = Math.min(top, cr.top);
-            right = Math.max(right, cr.right);
-            bottom = Math.max(bottom, cr.bottom);
-          } catch (_) {}
-        }
-
-        rects[pid] = { left: offX + left, top: offY + top, right: offX + right, bottom: offY + bottom };
+        rects[pid] = { left: offX + r.left, top: offY + r.top, right: offX + r.right, bottom: offY + r.bottom };
         return;
       }
 
@@ -223,7 +207,6 @@ if (!__isDetachedPanelWindow) {
     try {
       const pid = String(payload && payload.panelId || '').toLowerCase();
       if (!pid) return;
-      if (!pendingDetachPanels.has(pid)) return;
       pendingDetachPanels.delete(pid);
       setPanelSlotDetached(pid, true);
     } catch (_) {}
@@ -547,6 +530,7 @@ if (__isDetachedPanelWindow) {
 
       // Window drag: move this BrowserWindow by setting sender bounds.
       let dragState = null;
+      const DRAG_THRESHOLD_PX = 2;
       headerBtn.addEventListener('pointerdown', (ev) => {
         if (ev.button !== 0) return;
         ev.preventDefault();
@@ -558,7 +542,10 @@ if (__isDetachedPanelWindow) {
         dragState = {
           pointerId: ev.pointerId,
           offsetX: Math.round(pt.x - window.screenX),
-          offsetY: Math.round(pt.y - window.screenY)
+          offsetY: Math.round(pt.y - window.screenY),
+          startX: pt.x,
+          startY: pt.y,
+          moved: false
         };
         try { headerBtn.setPointerCapture(dragState.pointerId); } catch (_) {}
       });
@@ -567,31 +554,43 @@ if (__isDetachedPanelWindow) {
         if (!dragState || ev.pointerId !== dragState.pointerId) return;
         ev.preventDefault();
         const pt = getReliableScreenPoint(ev);
+        if (!dragState.moved) {
+          const dx = pt.x - dragState.startX;
+          const dy = pt.y - dragState.startY;
+          if (Math.hypot(dx, dy) >= DRAG_THRESHOLD_PX) {
+            dragState.moved = true;
+          }
+        }
         dockPreviewLatestPt = pt;
         requestDockPreviewUpdate(false);
-        const nextX = Math.round(pt.x - dragState.offsetX);
-        const nextY = Math.round(pt.y - dragState.offsetY);
-        ipcRenderer.send(IPC_CHANNELS.DETACHED_PANEL_SET_BOUNDS, { x: nextX, y: nextY });
+        if (dragState.moved) {
+          const nextX = Math.round(pt.x - dragState.offsetX);
+          const nextY = Math.round(pt.y - dragState.offsetY);
+          ipcRenderer.send(IPC_CHANNELS.DETACHED_PANEL_SET_BOUNDS, { x: nextX, y: nextY });
+        }
       });
 
       headerBtn.addEventListener('pointerup', async (ev) => {
         if (!dragState || ev.pointerId !== dragState.pointerId) return;
         ev.preventDefault();
         try { headerBtn.releasePointerCapture(dragState.pointerId); } catch (_) {}
+        const moved = !!dragState.moved;
         dragState = null;
         popForceInteractive();
 
-        const pt = getReliableScreenPoint(ev);
-        dockPreviewLatestPt = pt;
-        await invokeMain(IPC_CHANNELS.DETACHED_PANEL_DROP, {
-          panelId: __panelId,
-          pointerScreenX: Math.round(pt.x),
-          pointerScreenY: Math.round(pt.y),
-          winX: window.screenX,
-          winY: window.screenY,
-          width: window.innerWidth,
-          height: window.innerHeight
-        }).catch(() => {});
+        if (moved) {
+          const pt = getReliableScreenPoint(ev);
+          dockPreviewLatestPt = pt;
+          await invokeMain(IPC_CHANNELS.DETACHED_PANEL_DROP, {
+            panelId: __panelId,
+            pointerScreenX: Math.round(pt.x),
+            pointerScreenY: Math.round(pt.y),
+            winX: window.screenX,
+            winY: window.screenY,
+            width: window.innerWidth,
+            height: window.innerHeight
+          }).catch(() => {});
+        }
 
         dockPreviewLatestPt = null;
         await invokeMain(IPC_CHANNELS.DETACHED_PANEL_DOCK_PREVIEW_AT, { visible: false }).catch(() => {});

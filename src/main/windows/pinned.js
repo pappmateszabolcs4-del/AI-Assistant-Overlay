@@ -8,8 +8,10 @@ function createPinnedWindowsManager(deps) {
     clampWindowToWorkArea
   } = deps;
 
+  const { pinned } = registry;
+
   function bringPinnedHistoryWindowsToFront() {
-    registry.pinnedHistoryWindows.forEach((w) => {
+    pinned.pinnedHistoryWindows.forEach((w) => {
       if (!w || w.isDestroyed()) return;
       try {
         // Keep pinned panels above the overlay so the overlay rectangle can't visually "cut" them.
@@ -22,7 +24,7 @@ function createPinnedWindowsManager(deps) {
   }
 
   function setPinnedHistoryWindowsVisible(visible) {
-    registry.pinnedHistoryWindows.forEach((w) => {
+    pinned.pinnedHistoryWindows.forEach((w) => {
       if (!w || w.isDestroyed()) return;
       try {
         if (visible) {
@@ -37,18 +39,18 @@ function createPinnedWindowsManager(deps) {
   }
 
   function closeAllPinnedHistoryWindows() {
-    registry.pinnedHistoryWindows.forEach((w) => {
+    pinned.pinnedHistoryWindows.forEach((w) => {
       if (!w || w.isDestroyed()) return;
       try { w.destroy(); } catch (_) {}
     });
-    registry.pinnedHistoryWindows.clear();
+    pinned.pinnedHistoryWindows.clear();
   }
 
   function createPinnedHistoryWindow(payload) {
     const ts = Number(payload && payload.ts);
     if (!Number.isFinite(ts)) return null;
 
-    const existing = registry.pinnedHistoryWindows.get(ts);
+    const existing = pinned.pinnedHistoryWindows.get(ts);
     if (existing && !existing.isDestroyed()) {
       try { existing.webContents.send(IPC_CHANNELS.PINNED_HISTORY_UPDATE, payload); } catch (_) {}
       return existing;
@@ -84,7 +86,7 @@ function createPinnedWindowsManager(deps) {
     });
 
     pinnedWin.__pinnedHistoryTs = ts;
-    registry.pinnedHistoryWindows.set(ts, pinnedWin);
+    pinned.pinnedHistoryWindows.set(ts, pinnedWin);
 
     pinnedWin.loadFile('pinned-history.html');
     pinnedWin.webContents.on('did-finish-load', () => {
@@ -100,7 +102,7 @@ function createPinnedWindowsManager(deps) {
     try { pinnedWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true }); } catch (_) {}
 
     pinnedWin.on('closed', () => {
-      registry.pinnedHistoryWindows.delete(ts);
+      pinned.pinnedHistoryWindows.delete(ts);
     });
 
     // Start interactive so drag works immediately; window renderer will toggle click-through on hover.

@@ -46,6 +46,8 @@ function createIpcRegistrar(deps) {
     createOverlayWindow
   } = deps;
 
+  const { core, detached, overlay } = registry;
+
   function pointInRect(pt, rect) {
     if (!pt || !rect) return false;
     return pt.x >= rect.left && pt.x <= rect.right && pt.y >= rect.top && pt.y <= rect.bottom;
@@ -54,8 +56,8 @@ function createIpcRegistrar(deps) {
   function requestHistoryDropRects(timeoutMs = 250) {
     return new Promise((resolve) => {
       const sources = [];
-      if (registry.overlayWin && !registry.overlayWin.isDestroyed()) sources.push(registry.overlayWin);
-      const detachedHistory = registry.detachedPanelWindows && registry.detachedPanelWindows.get && registry.detachedPanelWindows.get('history');
+      if (core.overlayWin && !core.overlayWin.isDestroyed()) sources.push(core.overlayWin);
+      const detachedHistory = detached.detachedPanelWindows && detached.detachedPanelWindows.get && detached.detachedPanelWindows.get('history');
       if (detachedHistory && !detachedHistory.isDestroyed()) sources.push(detachedHistory);
 
       if (sources.length === 0) return resolve([]);
@@ -102,7 +104,7 @@ function createIpcRegistrar(deps) {
 
   function requestOverlayPanelDockRects(timeoutMs = 250) {
     return new Promise((resolve) => {
-      if (!registry.overlayWin || registry.overlayWin.isDestroyed()) return resolve({});
+      if (!core.overlayWin || core.overlayWin.isDestroyed()) return resolve({});
       const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
       let timer = null;
 
@@ -120,7 +122,7 @@ function createIpcRegistrar(deps) {
       };
 
       ipcMain.on(IPC_CHANNELS.RESPONSE_PANEL_DOCK_RECTS, onResponse);
-      registry.overlayWin.webContents.send(IPC_CHANNELS.REQUEST_PANEL_DOCK_RECTS, requestId);
+      core.overlayWin.webContents.send(IPC_CHANNELS.REQUEST_PANEL_DOCK_RECTS, requestId);
 
       timer = setTimeout(() => {
         cleanup();
@@ -187,10 +189,10 @@ function createIpcRegistrar(deps) {
   }
 
   function registerIpcHandlers() {
-    if (registry.ipcListenersRegistered) {
+    if (overlay.ipcListenersRegistered) {
       return;
     }
-    registry.ipcListenersRegistered = true;
+    overlay.ipcListenersRegistered = true;
 
     registerOverlayIpc({
       app,

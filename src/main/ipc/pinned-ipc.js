@@ -11,6 +11,8 @@ function registerPinnedIpc(deps) {
     shouldUnpinAtScreenPoint
   } = deps;
 
+  const { core, pinned } = registry;
+
   ipcMain.handle(IPC_CHANNELS.PINNED_HISTORY_OPEN, async (_event, payload) => {
     try {
       createPinnedHistoryWindow(payload);
@@ -23,7 +25,7 @@ function registerPinnedIpc(deps) {
   // Allow overlay renderer to move a pinned window while dragging out from history.
   ipcMain.handle(IPC_CHANNELS.PINNED_HISTORY_MOVE_BY_TS, async (_event, ts, x, y) => {
     const key = Number(ts);
-    const w = registry.pinnedHistoryWindows.get(key);
+    const w = pinned.pinnedHistoryWindows.get(key);
     if (!w || w.isDestroyed()) return { success: false, error: 'window-missing' };
     const nextX = typeof x === 'number' ? Math.round(x) : w.getBounds().x;
     const nextY = typeof y === 'number' ? Math.round(y) : w.getBounds().y;
@@ -33,7 +35,7 @@ function registerPinnedIpc(deps) {
 
   ipcMain.on(IPC_CHANNELS.PINNED_HISTORY_MOVE_BY_TS, (_event, ts, x, y) => {
     const key = Number(ts);
-    const w = registry.pinnedHistoryWindows.get(key);
+    const w = pinned.pinnedHistoryWindows.get(key);
     if (!w || w.isDestroyed()) return;
     const nextX = typeof x === 'number' ? Math.round(x) : w.getBounds().x;
     const nextY = typeof y === 'number' ? Math.round(y) : w.getBounds().y;
@@ -42,7 +44,7 @@ function registerPinnedIpc(deps) {
 
   ipcMain.handle(IPC_CHANNELS.PINNED_HISTORY_END_DRAG, async (_event, ts) => {
     const key = Number(ts);
-    const w = registry.pinnedHistoryWindows.get(key);
+    const w = pinned.pinnedHistoryWindows.get(key);
     if (!w || w.isDestroyed()) return { success: false, error: 'window-missing' };
     try {
       w.setIgnoreMouseEvents(false);
@@ -56,11 +58,11 @@ function registerPinnedIpc(deps) {
 
   ipcMain.handle(IPC_CHANNELS.PINNED_HISTORY_CLOSE, async (_event, ts) => {
     const key = Number(ts);
-    const w = registry.pinnedHistoryWindows.get(key);
+    const w = pinned.pinnedHistoryWindows.get(key);
     if (w && !w.isDestroyed()) {
       try { w.destroy(); } catch (_) {}
     }
-    registry.pinnedHistoryWindows.delete(key);
+    pinned.pinnedHistoryWindows.delete(key);
     return { success: true };
   });
 
@@ -117,12 +119,12 @@ function registerPinnedIpc(deps) {
     const w = BrowserWindow.fromWebContents(event.sender);
     if (!w || w.isDestroyed()) return;
     const ts = Number(payload && payload.ts);
-    if (!registry.overlayWin || registry.overlayWin.isDestroyed() || !Number.isFinite(ts)) return;
+    if (!core.overlayWin || core.overlayWin.isDestroyed() || !Number.isFinite(ts)) return;
     const b = w.getBounds();
     const clamped = clampWindowToWorkArea(b.x, b.y, b.width, b.height, 0);
     try { w.setPosition(clamped.x, clamped.y); } catch (_) {}
     const finalBounds = w.getBounds();
-    registry.overlayWin.webContents.send(IPC_CHANNELS.PINNED_HISTORY_BOUNDS, {
+    core.overlayWin.webContents.send(IPC_CHANNELS.PINNED_HISTORY_BOUNDS, {
       ts,
       bounds: { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height }
     });
@@ -143,20 +145,20 @@ function registerPinnedIpc(deps) {
 
     if (shouldUnpin && Number.isFinite(ts)) {
       try { w.destroy(); } catch (_) {}
-      registry.pinnedHistoryWindows.delete(ts);
-      if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
-        registry.overlayWin.webContents.send(IPC_CHANNELS.PINNED_HISTORY_UNPINNED, { ts });
+      pinned.pinnedHistoryWindows.delete(ts);
+      if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+        core.overlayWin.webContents.send(IPC_CHANNELS.PINNED_HISTORY_UNPINNED, { ts });
       }
       return { success: true, unpinned: true };
     }
 
     // Persist bounds after drop
-    if (registry.overlayWin && !registry.overlayWin.isDestroyed() && Number.isFinite(ts)) {
+    if (core.overlayWin && !core.overlayWin.isDestroyed() && Number.isFinite(ts)) {
       const b = w.getBounds();
       const clamped = clampWindowToWorkArea(b.x, b.y, b.width, b.height, 0);
       try { w.setPosition(clamped.x, clamped.y); } catch (_) {}
       const finalBounds = w.getBounds();
-      registry.overlayWin.webContents.send(IPC_CHANNELS.PINNED_HISTORY_BOUNDS, {
+      core.overlayWin.webContents.send(IPC_CHANNELS.PINNED_HISTORY_BOUNDS, {
         ts,
         bounds: { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height }
       });

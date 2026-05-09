@@ -7,8 +7,10 @@ function createMainWindowManager(deps) {
     notePanel
   } = deps;
 
+  const { core } = registry;
+
   function createWindow() {
-    registry.win = new BrowserWindow({
+    core.win = new BrowserWindow({
       width: 800,
       height: 600,
       minWidth: 600,
@@ -23,14 +25,14 @@ function createMainWindowManager(deps) {
         contextIsolation: false
       }
     });
-    registry.win.loadFile('index.html');
+    core.win.loadFile('index.html');
 
-    registry.win.on('closed', () => {
-      registry.win = null;
-      if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
-        registry.overlayWin.close();
+    core.win.on('closed', () => {
+      core.win = null;
+      if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+        core.overlayWin.close();
       }
-      registry.overlayWin = null;
+      core.overlayWin = null;
       closeAllPinnedHistoryWindows();
       closeAllDetachedPanelWindows();
       notePanel.closeNotePanelWindow();

@@ -9,61 +9,63 @@ function createInfoPanelManager(deps) {
     getCurrentLanguage
   } = deps;
 
+  const { info } = registry;
+
   function bringInfoPanelToFront() {
-    if (!registry.infoPanelWin || registry.infoPanelWin.isDestroyed()) return;
+    if (!info.infoPanelWin || info.infoPanelWin.isDestroyed()) return;
     try {
       // Keep the info panel above the overlay.
-      registry.infoPanelWin.setAlwaysOnTop(true, 'screen-saver', 2);
+      info.infoPanelWin.setAlwaysOnTop(true, 'screen-saver', 2);
     } catch (_) {
-      try { registry.infoPanelWin.setAlwaysOnTop(true, 'screen-saver'); } catch (_) {}
+      try { info.infoPanelWin.setAlwaysOnTop(true, 'screen-saver'); } catch (_) {}
     }
-    try { registry.infoPanelWin.moveTop(); } catch (_) {}
+    try { info.infoPanelWin.moveTop(); } catch (_) {}
   }
 
   function setInfoPanelVisible(visible) {
-    if (visible && (!registry.infoPanelWin || registry.infoPanelWin.isDestroyed())) {
+    if (visible && (!info.infoPanelWin || info.infoPanelWin.isDestroyed())) {
       try { createInfoPanelWindow({}); } catch (_) {}
     }
-    if (!registry.infoPanelWin || registry.infoPanelWin.isDestroyed()) return;
+    if (!info.infoPanelWin || info.infoPanelWin.isDestroyed()) return;
     try {
-      registry.infoPanelVirtualVisible = !!visible;
+      info.infoPanelVirtualVisible = !!visible;
       if (visible) {
         try {
-          if (!registry.infoPanelWin.isVisible()) {
-            if (typeof registry.infoPanelWin.showInactive === 'function') registry.infoPanelWin.showInactive();
-            else registry.infoPanelWin.show();
+          if (!info.infoPanelWin.isVisible()) {
+            if (typeof info.infoPanelWin.showInactive === 'function') info.infoPanelWin.showInactive();
+            else info.infoPanelWin.show();
           }
         } catch (_) {}
-        try { registry.infoPanelWin.setIgnoreMouseEvents(true, { forward: true }); } catch (_) {}
-        if (typeof registry.infoPanelWin.setOpacity === 'function') {
-          try { registry.infoPanelWin.setOpacity(1); } catch (_) {}
+        try { info.infoPanelWin.setIgnoreMouseEvents(true, { forward: true }); } catch (_) {}
+        if (typeof info.infoPanelWin.setOpacity === 'function') {
+          try { info.infoPanelWin.setOpacity(1); } catch (_) {}
         }
         try { bringInfoPanelToFront(); } catch (_) {}
       } else {
-        try { registry.infoPanelWin.setIgnoreMouseEvents(true); } catch (_) {}
-        if (typeof registry.infoPanelWin.setOpacity === 'function') {
-          try { registry.infoPanelWin.setOpacity(0); } catch (_) {}
+        try { info.infoPanelWin.setIgnoreMouseEvents(true); } catch (_) {}
+        if (typeof info.infoPanelWin.setOpacity === 'function') {
+          try { info.infoPanelWin.setOpacity(0); } catch (_) {}
         }
       }
     } catch (_) {}
   }
 
   function closeInfoPanelWindow() {
-    if (!registry.infoPanelWin || registry.infoPanelWin.isDestroyed()) {
-      registry.infoPanelWin = null;
+    if (!info.infoPanelWin || info.infoPanelWin.isDestroyed()) {
+      info.infoPanelWin = null;
       return;
     }
-    try { registry.infoPanelWin.destroy(); } catch (_) {}
-    registry.infoPanelWin = null;
+    try { info.infoPanelWin.destroy(); } catch (_) {}
+    info.infoPanelWin = null;
   }
 
   function createInfoPanelWindow(payload) {
-    if (registry.infoPanelWin && !registry.infoPanelWin.isDestroyed()) {
-      try { registry.infoPanelWin.webContents.send(IPC_CHANNELS.INFO_PANEL_INIT, payload || {}); } catch (_) {}
-      return registry.infoPanelWin;
+    if (info.infoPanelWin && !info.infoPanelWin.isDestroyed()) {
+      try { info.infoPanelWin.webContents.send(IPC_CHANNELS.INFO_PANEL_INIT, payload || {}); } catch (_) {}
+      return info.infoPanelWin;
     }
 
-    const bounds = (payload && payload.bounds) ? payload.bounds : (registry.infoPanelLastBounds || null);
+    const bounds = (payload && payload.bounds) ? payload.bounds : (info.infoPanelLastBounds || null);
     const width = Math.max(240, Math.round((bounds && bounds.width) || 440));
     const height = Math.max(140, Math.round((bounds && bounds.height) || 300));
     let x = typeof (bounds && bounds.x) === 'number' ? Math.round(bounds.x) : undefined;
@@ -82,7 +84,7 @@ function createInfoPanelManager(deps) {
       ? clampWindowToWorkArea(x, y, width, height, 0)
       : null;
 
-    registry.infoPanelWin = new BrowserWindow({
+    info.infoPanelWin = new BrowserWindow({
       width,
       height,
       x: clampedPos ? clampedPos.x : x,
@@ -101,29 +103,29 @@ function createInfoPanelManager(deps) {
       }
     });
 
-    registry.infoPanelWin.loadFile('info-panel.html');
-    registry.infoPanelWin.webContents.on('did-finish-load', () => {
+    info.infoPanelWin.loadFile('info-panel.html');
+    info.infoPanelWin.webContents.on('did-finish-load', () => {
       try {
         const language = getCurrentLanguage();
-        registry.infoPanelWin.webContents.send(IPC_CHANNELS.INFO_PANEL_INIT, { ...(payload || {}), language });
+        info.infoPanelWin.webContents.send(IPC_CHANNELS.INFO_PANEL_INIT, { ...(payload || {}), language });
       } catch (_) {}
     });
 
     try {
-      registry.infoPanelWin.setAlwaysOnTop(true, 'screen-saver', 2);
+      info.infoPanelWin.setAlwaysOnTop(true, 'screen-saver', 2);
     } catch (_) {
-      registry.infoPanelWin.setAlwaysOnTop(true, 'screen-saver');
+      info.infoPanelWin.setAlwaysOnTop(true, 'screen-saver');
     }
-    try { registry.infoPanelWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true }); } catch (_) {}
+    try { info.infoPanelWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true }); } catch (_) {}
 
-    registry.infoPanelWin.on('closed', () => {
-      registry.infoPanelWin = null;
+    info.infoPanelWin.on('closed', () => {
+      info.infoPanelWin = null;
     });
 
     // Start click-through; the renderer enables interactivity on hover.
-    try { registry.infoPanelWin.setIgnoreMouseEvents(true, { forward: true }); } catch (_) {}
+    try { info.infoPanelWin.setIgnoreMouseEvents(true, { forward: true }); } catch (_) {}
 
-    return registry.infoPanelWin;
+    return info.infoPanelWin;
   }
 
   return {

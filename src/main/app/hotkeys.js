@@ -15,6 +15,8 @@ function createHotkeyManager(deps) {
     getCurrentLanguage
   } = deps;
 
+  const { core, overlay, game, detached } = registry;
+
   let isHotkeyProcessing = false;
   let lastHotkeyTime = 0;
   const HOTKEY_MIN_INTERVAL_MS = 250;
@@ -33,48 +35,48 @@ function createHotkeyManager(deps) {
 
       detectCurrentGame();
 
-      if (registry.overlayWin && !registry.overlayWin.isDestroyed() && registry.currentDetectedGame) {
-        try { registry.overlayWin.webContents.send(IPC_CHANNELS.SET_GAME_CONTEXT, registry.currentDetectedGame); } catch (_) {}
+      if (core.overlayWin && !core.overlayWin.isDestroyed() && game.currentDetectedGame) {
+        try { core.overlayWin.webContents.send(IPC_CHANNELS.SET_GAME_CONTEXT, game.currentDetectedGame); } catch (_) {}
       }
 
-      if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
-        if (registry.overlayVirtualVisible) {
-          registry.overlayDetachGuardActive = false;
+      if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+        if (overlay.overlayVirtualVisible) {
+          overlay.overlayDetachGuardActive = false;
           setOverlayVirtualVisible(false);
           setPinnedHistoryWindowsVisible(false);
-          registry.detachedWindowsDesiredVisible = false;
+          detached.detachedWindowsDesiredVisible = false;
           setDetachedPanelWindowsVisible(false);
           reconcileDetachedPanelWindowsVisibility('hotkey hide');
           notePanel.setNotePanelVisible(false);
-          registry.lastOverlayRaiseAt = 0;
+          overlay.lastOverlayRaiseAt = 0;
         } else {
-          registry.detachedWindowsDesiredVisible = true;
+          detached.detachedWindowsDesiredVisible = true;
           showOverlayAndRaise();
           setPinnedHistoryWindowsVisible(true);
           setDetachedPanelWindowsVisible(true);
           reconcileDetachedPanelWindowsVisibility('hotkey show');
           notePanel.setNotePanelVisible(true);
-          registry.lastOverlayRaiseAt = now;
+          overlay.lastOverlayRaiseAt = now;
         }
       } else {
         createOverlayWindow();
-        registry.detachedWindowsDesiredVisible = true;
+        detached.detachedWindowsDesiredVisible = true;
         showOverlayAndRaise();
         setPinnedHistoryWindowsVisible(true);
         setDetachedPanelWindowsVisible(true);
         reconcileDetachedPanelWindowsVisibility('hotkey create+show');
         notePanel.setNotePanelVisible(true);
-        registry.lastOverlayRaiseAt = now;
-        if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
-          registry.overlayWin.webContents.send(IPC_CHANNELS.SET_LANGUAGE, getCurrentLanguage());
-          if (registry.currentDetectedGame) {
-            registry.overlayWin.webContents.send(IPC_CHANNELS.SET_GAME_CONTEXT, registry.currentDetectedGame);
+        overlay.lastOverlayRaiseAt = now;
+        if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+          core.overlayWin.webContents.send(IPC_CHANNELS.SET_LANGUAGE, getCurrentLanguage());
+          if (game.currentDetectedGame) {
+            core.overlayWin.webContents.send(IPC_CHANNELS.SET_GAME_CONTEXT, game.currentDetectedGame);
           }
         }
       }
 
-      if (registry.win && !registry.win.isDestroyed()) {
-        registry.win.setAlwaysOnTop(false);
+      if (core.win && !core.win.isDestroyed()) {
+        core.win.setAlwaysOnTop(false);
       }
     };
 

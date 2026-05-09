@@ -17,11 +17,13 @@ function createOverlayManager(deps) {
     getCurrentLanguage
   } = deps;
 
+  const { core, overlay, detached, pinned, note, info } = registry;
+
   const OVERLAY_TOPMOST_PULSE_MS = 900;
 
   function ensureOverlayWithinVisibleBounds(forceCenter = false) {
-    if (!registry.overlayWin || registry.overlayWin.isDestroyed()) return;
-    const bounds = registry.overlayWin.getBounds();
+    if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
+    const bounds = core.overlayWin.getBounds();
     const displays = screen.getAllDisplays();
     const isVisible = displays.some((display) => rectsOverlap(display.workArea, bounds));
 
@@ -29,7 +31,7 @@ function createOverlayManager(deps) {
       const target = screen.getPrimaryDisplay().workArea;
       const x = Math.round(target.x + Math.max(0, (target.width - bounds.width) / 2));
       const y = Math.round(target.y + Math.max(0, (target.height - bounds.height) / 2));
-      registry.overlayWin.setBounds({ ...bounds, x, y });
+      core.overlayWin.setBounds({ ...bounds, x, y });
     }
   }
 
@@ -64,8 +66,8 @@ function createOverlayManager(deps) {
 
   function hasAnyVisibleDetachedPanelWindow() {
     try {
-      if (!registry.detachedPanelWindows || registry.detachedPanelWindows.size === 0) return false;
-      for (const w of registry.detachedPanelWindows.values()) {
+      if (!detached.detachedPanelWindows || detached.detachedPanelWindows.size === 0) return false;
+      for (const w of detached.detachedPanelWindows.values()) {
         if (isWindowActivelyVisible(w)) return true;
       }
     } catch (_) {}
@@ -73,35 +75,35 @@ function createOverlayManager(deps) {
   }
 
   function reassertOverlayTopmost() {
-    if (!registry.overlayWin || registry.overlayWin.isDestroyed()) return;
+    if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
 
     const hasDetached = hasAnyVisibleDetachedPanelWindow();
 
     if (hasDetached) {
-      if (registry.overlayTopmostMode !== 'detached') {
-        registry.overlayTopmostMode = 'detached';
+      if (overlay.overlayTopmostMode !== 'detached') {
+        overlay.overlayTopmostMode = 'detached';
         try {
-          registry.overlayWin.setAlwaysOnTop(true, 'screen-saver', 1);
+          core.overlayWin.setAlwaysOnTop(true, 'screen-saver', 1);
         } catch (_) {
-          try { registry.overlayWin.setAlwaysOnTop(true, 'screen-saver'); } catch (_) {}
+          try { core.overlayWin.setAlwaysOnTop(true, 'screen-saver'); } catch (_) {}
         }
         try {
-          registry.overlayWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+          core.overlayWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
         } catch (_) {}
       }
     } else {
-      if (registry.overlayTopmostMode !== 'normal') {
-        registry.overlayTopmostMode = 'normal';
+      if (overlay.overlayTopmostMode !== 'normal') {
+        overlay.overlayTopmostMode = 'normal';
         try {
-          registry.overlayWin.setAlwaysOnTop(true, 'screen-saver', 1);
+          core.overlayWin.setAlwaysOnTop(true, 'screen-saver', 1);
         } catch (_) {
-          try { registry.overlayWin.setAlwaysOnTop(true, 'screen-saver'); } catch (_) {}
+          try { core.overlayWin.setAlwaysOnTop(true, 'screen-saver'); } catch (_) {}
         }
         try {
-          registry.overlayWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+          core.overlayWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
         } catch (_) {}
       }
-      try { registry.overlayWin.moveTop(); } catch (_) {}
+      try { core.overlayWin.moveTop(); } catch (_) {}
     }
 
     try { notePanel.bringNotePanelToFront(); } catch (_) {}
@@ -115,18 +117,18 @@ function createOverlayManager(deps) {
     if (!pt) return false;
 
     try {
-      if (registry.notePanelVirtualVisible && isWindowActivelyVisible(registry.notePanelWin)) {
-        if (pointInBounds(pt, registry.notePanelWin.getBounds())) return true;
+      if (note.notePanelVirtualVisible && isWindowActivelyVisible(note.notePanelWin)) {
+        if (pointInBounds(pt, note.notePanelWin.getBounds())) return true;
       }
     } catch (_) {}
     try {
-      if (registry.infoPanelVirtualVisible && isWindowActivelyVisible(registry.infoPanelWin)) {
-        if (pointInBounds(pt, registry.infoPanelWin.getBounds())) return true;
+      if (info.infoPanelVirtualVisible && isWindowActivelyVisible(info.infoPanelWin)) {
+        if (pointInBounds(pt, info.infoPanelWin.getBounds())) return true;
       }
     } catch (_) {}
 
     try {
-      for (const w of registry.detachedPanelWindows.values()) {
+      for (const w of detached.detachedPanelWindows.values()) {
         if (!isWindowActivelyVisible(w)) continue;
         try {
           if (pointInBounds(pt, w.getBounds())) return true;
@@ -135,7 +137,7 @@ function createOverlayManager(deps) {
     } catch (_) {}
 
     try {
-      for (const w of registry.pinnedHistoryWindows.values()) {
+      for (const w of pinned.pinnedHistoryWindows.values()) {
         if (!isWindowActivelyVisible(w)) continue;
         try {
           if (pointInBounds(pt, w.getBounds())) return true;
@@ -152,10 +154,10 @@ function createOverlayManager(deps) {
 
   function sendOverlayCursorPointForHoverEval() {
     try {
-      if (!registry.overlayWin || registry.overlayWin.isDestroyed() || !registry.overlayVirtualVisible) return;
+      if (!core.overlayWin || core.overlayWin.isDestroyed() || !overlay.overlayVirtualVisible) return;
       const pt = screen.getCursorScreenPoint();
-      const bounds = registry.overlayWin.getBounds();
-      registry.overlayWin.webContents.send(IPC_CHANNELS.OVERLAY_CURSOR_SCREEN_POINT, {
+      const bounds = core.overlayWin.getBounds();
+      core.overlayWin.webContents.send(IPC_CHANNELS.OVERLAY_CURSOR_SCREEN_POINT, {
         x: pt && typeof pt.x === 'number' ? pt.x : null,
         y: pt && typeof pt.y === 'number' ? pt.y : null,
         bounds: bounds && typeof bounds.x === 'number' ? bounds : null
@@ -164,133 +166,133 @@ function createOverlayManager(deps) {
   }
 
   function stopOverlayMouseForwardGate() {
-    if (!registry.overlayMouseForwardGateTimer) return;
-    try { clearInterval(registry.overlayMouseForwardGateTimer); } catch (_) {}
-    registry.overlayMouseForwardGateTimer = null;
+    if (!overlay.overlayMouseForwardGateTimer) return;
+    try { clearInterval(overlay.overlayMouseForwardGateTimer); } catch (_) {}
+    overlay.overlayMouseForwardGateTimer = null;
   }
 
   function startOverlayMouseForwardGate() {
-    if (registry.overlayMouseForwardGateTimer) return;
-    registry.overlayMouseForwardGateTimer = setInterval(() => {
+    if (overlay.overlayMouseForwardGateTimer) return;
+    overlay.overlayMouseForwardGateTimer = setInterval(() => {
       try {
-        if (!registry.overlayWin || registry.overlayWin.isDestroyed() || !registry.overlayVirtualVisible) {
+        if (!core.overlayWin || core.overlayWin.isDestroyed() || !overlay.overlayVirtualVisible) {
           stopOverlayMouseForwardGate();
           return;
         }
-        if (!registry.clickThrough) {
+        if (!overlay.clickThrough) {
           stopOverlayMouseForwardGate();
           return;
         }
 
-        const hasChildren = hasAnyVisibleDetachedPanelWindow() || (registry.pinnedHistoryWindows && registry.pinnedHistoryWindows.size) || (registry.notePanelWin && !registry.notePanelWin.isDestroyed()) || (registry.infoPanelWin && !registry.infoPanelWin.isDestroyed());
+        const hasChildren = hasAnyVisibleDetachedPanelWindow() || (pinned.pinnedHistoryWindows && pinned.pinnedHistoryWindows.size) || (note.notePanelWin && !note.notePanelWin.isDestroyed()) || (info.infoPanelWin && !info.infoPanelWin.isDestroyed());
         if (!hasChildren) {
-          if (!registry.overlayMouseForwardEnabled) {
-            registry.overlayMouseForwardEnabled = true;
-            try { registry.overlayWin.setIgnoreMouseEvents(true, { forward: true }); } catch (_) {}
+          if (!overlay.overlayMouseForwardEnabled) {
+            overlay.overlayMouseForwardEnabled = true;
+            try { core.overlayWin.setIgnoreMouseEvents(true, { forward: true }); } catch (_) {}
           }
           return;
         }
 
         const insideChild = isCursorInsideOverlayChildWindow();
         const desiredForward = !insideChild;
-        if (desiredForward === registry.overlayMouseForwardEnabled) return;
-        registry.overlayMouseForwardEnabled = desiredForward;
+        if (desiredForward === overlay.overlayMouseForwardEnabled) return;
+        overlay.overlayMouseForwardEnabled = desiredForward;
         try {
           if (desiredForward) {
-            registry.overlayWin.setIgnoreMouseEvents(true, { forward: true });
+            core.overlayWin.setIgnoreMouseEvents(true, { forward: true });
             sendOverlayCursorPointForHoverEval();
           }
-          else registry.overlayWin.setIgnoreMouseEvents(true);
+          else core.overlayWin.setIgnoreMouseEvents(true);
         } catch (_) {}
       } catch (_) {}
     }, 60);
   }
 
   function startOverlayTopmostPulse() {
-    if (registry.overlayTopmostPulseTimer) return;
-    registry.overlayTopmostPulseTimer = setInterval(() => {
+    if (overlay.overlayTopmostPulseTimer) return;
+    overlay.overlayTopmostPulseTimer = setInterval(() => {
       try {
-        if (!registry.overlayWin || registry.overlayWin.isDestroyed() || !registry.overlayVirtualVisible) return;
+        if (!core.overlayWin || core.overlayWin.isDestroyed() || !overlay.overlayVirtualVisible) return;
         reassertOverlayTopmost();
       } catch (_) {}
     }, OVERLAY_TOPMOST_PULSE_MS);
   }
 
   function stopOverlayTopmostPulse() {
-    if (!registry.overlayTopmostPulseTimer) return;
-    try { clearInterval(registry.overlayTopmostPulseTimer); } catch (_) {}
-    registry.overlayTopmostPulseTimer = null;
+    if (!overlay.overlayTopmostPulseTimer) return;
+    try { clearInterval(overlay.overlayTopmostPulseTimer); } catch (_) {}
+    overlay.overlayTopmostPulseTimer = null;
   }
 
   function setOverlayVirtualVisible(visible) {
-    if (!registry.overlayWin || registry.overlayWin.isDestroyed()) return;
-    registry.overlayVirtualVisible = !!visible;
+    if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
+    overlay.overlayVirtualVisible = !!visible;
 
-    const canOpacity = typeof registry.overlayWin.setOpacity === 'function';
-    if (!registry.overlayVirtualVisible) {
+    const canOpacity = typeof core.overlayWin.setOpacity === 'function';
+    if (!overlay.overlayVirtualVisible) {
       stopOverlayTopmostPulse();
       stopOverlayMouseForwardGate();
-      try { registry.overlayWin.setIgnoreMouseEvents(true, { forward: true }); } catch (_) {}
+      try { core.overlayWin.setIgnoreMouseEvents(true, { forward: true }); } catch (_) {}
       if (canOpacity) {
-        try { registry.overlayWin.setOpacity(0); } catch (_) {}
+        try { core.overlayWin.setOpacity(0); } catch (_) {}
       }
       return;
     }
 
     try {
-      if (typeof registry.overlayWin.showInactive === 'function') registry.overlayWin.showInactive();
-      else registry.overlayWin.show();
+      if (typeof core.overlayWin.showInactive === 'function') core.overlayWin.showInactive();
+      else core.overlayWin.show();
     } catch (_) {}
 
     if (canOpacity) {
-      try { registry.overlayWin.setOpacity(1); } catch (_) {}
+      try { core.overlayWin.setOpacity(1); } catch (_) {}
     }
 
-    registry.overlayEverShown = true;
+    overlay.overlayEverShown = true;
     try {
-      registry.overlayWin.setIgnoreMouseEvents(!!registry.clickThrough, registry.clickThrough ? { forward: true } : undefined);
+      core.overlayWin.setIgnoreMouseEvents(!!overlay.clickThrough, overlay.clickThrough ? { forward: true } : undefined);
     } catch (_) {}
 
-    registry.overlayMouseForwardEnabled = true;
-    if (registry.clickThrough) startOverlayMouseForwardGate();
+    overlay.overlayMouseForwardEnabled = true;
+    if (overlay.clickThrough) startOverlayMouseForwardGate();
 
     try {
       reassertOverlayTopmost();
       ensureOverlayWithinVisibleBounds();
       if (!hasAnyVisibleDetachedPanelWindow()) {
-        registry.overlayWin.moveTop();
+        core.overlayWin.moveTop();
       }
     } catch (_) {}
     startOverlayTopmostPulse();
 
     setTimeout(() => {
       try {
-        if (!registry.overlayWin || registry.overlayWin.isDestroyed() || !registry.overlayVirtualVisible) return;
+        if (!core.overlayWin || core.overlayWin.isDestroyed() || !overlay.overlayVirtualVisible) return;
         if (canOpacity) {
-          try { registry.overlayWin.setOpacity(1); } catch (_) {}
+          try { core.overlayWin.setOpacity(1); } catch (_) {}
         }
         reassertOverlayTopmost();
         ensureOverlayWithinVisibleBounds();
         if (!hasAnyVisibleDetachedPanelWindow()) {
-          registry.overlayWin.moveTop();
+          core.overlayWin.moveTop();
         }
       } catch (_) {}
     }, 0);
   }
 
   function centerOverlayOnDisplay(display) {
-    if (!registry.overlayWin || registry.overlayWin.isDestroyed()) return;
+    if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
     if (!display || !display.workArea) return;
-    const b = registry.overlayWin.getBounds();
+    const b = core.overlayWin.getBounds();
     const area = display.workArea;
     const x = Math.round(area.x + Math.max(0, (area.width - b.width) / 2));
     const y = Math.round(area.y + Math.max(0, (area.height - b.height) / 2));
-    try { registry.overlayWin.setPosition(x, y); } catch (_) {}
+    try { core.overlayWin.setPosition(x, y); } catch (_) {}
   }
 
   function createOverlayWindow() {
-    if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
-      if (!registry.overlayWin.isVisible()) {
+    if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+      if (!core.overlayWin.isVisible()) {
         try {
           reassertOverlayTopmost();
           ensureOverlayWithinVisibleBounds();
@@ -299,7 +301,7 @@ function createOverlayManager(deps) {
       return;
     }
 
-    registry.overlayWin = new BrowserWindow({
+    core.overlayWin = new BrowserWindow({
       width: 1100,
       height: 500,
       x: -999,
@@ -321,7 +323,7 @@ function createOverlayManager(deps) {
       }
     });
 
-    registry.overlayWin.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
+    core.overlayWin.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
       if (permission === 'media') {
         callback(true);
       } else {
@@ -329,29 +331,29 @@ function createOverlayManager(deps) {
       }
     });
 
-    registry.overlayWin.loadFile('overlay.html');
+    core.overlayWin.loadFile('overlay.html');
     if (shouldOpenOverlayDevTools()) {
-      registry.overlayWin.webContents.openDevTools({ mode: 'detach' });
+      core.overlayWin.webContents.openDevTools({ mode: 'detach' });
     }
 
-    registry.overlayWin.webContents.on('did-start-loading', () => {
-      if (!registry.overlayWin || registry.overlayWin.isDestroyed()) return;
-      registry.overlayIgnoreMoveUntil = Date.now() + 1500;
-      if (!registry.overlayVirtualVisible) {
-        registry.overlayHideDuringLoad = false;
+    core.overlayWin.webContents.on('did-start-loading', () => {
+      if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
+      overlay.overlayIgnoreMoveUntil = Date.now() + 1500;
+      if (!overlay.overlayVirtualVisible) {
+        overlay.overlayHideDuringLoad = false;
         return;
       }
-      registry.overlayHideDuringLoad = true;
+      overlay.overlayHideDuringLoad = true;
       try { setOverlayVirtualVisible(false); } catch (_) {}
     });
 
-    registry.overlayWin.webContents.on('did-finish-load', () => {
-      if (!registry.overlayWin || registry.overlayWin.isDestroyed()) return;
-      registry.overlayWin.webContents.send(IPC_CHANNELS.SET_LANGUAGE, getCurrentLanguage());
+    core.overlayWin.webContents.on('did-finish-load', () => {
+      if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
+      core.overlayWin.webContents.send(IPC_CHANNELS.SET_LANGUAGE, getCurrentLanguage());
       sendDetachedPanelsStateToOverlay();
 
       try {
-        const b = registry.overlayWin.getBounds();
+        const b = core.overlayWin.getBounds();
         let maxWidth = null;
         let minWidth = null;
         try {
@@ -361,23 +363,23 @@ function createOverlayManager(deps) {
           }
         } catch (_) {}
         try {
-          const minSize = registry.overlayWin.getMinimumSize();
+          const minSize = core.overlayWin.getMinimumSize();
           if (Array.isArray(minSize) && typeof minSize[0] === 'number') {
             minWidth = minSize[0];
           }
         } catch (_) {}
         const payload = { x: b.x, y: b.y, width: b.width, height: b.height, maxWidth, minWidth };
-        registry.overlayWin.webContents.send(IPC_CHANNELS.OVERLAY_BOUNDS_UPDATED, payload);
-        if (registry.detachedPanelWindows && registry.detachedPanelWindows.size) {
-          for (const win of registry.detachedPanelWindows.values()) {
+        core.overlayWin.webContents.send(IPC_CHANNELS.OVERLAY_BOUNDS_UPDATED, payload);
+        if (detached.detachedPanelWindows && detached.detachedPanelWindows.size) {
+          for (const win of detached.detachedPanelWindows.values()) {
             if (!win || win.isDestroyed()) continue;
             try { win.webContents.send(IPC_CHANNELS.OVERLAY_BOUNDS_UPDATED, payload); } catch (_) {}
           }
         }
       } catch (_) {}
 
-      if (registry.overlayHideDuringLoad) {
-        registry.overlayHideDuringLoad = false;
+      if (overlay.overlayHideDuringLoad) {
+        overlay.overlayHideDuringLoad = false;
         try { setOverlayVirtualVisible(true); } catch (_) {}
       }
 
@@ -391,16 +393,16 @@ function createOverlayManager(deps) {
     });
 
     try {
-      registry.overlayWin.setAlwaysOnTop(true, 'screen-saver', 1);
+      core.overlayWin.setAlwaysOnTop(true, 'screen-saver', 1);
     } catch (_) {
-      try { registry.overlayWin.setAlwaysOnTop(true, 'screen-saver'); } catch (_) {}
+      try { core.overlayWin.setAlwaysOnTop(true, 'screen-saver'); } catch (_) {}
     }
     reassertOverlayTopmost();
 
-    registry.overlayWin.on('resize', () => {
-      if (!registry.overlayWin || registry.overlayWin.isDestroyed()) return;
+    core.overlayWin.on('resize', () => {
+      if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
       try {
-        const b = registry.overlayWin.getBounds();
+        const b = core.overlayWin.getBounds();
         let maxWidth = null;
         let minWidth = null;
         try {
@@ -410,14 +412,14 @@ function createOverlayManager(deps) {
           }
         } catch (_) {}
         try {
-          const minSize = registry.overlayWin.getMinimumSize();
+          const minSize = core.overlayWin.getMinimumSize();
           if (Array.isArray(minSize) && typeof minSize[0] === 'number') {
             minWidth = minSize[0];
           }
         } catch (_) {}
         const payload = { x: b.x, y: b.y, width: b.width, height: b.height, maxWidth, minWidth };
-        if (registry.detachedPanelWindows && registry.detachedPanelWindows.size) {
-          for (const win of registry.detachedPanelWindows.values()) {
+        if (detached.detachedPanelWindows && detached.detachedPanelWindows.size) {
+          for (const win of detached.detachedPanelWindows.values()) {
             if (!win || win.isDestroyed()) continue;
             try { win.webContents.send(IPC_CHANNELS.OVERLAY_BOUNDS_UPDATED, payload); } catch (_) {}
           }
@@ -425,19 +427,19 @@ function createOverlayManager(deps) {
       } catch (_) {}
     });
 
-    registry.overlayWin.on('closed', () => {
-      registry.overlayWin = null;
+    core.overlayWin.on('closed', () => {
+      core.overlayWin = null;
       stopOverlayTopmostPulse();
       closeAllPinnedHistoryWindows();
       closeAllDetachedPanelWindows();
       notePanel.closeNotePanelWindow();
     });
 
-    registry.overlayWin.webContents.on('render-process-gone', () => {
-      if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
-        registry.overlayWin.destroy();
+    core.overlayWin.webContents.on('render-process-gone', () => {
+      if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+        core.overlayWin.destroy();
       }
-      registry.overlayWin = null;
+      core.overlayWin = null;
     });
   }
 

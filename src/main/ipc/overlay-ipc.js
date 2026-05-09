@@ -29,31 +29,33 @@ function registerOverlayIpc(deps) {
     createOverlayWindow
   } = deps;
 
+  const { core, overlay, detached, note, info, game } = registry;
+
   ipcMain.handle(IPC_CHANNELS.WINDOW_CONTROL, async (_event, action) => {
     switch (action) {
       case 'minimize':
-        if (registry.win && !registry.win.isDestroyed()) {
-          registry.win.minimize();
+        if (core.win && !core.win.isDestroyed()) {
+          core.win.minimize();
         }
         break;
       case 'maximize':
-        if (registry.win && !registry.win.isDestroyed()) {
-          if (registry.win.isMaximized()) {
-            registry.win.unmaximize();
+        if (core.win && !core.win.isDestroyed()) {
+          if (core.win.isMaximized()) {
+            core.win.unmaximize();
           } else {
-            registry.win.maximize();
+            core.win.maximize();
           }
         }
         break;
       case 'close':
-        if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
-          registry.overlayWin.destroy();
+        if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+          core.overlayWin.destroy();
         }
-        registry.overlayWin = null;
-        if (registry.win && !registry.win.isDestroyed()) {
-          registry.win.destroy();
+        core.overlayWin = null;
+        if (core.win && !core.win.isDestroyed()) {
+          core.win.destroy();
         }
-        registry.win = null;
+        core.win = null;
         app.quit();
         break;
     }
@@ -61,23 +63,23 @@ function registerOverlayIpc(deps) {
   });
 
   ipcMain.handle(IPC_CHANNELS.WINDOW_ACTION, async (_event, action) => {
-    if (!registry.overlayWin || registry.overlayWin.isDestroyed()) {
+    if (!core.overlayWin || core.overlayWin.isDestroyed()) {
       return { success: false, error: 'overlay-missing' };
     }
     switch (action) {
       case 'maximize-temp':
-        registry.overlayOriginalBounds = registry.overlayWin.getBounds();
-        registry.overlayWin.maximize();
+        overlay.overlayOriginalBounds = core.overlayWin.getBounds();
+        core.overlayWin.maximize();
         break;
       case 'restore-temp':
-        if (registry.overlayOriginalBounds) {
-          registry.overlayWin.setBounds(registry.overlayOriginalBounds);
-          registry.overlayOriginalBounds = null;
+        if (overlay.overlayOriginalBounds) {
+          core.overlayWin.setBounds(overlay.overlayOriginalBounds);
+          overlay.overlayOriginalBounds = null;
         }
         break;
       case 'reset-position':
-        registry.overlayIgnoreMoveUntil = Date.now() + 1500;
-        registry.overlayWin.setSize(1100, 500);
+        overlay.overlayIgnoreMoveUntil = Date.now() + 1500;
+        core.overlayWin.setSize(1100, 500);
         ensureOverlayWithinVisibleBounds(true);
         break;
     }
@@ -95,17 +97,17 @@ function registerOverlayIpc(deps) {
 
       // If the main overlay is virtual-hidden (opacity 0), never allow it to become interactive.
       // Otherwise it can behave like an invisible window that still receives clicks/drags.
-      if (registry.overlayWin && !registry.overlayWin.isDestroyed() && senderWin.id === registry.overlayWin.id && !registry.overlayVirtualVisible) {
+      if (core.overlayWin && !core.overlayWin.isDestroyed() && senderWin.id === core.overlayWin.id && !overlay.overlayVirtualVisible) {
         try { senderWin.setIgnoreMouseEvents(true, { forward: true }); } catch (_) {}
-        registry.clickThrough = true;
-        registry.overlayMouseForwardEnabled = true;
+        overlay.clickThrough = true;
+        overlay.overlayMouseForwardEnabled = true;
         stopOverlayMouseForwardGate();
         return { success: true };
       }
 
       // If the cursor is inside a detached/pinned/note/info window, keep the main overlay click-through.
       // This prevents cursor flicker when windows overlap and not all panels are undocked.
-      if (registry.overlayWin && !registry.overlayWin.isDestroyed() && senderWin.id === registry.overlayWin.id && !allowThrough) {
+      if (core.overlayWin && !core.overlayWin.isDestroyed() && senderWin.id === core.overlayWin.id && !allowThrough) {
         if (isCursorInsideOverlayChildWindow()) {
           allowThrough = true;
         }
@@ -114,7 +116,7 @@ function registerOverlayIpc(deps) {
       // If the note panel is virtual-hidden (opacity 0), never allow it to become interactive.
       // Otherwise it can end up as an invisible window that blocks clicks behind it.
       let forwardMoves = allowThrough;
-      if (registry.notePanelWin && !registry.notePanelWin.isDestroyed() && senderWin.id === registry.notePanelWin.id && !registry.notePanelVirtualVisible) {
+      if (note.notePanelWin && !note.notePanelWin.isDestroyed() && senderWin.id === note.notePanelWin.id && !note.notePanelVirtualVisible) {
         allowThrough = true;
         forwardMoves = false;
       }
@@ -122,7 +124,7 @@ function registerOverlayIpc(deps) {
       // When the cursor is inside a child window (detached/pinned/note/info), do NOT forward
       // mouse moves to the overlay renderer while click-through is enabled. Forwarding can
       // still affect the cursor (grab<->arrow) on Windows even though clicks pass through.
-      if (registry.overlayWin && !registry.overlayWin.isDestroyed() && senderWin.id === registry.overlayWin.id && allowThrough) {
+      if (core.overlayWin && !core.overlayWin.isDestroyed() && senderWin.id === core.overlayWin.id && allowThrough) {
         try {
           if (isCursorInsideOverlayChildWindow()) {
             forwardMoves = false;
@@ -137,27 +139,27 @@ function registerOverlayIpc(deps) {
         }
       } catch (_) {}
     }
-    if (registry.overlayWin && senderWin && senderWin.id === registry.overlayWin.id) {
-      registry.clickThrough = allowThrough;
-      registry.overlayMouseForwardEnabled = true;
-      if (registry.clickThrough) startOverlayMouseForwardGate();
+    if (core.overlayWin && senderWin && senderWin.id === core.overlayWin.id) {
+      overlay.clickThrough = allowThrough;
+      overlay.overlayMouseForwardEnabled = true;
+      if (overlay.clickThrough) startOverlayMouseForwardGate();
       else stopOverlayMouseForwardGate();
     }
     return { success: true };
   });
 
   ipcMain.handle(IPC_CHANNELS.SET_ALWAYS_ON_TOP, async (_event, enable) => {
-    if (registry.win && !registry.win.isDestroyed()) {
+    if (core.win && !core.win.isDestroyed()) {
       if (enable) {
-        if (registry.win.isMinimized()) registry.win.restore();
-        registry.win.setAlwaysOnTop(true, 'floating', 1);
-        registry.win.show();
-        registry.win.moveTop();
-        registry.win.focus();
-        registry.win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+        if (core.win.isMinimized()) core.win.restore();
+        core.win.setAlwaysOnTop(true, 'floating', 1);
+        core.win.show();
+        core.win.moveTop();
+        core.win.focus();
+        core.win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
       } else {
-        registry.win.setAlwaysOnTop(false);
-        registry.win.setVisibleOnAllWorkspaces(false);
+        core.win.setAlwaysOnTop(false);
+        core.win.setVisibleOnAllWorkspaces(false);
       }
     }
     return { success: true };
@@ -165,15 +167,15 @@ function registerOverlayIpc(deps) {
 
   ipcMain.handle(IPC_CHANNELS.OPEN_OVERLAY, async () => {
     createOverlayWindow();
-    registry.detachedWindowsDesiredVisible = true;
-    if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
+    detached.detachedWindowsDesiredVisible = true;
+    if (core.overlayWin && !core.overlayWin.isDestroyed()) {
       try {
-        if (!registry.overlayVirtualVisible) {
+        if (!overlay.overlayVirtualVisible) {
           // Preserve the last user position when toggling the overlay (hotkey).
           // Only center on first-ever show; subsequent opens should feel stable.
-          if (!registry.overlayEverShown) {
+          if (!overlay.overlayEverShown) {
             detectCurrentGame();
-            const gameDisplay = tryGetDisplayForGameWindow(registry.currentDetectedGame);
+            const gameDisplay = tryGetDisplayForGameWindow(game.currentDetectedGame);
             const preferred = gameDisplay || getPreferredOverlayDisplay();
             centerOverlayOnDisplay(preferred);
           }
@@ -182,8 +184,8 @@ function registerOverlayIpc(deps) {
       showOverlayAndRaise();
 
       // Keep renderer in sync even when overlay is pre-created.
-      if (registry.currentDetectedGame) {
-        try { registry.overlayWin.webContents.send(IPC_CHANNELS.SET_GAME_CONTEXT, registry.currentDetectedGame); } catch (_) {}
+      if (game.currentDetectedGame) {
+        try { core.overlayWin.webContents.send(IPC_CHANNELS.SET_GAME_CONTEXT, game.currentDetectedGame); } catch (_) {}
       }
     }
     setPinnedHistoryWindowsVisible(true);
@@ -198,15 +200,15 @@ function registerOverlayIpc(deps) {
       }, 250);
     } catch (_) {}
     notePanel.setNotePanelVisible(true);
-    return { success: true, visible: !!(registry.overlayWin && registry.overlayVirtualVisible) };
+    return { success: true, visible: !!(core.overlayWin && overlay.overlayVirtualVisible) };
   });
 
   ipcMain.handle(IPC_CHANNELS.CLOSE_OVERLAY, async () => {
     // If the renderer hid the overlay mid-detach gesture, ensure the main-process
     // guard can't remain stuck (which would ignore future x/y moves).
-    registry.overlayDetachGuardActive = false;
-    registry.detachedWindowsDesiredVisible = false;
-    if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
+    overlay.overlayDetachGuardActive = false;
+    detached.detachedWindowsDesiredVisible = false;
+    if (core.overlayWin && !core.overlayWin.isDestroyed()) {
       setOverlayVirtualVisible(false);
     }
     setPinnedHistoryWindowsVisible(false);
@@ -219,21 +221,21 @@ function registerOverlayIpc(deps) {
   ipcMain.handle(IPC_CHANNELS.SET_LANGUAGE, async (_event, lang) => {
     const nextLanguage = openaiService.normalizeLanguage(lang);
     setCurrentLanguage(nextLanguage);
-    if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
-      registry.overlayWin.webContents.send(IPC_CHANNELS.SET_LANGUAGE, nextLanguage);
+    if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+      core.overlayWin.webContents.send(IPC_CHANNELS.SET_LANGUAGE, nextLanguage);
     }
-    if (registry.notePanelWin && !registry.notePanelWin.isDestroyed()) {
+    if (note.notePanelWin && !note.notePanelWin.isDestroyed()) {
       try {
-        registry.notePanelWin.webContents.send(IPC_CHANNELS.NOTE_PANEL_INIT, { language: nextLanguage });
+        note.notePanelWin.webContents.send(IPC_CHANNELS.NOTE_PANEL_INIT, { language: nextLanguage });
       } catch (_) {}
     }
-    if (registry.infoPanelWin && !registry.infoPanelWin.isDestroyed()) {
+    if (info.infoPanelWin && !info.infoPanelWin.isDestroyed()) {
       try {
-        registry.infoPanelWin.webContents.send(IPC_CHANNELS.INFO_PANEL_INIT, { language: nextLanguage });
+        info.infoPanelWin.webContents.send(IPC_CHANNELS.INFO_PANEL_INIT, { language: nextLanguage });
       } catch (_) {}
     }
-    if (registry.detachedPanelWindows && registry.detachedPanelWindows.size) {
-      for (const win of registry.detachedPanelWindows.values()) {
+    if (detached.detachedPanelWindows && detached.detachedPanelWindows.size) {
+      for (const win of detached.detachedPanelWindows.values()) {
         if (!win || win.isDestroyed()) continue;
         try {
           win.webContents.send(IPC_CHANNELS.SET_LANGUAGE, nextLanguage);
@@ -256,9 +258,9 @@ function registerOverlayIpc(deps) {
       try { win.webContents.send(IPC_CHANNELS.OVERLAY_LAYOUT_UPDATED, { mode: nextMode }); } catch (_) {}
     };
 
-    sendLayout(registry.overlayWin);
-    if (registry.detachedPanelWindows && registry.detachedPanelWindows.size) {
-      for (const win of registry.detachedPanelWindows.values()) {
+    sendLayout(core.overlayWin);
+    if (detached.detachedPanelWindows && detached.detachedPanelWindows.size) {
+      for (const win of detached.detachedPanelWindows.values()) {
         sendLayout(win);
       }
     }
@@ -269,18 +271,18 @@ function registerOverlayIpc(deps) {
   ipcMain.handle(IPC_CHANNELS.SET_SPEECH_RATE, async (_event, rate) => {
     const nextRate = Math.max(0, Math.min(200, rate));
     setCurrentSpeechRate(nextRate);
-    if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
-      registry.overlayWin.webContents.send(IPC_CHANNELS.SET_SPEECH_RATE, nextRate);
+    if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+      core.overlayWin.webContents.send(IPC_CHANNELS.SET_SPEECH_RATE, nextRate);
     }
     return { success: true };
   });
 
   ipcMain.handle(IPC_CHANNELS.RESIZE_OVERLAY, async (_event, bounds) => {
-    if (!registry.overlayWin || registry.overlayWin.isDestroyed()) {
+    if (!core.overlayWin || core.overlayWin.isDestroyed()) {
       return { success: false, error: 'overlay-missing' };
     }
-    const current = registry.overlayWin.getBounds();
-    const ignoreMoves = registry.overlayDetachGuardActive || Date.now() < registry.overlayIgnoreMoveUntil;
+    const current = core.overlayWin.getBounds();
+    const ignoreMoves = overlay.overlayDetachGuardActive || Date.now() < overlay.overlayIgnoreMoveUntil;
     const rawX = (!ignoreMoves && bounds && Number.isFinite(bounds.x)) ? Math.round(bounds.x) : current.x;
     const rawY = (!ignoreMoves && bounds && Number.isFinite(bounds.y)) ? Math.round(bounds.y) : current.y;
     const rawW = (bounds && Number.isFinite(bounds.width)) ? Math.round(bounds.width) : current.width;
@@ -297,19 +299,19 @@ function registerOverlayIpc(deps) {
       height
     };
 
-    try { registry.overlayWin.setBounds(next); } catch (_) {}
+    try { core.overlayWin.setBounds(next); } catch (_) {}
     return { success: true };
   });
 
   ipcMain.on(IPC_CHANNELS.OVERLAY_DETACH_GUARD, (_event, active) => {
-    registry.overlayDetachGuardActive = !!active;
+    overlay.overlayDetachGuardActive = !!active;
   });
 
   ipcMain.handle(IPC_CHANNELS.GET_GAME_CONTEXT, async () => {
-    if (!registry.currentDetectedGame) {
+    if (!game.currentDetectedGame) {
       try { detectCurrentGame(false); } catch (_) {}
     }
-    return registry.currentDetectedGame;
+    return game.currentDetectedGame;
   });
 
   ipcMain.handle(IPC_CHANNELS.SET_AUTO_START, async (_event, enable) => {
@@ -326,11 +328,11 @@ function registerOverlayIpc(deps) {
     const normalized = Array.isArray(list)
       ? list.map((entry) => String(entry).trim()).filter(Boolean)
       : [];
-    registry.gameDetectIgnoreList = normalized;
+    game.gameDetectIgnoreList = normalized;
     try {
       detectCurrentGame(true);
-      if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
-        registry.overlayWin.webContents.send(IPC_CHANNELS.SET_GAME_CONTEXT, registry.currentDetectedGame);
+      if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+        core.overlayWin.webContents.send(IPC_CHANNELS.SET_GAME_CONTEXT, game.currentDetectedGame);
       }
     } catch (_) {}
     return { success: true };
@@ -339,7 +341,7 @@ function registerOverlayIpc(deps) {
   ipcMain.handle(IPC_CHANNELS.CAPTURE_SCREENSHOT, async () => {
     try {
       const { desktopCapturer } = require('electron');
-      const wasVirtualVisible = registry.overlayWin && !registry.overlayWin.isDestroyed() && registry.overlayVirtualVisible;
+      const wasVirtualVisible = core.overlayWin && !core.overlayWin.isDestroyed() && overlay.overlayVirtualVisible;
       if (wasVirtualVisible) {
         setOverlayVirtualVisible(false);
       }
@@ -358,7 +360,7 @@ function registerOverlayIpc(deps) {
       return { success: true, imageData };
     } catch (err) {
       console.error('[Screenshot] Hiba:', err);
-      if (registry.overlayWin && !registry.overlayWin.isDestroyed()) setOverlayVirtualVisible(true);
+      if (core.overlayWin && !core.overlayWin.isDestroyed()) setOverlayVirtualVisible(true);
       return { success: false, error: err.message };
     }
   });

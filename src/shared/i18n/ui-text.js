@@ -876,7 +876,10 @@ const UI_TEXT = {
     alertOk: 'OK',
     confirmYes: '✓ 是',
     confirmNo: '✕ 取消'
-  }
+  },
+  es: {},
+  it: {},
+  pl: {}
 };
 
 function normalizeLang(lang) {
