@@ -48,6 +48,7 @@ const IPC_CHANNELS = {
   SET_LANGUAGE: 'set-language',
   SET_SPEECH_RATE: 'set-speech-rate',
   SET_GAME_CONTEXT: 'set-game-context',
+  SET_GAME_DETECT_IGNORE_LIST: 'set-game-detect-ignore-list',
   RESIZE_OVERLAY: 'resize-overlay',
   OVERLAY_DETACH_GUARD: 'overlay-detach-guard',
   OVERLAY_DOCK_PREVIEW: 'overlay-dock-preview',

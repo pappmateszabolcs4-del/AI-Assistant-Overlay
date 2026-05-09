@@ -42,10 +42,10 @@ This audit was conducted on Feb 5. The following notable improvements were added
 ### Dock/Detach & Layout
 - Dock target selection improved (smallest rect + header-band fallback) to support slot swaps.
 - Layout mode toggling works from detached Settings and broadcasts to all overlay windows.
-- Overlay bounds broadcast to detached windows to sync the width slider range.
+- Overlay bounds broadcast to detached windows to keep layout state consistent.
 
 ### Known Issue (Deferred)
-- Detached Settings overlay width slider can still stick to the first step; requires further investigation into min/max/step sync.
+- No critical deferred issues tracked in this audit section.
 
 ---
 
@@ -81,6 +81,17 @@ This audit was conducted on Feb 5. The following notable improvements were added
 
 ### Registry State Centralization
 - Main-process language, speech rate, and game context now live in [src/main/state/registry.js](src/main/state/registry.js).
+
+---
+
+## May 9, 2026 Addendum (Delta Since Audit)
+
+### Game Detection UX
+- Added a user-configurable ignore list (Settings UI) for window titles that should never be treated as game context.
+- Game detection now clears stale context when no match is found.
+
+### Error Messaging
+- Renderer now maps common IPC error codes into friendly, localized status messages.
 
 ---
 

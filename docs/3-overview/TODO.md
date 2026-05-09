@@ -1,23 +1,23 @@
 # ✅ TODO / Backlog
 
-Last updated: 2026-05-08
+Last updated: 2026-05-09
 
 ## Top candidates (next)
 
 - [ ] Unify UI translation sources (overlay/index/detached/aux windows)
 - [ ] Split registry by domain (overlay, detached, pinned, note/info)
-- [ ] Deferred bugfix: detached Settings overlay size slider can stick to first step
 - [ ] Reduce offline IGDB dataset size (minify/prune/gzip) without losing match quality
-- [ ] Context-aware error messages
 - [ ] Basic unit tests (3-5 critical paths)
 
 ## Recently completed
 
 - [x] Modularize overlay renderer script
 - [x] Restructure IPC handlers (clear domain ownership)
+- [x] Context-aware error messages
+- [x] Configurable game detection ignore list (UI + IPC)
 
 - [ ] Per-game layout profiles
-  - Save/apply per detected game: overlay width, layout mode, panel order (and optionally open/detached state)
+  - Save/apply per detected game: layout mode, panel order (and optionally open/detached state)
 - [ ] Prompt templates per game
   - One-click question templates tailored to the detected game (e.g., "next steps", "build advice", "boss prep")
 - [ ] Pinned history search/filter

@@ -70,7 +70,7 @@ When adding new work logs, append them under **Daily Logs (Chronological)** usin
 - Respect persistence: user choices should survive restarts.
 
 **Examples:**
-- Overlay size, width/height, and layout settings are user-controlled.
+- Overlay layout and position are user-controlled where feasible.
 - Voice output settings (volume, enable/disable) are adjustable.
 - Any new feature includes configuration if it affects UX.
 
@@ -547,7 +547,7 @@ overlayWin.hide();
 3. ~~**History/conversation memory**~~ - ✅ COMPLETED (Feb 5, 2026)
 4. **Screenshot annotations** - Draw on screenshots before sending
 5. **Performance optimizations** - Reduce memory footprint
-2. **Customizable overlay size** - Let users adjust width/height
+2. **Customizable overlay layout** - Let users adjust layout and panel arrangement
 3. **Keyboard input passthrough** - Some keys might still need passing through
 4. **Multiple monitor support** - Open overlay on active screen only
 5. **Recording device selection** - Let users choose mic input
@@ -1157,6 +1157,39 @@ forbidden = [
 - ❌ Real-world harm: "kill people", "build real bomb"
 
 Add "real" prefix to forbidden terms to preserve gaming vocabulary.
+
+---
+
+### 2026-05-09 (Evening)
+
+#### Summary
+- What changed: Added a configurable game detection ignore list UI and context-aware error messages.
+- Why: Reduce false game detections from non-game windows and make failures easier to understand.
+- Impact: Game context is now user-tunable; renderer errors are localized and more actionable.
+
+#### Details
+- Added Settings UI for window-title ignore patterns (per-line, persisted, IPC-synced).
+- Game detection now applies the ignore list and clears stale context when no match exists.
+- Renderer maps common error codes/messages to translated status lines.
+
+#### Files touched
+- [overlay.html](overlay.html)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/renderer/overlay/translations.js](src/renderer/overlay/translations.js)
+- [src/main/services/game-detect.js](src/main/services/game-detect.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/shared/ipc-channels.js](src/shared/ipc-channels.js)
+- [src/shared/storage-keys.js](src/shared/storage-keys.js)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Tests not run (not requested)
+
+#### Follow-ups
+- Consider adding an optional “active window only” toggle for detection.
 
 ---
 

@@ -114,6 +114,24 @@
               🗑️ Minden adat törlése
             </button>
           </div>
+
+          <div class="specialization-container" style="margin-top: 12px;">
+            <div class="specialization-label">
+              <span id="gameIgnoreLabel">🧹 Kihagyott ablakcímek:</span>
+            </div>
+            <p id="gameIgnoreHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;">
+              Egy sor = egy minta. Ha a cím tartalmazza, nem lesz játéknak nézve.
+            </p>
+            <textarea id="gameIgnoreInput" rows="5" style="width: 100%; resize: vertical; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder="Opera\nGoogle Chrome\nMicrosoft Edge"></textarea>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+              <button id="gameIgnoreApplyBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
+                ✅ Mentés
+              </button>
+              <button id="gameIgnoreResetBtn" style="flex: 1; padding: 8px; background: rgba(255, 196, 100, 0.15); border: 1px solid rgba(255, 196, 100, 0.35); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
+                🔄 Alaplista
+              </button>
+            </div>
+          </div>
           
           <div class="specialization-container" style="margin-top: 12px;">
             <div class="specialization-label">

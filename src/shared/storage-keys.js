@@ -6,6 +6,7 @@ const STORAGE_KEYS = {
   OVERLAY_PANEL_ORDER: 'overlayPanelOrder',
   OVERLAY_POSITION_X: 'overlayPositionX',
   OVERLAY_POSITION_Y: 'overlayPositionY',
+  GAME_DETECT_IGNORE_LIST: 'gameDetectIgnoreList',
   ASK_ENABLE_TTS: 'askEnableTTS',
   ENABLE_TTS: 'enableTTS',
   PINNED_TABS: 'pinnedTabs',

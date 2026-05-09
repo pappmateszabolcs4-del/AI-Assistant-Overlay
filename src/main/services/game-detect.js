@@ -5,6 +5,11 @@ const { execSync } = require('child_process');
 function createGameDetectService(deps) {
   const { registry, screen } = deps;
 
+  const ALWAYS_IGNORE_PATTERNS = [
+    /AIGameAssistant/i,
+    /AI Game Assistant/i
+  ];
+
   // Known game patterns (120+ popular games)
   const gamePatterns = [
     // === FPS / SHOOTER ===
@@ -370,34 +375,30 @@ function createGameDetectService(deps) {
     return best.name;
   }
 
+  function shouldIgnoreWindowTitle(windowTitle) {
+    if (!windowTitle) return true;
+    for (const pattern of ALWAYS_IGNORE_PATTERNS) {
+      if (pattern.test(windowTitle)) return true;
+    }
+
+    const ignoreList = Array.isArray(registry.gameDetectIgnoreList)
+      ? registry.gameDetectIgnoreList
+      : [];
+    if (!ignoreList.length) return false;
+
+    const lowered = windowTitle.toLowerCase();
+    for (const entry of ignoreList) {
+      const cleaned = String(entry || '').trim();
+      if (!cleaned) continue;
+      if (lowered.includes(cleaned.toLowerCase())) return true;
+    }
+    return false;
+  }
+
   function extractGameName(windowTitle) {
     if (!windowTitle) return null;
 
-    // Közös minták eltávolítása (steam, discord, browser stb)
-    const ignorePatterns = [
-      /Discord/i,
-      /Google Chrome/i,
-      /Mozilla Firefox/i,
-      /Microsoft Edge/i,
-      /Visual Studio Code/i,
-      /Notepad/i,
-      /File Explorer/i,
-      /Task Manager/i,
-      /PowerShell/i,
-      /Command Prompt/i,
-      /^Settings$/i,
-      /^Steam$/i,
-      /Spotify/i,
-      /Slack/i,
-      /Telegram/i,
-      /WhatsApp/i,
-      /AIGameAssistant/i,
-      /AI Game Assistant/i,
-    ];
-
-    for (const pattern of ignorePatterns) {
-      if (pattern.test(windowTitle)) return null;
-    }
+    if (shouldIgnoreWindowTitle(windowTitle)) return null;
 
     const datasetMatch = matchGameFromText(windowTitle);
     if (datasetMatch) {
@@ -521,6 +522,8 @@ function createGameDetectService(deps) {
       }
       registry.lastGameDetectAt = now;
 
+      let detected = false;
+
       const activeScriptPath = path.join(__dirname, '..', '..', '..', 'get-active-window.ps1');
       const windowTitle = execSync(`powershell -NoProfile -ExecutionPolicy Bypass -File "${activeScriptPath}"`, {
         encoding: 'utf8',
@@ -533,6 +536,7 @@ function createGameDetectService(deps) {
         if (gameFromActive) {
           registry.currentDetectedGame = gameFromActive;
           rememberGameDisplayFromCursor();
+          detected = true;
         }
       }
 
@@ -553,9 +557,14 @@ function createGameDetectService(deps) {
           const game = extractGameName(title);
           if (game) {
             registry.currentDetectedGame = game;
+            detected = true;
             break;
           }
         }
+      }
+
+      if (!detected) {
+        registry.currentDetectedGame = null;
       }
     } catch (error) {
       console.error('[GAME] Detection failed:', error.message);

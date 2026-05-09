@@ -326,6 +326,20 @@ function registerOverlayIpc(deps) {
 
   ipcMain.handle(IPC_CHANNELS.GET_AUTO_START, () => app.getLoginItemSettings().openAtLogin);
 
+  ipcMain.handle(IPC_CHANNELS.SET_GAME_DETECT_IGNORE_LIST, (_event, list) => {
+    const normalized = Array.isArray(list)
+      ? list.map((entry) => String(entry).trim()).filter(Boolean)
+      : [];
+    registry.gameDetectIgnoreList = normalized;
+    try {
+      detectCurrentGame(true);
+      if (registry.overlayWin && !registry.overlayWin.isDestroyed()) {
+        registry.overlayWin.webContents.send(IPC_CHANNELS.SET_GAME_CONTEXT, registry.currentDetectedGame);
+      }
+    } catch (_) {}
+    return { success: true };
+  });
+
   ipcMain.handle(IPC_CHANNELS.CAPTURE_SCREENSHOT, async () => {
     try {
       const { desktopCapturer } = require('electron');

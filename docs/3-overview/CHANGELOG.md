@@ -18,6 +18,23 @@
 
 ---
 
+## [1.0.17] - 2026-05-09 (Game Detection Ignore List + Error Messaging)
+
+### ✅ Added
+
+- Configurable game detection ignore list with in-overlay Settings UI.
+- Context-aware error messages for common IPC failures (overlay/window missing, no screen, missing API key).
+
+### 🔧 Changed
+
+- Game detection now applies the user-configured ignore list and clears stale detected games when no match is found.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+---
+
 ## [1.0.15] - 2026-05-08 (Main Entry Relocation)
 
 ### 🔧 Changed
@@ -115,17 +132,13 @@
 
 - Introduced shared constants for panel IDs, IPC channels, and storage keys to reduce drift across main/renderer windows.
 - Layout mode can now be toggled from detached Settings and is broadcast to all overlay windows.
-- Overlay bounds are broadcast to detached windows to improve slider sync (width min/max + step).
+- Overlay bounds are broadcast to detached windows to keep layout state consistent.
 - Dock target selection prefers smallest matching rect, with a header-band fallback to improve swaps.
 
 ### 🐛 Fixed
 
 - Remaining mixed-language UI strings in overlay + main settings; missing translation keys wired to update functions.
 - Detached overlay windows now receive language updates via `set-language` broadcast.
-
-### ⚠️ Known Issue
-
-- Detached Settings overlay size slider can still stick to the first step in some scenarios; further sync work required.
 
 ### 🧾 Notes
 
@@ -236,7 +249,6 @@
 ### 🔧 Changed
 
 - **Layout mode switching** now repositions any open dropdown popups immediately after changing layout classes.
-- **Overlay width slider** is now **discrete (10 segments)** and **applies on release/commit** instead of live-resizing while held (prevents jitter).
 
 ### 🐛 Fixed
 

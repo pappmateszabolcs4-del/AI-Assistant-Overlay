@@ -42,6 +42,65 @@ let mediaRecorder = null; // MediaRecorder for Whisper audio capture
 let currentScreenshot = null; // Base64 image data
 var currentGameContext = null;
 
+const DEFAULT_GAME_IGNORE_TITLES = [
+  'Google Chrome',
+  'Chrome',
+  'Microsoft Edge',
+  'Edge',
+  'Opera',
+  'Firefox',
+  'Mozilla Firefox',
+  'Brave',
+  'Vivaldi',
+  'Discord',
+  'Visual Studio Code',
+  'VS Code'
+];
+
+function normalizeGameIgnoreInput(text) {
+  return String(text || '')
+    .split(/[\n,]+/)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+}
+
+function loadGameIgnoreList() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.GAME_DETECT_IGNORE_LIST);
+    if (!raw) return [...DEFAULT_GAME_IGNORE_TITLES];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length) return parsed.filter((entry) => typeof entry === 'string' && entry.trim());
+  } catch (_) {}
+  return [...DEFAULT_GAME_IGNORE_TITLES];
+}
+
+function persistGameIgnoreList(list) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.GAME_DETECT_IGNORE_LIST, JSON.stringify(list));
+  } catch (_) {}
+}
+
+function sendGameIgnoreListToMain(list) {
+  try { invokeMain(IPC_CHANNELS.SET_GAME_DETECT_IGNORE_LIST, list); } catch (_) {}
+}
+
+function getUserFacingErrorMessage(rawError) {
+  const msg = String(rawError || '').trim();
+  if (!msg) return '';
+  const lower = msg.toLowerCase();
+
+  if (msg === 'overlay-missing') return t().errorOverlayMissing || msg;
+  if (msg === 'window-missing') return t().errorWindowMissing || msg;
+  if (lower.includes('nincs elerheto kepernyo') || lower.includes('no screen')) {
+    return t().errorNoScreen || msg;
+  }
+  if (lower.includes('openai') && (lower.includes('kulcs') || lower.includes('api key') || lower.includes('api kulcs'))) {
+    return t().errorOpenAiKey || msg;
+  }
+
+  return '';
+}
+
 // Editable Note Panel (separate window)
 const NOTE_PANEL_BOUNDS_KEY = STORAGE_KEYS.NOTE_PANEL_BOUNDS;
 let notePanelBounds = null; // { x, y, width, height } in screen coords
@@ -918,6 +977,16 @@ function updateOverlayText() {
   if (exportHistoryBtn) exportHistoryBtn.textContent = t().exportHistory || exportHistoryBtn.textContent;
   const clearAllBtn = document.getElementById('clearAllBtn');
   if (clearAllBtn) clearAllBtn.textContent = t().clearAllData || clearAllBtn.textContent;
+  const gameIgnoreLabel = document.getElementById('gameIgnoreLabel');
+  if (gameIgnoreLabel) gameIgnoreLabel.textContent = t().gameIgnoreLabel || gameIgnoreLabel.textContent;
+  const gameIgnoreHint = document.getElementById('gameIgnoreHint');
+  if (gameIgnoreHint) gameIgnoreHint.textContent = t().gameIgnoreHint || gameIgnoreHint.textContent;
+  const gameIgnoreInput = document.getElementById('gameIgnoreInput');
+  if (gameIgnoreInput) gameIgnoreInput.placeholder = t().gameIgnorePlaceholder || gameIgnoreInput.placeholder;
+  const gameIgnoreApplyBtn = document.getElementById('gameIgnoreApplyBtn');
+  if (gameIgnoreApplyBtn) gameIgnoreApplyBtn.textContent = t().gameIgnoreApply || gameIgnoreApplyBtn.textContent;
+  const gameIgnoreResetBtn = document.getElementById('gameIgnoreResetBtn');
+  if (gameIgnoreResetBtn) gameIgnoreResetBtn.textContent = t().gameIgnoreReset || gameIgnoreResetBtn.textContent;
   const versionLabel = document.getElementById('versionLabel');
   if (versionLabel) versionLabel.textContent = t().versionLabel || versionLabel.textContent;
   const layoutLabel = document.getElementById('layoutLabel');
@@ -967,10 +1036,12 @@ async function askQuestion() {
       // Add to history
       addToHistory(text, result.response, !!currentScreenshot);
     } else {
-      status.textContent = t().genericErrorPrefix + result.error;
+      const friendly = getUserFacingErrorMessage(result.error);
+      status.textContent = t().genericErrorPrefix + (friendly || result.error);
     }
   } catch (err) {
-    status.textContent = t().apiErrorPrefix + err.message;
+    const friendly = getUserFacingErrorMessage(err && err.message);
+    status.textContent = t().apiErrorPrefix + (friendly || (err && err.message) || t().unknownError);
   } finally {
     askBtn.disabled = false;
   }
@@ -1060,16 +1131,20 @@ on(micBtn, 'click', async () => {
               // Add to history
               addToHistory(transcript, processResult.response, !!currentScreenshot);
             } else {
-              status.textContent = t().genericErrorPrefix + processResult.error;
+              const friendly = getUserFacingErrorMessage(processResult.error);
+              status.textContent = t().genericErrorPrefix + (friendly || processResult.error);
             }
           } catch (err) {
-            status.textContent = t().apiErrorPrefix + err.message;
+            const friendly = getUserFacingErrorMessage(err && err.message);
+            status.textContent = t().apiErrorPrefix + (friendly || (err && err.message) || t().unknownError);
           }
         } else {
-          status.textContent = t().transcriptionErrorPrefix + result.error;
+          const friendly = getUserFacingErrorMessage(result.error);
+          status.textContent = t().transcriptionErrorPrefix + (friendly || result.error);
         }
       } catch (err) {
-        status.textContent = t().audioProcessingErrorPrefix + err.message;
+        const friendly = getUserFacingErrorMessage(err && err.message);
+        status.textContent = t().audioProcessingErrorPrefix + (friendly || (err && err.message) || t().unknownError);
         console.error('[MIC] Error:', err);
       } finally {
         micBtn.textContent = t().mic;
@@ -1080,7 +1155,8 @@ on(micBtn, 'click', async () => {
     mediaRecorder.start();
 
   } catch (err) {
-    status.textContent = t().microphoneErrorPrefix + err.message;
+    const friendly = getUserFacingErrorMessage(err && err.message);
+    status.textContent = t().microphoneErrorPrefix + (friendly || (err && err.message) || t().unknownError);
     micBtn.textContent = t().mic;
     recording = false;
     console.error('[MIC] Permission error:', err);
@@ -1107,10 +1183,12 @@ on(screenshotBtn, 'click', async () => {
       screenshotInfo.textContent = t().screenshotReady;
       status.textContent = t().statusIdle;
     } else {
-      status.textContent = t().screenshotError + result.error;
+      const friendly = getUserFacingErrorMessage(result.error);
+      status.textContent = t().screenshotError + (friendly || result.error);
     }
   } catch (err) {
-    status.textContent = t().screenshotError + err.message;
+    const friendly = getUserFacingErrorMessage(err && err.message);
+    status.textContent = t().screenshotError + (friendly || (err && err.message) || t().unknownError);
   }
 });
 
@@ -1185,6 +1263,44 @@ if (savedTTS !== null) {
 on(enableTTS, 'change', () => {
   localStorage.setItem(STORAGE_KEYS.ENABLE_TTS, enableTTS.checked);
 });
+
+// Settings: game detection ignore list
+const gameIgnoreInput = document.getElementById('gameIgnoreInput');
+const gameIgnoreApplyBtn = document.getElementById('gameIgnoreApplyBtn');
+const gameIgnoreResetBtn = document.getElementById('gameIgnoreResetBtn');
+
+function applyGameIgnoreList(list, options = {}) {
+  const normalized = Array.isArray(list)
+    ? list.map((entry) => String(entry).trim()).filter(Boolean)
+    : [];
+
+  if (gameIgnoreInput) {
+    gameIgnoreInput.value = normalized.join('\n');
+  }
+
+  if (options.persist) {
+    persistGameIgnoreList(normalized);
+  }
+
+  sendGameIgnoreListToMain(normalized);
+}
+
+if (gameIgnoreInput) {
+  applyGameIgnoreList(loadGameIgnoreList(), { persist: true });
+}
+
+if (gameIgnoreApplyBtn) {
+  on(gameIgnoreApplyBtn, 'click', () => {
+    const list = normalizeGameIgnoreInput(gameIgnoreInput ? gameIgnoreInput.value : '');
+    applyGameIgnoreList(list, { persist: true });
+  });
+}
+
+if (gameIgnoreResetBtn) {
+  on(gameIgnoreResetBtn, 'click', () => {
+    applyGameIgnoreList(DEFAULT_GAME_IGNORE_TITLES, { persist: true });
+  });
+}
 
 // Clear all data
 // Custom modal functions
