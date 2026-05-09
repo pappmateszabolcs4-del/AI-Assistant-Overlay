@@ -4,13 +4,13 @@ Last updated: 2026-05-09
 
 ## Top candidates (next)
 
-- [ ] Unify UI translation sources (overlay/index/detached/aux windows)
 - [ ] Split registry by domain (overlay, detached, pinned, note/info)
 - [ ] Reduce offline IGDB dataset size (minify/prune/gzip) without losing match quality
 - [ ] Basic unit tests (3-5 critical paths)
 
 ## Recently completed
 
+- [x] Unify UI translation sources (overlay/index/detached/aux windows)
 - [x] Modularize overlay renderer script
 - [x] Restructure IPC handlers (clear domain ownership)
 - [x] Context-aware error messages

@@ -13,7 +13,6 @@ const { createOverlayManager } = require('./windows/overlay');
 const { createMainWindowManager } = require('./windows/main-window');
 const { createHotkeyManager } = require('./app/hotkeys');
 const { createLifecycleManager } = require('./app/lifecycle');
-const { createUiTextService } = require('./services/ui-text');
 const { createDetachedStateSender } = require('./windows/detached-state');
 const { createGameDetectService } = require('./services/game-detect');
 const { createOpenAIService } = require('./services/openai');
@@ -52,12 +51,10 @@ const openaiService = createOpenAIService({
   getCurrentLanguage: () => registry.currentLanguage
 });
 
-const uiText = createUiTextService();
 const detachedStateSender = createDetachedStateSender({
   registry
 });
 
-const { getNotePanelLabels, getInfoPanelLabels } = uiText;
 const { sendDetachedPanelsStateToOverlay } = detachedStateSender;
 
 const detachedVisibility = createDetachedVisibilityManager({
@@ -212,8 +209,6 @@ const ipcRegistrar = createIpcRegistrar({
   closeAllDetachedPanelWindows,
   closeAllPinnedHistoryWindows,
   openaiService,
-  getNotePanelLabels,
-  getInfoPanelLabels,
   setCurrentLanguage: (lang) => { registry.currentLanguage = lang; },
   getCurrentLanguage: () => registry.currentLanguage,
   setCurrentSpeechRate: (rate) => { registry.currentSpeechRate = rate; },

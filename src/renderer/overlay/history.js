@@ -74,16 +74,7 @@ function getHistoryEntryByTimestamp(ts) {
   return conversationHistory.find((e) => e && e.timestamp === ts) || null;
 }
 
-function getPinnedHistoryLabels() {
-  return {
-    title: t().pinnedHistoryTitle || '📌 Pinned history',
-    question: t().historyPopupQuestion || 'Question',
-    answer: t().historyPopupAnswer || 'Answer'
-  };
-}
-
 function syncPinnedHistoryWindows() {
-  const labels = getPinnedHistoryLabels();
   pinnedHistoryBoxes.forEach((box) => {
     const entry = getHistoryEntryByTimestamp(box.ts);
     if (!entry) return;
@@ -99,7 +90,7 @@ function syncPinnedHistoryWindows() {
       question: entry.question,
       answer: entry.answer || '',
       meta: `🕒 ${timeStr}`,
-      labels,
+      language: currentLanguage,
       bounds: {
         x: Math.round(box.x),
         y: Math.round(box.y),
@@ -512,7 +503,7 @@ function renderHistory() {
             question: entry.question,
             answer: entry.answer || '',
             meta: timeStr ? `🕒 ${timeStr}` : '…',
-            labels: getPinnedHistoryLabels(),
+            language: currentLanguage,
             bounds: { x: startWinX, y: startWinY, width: 420, height: 300 },
             dragging: true
           });

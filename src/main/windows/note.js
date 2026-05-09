@@ -1,18 +1,5 @@
 const { IPC_CHANNELS } = require('../../shared/ipc-channels');
 
-function getNotePanelLabels(lang) {
-  const L = String(lang || '').toLowerCase();
-  const table = {
-    hu: { title: '📝 Jegyzet', placeholder: 'Írj ide jegyzetet...' },
-    en: { title: '📝 Note', placeholder: 'Write a note...' },
-    de: { title: '📝 Notiz', placeholder: 'Schreibe eine Notiz...' },
-    ru: { title: '📝 Заметка', placeholder: 'Напишите заметку...' },
-    fr: { title: '📝 Note', placeholder: 'Écrivez une note...' },
-    zh: { title: '📝 便笺', placeholder: '写点笔记...' }
-  };
-  return table[L] || table.en;
-}
-
 function createNotePanelManager(deps) {
   const {
     registry,
@@ -130,8 +117,8 @@ function createNotePanelManager(deps) {
     registry.notePanelWin.loadFile('note-panel.html');
     registry.notePanelWin.webContents.on('did-finish-load', () => {
       try {
-        const labels = getNotePanelLabels(getCurrentLanguage());
-        registry.notePanelWin.webContents.send(IPC_CHANNELS.NOTE_PANEL_INIT, { ...(payload || {}), labels });
+        const language = getCurrentLanguage();
+        registry.notePanelWin.webContents.send(IPC_CHANNELS.NOTE_PANEL_INIT, { ...(payload || {}), language });
       } catch (_) {}
     });
 

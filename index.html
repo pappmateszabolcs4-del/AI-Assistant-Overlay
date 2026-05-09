@@ -897,380 +897,16 @@
       }
     </style>
     <script>
-      // Fordítások
-      const translations = {
-        hu: {
-          // Titlebar
-          minimize: 'Kicsinyítés',
-          maximize: 'Nagyítás/Visszaállítás',
-          close: 'Bezárás',
-          // Főmenü
-          appTitle: 'AI Játék Asszisztens',
-          overlayBtn: '🎮 Rátét',
-          settingsBtn: '⚙️ Beállítások',
-          welcomeText: 'Üdvözöl az AI Játék Asszisztens!<br>Válassz funkciót a fenti menüből.',
-          // Overlay
-          voiceAssistant: '🎤 Hangos AI Segéd',
-          micBtn: '🎤 Mikrofon',
-          micBtnStop: '⏹️ Leállítás',
-          recordingStarted: 'Hangrögzítés indult... (max {duration} mp)',
-          recordingComplete: 'Rögzítés kész!',
-          readyToPlay: 'Lejátszásra kész!',
-          browserNotSupported: 'A böngésző nem támogatja a hangrögzítést.',
-          recordingError: 'Hiba a hangrögzítésnél: ',
-          // Settings
-          settingsTitle: '⚙️ Beállítások',
-          generalSection: '🎯 Általános',
-          language: 'Nyelv:',          theme: 'Téma:',
-          themeDark: 'Sötét mód',
-          themeLight: 'Világos mód',          autoStart: 'Windows indításkor automatikus start',
-          hotkeysSection: '⌨️ Billentyűparancsok',
-          overlayHotkey: 'Overlay hotkey:',
-          hotkeyDescription: 'Globális hotkey - működik játék közben.',
-          audioSection: '🎤 Hang',
-          micDevice: 'Mikrofon eszköz:',
-          defaultDevice: 'Alaphelyzet',
-          recordDuration: 'Rögzítési idő (mp):',
-          speechRate: 'Beszéd hangereje:',
-          openaiSectionTitle: '🤖 OpenAI API',
-          openaiApiKeyLabel: 'API Kulcs:',
-          openaiStorageNote: '🔒 Biztonságosan tárolódik az OS-ben (Windows Credential Manager).',
-          openaiStatusLabel: 'Status:',
-          openaiStatusChecking: 'Ellenőrzés...',
-          openaiStatusConfigured: '✅ Konfigurálva',
-          openaiStatusMissing: '⚠️ Nincs beállítva',
-          openaiDeleteTitle: 'Kulcs törlése',
-          openaiDeleteConfirm: 'Biztosan törölni szeretnéd az OpenAI API kulcsot?',
-          openaiDeleteSuccess: '✅ API kulcs törölve!',
-          openaiDeleteErrorPrefix: '❌ Hiba a törlés során: ',
-          saveBtn: '💾 Mentés',
-          resetBtn: '🔄 Alaphelyzet',
-          // Alert üzenetek
-          settingsSaved: 'Beállítások mentve! ✓',
-          resetConfirm: 'Biztosan visszaállítod az alaphelyzetet?',
-          settingsReset: 'Alaphelyzet visszaállítva! ✓',
-          // Exit modal
-          exitTitle: '❓ Megerősítés',
-          exitMessage: 'Biztosan ki akarsz lépni?',
-          exitConfirm: '✓ Igen',
-          exitCancel: '✕ Mégsem',
-          alertOk: 'OK',
-          confirmYes: '✓ Igen',
-          confirmNo: '✕ Mégsem'
-        },
-        en: {
-          // Titlebar
-          minimize: 'Minimize',
-          maximize: 'Maximize/Restore',
-          close: 'Close',
-          // Főmenü
-          appTitle: 'AI Game Assistant',
-          overlayBtn: '🎮 Overlay',
-          settingsBtn: '⚙️ Settings',
-          welcomeText: 'Welcome to AI Game Assistant!<br>Choose a function from the menu above.',
-          // Overlay
-          voiceAssistant: '🎤 Voice AI Assistant',
-          micBtn: '🎤 Microphone',
-          micBtnStop: '⏹️ Stop',
-          recordingStarted: 'Recording started... (max {duration} sec)',
-          recordingComplete: 'Recording complete!',
-          readyToPlay: 'Ready to play!',
-          browserNotSupported: 'Browser does not support audio recording.',
-          recordingError: 'Recording error: ',
-          // Settings
-          settingsTitle: '⚙️ Settings',
-          generalSection: '🎯 General',
-          language: 'Language:',
-          theme: 'Theme:',
-          themeDark: 'Dark Mode',
-          themeLight: 'Light Mode',
-          autoStart: 'Auto-start with Windows',
-          hotkeysSection: '⌨️ Hotkeys',
-          overlayHotkey: 'Overlay hotkey:',
-          hotkeyDescription: 'Global hotkey - works in-game.',
-          audioSection: '🎤 Audio',
-          micDevice: 'Microphone device:',
-          defaultDevice: 'Default',
-          recordDuration: 'Recording duration (sec):',
-          speechRate: 'Speech volume:',
-          openaiSectionTitle: '🤖 OpenAI API',
-          openaiApiKeyLabel: 'API Key:',
-          openaiStorageNote: '🔒 Safely stored in the OS (Windows Credential Manager).',
-          openaiStatusLabel: 'Status:',
-          openaiStatusChecking: 'Checking...',
-          openaiStatusConfigured: '✅ Configured',
-          openaiStatusMissing: '⚠️ Not configured',
-          openaiDeleteTitle: 'Delete key',
-          openaiDeleteConfirm: 'Are you sure you want to delete the OpenAI API key?',
-          openaiDeleteSuccess: '✅ API key deleted!',
-          openaiDeleteErrorPrefix: '❌ Error while deleting: ',
-          saveBtn: '💾 Save',
-          resetBtn: '🔄 Reset to Defaults',
-          // Alert üzenetek
-          settingsSaved: 'Settings saved! ✓',
-          resetConfirm: 'Are you sure you want to reset to default settings?',
-          settingsReset: 'Default settings restored! ✓',
-          // Exit modal
-          exitTitle: '❓ Confirmation',
-          exitMessage: 'Are you sure you want to exit?',
-          exitConfirm: '✓ Yes',
-          exitCancel: '✕ Cancel',
-          alertOk: 'OK',
-          confirmYes: '✓ Yes',
-          confirmNo: '✕ Cancel'
-        },
-        de: {
-          // Titlebar
-          minimize: 'Minimieren',
-          maximize: 'Maximieren/Wiederherstellen',
-          close: 'Schließen',
-          // Főmenü
-          appTitle: 'KI-Spielassistent',
-          overlayBtn: '🎮 Überlagerung',
-          settingsBtn: '⚙️ Einstellungen',
-          welcomeText: 'Willkommen beim KI-Spielassistenten!<br>Wählen Sie eine Funktion aus dem obigen Menü.',
-          // Overlay
-          voiceAssistant: '🎙️ Sprach-KI-Assistent',
-          micBtn: '🎙️ Mikrofon',
-          micBtnStop: '⏹️ Stopp',
-          recordingStarted: 'Aufnahme gestartet... (max {duration} Sek.)',
-          recordingComplete: 'Aufnahme abgeschlossen!',
-          readyToPlay: 'Bereit zum Abspielen!',
-          browserNotSupported: 'Browser unterstützt keine Audioaufnahme.',
-          recordingError: 'Aufnahmefehler: ',
-          // Settings
-          settingsTitle: '⚙️ Einstellungen',
-          generalSection: '🎯 Allgemein',
-          language: 'Sprache:',
-          theme: 'Design:',
-          themeDark: 'Dunkler Modus',
-          themeLight: 'Heller Modus',
-          autoStart: 'Autostart mit Windows',
-          hotkeysSection: '⌨️ Tastenkombinationen',
-          overlayHotkey: 'Overlay-Hotkey:',
-          hotkeyDescription: 'Globaler Hotkey - funktioniert im Spiel.',
-          audioSection: '🎙️ Audio',
-          micDevice: 'Mikrofon:',
-          defaultDevice: 'Standard',
-          recordDuration: 'Aufnahmedauer (Sek.):',
-          speechRate: 'Sprachlautstärke:',
-          openaiSectionTitle: '🤖 OpenAI API',
-          openaiApiKeyLabel: 'API-Schlüssel:',
-          openaiStorageNote: '🔒 Sicher im Betriebssystem gespeichert (Windows Credential Manager).',
-          openaiStatusLabel: 'Status:',
-          openaiStatusChecking: 'Prüfung...',
-          openaiStatusConfigured: '✅ Konfiguriert',
-          openaiStatusMissing: '⚠️ Nicht konfiguriert',
-          openaiDeleteTitle: 'Schlüssel löschen',
-          openaiDeleteConfirm: 'Möchten Sie den OpenAI-API-Schlüssel wirklich löschen?',
-          openaiDeleteSuccess: '✅ API-Schlüssel gelöscht!',
-          openaiDeleteErrorPrefix: '❌ Fehler beim Löschen: ',
-          saveBtn: '💾 Speichern',
-          resetBtn: '🔄 Zurücksetzen',
-          // Alert üzenetek
-          settingsSaved: 'Einstellungen gespeichert! ✓',
-          resetConfirm: 'Möchten Sie wirklich die Standardeinstellungen wiederherstellen?',
-          settingsReset: 'Standardeinstellungen wiederhergestellt! ✓',
-          // Exit modal
-          exitTitle: '❓ Bestätigung',
-          exitMessage: 'Möchten Sie wirklich beenden?',
-          exitConfirm: '✓ Ja',
-          exitCancel: '✕ Abbrechen',
-          alertOk: 'OK',
-          confirmYes: '✓ Ja',
-          confirmNo: '✕ Abbrechen'
-        },
-        ru: {
-          // Titlebar
-          minimize: 'Свернуть',
-          maximize: 'Развернуть/Восстановить',
-          close: 'Закрыть',
-          // Főmenü
-          appTitle: 'ИИ Игровой Помощник',
-          overlayBtn: '🎮 Наложение',
-          settingsBtn: '⚙️ Настройки',
-          welcomeText: 'Добро пожаловать в ИИ Игровой Помощник!<br>Выберите функцию из меню выше.',
-          // Overlay
-          voiceAssistant: '🎙️ Голосовой ИИ Помощник',
-          micBtn: '🎙️ Микрофон',
-          micBtnStop: '⏹️ Стоп',
-          recordingStarted: 'Запись началась... (макс {duration} сек)',
-          recordingComplete: 'Запись завершена!',
-          readyToPlay: 'Готово к воспроизведению!',
-          browserNotSupported: 'Браузер не поддерживает запись аудио.',
-          recordingError: 'Ошибка записи: ',
-          // Settings
-          settingsTitle: '⚙️ Настройки',
-          generalSection: '🎯 Основные',
-          language: 'Язык:',
-          theme: 'Тема:',
-          themeDark: 'Тёмный режим',
-          themeLight: 'Светлый режим',
-          autoStart: 'Автозапуск с Windows',
-          hotkeysSection: '⌨️ Горячие клавиши',
-          overlayHotkey: 'Горячая клавиша наложения:',
-          hotkeyDescription: 'Глобальная горячая клавиша - работает в игре.',
-          audioSection: '🎙️ Аудио',
-          micDevice: 'Микрофон:',
-          defaultDevice: 'По умолчанию',
-          recordDuration: 'Длительность записи (сек):',
-          speechRate: 'Громкость речи:',
-          openaiSectionTitle: '🤖 OpenAI API',
-          openaiApiKeyLabel: 'API ключ:',
-          openaiStorageNote: '🔒 Безопасно хранится в ОС (Windows Credential Manager).',
-          openaiStatusLabel: 'Статус:',
-          openaiStatusChecking: 'Проверка...',
-          openaiStatusConfigured: '✅ Настроено',
-          openaiStatusMissing: '⚠️ Не настроено',
-          openaiDeleteTitle: 'Удалить ключ',
-          openaiDeleteConfirm: 'Вы уверены, что хотите удалить ключ OpenAI API?',
-          openaiDeleteSuccess: '✅ Ключ API удален!',
-          openaiDeleteErrorPrefix: '❌ Ошибка при удалении: ',
-          saveBtn: '💾 Сохранить',
-          resetBtn: '🔄 Сбросить',
-          // Alert üzenetek
-          settingsSaved: 'Настройки сохранены! ✓',
-          resetConfirm: 'Вы уверены, что хотите сбросить настройки?',
-          settingsReset: 'Настройки по умолчанию восстановлены! ✓',
-          // Exit modal
-          exitTitle: '❓ Подтверждение',
-          exitMessage: 'Вы действительно хотите выйти?',
-          exitConfirm: '✓ Да',
-          exitCancel: '✕ Отмена',
-          alertOk: 'OK',
-          confirmYes: '✓ Да',
-          confirmNo: '✕ Отмена'
-        },
-        fr: {
-          // Titlebar
-          minimize: 'Réduire',
-          maximize: 'Maximiser/Restaurer',
-          close: 'Fermer',
-          // Főmenü
-          appTitle: 'Assistant de Jeu IA',
-          overlayBtn: '🎮 Superposition',
-          settingsBtn: '⚙️ Paramètres',
-          welcomeText: 'Bienvenue dans l\'Assistant de Jeu IA!<br>Choisissez une fonction dans le menu ci-dessus.',
-          // Overlay
-          voiceAssistant: '🎙️ Assistant IA Vocal',
-          micBtn: '🎙️ Microphone',
-          micBtnStop: '⏹️ Arrêter',
-          recordingStarted: 'Enregistrement démarré... (max {duration} sec)',
-          recordingComplete: 'Enregistrement terminé!',
-          readyToPlay: 'Prêt à jouer!',
-          browserNotSupported: 'Le navigateur ne prend pas en charge l\'enregistrement audio.',
-          recordingError: 'Erreur d\'enregistrement: ',
-          // Settings
-          settingsTitle: '⚙️ Paramètres',
-          generalSection: '🎯 Général',
-          language: 'Langue:',
-          theme: 'Thème:',
-          themeDark: 'Mode Sombre',
-          themeLight: 'Mode Clair',
-          autoStart: 'Démarrage automatique avec Windows',
-          hotkeysSection: '⌨️ Raccourcis',
-          overlayHotkey: 'Raccourci de superposition:',
-          hotkeyDescription: 'Raccourci global - fonctionne en jeu.',
-          audioSection: '🎙️ Audio',
-          micDevice: 'Microphone:',
-          defaultDevice: 'Par défaut',
-          recordDuration: 'Durée d\'enregistrement (sec):',
-          speechRate: 'Volume de la parole:',
-          openaiSectionTitle: '🤖 OpenAI API',
-          openaiApiKeyLabel: 'Clé API :',
-          openaiStorageNote: '🔒 Stockée en toute sécurité dans l\'OS (Windows Credential Manager).',
-          openaiStatusLabel: 'Statut :',
-          openaiStatusChecking: 'Vérification...',
-          openaiStatusConfigured: '✅ Configuré',
-          openaiStatusMissing: '⚠️ Non configuré',
-          openaiDeleteTitle: 'Supprimer la clé',
-          openaiDeleteConfirm: 'Êtes-vous sûr de vouloir supprimer la clé API OpenAI ?',
-          openaiDeleteSuccess: '✅ Clé API supprimée !',
-          openaiDeleteErrorPrefix: '❌ Erreur lors de la suppression : ',
-          saveBtn: '💾 Enregistrer',
-          resetBtn: '🔄 Réinitialiser',
-          // Alert üzenetek
-          settingsSaved: 'Paramètres enregistrés! ✓',
-          resetConfirm: 'Êtes-vous sûr de vouloir réinitialiser les paramètres?',
-          settingsReset: 'Paramètres par défaut restaurés! ✓',
-          // Exit modal
-          exitTitle: '❓ Confirmation',
-          exitMessage: 'Voulez-vous vraiment quitter?',
-          exitConfirm: '✓ Oui',
-          exitCancel: '✕ Annuler',
-          alertOk: 'OK',
-          confirmYes: '✓ Oui',
-          confirmNo: '✕ Annuler'
-        },
-        zh: {
-          // Titlebar
-          minimize: '最小化',
-          maximize: '最大化/还原',
-          close: '关闭',
-          // Főmenü
-          appTitle: 'AI游戏助手',
-          overlayBtn: '🎮 覆盖层',
-          settingsBtn: '⚙️ 设置',
-          welcomeText: '欢迎使用AI游戏助手！<br>请从上方菜单中选择功能。',
-          // Overlay
-          voiceAssistant: '🎙️ 语音AI助手',
-          micBtn: '🎙️ 麦克风',
-          micBtnStop: '⏹️ 停止',
-          recordingStarted: '开始录音... (最长 {duration} 秒)',
-          recordingComplete: '录音完成！',
-          readyToPlay: '准备播放！',
-          browserNotSupported: '浏览器不支持音频录制。',
-          recordingError: '录音错误：',
-          // Settings
-          settingsTitle: '⚙️ 设置',
-          generalSection: '🎯 常规',
-          language: '语言：',
-          theme: '主题：',
-          themeDark: '深色模式',
-          themeLight: '浅色模式',
-          autoStart: 'Windows启动时自动运行',
-          hotkeysSection: '⌨️ 快捷键',
-          overlayHotkey: '覆盖层快捷键：',
-          hotkeyDescription: '全局快捷键 - 在游戏中工作。',
-          audioSection: '🎙️ 音频',
-          micDevice: '麦克风设备：',
-          defaultDevice: '默认',
-          recordDuration: '录音时长（秒）：',
-          speechRate: '语音音量：',
-          openaiSectionTitle: '🤖 OpenAI API',
-          openaiApiKeyLabel: 'API 密钥：',
-          openaiStorageNote: '🔒 安全存储在操作系统中（Windows Credential Manager）。',
-          openaiStatusLabel: '状态：',
-          openaiStatusChecking: '检查中...',
-          openaiStatusConfigured: '✅ 已配置',
-          openaiStatusMissing: '⚠️ 未配置',
-          openaiDeleteTitle: '删除密钥',
-          openaiDeleteConfirm: '确定要删除 OpenAI API 密钥吗？',
-          openaiDeleteSuccess: '✅ API 密钥已删除！',
-          openaiDeleteErrorPrefix: '❌ 删除时出错：',
-          saveBtn: '💾 保存',
-          resetBtn: '🔄 重置',
-          // Alert üzenetek
-          settingsSaved: '设置已保存！✓',
-          resetConfirm: '确定要重置为默认设置吗？',
-          settingsReset: '默认设置已恢复！✓',
-          // Exit modal
-          exitTitle: '❓ 确认',
-          exitMessage: '确定要退出吗？',
-          exitConfirm: '✓ 是',
-          exitCancel: '✕ 取消',
-          alertOk: 'OK',
-          confirmYes: '✓ 是',
-          confirmNo: '✕ 取消'
-        }
-      };
+      const { createRendererI18n } = require('./src/shared/i18n/renderer-i18n');
 
       let currentLang = 'en';
+      const i18n = createRendererI18n({
+        lang: currentLang,
+        onUpdate: () => applyLanguage()
+      });
 
-      // UI frissítése a kiválasztott nyelvvel
-      function updateLanguage(lang) {
-        currentLang = lang;
-        const t = translations[lang];
+      function applyLanguage() {
+        const t = i18n.t();
         
         // Titlebar
         document.getElementById('minBtn').title = t.minimize;
@@ -1332,7 +968,13 @@
         if (confirmNoBtn) confirmNoBtn.textContent = t.confirmNo;
 
         checkOpenAIStatus();
-      }      
+      }
+
+      // UI frissítése a kiválasztott nyelvvel
+      function updateLanguage(lang) {
+        currentLang = lang || 'en';
+        i18n.setLang(currentLang);
+      }
       // Theme alkalmazása
       function applyTheme(theme) {
         document.body.classList.remove('light-mode', 'gaming-mode');
@@ -1561,7 +1203,7 @@
         // Nyelv frissítése
         updateLanguage(language);
         
-        showAlert(translations[currentLang].settingsSaved);
+        showAlert(i18n.t().settingsSaved);
       }
       
       // OpenAI status ellenőrzése
@@ -1569,7 +1211,7 @@
         try {
           const status = await ipcRenderer.invoke(IPC_CHANNELS.GET_OPENAI_STATUS);
           const statusEl = document.getElementById('openaiStatusText');
-          const t = translations[currentLang] || translations.en;
+          const t = i18n.t();
           if (status.configured) {
             statusEl.textContent = t.openaiStatusConfigured;
             statusEl.style.color = '#4ade80';
@@ -1584,22 +1226,22 @@
       
       // API kulcs törlése
       document.getElementById('deleteApiKeyBtn').addEventListener('click', async () => {
-        showConfirm(translations[currentLang].openaiDeleteConfirm, async (confirmed) => {
+        showConfirm(i18n.t().openaiDeleteConfirm, async (confirmed) => {
           if (!confirmed) return;
           try {
             await ipcRenderer.invoke(IPC_CHANNELS.DELETE_OPENAI_KEY);
             document.getElementById('openaiApiKey').value = '';
             await checkOpenAIStatus();
-            showAlert(translations[currentLang].openaiDeleteSuccess);
+            showAlert(i18n.t().openaiDeleteSuccess);
           } catch (err) {
-            showAlert(translations[currentLang].openaiDeleteErrorPrefix + err.message);
+            showAlert(i18n.t().openaiDeleteErrorPrefix + err.message);
           }
         });
       });
 
       // Alapértelmezett beállítások visszaállítása
       function resetSettings() {
-        showConfirm(translations[currentLang].resetConfirm, (confirmed) => {
+        showConfirm(i18n.t().resetConfirm, (confirmed) => {
           if (confirmed) {
             // Alapértelmezett értékek beállítása a UI-ban
             document.getElementById('languageSelect').value = defaultSettings.language;
@@ -1622,7 +1264,7 @@
             // Nyelv visszaállítása
             updateLanguage(defaultSettings.language);
             
-            showAlert(translations[currentLang].settingsReset);
+            showAlert(i18n.t().settingsReset);
           }
         });
       }
@@ -1632,7 +1274,7 @@
         try {
           const devices = await navigator.mediaDevices.enumerateDevices();
           const audioInputs = devices.filter(device => device.kind === 'audioinput');
-          micSelect.innerHTML = `<option value="default">${translations[currentLang].defaultDevice}</option>`;
+          micSelect.innerHTML = `<option value="default">${i18n.t().defaultDevice}</option>`;
           audioInputs.forEach(device => {
             const option = document.createElement('option');
             option.value = device.deviceId;

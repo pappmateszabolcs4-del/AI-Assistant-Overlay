@@ -15,7 +15,8 @@ const STORAGE_KEYS = {
   NOTE_PANEL_TEXT: 'notePanelText',
   CONVERSATION_HISTORY: 'conversationHistory',
   HISTORY_POPUP_PINNED: 'historyPopupPinned',
-  HISTORY_POPUP_LAST_INDEX: 'historyPopupLastIndex'
+  HISTORY_POPUP_LAST_INDEX: 'historyPopupLastIndex',
+  UI_TEXT_OVERRIDES: 'uiTextOverrides'
 };
 
 module.exports = {

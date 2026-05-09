@@ -240,12 +240,71 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
     }
   }
 
+  async function translateUiText(payload) {
+    const { lang, entries } = payload || {};
+    if (!openai) {
+      return { success: false, error: 'openai-not-initialized' };
+    }
+    const targetLang = normalizeLanguage(lang);
+    if (targetLang === 'en') {
+      return { success: true, translations: {} };
+    }
+    const safeEntries = Array.isArray(entries)
+      ? entries
+          .map((entry) => ({
+            key: String(entry && entry.key || '').trim(),
+            text: String(entry && entry.text || '').trim()
+          }))
+          .filter((entry) => entry.key && entry.text)
+      : [];
+    if (!safeEntries.length) {
+      return { success: true, translations: {} };
+    }
+
+    try {
+      const systemPrompt =
+        'You are a translation engine for UI text. Translate the provided English strings into the target language. ' +
+        'Keep emojis, punctuation, and placeholders like {text}, {duration} unchanged. Return JSON only.';
+      const userPayload = JSON.stringify({
+        targetLanguage: targetLang,
+        entries: safeEntries
+      });
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPayload }
+        ],
+        temperature: 0.2,
+        response_format: { type: 'json_object' }
+      });
+
+      const content = completion && completion.choices && completion.choices[0]
+        ? completion.choices[0].message && completion.choices[0].message.content
+        : null;
+      if (!content) {
+        return { success: false, error: 'empty-translation-response' };
+      }
+      const parsed = JSON.parse(content);
+      const translations = parsed && parsed.translations ? parsed.translations : parsed;
+      if (!translations || typeof translations !== 'object') {
+        return { success: false, error: 'invalid-translation-response' };
+      }
+      return { success: true, translations };
+    } catch (err) {
+      console.error('[OPENAI] UI translation error:', err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
   return {
     normalizeLanguage,
     getSystemPrompt,
     initializeOpenAI,
     processText,
     processAudio,
+    translateUiText,
     setOpenAIKey,
     getOpenAIStatus,
     deleteOpenAIKey

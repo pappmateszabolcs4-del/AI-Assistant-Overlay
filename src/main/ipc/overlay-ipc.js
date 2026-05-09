@@ -21,8 +21,6 @@ function registerOverlayIpc(deps) {
     startDetachedPanelPrewarm,
     notePanel,
     openaiService,
-    getNotePanelLabels,
-    getInfoPanelLabels,
     setCurrentLanguage,
     setCurrentSpeechRate,
     isCursorInsideOverlayChildWindow,
@@ -226,14 +224,12 @@ function registerOverlayIpc(deps) {
     }
     if (registry.notePanelWin && !registry.notePanelWin.isDestroyed()) {
       try {
-        const labels = getNotePanelLabels(nextLanguage);
-        registry.notePanelWin.webContents.send(IPC_CHANNELS.NOTE_PANEL_INIT, { labels });
+        registry.notePanelWin.webContents.send(IPC_CHANNELS.NOTE_PANEL_INIT, { language: nextLanguage });
       } catch (_) {}
     }
     if (registry.infoPanelWin && !registry.infoPanelWin.isDestroyed()) {
       try {
-        const labels = getInfoPanelLabels(nextLanguage);
-        registry.infoPanelWin.webContents.send(IPC_CHANNELS.INFO_PANEL_INIT, { labels });
+        registry.infoPanelWin.webContents.send(IPC_CHANNELS.INFO_PANEL_INIT, { language: nextLanguage });
       } catch (_) {}
     }
     if (registry.detachedPanelWindows && registry.detachedPanelWindows.size) {

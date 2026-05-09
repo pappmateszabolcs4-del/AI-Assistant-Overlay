@@ -22,6 +22,10 @@ function registerOpenAiIpc(deps) {
   ipcMain.handle(IPC_CHANNELS.DELETE_OPENAI_KEY, async () => {
     return openaiService.deleteOpenAIKey();
   });
+
+  ipcMain.handle(IPC_CHANNELS.TRANSLATE_UI_TEXT, async (_event, payload) => {
+    return openaiService.translateUiText(payload);
+  });
 }
 
 module.exports = {

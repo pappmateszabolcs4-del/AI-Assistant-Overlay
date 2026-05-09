@@ -66,6 +66,7 @@ const IPC_CHANNELS = {
   SET_OPENAI_KEY: 'set-openai-key',
   GET_OPENAI_STATUS: 'get-openai-status',
   DELETE_OPENAI_KEY: 'delete-openai-key',
+  TRANSLATE_UI_TEXT: 'translate-ui-text',
   RESPONSE_HISTORY_DROP_RECTS: 'response-history-drop-rects',
   REQUEST_HISTORY_DROP_RECTS: 'request-history-drop-rects',
   RESPONSE_PANEL_DOCK_RECTS: 'response-panel-dock-rects',

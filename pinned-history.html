@@ -261,6 +261,8 @@
   <script>
     const { ipcRenderer } = require('electron');
     const { IPC_CHANNELS } = require('./src/shared/ipc-channels');
+    const { STORAGE_KEYS } = require('./src/shared/storage-keys');
+    const { createRendererI18n } = require('./src/shared/i18n/renderer-i18n');
 
     const dragHeader = document.getElementById('dragHeader');
     const titleEl = document.getElementById('title');
@@ -274,6 +276,25 @@
     const resizeRight = document.getElementById('resizeRight');
     const resizeBottom = document.getElementById('resizeBottom');
     const resizeCorner = document.getElementById('resizeCorner');
+
+    const LANG_KEY = STORAGE_KEYS.OVERLAY_LANGUAGE;
+    let currentLang = 'en';
+    const i18n = createRendererI18n({
+      lang: currentLang,
+      onUpdate: () => applyI18n()
+    });
+
+    function applyI18n() {
+      const t = i18n.t();
+      if (t.pinnedHistoryTitle) titleEl.textContent = t.pinnedHistoryTitle;
+      if (t.historyPopupQuestion) qLabelEl.textContent = t.historyPopupQuestion;
+      if (t.historyPopupAnswer) aLabelEl.textContent = t.historyPopupAnswer;
+    }
+
+    function setLanguage(nextLang) {
+      currentLang = nextLang || 'en';
+      i18n.setLang(currentLang);
+    }
 
     let pinnedTs = null;
     let dragState = null;
@@ -337,10 +358,9 @@
         syncClickThrough(true);
       }
 
-      const labels = payload.labels || {};
-      if (labels.title) titleEl.textContent = labels.title;
-      if (labels.question) qLabelEl.textContent = labels.question;
-      if (labels.answer) aLabelEl.textContent = labels.answer;
+      if (payload.language) {
+        setLanguage(payload.language);
+      }
 
       if (Object.prototype.hasOwnProperty.call(payload, 'meta')) {
         metaEl.textContent = payload.meta || '';
@@ -360,6 +380,12 @@
     ipcRenderer.on(IPC_CHANNELS.PINNED_HISTORY_UPDATE, (_event, payload) => {
       applyPayload(payload);
     });
+
+    try {
+      const storedLang = localStorage.getItem(LANG_KEY);
+      if (storedLang) setLanguage(storedLang);
+    } catch (_) {}
+    applyI18n();
 
     function pointerToScreen(ev) {
       // window.screenX/screenY represent top-left of this BrowserWindow.

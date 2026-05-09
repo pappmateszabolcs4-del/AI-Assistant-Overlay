@@ -5,9 +5,10 @@ ipcRenderer.on(IPC_CHANNELS.CLEANUP_OVERLAY, () => {
 });
 
 ipcRenderer.on(IPC_CHANNELS.SET_LANGUAGE, (event, lang) => {
-  currentLanguage = lang || 'en';
+  const nextLang = lang || 'en';
+  setLanguage(nextLang);
   try {
-    localStorage.setItem(STORAGE_KEYS.OVERLAY_LANGUAGE, currentLanguage);
+    localStorage.setItem(STORAGE_KEYS.OVERLAY_LANGUAGE, nextLang);
   } catch (_) {}
   updateOverlayText();
   refreshVoices();

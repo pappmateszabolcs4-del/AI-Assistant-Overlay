@@ -6,6 +6,24 @@
 
 ---
 
+## [1.0.18] - 2026-05-09 (Unified UI i18n + Runtime Fallback)
+
+### ✅ Added
+
+- Shared UI text registry with renderer-side i18n helper and runtime translation fallback.
+
+### 🔧 Changed
+
+- Overlay, main window, note/info, and pinned history now read from the shared UI registry.
+- Language updates broadcast to aux windows as language only (no label bundles).
+- Removed the legacy main-process UI label service.
+
+### 🧾 Notes
+
+- Tests: `npm run check`.
+
+---
+
 ## [1.0.16] - 2026-05-08 (Registry State Centralization)
 
 ### 🔧 Changed

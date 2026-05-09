@@ -1193,6 +1193,44 @@ Add "real" prefix to forbidden terms to preserve gaming vocabulary.
 
 ---
 
+### 2026-05-09 (Night)
+
+#### Summary
+- What changed: Unified UI translations across overlay, main window, note/info, and pinned history; added runtime translation fallback for missing keys.
+- Why: Remove drift between windows and ensure new UI strings are always translatable.
+- Impact: One shared registry powers all UI text, with auto-fill for missing translations via OpenAI.
+
+#### Details
+- Added a shared UI registry + renderer helper with OpenAI translation fallback and local override cache.
+- Migrated overlay, main settings, note/info, and pinned history to the shared bundle.
+- Removed the legacy main-process UI label service and switched IPC payloads to language-only.
+
+#### Files touched
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+- [src/shared/i18n/renderer-i18n.js](src/shared/i18n/renderer-i18n.js)
+- [index.html](index.html)
+- [overlay.html](overlay.html)
+- [src/renderer/overlay/translations.js](src/renderer/overlay/translations.js)
+- [src/renderer/overlay/history.js](src/renderer/overlay/history.js)
+- [note-panel.html](note-panel.html)
+- [info-panel.html](info-panel.html)
+- [pinned-history.html](pinned-history.html)
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [src/main/ipc/openai-ipc.js](src/main/ipc/openai-ipc.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/main/index.js](src/main/index.js)
+
+#### Backups
+- Not created (work continued without new backup request)
+
+#### Verification
+- npm run check
+
+#### Follow-ups
+- Consider splitting UI registry by domain (overlay, detached, pinned, note/info).
+
+---
+
 #### Issue 13: Game Context Detection (Feb 5, 2026 Evening)
 **Feature**: Auto-detect what game the user is playing and hyper-focus AI responses
 

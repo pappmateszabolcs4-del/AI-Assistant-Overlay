@@ -93,6 +93,11 @@ This audit was conducted on Feb 5. The following notable improvements were added
 ### Error Messaging
 - Renderer now maps common IPC error codes into friendly, localized status messages.
 
+### Unified UI Translation Sources
+- All UI windows now consume a shared translation registry (overlay, main window, note/info, pinned history).
+- Renderer-side i18n helper adds runtime translation fallback for missing keys.
+- Legacy main-process UI label service removed; IPC payloads now send language only.
+
 ---
 
 ## 📋 AUDIT METHODOLOGY
