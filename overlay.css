@@ -258,6 +258,28 @@
       display: none;
     }
 
+    .tts-volume {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .tts-volume-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #c9d4ea;
+      font-size: 0.85em;
+    }
+
+    .tts-volume-value {
+      min-width: 32px;
+      text-align: right;
+      color: #f5f7fa;
+      font-weight: 600;
+    }
+
     .block-item.block-dragging {
       opacity: 0.7;
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);

@@ -29,6 +29,9 @@ ipcRenderer.on(IPC_CHANNELS.SET_LANGUAGE, (event, lang) => {
 
 ipcRenderer.on(IPC_CHANNELS.SET_SPEECH_RATE, (event, rate) => {
   currentSpeechRate = rate || 100;
+  if (typeof setSpeechRateUI === 'function') {
+    setSpeechRateUI(currentSpeechRate);
+  }
 });
 
 // Játék kontextus fogadása

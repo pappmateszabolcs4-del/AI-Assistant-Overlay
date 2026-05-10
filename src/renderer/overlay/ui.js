@@ -1034,6 +1034,8 @@ function updateOverlayText() {
   if (specDetail) specDetail.textContent = t().specializationDetail || specDetail.textContent;
   const ttsLabel = document.getElementById('ttsLabel');
   if (ttsLabel) ttsLabel.textContent = t().ttsLabel || ttsLabel.textContent;
+  const speechRateLabel = document.getElementById('speechRateLabel');
+  if (speechRateLabel) speechRateLabel.textContent = t().speechRate || speechRateLabel.textContent;
   const dataLabel = document.getElementById('dataLabel');
   if (dataLabel) dataLabel.textContent = t().dataLabel || dataLabel.textContent;
   const exportHistoryBtn = document.getElementById('exportHistoryBtn');
@@ -1066,6 +1068,53 @@ function updateOverlayText() {
   renderHistory(); // Re-render history with new language
   updatePinnedUI();
   syncPinnedHistoryWindows();
+}
+
+function readSpeechRateSetting() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.APP_SETTINGS);
+    if (!raw) return 100;
+    const parsed = JSON.parse(raw);
+    const rate = Number(parsed && parsed.speechRate);
+    if (!Number.isFinite(rate)) return 100;
+    return Math.max(0, Math.min(100, Math.round(rate)));
+  } catch (_) {
+    return 100;
+  }
+}
+
+function writeSpeechRateSetting(rate) {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.APP_SETTINGS);
+    const parsed = raw ? JSON.parse(raw) : {};
+    const next = parsed && typeof parsed === 'object' ? parsed : {};
+    next.speechRate = Math.max(0, Math.min(100, Math.round(rate)));
+    localStorage.setItem(STORAGE_KEYS.APP_SETTINGS, JSON.stringify(next));
+  } catch (_) {}
+}
+
+function setSpeechRateUI(nextRate) {
+  const speechRateInput = document.getElementById('speechRate');
+  const speechRateValue = document.getElementById('speechRateValue');
+  const normalized = Math.max(0, Math.min(100, Math.round(Number(nextRate) || 0)));
+  if (speechRateInput) speechRateInput.value = String(normalized);
+  if (speechRateValue) speechRateValue.textContent = String(normalized);
+}
+
+window.setSpeechRateUI = setSpeechRateUI;
+
+const speechRateInput = document.getElementById('speechRate');
+if (speechRateInput) {
+  const initialRate = readSpeechRateSetting();
+  currentSpeechRate = initialRate;
+  setSpeechRateUI(initialRate);
+  speechRateInput.addEventListener('input', () => {
+    const next = Math.max(0, Math.min(100, Math.round(Number(speechRateInput.value) || 0)));
+    currentSpeechRate = next;
+    setSpeechRateUI(next);
+    writeSpeechRateSetting(next);
+    fireAndForget(IPC_CHANNELS.SET_SPEECH_RATE, next);
+  });
 }
 
 async function askQuestion() {

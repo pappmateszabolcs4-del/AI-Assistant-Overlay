@@ -104,7 +104,7 @@
             <div class="setting-item">
               <label for="speechRate">Beszéd hangereje:</label>
               <div class="range-container">
-                <input type="range" id="speechRate" value="100" min="0" max="200">
+                <input type="range" id="speechRate" value="100" min="0" max="100">
                 <span id="speechRateValue" style="min-width: 35px; text-align: center; font-weight: bold;">100</span>
               </div>
             </div>
@@ -1097,7 +1097,7 @@
         recordDurationValue.textContent = recordDurationSlider.value;
       });
       
-      // Speech rate slider dinamikus érték frissítés
+      // Speech volume slider dinamikus érték frissítés
       speechRateSlider.addEventListener('input', () => {
         speechRateValue.textContent = speechRateSlider.value;
         fireAndForget(IPC_CHANNELS.SET_SPEECH_RATE, parseInt(speechRateSlider.value));
@@ -1140,9 +1140,11 @@
         document.getElementById('recordDuration').value = settings.recordDuration || 10;
         document.getElementById('recordDurationValue').textContent = settings.recordDuration || 10;
         
-        document.getElementById('speechRate').value = settings.speechRate || 100;
-        document.getElementById('speechRateValue').textContent = settings.speechRate || 100;
-        fireAndForget(IPC_CHANNELS.SET_SPEECH_RATE, parseInt(document.getElementById('speechRate').value));
+        const rawSpeechRate = Number(settings.speechRate);
+        const safeSpeechRate = Number.isFinite(rawSpeechRate) ? Math.max(0, Math.min(100, Math.round(rawSpeechRate))) : 100;
+        document.getElementById('speechRate').value = safeSpeechRate;
+        document.getElementById('speechRateValue').textContent = safeSpeechRate;
+        fireAndForget(IPC_CHANNELS.SET_SPEECH_RATE, safeSpeechRate);
         
         // Mikrofon eszköz kiválasztása ha van elmentve
         if (settings.micDeviceId) {
@@ -1171,7 +1173,7 @@
           theme: theme,
           autoStart: autoStartChecked,
           recordDuration: parseInt(document.getElementById('recordDuration').value),
-          speechRate: parseInt(document.getElementById('speechRate').value),
+          speechRate: Math.max(0, Math.min(100, parseInt(document.getElementById('speechRate').value))),
           micDeviceId: micDeviceId,
           hotkey: hotkey
         };

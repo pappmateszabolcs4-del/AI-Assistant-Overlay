@@ -112,6 +112,13 @@
                 <input type="checkbox" id="enableTTS" checked style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
                 <span id="askTtsLabel">AI válasz felolvasása</span>
               </label>
+              <div class="tts-volume">
+                <div class="tts-volume-label">
+                  <span id="speechRateLabel">🔊 Beszéd hangereje:</span>
+                  <span id="speechRateValue" class="tts-volume-value">100</span>
+                </div>
+                <input type="range" id="speechRate" value="100" min="0" max="100" onclick="event.stopPropagation()">
+              </div>
             </div>
 
             <div class="specialization-container block-item" id="block-data" data-block-id="data" data-block-home="settings" data-block-title-key="dataLabel" style="margin-top: 12px;">

@@ -210,6 +210,7 @@ function registerOverlayIpc(deps) {
     // guard can't remain stuck (which would ignore future x/y moves).
     overlay.overlayDetachGuardActive = false;
     detached.detachedWindowsDesiredVisible = false;
+      try { core.overlayWin.webContents.send(IPC_CHANNELS.SET_SPEECH_RATE, registry.game.currentSpeechRate); } catch (_) {}
     if (core.overlayWin && !core.overlayWin.isDestroyed()) {
       setOverlayVirtualVisible(false);
     }
@@ -272,7 +273,7 @@ function registerOverlayIpc(deps) {
   });
 
   ipcMain.handle(IPC_CHANNELS.SET_SPEECH_RATE, async (_event, rate) => {
-    const nextRate = Math.max(0, Math.min(200, rate));
+    const nextRate = Math.max(0, Math.min(100, rate));
     setCurrentSpeechRate(nextRate);
     if (core.overlayWin && !core.overlayWin.isDestroyed()) {
       core.overlayWin.webContents.send(IPC_CHANNELS.SET_SPEECH_RATE, nextRate);
