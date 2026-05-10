@@ -3,6 +3,7 @@ const { IPC_CHANNELS } = require('../../shared/ipc-channels');
 const { registerOverlayIpc } = require('./overlay-ipc');
 const { registerDetachedIpc } = require('./detached-ipc');
 const { registerPinnedIpc } = require('./pinned-ipc');
+const { registerBlockIpc } = require('./blocks-ipc');
 const { registerNoteIpc } = require('./note-ipc');
 const { registerInfoIpc } = require('./info-ipc');
 const { registerOpenAiIpc } = require('./openai-ipc');
@@ -23,6 +24,7 @@ function createIpcRegistrar(deps) {
     showOverlayAndRaise,
     setOverlayVirtualVisible,
     setPinnedHistoryWindowsVisible,
+    setBlockWindowsVisible,
     setDetachedPanelWindowsVisible,
     reconcileDetachedPanelWindowsVisibility,
     startDetachedSelfHealPulse,
@@ -34,8 +36,12 @@ function createIpcRegistrar(deps) {
     normalizePanelId,
     deactivateDetachedPanelWindow,
     createPinnedHistoryWindow,
+    createBlockWindow,
+    closeBlockWindow,
+    updateBlockWindowBounds,
     closeAllDetachedPanelWindows,
     closeAllPinnedHistoryWindows,
+    closeAllBlockWindows,
     openaiService,
     setCurrentLanguage,
     getCurrentLanguage,
@@ -59,6 +65,10 @@ function createIpcRegistrar(deps) {
       if (core.overlayWin && !core.overlayWin.isDestroyed()) sources.push(core.overlayWin);
       const detachedHistory = detached.detachedPanelWindows && detached.detachedPanelWindows.get && detached.detachedPanelWindows.get('history');
       if (detachedHistory && !detachedHistory.isDestroyed()) sources.push(detachedHistory);
+      const blockHistory = registry.blocks && registry.blocks.detachedBlockWindows && registry.blocks.detachedBlockWindows.get
+        ? registry.blocks.detachedBlockWindows.get('history-list')
+        : null;
+      if (blockHistory && !blockHistory.isDestroyed()) sources.push(blockHistory);
 
       if (sources.length === 0) return resolve([]);
 
@@ -98,6 +108,35 @@ function createIpcRegistrar(deps) {
       timer = setTimeout(() => {
         cleanup();
         resolve(aggregated);
+      }, timeoutMs);
+    });
+  }
+
+  function requestBlockDropRects(timeoutMs = 250) {
+    return new Promise((resolve) => {
+      if (!core.overlayWin || core.overlayWin.isDestroyed()) return resolve([]);
+      const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      let timer = null;
+
+      const cleanup = () => {
+        if (timer) clearTimeout(timer);
+        timer = null;
+        ipcMain.removeListener(IPC_CHANNELS.RESPONSE_BLOCK_DROP_RECTS, onResponse);
+      };
+
+      const onResponse = (_event, id, rects) => {
+        if (id !== requestId) return;
+        cleanup();
+        if (Array.isArray(rects)) return resolve(rects);
+        return resolve([]);
+      };
+
+      ipcMain.on(IPC_CHANNELS.RESPONSE_BLOCK_DROP_RECTS, onResponse);
+      try { core.overlayWin.webContents.send(IPC_CHANNELS.REQUEST_BLOCK_DROP_RECTS, requestId); } catch (_) {}
+
+      timer = setTimeout(() => {
+        cleanup();
+        resolve([]);
       }, timeoutMs);
     });
   }
@@ -180,6 +219,25 @@ function createIpcRegistrar(deps) {
     return null;
   }
 
+  async function getBlockDropTargetPanelIdAtScreenPoint(screenPoint) {
+    if (!screenPoint || !Number.isFinite(screenPoint.x) || !Number.isFinite(screenPoint.y)) return null;
+    const rects = await requestBlockDropRects();
+    let bestPid = null;
+    let bestArea = Infinity;
+    for (const r of rects) {
+      if (!r || typeof r.left !== 'number' || typeof r.right !== 'number' || typeof r.top !== 'number' || typeof r.bottom !== 'number') {
+        continue;
+      }
+      if (!pointInRect(screenPoint, r)) continue;
+      const area = Math.max(0, r.right - r.left) * Math.max(0, r.bottom - r.top);
+      if (area < bestArea) {
+        bestArea = area;
+        bestPid = r.panelId || null;
+      }
+    }
+    return bestPid;
+  }
+
   async function shouldUnpinAtScreenPoint(screenPoint) {
     const rects = await requestHistoryDropRects();
     for (const r of rects) {
@@ -209,6 +267,7 @@ function createIpcRegistrar(deps) {
       showOverlayAndRaise,
       setOverlayVirtualVisible,
       setPinnedHistoryWindowsVisible,
+      setBlockWindowsVisible,
       setDetachedPanelWindowsVisible,
       reconcileDetachedPanelWindowsVisibility,
       startDetachedSelfHealPulse,
@@ -248,6 +307,16 @@ function createIpcRegistrar(deps) {
       createPinnedHistoryWindow,
       closeAllPinnedHistoryWindows,
       shouldUnpinAtScreenPoint
+    });
+
+    registerBlockIpc({
+      ipcMain,
+      registry,
+      clampWindowToWorkArea,
+      createBlockWindow,
+      closeBlockWindow,
+      updateBlockWindowBounds,
+      getBlockDropTargetPanelIdAtScreenPoint
     });
 
     registerNoteIpc({

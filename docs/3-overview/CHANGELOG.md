@@ -6,6 +6,28 @@
 
 ---
 
+## [1.0.22] - 2026-05-10 (Block Layout + Widget Cleanup)
+
+### ✅ Added
+
+- Block-based layout with movable blocks and detachable block windows.
+
+### 🔧 Changed
+
+- Block layout persistence (order + location) is now the primary layout system.
+- Free-layout mode stored under a block-specific key with legacy migration.
+- Removed the legacy widget manager system and widget window IPC.
+
+### 🐛 Fixed
+
+- Block windows now inherit language and pinned history state consistently.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+---
+
 ## [1.0.21] - 2026-05-09 (Basic Unit Tests)
 
 ### ✅ Added

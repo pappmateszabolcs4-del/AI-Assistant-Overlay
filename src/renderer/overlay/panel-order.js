@@ -80,7 +80,7 @@ function swapPanelOrder(fromPanelId, toPanelId) {
 }
 
 function initPanelOrderPersistence() {
-  if (__isDetachedPanelWindow) return;
+  if (__isDetachedPanelWindow || (typeof __isBlockWindow !== 'undefined' && __isBlockWindow)) return;
   panelOrder = loadPanelOrder();
   applyPanelOrder(panelOrder);
   savePanelOrder(panelOrder);

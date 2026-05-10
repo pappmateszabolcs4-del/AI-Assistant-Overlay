@@ -9,15 +9,17 @@ function createOverlayManager(deps) {
     notePanel,
     bringDetachedPanelWindowsToFront,
     bringPinnedHistoryWindowsToFront,
+    bringBlockWindowsToFront,
     closeAllPinnedHistoryWindows,
     closeAllDetachedPanelWindows,
+    closeAllBlockWindows,
     startDetachedSelfHealPulse,
     reconcileDetachedPanelWindowsVisibility,
     sendDetachedPanelsStateToOverlay,
     getCurrentLanguage
   } = deps;
 
-  const { core, overlay, detached, pinned, note, info } = registry;
+  const { core, overlay, detached, pinned, blocks, note, info } = registry;
 
   const OVERLAY_TOPMOST_PULSE_MS = 900;
 
@@ -109,6 +111,7 @@ function createOverlayManager(deps) {
     try { notePanel.bringNotePanelToFront(); } catch (_) {}
     try { bringDetachedPanelWindowsToFront(); } catch (_) {}
     try { bringPinnedHistoryWindowsToFront(); } catch (_) {}
+    try { bringBlockWindowsToFront(); } catch (_) {}
   }
 
   function isCursorInsideOverlayChildWindow() {
@@ -138,6 +141,15 @@ function createOverlayManager(deps) {
 
     try {
       for (const w of pinned.pinnedHistoryWindows.values()) {
+        if (!isWindowActivelyVisible(w)) continue;
+        try {
+          if (pointInBounds(pt, w.getBounds())) return true;
+        } catch (_) {}
+      }
+    } catch (_) {}
+
+    try {
+      for (const w of blocks.detachedBlockWindows.values()) {
         if (!isWindowActivelyVisible(w)) continue;
         try {
           if (pointInBounds(pt, w.getBounds())) return true;

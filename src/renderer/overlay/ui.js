@@ -220,7 +220,7 @@ function getPopupMaxHeightPx() {
 }
 
 function syncClickThrough(allowThrough) {
-  if (__isDetachedPanelWindow) return;
+  if (__isDetachedPanelWindow || (typeof __isBlockWindow !== 'undefined' && __isBlockWindow)) return;
   // After an interaction (resize/drag), keep the window interactive briefly.
   // This prevents a common failure mode where pointerup happens outside the window
   // (due to pointer capture), we immediately go click-through, and the next click
@@ -239,6 +239,8 @@ function holdInteractive(ms = 600) {
   overlayHovered = true;
   syncClickThrough(false);
 }
+
+window.__holdInteractive = holdInteractive;
 
 function pushForceInteractive() {
   forceInteractiveCount += 1;
@@ -261,6 +263,9 @@ function popForceInteractive() {
     syncClickThrough(!overlayHovered);
   }, 0);
 }
+
+window.__pushForceInteractive = pushForceInteractive;
+window.__popForceInteractive = popForceInteractive;
 
 function isInteractiveTarget(target) {
   if (!target) return false;
@@ -299,6 +304,64 @@ function isInteractiveTarget(target) {
   if (confirmModal && confirmModal.contains(hit)) return true;
   return false;
 }
+
+// Keep overlay interactive while native selects are open.
+on(document, 'focusin', (event) => {
+  const el = event && event.target;
+  if (el && (el.tagName === 'SELECT' || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+    pushForceInteractive();
+  }
+}, true);
+
+on(document, 'focusout', (event) => {
+  const el = event && event.target;
+  if (el && (el.tagName === 'SELECT' || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+    setTimeout(() => {
+      popForceInteractive();
+    }, 0);
+  }
+}, true);
+
+let selectHoldActive = false;
+let selectHoldTimer = null;
+
+function releaseSelectHold() {
+  if (!selectHoldActive) return;
+  selectHoldActive = false;
+  if (selectHoldTimer) {
+    clearTimeout(selectHoldTimer);
+    selectHoldTimer = null;
+  }
+  popForceInteractive();
+}
+
+on(document, 'pointerdown', (event) => {
+  const el = event && event.target;
+  if (el && el.tagName === 'SELECT') {
+    if (!selectHoldActive) {
+      selectHoldActive = true;
+      pushForceInteractive();
+    }
+    if (selectHoldTimer) clearTimeout(selectHoldTimer);
+    selectHoldTimer = setTimeout(() => {
+      releaseSelectHold();
+    }, 2000);
+  }
+}, true);
+
+on(document, 'pointerup', (event) => {
+  const el = event && event.target;
+  if (el && el.tagName === 'SELECT') {
+    releaseSelectHold();
+  }
+}, true);
+
+on(document, 'pointercancel', (event) => {
+  const el = event && event.target;
+  if (el && el.tagName === 'SELECT') {
+    releaseSelectHold();
+  }
+}, true);
 
 function evaluateHoverFromPoint(clientX, clientY) {
   if (forceInteractiveCount > 0) return;
@@ -991,6 +1054,10 @@ function updateOverlayText() {
   if (versionLabel) versionLabel.textContent = t().versionLabel || versionLabel.textContent;
   const layoutLabel = document.getElementById('layoutLabel');
   if (layoutLabel) layoutLabel.textContent = t().layoutLabel || '🧩 Layout mode:';
+  const notePanelLabel = document.getElementById('notePanelLabel');
+  if (notePanelLabel) notePanelLabel.textContent = t().notePanelBtn || notePanelLabel.textContent;
+  const compositionModeLabel = document.getElementById('compositionModeLabel');
+  if (compositionModeLabel) compositionModeLabel.textContent = t().compositionModeLabel || compositionModeLabel.textContent;
   document.getElementById('resetLayoutBtn').textContent = t().resetLayout;
   const notePanelBtn = document.getElementById('notePanelBtn');
   if (notePanelBtn) notePanelBtn.textContent = t().notePanelBtn || '📝 Note panel';

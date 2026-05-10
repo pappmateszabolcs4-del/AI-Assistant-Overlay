@@ -16,7 +16,9 @@ const STORAGE_KEYS = {
   CONVERSATION_HISTORY: 'conversationHistory',
   HISTORY_POPUP_PINNED: 'historyPopupPinned',
   HISTORY_POPUP_LAST_INDEX: 'historyPopupLastIndex',
-  UI_TEXT_OVERRIDES: 'uiTextOverrides'
+  UI_TEXT_OVERRIDES: 'uiTextOverrides',
+  BLOCK_LAYOUTS: 'overlayBlockLayouts',
+  BLOCK_FREE_LAYOUT: 'overlayBlockFreeLayout'
 };
 
 module.exports = {

@@ -110,6 +110,18 @@ This audit was conducted on Feb 5. The following notable improvements were added
 
 ---
 
+## May 10, 2026 Addendum (Delta Since Audit)
+
+### Block Layout System
+- Overlay content is now organized into movable blocks that can be detached into block windows.
+- Block windows support drag, resize, and dock-back with drop previews.
+
+### Cleanup: Legacy Widgets
+- Removed the widget manager system and widget window IPC in favor of blocks.
+- Free-layout state now persists under block-specific keys with legacy migration.
+
+---
+
 ## 📋 AUDIT METHODOLOGY
 
 This comprehensive audit examined:

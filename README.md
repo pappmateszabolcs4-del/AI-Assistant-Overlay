@@ -1,19 +1,29 @@
 # AI Assistant Overlay
 
-Electron-based desktop overlay assistant for video games.  
-It detects the active game window on Windows, provides in-game help, and supports text, voice (Whisper STT), and image-based analysis (Vision).
+Electron-based desktop overlay assistant for video games. It detects the active game window on Windows, provides in-game help, and supports text, voice (Whisper STT), and image-based analysis (Vision).
 
 ## ✨ Features
 
-- **Game overlay UI** (non-intrusive, game-friendly)
-- **Real-time game detection** (Windows + PowerShell)
-- **OpenAI text assistant** for game-specific guidance
-- **Vision analysis** for game screenshots
-- **Whisper speech-to-text** for voice input
-- **Collapsible panels** and compact layout
-- **Conversation history** (localStorage, persisted)
-- **Multi-language UI**: `hu`, `en`, `de`, `ru`, `fr`, `zh`
-- **Hotkey support**: `Ctrl + Shift + K`
+- **Game overlay UI** designed for non-intrusive use during gameplay.
+- **Real-time game detection** via PowerShell window/title inspection.
+- **OpenAI text assistant** for game-specific guidance.
+- **Vision analysis** for screenshots.
+- **Whisper speech-to-text** for voice input.
+- **Block-based layout**: move blocks between panels and detach them into block windows.
+- **Conversation history** stored in localStorage.
+- **Multi-language UI**: `hu`, `en`, `de`, `ru`, `fr`, `zh`.
+- **Hotkey support**: `Ctrl + Shift + K`.
+
+---
+
+## ⚙️ How It Works
+
+1) Detects the active game window title on Windows.
+2) Uses that context to tailor prompts and responses.
+3) Captures text, voice, or screenshots from the overlay UI.
+4) Sends requests to OpenAI (chat, Whisper STT, Vision).
+5) Renders results inside movable blocks or detached block windows.
+6) Persists layout, history, and settings locally.
 
 ---
 
@@ -22,7 +32,7 @@ It detects the active game window on Windows, provides in-game help, and support
 - **Electron** (main + renderer processes)
 - **Node.js**
 - **OpenAI API** (`chat`, `vision`, `whisper-1`)
-- **PowerShell scripts** for active window/game context detection
+- **PowerShell** for active window/game context detection
 - **Keytar** for secure API key storage
 
 ---
@@ -68,16 +78,7 @@ npm install
 
 ### 3) Configure OpenAI API key
 
-Use either:
-
-- **Settings panel in app** (recommended; stored via keytar), or
-- `.env` in project root:
-
-```env
-OPENAI_API_KEY=your_api_key_here
-```
-
-> Do not commit real secrets.
+Set the key in the **Settings panel** inside the app (stored via keytar).
 
 ### 4) Run
 
@@ -90,6 +91,7 @@ npm start
 ## 🛠️ NPM Scripts
 
 - `npm start` – start Electron app
+- `npm test` – run Node test runner
 - `npm run check` – project checks (patterns, IPC, translations, etc.)
 - `npm run cleanup` – maintenance report (does not delete backups)
 - `npm run make-backup` – create timestamped backup
@@ -98,15 +100,14 @@ npm start
 
 ## 🔒 Safety / Scope
 
-This assistant is designed for **video game-related help only**.  
-The prompt policy enforces refusal for non-gaming and unsafe topics.
+This assistant is designed for **video game-related help only**. The prompt policy enforces refusal for non-gaming and unsafe topics.
 
 ---
 
 ## 🧪 Notes
 
 - Build outputs in `out/` should be ignored in GitHub commits.
-- Backups are preserved intentionally (`backups/`), deletion is manual.
+- Backups are preserved intentionally (`backups/`); deletion is manual.
 - If game detection fails, the assistant still works with generic game guidance.
 
 ---

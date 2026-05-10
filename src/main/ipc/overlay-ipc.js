@@ -15,6 +15,7 @@ function registerOverlayIpc(deps) {
     showOverlayAndRaise,
     setOverlayVirtualVisible,
     setPinnedHistoryWindowsVisible,
+    setBlockWindowsVisible,
     setDetachedPanelWindowsVisible,
     reconcileDetachedPanelWindowsVisibility,
     startDetachedSelfHealPulse,
@@ -189,6 +190,7 @@ function registerOverlayIpc(deps) {
       }
     }
     setPinnedHistoryWindowsVisible(true);
+    setBlockWindowsVisible(true);
     setDetachedPanelWindowsVisible(true);
     reconcileDetachedPanelWindowsVisibility('open-overlay');
     try { startDetachedSelfHealPulse(2000, 250); } catch (_) {}
@@ -212,6 +214,7 @@ function registerOverlayIpc(deps) {
       setOverlayVirtualVisible(false);
     }
     setPinnedHistoryWindowsVisible(false);
+    setBlockWindowsVisible(false);
     setDetachedPanelWindowsVisible(false);
     reconcileDetachedPanelWindowsVisibility('close-overlay');
     notePanel.setNotePanelVisible(false);

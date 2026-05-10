@@ -1332,6 +1332,49 @@ Add "real" prefix to forbidden terms to preserve gaming vocabulary.
 
 ---
 
+### 2026-05-10 (Evening)
+
+#### Summary
+- What changed: Removed the legacy widget manager system, consolidated layout state under blocks, and refreshed docs to reflect the block-based UI.
+- Why: Widgets were superseded by movable blocks + block windows, and the remaining code paths caused maintenance overhead.
+- Impact: Cleaner IPC/state wiring, fewer unused files, and documentation aligned with the current block layout.
+
+#### Details
+- Dropped widget IPC channels, window managers, and renderer helpers.
+- Added legacy free-layout migration to the block layout key.
+- Removed widget-specific CSS and i18n strings.
+- Updated overview/changelog/audit docs to reflect block layout and cleanup.
+
+#### Files touched
+- [src/main/index.js](src/main/index.js)
+- [src/main/windows/overlay.js](src/main/windows/overlay.js)
+- [src/main/windows/main-window.js](src/main/windows/main-window.js)
+- [src/main/app/hotkeys.js](src/main/app/hotkeys.js)
+- [src/main/app/lifecycle.js](src/main/app/lifecycle.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/main/ipc/register.js](src/main/ipc/register.js)
+- [src/shared/ipc-channels.js](src/shared/ipc-channels.js)
+- [src/shared/storage-keys.js](src/shared/storage-keys.js)
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+- [src/renderer/overlay/blocks.js](src/renderer/overlay/blocks.js)
+- [src/renderer/overlay/blocks-window.js](src/renderer/overlay/blocks-window.js)
+- [overlay.css](overlay.css)
+- [README.md](README.md)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/AUDIT_REPORT.md](docs/2-technical/AUDIT_REPORT.md)
+
+#### Backups
+- Not created (targeted edits only)
+
+#### Verification
+- Tests not run (not requested)
+
+#### Follow-ups
+- Consider running `npm run check` before release.
+
+---
+
 #### Issue 13: Game Context Detection (Feb 5, 2026 Evening)
 **Feature**: Auto-detect what game the user is playing and hyper-focus AI responses
 

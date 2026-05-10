@@ -144,6 +144,7 @@ ipcRenderer.on(IPC_CHANNELS.PINNED_HISTORY_UNPINNED, (_event, payload) => {
   if (!ts) return;
   pinnedHistoryBoxes = pinnedHistoryBoxes.filter((b) => b.ts !== ts);
   savePinnedHistoryBoxes();
+  renderHistory();
 });
 
 ipcRenderer.on(IPC_CHANNELS.REQUEST_HISTORY_DROP_RECTS, (_event, requestId) => {
@@ -160,6 +161,14 @@ ipcRenderer.on(IPC_CHANNELS.REQUEST_HISTORY_DROP_RECTS, (_event, requestId) => {
   if (historyPopup) {
     const r = historyPopup.getBoundingClientRect();
     rects.push({ left: offX + r.left, top: offY + r.top, right: offX + r.right, bottom: offY + r.bottom });
+  }
+
+  if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow) {
+    const list = document.getElementById('historyList');
+    if (list) {
+      const r = list.getBoundingClientRect();
+      rects.push({ left: offX + r.left, top: offY + r.top, right: offX + r.right, bottom: offY + r.bottom });
+    }
   }
   ipcRenderer.send(IPC_CHANNELS.RESPONSE_HISTORY_DROP_RECTS, requestId, rects);
 });
@@ -198,12 +207,15 @@ function loadPinnedTabs() {
 // Always start clean (unpinned) and close any pinned windows left open during reload.
 // IMPORTANT: only the MAIN overlay window should do this.
 // Detached panel windows also load overlay.html, and must NOT clear global pinned state.
-if (!__isDetachedPanelWindow) {
+const isBlockWindow = (typeof __isBlockWindow !== 'undefined' && __isBlockWindow);
+if (!__isDetachedPanelWindow && !isBlockWindow) {
   pinnedHistoryBoxes = [];
   try { localStorage.removeItem(PINNED_HISTORY_KEY); } catch (_) {}
   if (typeof fireAndForget === 'function') {
     fireAndForget(IPC_CHANNELS.PINNED_HISTORY_CLOSE_ALL);
   }
+} else {
+  loadPinnedHistoryBoxes();
 }
 
 // Save pinned tabs to localStorage
@@ -363,6 +375,9 @@ function renderHistory() {
   }
 
   conversationHistory.forEach((entry, index) => {
+    if (pinnedHistoryBoxes.some((b) => b.ts === entry.timestamp)) {
+      return;
+    }
     const date = new Date(entry.timestamp);
     const timeStr = date.toLocaleString(currentLanguage === 'hu' ? 'hu-HU' : 'en-US', {
       month: 'short',
@@ -534,6 +549,7 @@ function renderHistory() {
       // If we pinned during drag, it's already created and positioned.
       if (pullState.pinned) {
         fireAndForget(IPC_CHANNELS.PINNED_HISTORY_END_DRAG, pullState.ts);
+        renderHistory();
       }
       try { item.releasePointerCapture(pullState.pointerId); } catch (_) {}
       document.body.classList.remove('pulling-history');
@@ -599,4 +615,12 @@ window.exportHistory = function() {
   URL.revokeObjectURL(url);
   status.textContent = t().historyExported;
 };
+
+window.addEventListener('storage', (ev) => {
+  if (!ev || !ev.key) return;
+  if (ev.key === PINNED_HISTORY_KEY) {
+    loadPinnedHistoryBoxes();
+    renderHistory();
+  }
+});
 

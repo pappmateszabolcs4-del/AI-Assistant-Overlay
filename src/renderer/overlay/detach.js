@@ -27,7 +27,7 @@ function getReliableScreenPoint(ev) {
 }
 
 // Provide header dock rects (screen coords) for detached panels to dock back.
-if (!__isDetachedPanelWindow) {
+if (!__isDetachedPanelWindow && !(typeof __isBlockWindow !== 'undefined' && __isBlockWindow)) {
   ipcRenderer.on(IPC_CHANNELS.REQUEST_PANEL_DOCK_RECTS, (_event, requestId) => {
     const offX = window.screenX;
     const offY = window.screenY;

@@ -8,6 +8,7 @@ function createHotkeyManager(deps) {
     showOverlayAndRaise,
     setOverlayVirtualVisible,
     setPinnedHistoryWindowsVisible,
+    setBlockWindowsVisible,
     setDetachedPanelWindowsVisible,
     reconcileDetachedPanelWindowsVisibility,
     notePanel,
@@ -44,6 +45,7 @@ function createHotkeyManager(deps) {
           overlay.overlayDetachGuardActive = false;
           setOverlayVirtualVisible(false);
           setPinnedHistoryWindowsVisible(false);
+          setBlockWindowsVisible(false);
           detached.detachedWindowsDesiredVisible = false;
           setDetachedPanelWindowsVisible(false);
           reconcileDetachedPanelWindowsVisibility('hotkey hide');
@@ -53,6 +55,7 @@ function createHotkeyManager(deps) {
           detached.detachedWindowsDesiredVisible = true;
           showOverlayAndRaise();
           setPinnedHistoryWindowsVisible(true);
+          setBlockWindowsVisible(true);
           setDetachedPanelWindowsVisible(true);
           reconcileDetachedPanelWindowsVisibility('hotkey show');
           notePanel.setNotePanelVisible(true);
@@ -63,6 +66,7 @@ function createHotkeyManager(deps) {
         detached.detachedWindowsDesiredVisible = true;
         showOverlayAndRaise();
         setPinnedHistoryWindowsVisible(true);
+        setBlockWindowsVisible(true);
         setDetachedPanelWindowsVisible(true);
         reconcileDetachedPanelWindowsVisibility('hotkey create+show');
         notePanel.setNotePanelVisible(true);

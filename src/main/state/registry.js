@@ -39,6 +39,10 @@ const registry = {
   pinned: {
     pinnedHistoryWindows: new Map()
   },
+  blocks: {
+    detachedBlockWindows: new Map(),
+    blockLastBounds: new Map()
+  },
   note: {
     notePanelWin: null,
     notePanelLastBounds: null,

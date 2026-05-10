@@ -71,6 +71,14 @@ const IPC_CHANNELS = {
   REQUEST_HISTORY_DROP_RECTS: 'request-history-drop-rects',
   RESPONSE_PANEL_DOCK_RECTS: 'response-panel-dock-rects',
   REQUEST_PANEL_DOCK_RECTS: 'request-panel-dock-rects',
+  BLOCK_WINDOW_OPEN: 'block-window-open',
+  BLOCK_WINDOW_CLOSE: 'block-window-close',
+  BLOCK_WINDOW_MOVE: 'block-window-move',
+  BLOCK_WINDOW_SET_BOUNDS: 'block-window-set-bounds',
+  BLOCK_WINDOW_DROP_TARGET: 'block-window-drop-target',
+  BLOCK_WINDOW_DROP_PREVIEW: 'block-window-drop-preview',
+  REQUEST_BLOCK_DROP_RECTS: 'request-block-drop-rects',
+  RESPONSE_BLOCK_DROP_RECTS: 'response-block-drop-rects',
   CLEANUP_OVERLAY: 'cleanup-overlay'
 };
 

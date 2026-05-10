@@ -4,12 +4,14 @@
 const __urlParams = new URLSearchParams(window.location.search || '');
 const __windowRole = (__urlParams.get('role') || 'main').toLowerCase();
 const __panelId = (__urlParams.get('panel') || '').toLowerCase();
+const __blockId = (__urlParams.get('block') || '').toLowerCase();
 const __isDetachedPanelWindow = __windowRole === 'detached' && (__panelId === 'ask' || __panelId === 'history' || __panelId === 'settings');
+const __isBlockWindow = __windowRole === 'block' && !!__blockId;
 
 // Main overlay boot gating: hide the header panel slots until we have both
 // language + detached-panels-state from main. This prevents any transient
 // "docked content" flash on Ctrl+R.
-let __bootingMainOverlay = !__isDetachedPanelWindow;
+let __bootingMainOverlay = !__isDetachedPanelWindow && !__isBlockWindow;
 let __bootLangReady = false;
 let __bootDetachedReady = false;
 
@@ -52,4 +54,8 @@ if (__isDetachedPanelWindow) {
   // Intentionally do NOT force any initial docked/detached state here.
   // We keep the header slots hidden (booting) until main sends authoritative
   // detached-panels-state to avoid any flicker.
+}
+
+if (__isBlockWindow) {
+  document.body.classList.add('block-mode');
 }

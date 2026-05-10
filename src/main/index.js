@@ -9,6 +9,7 @@ const { createInfoPanelManager } = require('./windows/info');
 const { createDetachedWindowsManager } = require('./windows/detached');
 const { createDetachedVisibilityManager } = require('./windows/detached-visibility');
 const { createPinnedWindowsManager } = require('./windows/pinned');
+const { createBlockWindowsManager } = require('./windows/blocks');
 const { createOverlayManager } = require('./windows/overlay');
 const { createMainWindowManager } = require('./windows/main-window');
 const { createHotkeyManager } = require('./app/hotkeys');
@@ -104,6 +105,14 @@ const pinnedHistory = createPinnedWindowsManager({
   clampWindowToWorkArea
 });
 
+
+const blockWindows = createBlockWindowsManager({
+  registry,
+  BrowserWindow,
+  clampWindowToWorkArea,
+  getCurrentLanguage: () => registry.game.currentLanguage
+});
+
 const {
   bringDetachedPanelWindowsToFront,
   setDetachedPanelWindowsVisible,
@@ -122,6 +131,16 @@ const {
   createPinnedHistoryWindow
 } = pinnedHistory;
 
+
+const {
+  bringBlockWindowsToFront,
+  setBlockWindowsVisible,
+  closeAllBlockWindows,
+  createBlockWindow,
+  closeBlockWindow,
+  updateBlockWindowBounds
+} = blockWindows;
+
 const overlayManager = createOverlayManager({
   registry,
   BrowserWindow,
@@ -130,8 +149,10 @@ const overlayManager = createOverlayManager({
   notePanel,
   bringDetachedPanelWindowsToFront,
   bringPinnedHistoryWindowsToFront,
+  bringBlockWindowsToFront,
   closeAllPinnedHistoryWindows,
   closeAllDetachedPanelWindows,
+  closeAllBlockWindows,
   startDetachedSelfHealPulse,
   reconcileDetachedPanelWindowsVisibility,
   sendDetachedPanelsStateToOverlay,
@@ -141,8 +162,8 @@ const overlayManager = createOverlayManager({
 const mainWindowManager = createMainWindowManager({
   registry,
   BrowserWindow,
-  closeAllPinnedHistoryWindows,
   closeAllDetachedPanelWindows,
+  closeAllBlockWindows,
   notePanel
 });
 
@@ -171,6 +192,7 @@ const hotkeyManager = createHotkeyManager({
   showOverlayAndRaise,
   setOverlayVirtualVisible,
   setPinnedHistoryWindowsVisible,
+  setBlockWindowsVisible,
   setDetachedPanelWindowsVisible,
   reconcileDetachedPanelWindowsVisibility,
   notePanel,
@@ -195,6 +217,7 @@ const ipcRegistrar = createIpcRegistrar({
   showOverlayAndRaise,
   setOverlayVirtualVisible,
   setPinnedHistoryWindowsVisible,
+  setBlockWindowsVisible,
   setDetachedPanelWindowsVisible,
   reconcileDetachedPanelWindowsVisibility,
   startDetachedSelfHealPulse,
@@ -206,8 +229,12 @@ const ipcRegistrar = createIpcRegistrar({
   normalizePanelId,
   deactivateDetachedPanelWindow,
   createPinnedHistoryWindow,
+  createBlockWindow,
+  closeBlockWindow,
+  updateBlockWindowBounds,
   closeAllDetachedPanelWindows,
   closeAllPinnedHistoryWindows,
+  closeAllBlockWindows,
   openaiService,
   setCurrentLanguage: (lang) => { registry.game.currentLanguage = lang; },
   getCurrentLanguage: () => registry.game.currentLanguage,
@@ -233,7 +260,7 @@ const lifecycleManager = createLifecycleManager({
   ensureOverlayWithinVisibleBounds,
   reassertOverlayTopmost,
   closeAllPinnedHistoryWindows,
-  closeAllDetachedPanelWindows,
+  closeAllBlockWindows,
   notePanel,
   registerHotkey
 });

@@ -15,6 +15,7 @@ function createLifecycleManager(deps) {
     reassertOverlayTopmost,
     closeAllPinnedHistoryWindows,
     closeAllDetachedPanelWindows,
+    closeAllBlockWindows,
     notePanel,
     registerHotkey
   } = deps;
@@ -95,6 +96,13 @@ function createLifecycleManager(deps) {
         console.log('[Cleanup] Pinned ablakok megsemmisítve');
       } catch (err) {
         console.error('[Cleanup] Pinned destroy hiba:', err);
+      }
+
+      try {
+        closeAllBlockWindows();
+        console.log('[Cleanup] Block ablakok megsemmisítve');
+      } catch (err) {
+        console.error('[Cleanup] Block destroy hiba:', err);
       }
 
       if (core.win && !core.win.isDestroyed()) {

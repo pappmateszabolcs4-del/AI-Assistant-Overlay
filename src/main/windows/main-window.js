@@ -4,6 +4,7 @@ function createMainWindowManager(deps) {
     BrowserWindow,
     closeAllPinnedHistoryWindows,
     closeAllDetachedPanelWindows,
+    closeAllBlockWindows,
     notePanel
   } = deps;
 
@@ -35,6 +36,7 @@ function createMainWindowManager(deps) {
       core.overlayWin = null;
       closeAllPinnedHistoryWindows();
       closeAllDetachedPanelWindows();
+      closeAllBlockWindows();
       notePanel.closeNotePanelWindow();
     });
   }

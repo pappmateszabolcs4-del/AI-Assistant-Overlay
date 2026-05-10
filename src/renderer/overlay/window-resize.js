@@ -13,6 +13,8 @@ const modalConfirm = document.getElementById('modalConfirm');
 const modalCancel = document.getElementById('modalCancel');
 const infoBtn = document.getElementById('infoBtn');
 
+const __skipOverlayResize = typeof __isBlockWindow !== 'undefined' && __isBlockWindow;
+
 let isResizing = false;
 let startX = 0;
 let startWidth = 0;
@@ -237,12 +239,14 @@ function stopResize(e) {
   }
 }
 
-on(leftHandle, 'pointerdown', (e) => startResize(e, 'left'));
-on(rightHandle, 'pointerdown', (e) => startResize(e, 'right'));
-// Bottom resize handle is intentionally not used on the main overlay.
-on(document, 'pointermove', doResize);
-on(document, 'pointerup', stopResize);
-on(document, 'pointercancel', stopResize);
+if (!__skipOverlayResize) {
+  on(leftHandle, 'pointerdown', (e) => startResize(e, 'left'));
+  on(rightHandle, 'pointerdown', (e) => startResize(e, 'right'));
+  // Bottom resize handle is intentionally not used on the main overlay.
+  on(document, 'pointermove', doResize);
+  on(document, 'pointerup', stopResize);
+  on(document, 'pointercancel', stopResize);
+}
 
 // Manual window dragging fallback to ensure reliable movement on transparent overlays
 let isWindowDragging = false;
@@ -341,6 +345,6 @@ function endWindowDrag(event) {
   sendOverlayResize({ x: window.screenX, y: window.screenY });
 }
 
-if (dragHandle) {
+if (!__skipOverlayResize && dragHandle) {
   on(dragHandle, 'pointerdown', beginWindowDrag);
 }
