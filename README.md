@@ -1,6 +1,6 @@
 # AI Assistant Overlay
 
-Electron-based desktop overlay assistant for video games. It detects the active game window on Windows, provides in-game help, and supports text, voice (Whisper STT), and image-based analysis (Vision).
+Electron-based desktop overlay assistant for video games on Windows. It detects the active game window, provides in-game help, and supports text, voice (Whisper STT), and image-based analysis (Vision).
 
 ## ✨ Features
 
@@ -10,9 +10,17 @@ Electron-based desktop overlay assistant for video games. It detects the active 
 - **Vision analysis** for screenshots.
 - **Whisper speech-to-text** for voice input.
 - **Block-based layout**: move blocks between panels and detach them into block windows.
+- **Pinned history** and **note/info panels** as separate windows.
 - **Conversation history** stored in localStorage.
-- **Multi-language UI**: `hu`, `en`, `de`, `ru`, `fr`, `zh`.
 - **Hotkey support**: `Ctrl + Shift + K`.
+
+---
+
+## 🌍 Languages
+
+- **UI languages**: `hu`, `en`, `de`, `ru`, `fr`, `zh`, `es`, `it`, `pl`.
+- **Runtime UI fallback**: missing labels are auto-translated on demand.
+- **AI response language** follows the selected UI language.
 
 ---
 
@@ -95,6 +103,12 @@ npm start
 - `npm run check` – project checks (patterns, IPC, translations, etc.)
 - `npm run cleanup` – maintenance report (does not delete backups)
 - `npm run make-backup` – create timestamped backup
+- `npm run build:games` – build the offline game dataset
+- `npm run validate:games` – validate game detection rules
+- `npm run package` – package the app
+- `npm run package:win` – package for Windows x64
+- `npm run make` – create platform installers
+- `npm run publish` – publish via Electron Forge
 
 ---
 
