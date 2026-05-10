@@ -6,6 +6,23 @@
 
 ---
 
+## [1.0.23] - 2026-05-10 (TTS Volume Control)
+
+### ✅ Added
+
+- TTS volume slider in the overlay settings.
+
+### 🔧 Changed
+
+- Speech volume clamped to 0-100 and synced on overlay open.
+- Main settings speech volume slider aligned to the same range.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+---
+
 ## [1.0.22] - 2026-05-10 (Block Layout + Widget Cleanup)
 
 ### ✅ Added

@@ -1375,6 +1375,39 @@ Add "real" prefix to forbidden terms to preserve gaming vocabulary.
 
 ---
 
+### 2026-05-10 (Night)
+
+#### Summary
+- What changed: Added a dedicated TTS volume slider to the overlay and aligned volume limits across UI and IPC.
+- Why: The existing speech slider was mislabeled and mixed rate/volume behavior.
+- Impact: Users can control TTS volume consistently, and the value stays within 0-100.
+
+#### Details
+- Added overlay-side volume UI and storage syncing.
+- Clamped volume to 0-100 in main and renderer.
+- Synced the main settings slider and overlay on open.
+
+#### Files touched
+- [overlay.html](overlay.html)
+- [overlay.css](overlay.css)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/renderer/overlay/ipc.js](src/renderer/overlay/ipc.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [index.html](index.html)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+
+#### Backups
+- Not created (targeted edits only)
+
+#### Verification
+- Tests not run (not requested)
+
+#### Follow-ups
+- Consider separating speech rate vs volume if needed in the future.
+
+---
+
 #### Issue 13: Game Context Detection (Feb 5, 2026 Evening)
 **Feature**: Auto-detect what game the user is playing and hyper-focus AI responses
 

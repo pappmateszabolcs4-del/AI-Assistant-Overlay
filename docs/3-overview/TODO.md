@@ -1,6 +1,6 @@
 # ✅ TODO / Backlog
 
-Last updated: 2026-05-09
+Last updated: 2026-05-10
 
 ## Top candidates (next)
 
@@ -10,6 +10,7 @@ Last updated: 2026-05-09
 
 ## Recently completed
 
+- [x] Add volume control for TTS
 - [x] Basic unit tests (3-5 critical paths)
 - [x] Reduce offline IGDB dataset size (minify/prune/gzip) without losing match quality
 - [x] Unify UI translation sources (overlay/index/detached/aux windows)
@@ -31,15 +32,12 @@ Last updated: 2026-05-09
 - [ ] Privacy policy document
 - [ ] Terms of service
 
-### v1.1 (Next Month)
 
-- [ ] Replace history popup with inline expansion
-- [ ] Fix 11 IPC listener duplications
-- [ ] Add volume control for TTS
-- [ ] User feedback integration
+
 
 ### v2.0 (Q2 2026)
 
+- [ ] User feedback integration
 - [ ] Refactor overlay.html → React
 - [ ] Plugin API for game mods
 - [ ] Cloud sync for settings
