@@ -2,10 +2,12 @@
 
 **Status**: Production-ready
 **Release**: Ready after installer + signing
-**Last verified**: 2026-05-08
+**Last verified**: 2026-05-10
 
 ## What Is Done
 - Core overlay features complete (audio, vision, game detection).
+- Block-based layout with detachable block windows.
+- Dynamic notes (multiple entries, rename + pin).
 - Multi-language UI support implemented.
 - Critical bugs addressed and documented.
 - Quality checks and backup policy established.

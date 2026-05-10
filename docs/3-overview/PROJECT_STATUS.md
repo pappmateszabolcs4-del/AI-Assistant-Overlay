@@ -1,6 +1,6 @@
 # 🎮 AI Game Assistant - Project Status Report
 
-**Date**: February 7, 2026  
+**Date**: May 10, 2026  
 **Version**: v1.0.x (READY FOR RELEASE)  
 **Status**: ✅ PRODUCTION READY
 
@@ -24,6 +24,16 @@ Recent work focused on “serious app” UX and game-safe behavior:
 
 ---
 
+## May 10, 2026 Addendum (Blocks + Notes)
+
+Recent work focused on block layout and notes quality:
+- ✅ Block-based layout with detachable block windows (lightweight renderer).
+- ✅ History sync into block windows (localStorage + IPC bridge).
+- ✅ Notes upgraded to multiple entries with rename + pin.
+- ✅ Note preview and info panel behavior aligned with new UI.
+
+---
+
 ## 📊 Project Metrics
 
 | Metric | Value | Status |
@@ -35,7 +45,7 @@ Recent work focused on “serious app” UX and game-safe behavior:
 | Documentation | 100% | ✅ Complete |
 | Security Audit | Passed | ✅ Safe |
 | Performance | Acceptable | ✅ OK |
-| Languages Supported | 6 | ✅ Full |
+| Languages Supported | 8 | ✅ Full |
 
 ---
 
@@ -49,6 +59,7 @@ Recent work focused on “serious app” UX and game-safe behavior:
 - ✅ Text-to-speech output with multi-language support
 - ✅ Conversation history (localStorage, 20-item limit)
 - ✅ User settings persistence (language, TTS, specialization)
+- ✅ Dynamic notes with pinned entries (localStorage)
 
 ### UI/UX
 - ✅ Regional overlay (1100x500px, transparent, frameless)
@@ -57,6 +68,8 @@ Recent work focused on “serious app” UX and game-safe behavior:
 - ✅ Emoji-based intuitive interface
 - ✅ Custom confirmation modals (no native dialogs)
 - ✅ Responsive design for gaming scenarios
+- ✅ Block-based layout with detachable block windows
+- ✅ Note + info panels as independent windows
 
 ### Multi-Language Support
 - ✅ Hungarian (hu) - Native speaker quality
@@ -128,7 +141,7 @@ d:\AIGameAssistant_new\
 - Vision analysis (GPT-4o): Working, game-aware responses
 - Game detection: Working, <1 sec startup detection
 - History persistence: Working, survives app restart
-- Multi-language: All 6 languages working
+- Multi-language: All 8 languages working
 - UI responsiveness: Smooth, no lag
 
 ### Performance ✅
@@ -183,7 +196,7 @@ See the canonical checklist in [docs/3-overview/TODO.md](docs/3-overview/TODO.md
 4. **localStorage for history** - Simple, private, fast
 5. **Collapsible UI** - Gaming-friendly compact design
 6. **Vanilla JS** - Small bundle, no build complexity
-7. **6-language support** - Professional market appeal
+7. **8-language support** - Professional market appeal
 
 ---
 

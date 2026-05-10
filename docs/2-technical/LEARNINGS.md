@@ -100,7 +100,7 @@ When adding new work logs, append them under **Daily Logs (Chronological)** usin
 - ✅ Draggable overlay with persistent position
 - ✅ Reset Layout button with proper confirmation
 - ✅ Custom modal dialogs (no native confirm/alert)
-- ✅ Full 6-language support for all features
+- ✅ Full 8-language support for all features
 - ✅ Gaming-aware content filter (allows game mechanics terms)
 - ✅ Tab pinning system with localStorage
 - ✅ Conversation history (20 items)
@@ -109,13 +109,15 @@ When adding new work logs, append them under **Daily Logs (Chronological)** usin
 ## 🌍 CRITICAL RULE: Universal Translation Policy
 
 ### ⚠️ MANDATORY FOR ALL NEW FEATURES
-**Every new UI element, message, or user-facing text MUST be translated to ALL 6 supported languages:**
+**Every new UI element, message, or user-facing text MUST be translated to ALL 8 supported languages:**
 1. 🇭🇺 Hungarian (hu)
 2. 🇬🇧 English (en)
 3. 🇩🇪 German (de)
 4. 🇷🇺 Russian (ru)
 5. 🇫🇷 French (fr)
 6. 🇨🇳 Chinese (zh)
+7. 🇮🇹 Italian (it)
+8. 🇵🇱 Polish (pl)
 
 **No exceptions.** If you add:
 - A new button label
@@ -124,7 +126,7 @@ When adding new work logs, append them under **Daily Logs (Chronological)** usin
 - A status text
 - Any user-visible content
 
-**→ Add it to the `uiText` object in overlay.html with ALL 6 language keys**
+**→ Add it to the `uiText` object in overlay.html with ALL 8 language keys**
 
 **Example:**
 ```javascript
@@ -134,7 +136,9 @@ const uiText = {
   de: { newFeature: '<German translation>' },
   ru: { newFeature: '<Russian translation>' },
   fr: { newFeature: '<French translation>' },
-  zh: { newFeature: '<Chinese translation>' }
+  zh: { newFeature: '<Chinese translation>' },
+  it: { newFeature: '<Italian translation>' },
+  pl: { newFeature: '<Polish translation>' }
 };
 ```
 
@@ -1100,7 +1104,7 @@ showConfirmModal(t().confirmTitle, t().resetLayout, callback, t().btnReset);
 **Translations Added**:
 - `btnDelete`: For destructive actions (Clear History, Clear All Data)
 - `btnReset`: For reset actions (Reset Layout)
-- Properly translated in all 6 languages
+- Properly translated in all 8 languages
 
 **Lesson**: Generic modal dialogs need context-specific button text to avoid confusion.
 
@@ -1408,6 +1412,46 @@ Add "real" prefix to forbidden terms to preserve gaming vocabulary.
 
 ---
 
+### 2026-05-10 (Night)
+
+#### Summary
+- What changed: Implemented multi-note storage with pinned notes and a custom dropdown selector; synced note preview to active note; refreshed core docs.
+- Why: The native select dropdown was blocked by always-on-top click-through, and the single-note model was too limiting.
+- Impact: Notes scale cleanly, selection works reliably, and docs match the current UX.
+
+#### Details
+- Added notes list + active note storage keys and migrated legacy note content.
+- Replaced native select with in-window dropdown list + search at 20+ notes.
+- Updated overlay/block previews to show the active note.
+- Refreshed status/changelog/start-here docs.
+
+#### Files touched
+- [note-panel.html](note-panel.html)
+- [src/shared/storage-keys.js](src/shared/storage-keys.js)
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/renderer/overlay/block-app.js](src/renderer/overlay/block-app.js)
+- [README.md](README.md)
+- [docs/1-start-here/START_HERE.md](docs/1-start-here/START_HERE.md)
+- [docs/1-start-here/COMPLETION_SUMMARY.md](docs/1-start-here/COMPLETION_SUMMARY.md)
+- [docs/1-start-here/VISUAL_SUMMARY.md](docs/1-start-here/VISUAL_SUMMARY.md)
+- [docs/3-overview/PROJECT_STATUS.md](docs/3-overview/PROJECT_STATUS.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/3-overview/SESSION_FINAL_REPORT.md](docs/3-overview/SESSION_FINAL_REPORT.md)
+- [docs/2-technical/AUDIT_REPORT.md](docs/2-technical/AUDIT_REPORT.md)
+- [docs/4-reference/README.md](docs/4-reference/README.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes
+
+#### Verification
+- Tests not run (not requested)
+
+#### Follow-ups
+- Update Info panel copy to match the refreshed docs.
+
+---
+
 #### Issue 13: Game Context Detection (Feb 5, 2026 Evening)
 **Feature**: Auto-detect what game the user is playing and hyper-focus AI responses
 
@@ -1484,7 +1528,7 @@ src/
 │   │   └── animations.css    # Transitions, effects
 │   └── scripts/
 │       ├── ui.js             # UI state management
-│       ├── translations.js   # 6-language system
+│       ├── translations.js   # 8-language system
 │       ├── modal.js          # Custom modal logic
 │       ├── tabs.js           # Tab switching & pinning
 │       ├── history.js        # Conversation history
@@ -1890,7 +1934,7 @@ Short summary (as of Feb 5):
 - Edge case: When restoring from backup, never overwrite a working file unless you are sure it is the latest.
 
 ##### 7. Standards, Best Practices
-- All user-facing text must be translated to 6 languages (uiText: hu, en, de, ru, fr, zh); new UI elements must follow this rule.
+- All user-facing text must be translated to 8 languages (uiText: hu, en, de, ru, fr, zh, it, pl); new UI elements must follow this rule.
 - Custom modal dialogs are mandatory; never use native confirm/alert/prompt.
 - High-frequency IPC (move/resize) must be fire-and-forget, rAF-throttled.
 - All window bounds are always clamped to the visible work area.
@@ -1949,7 +1993,7 @@ Short summary (as of Feb 5):
 - **Popup sizing persistence**: custom heights are session-only; decide whether to store per-section height and restore on reopen.
 - **Keyboard accessibility**: the new floating popups rely on mouse/touch input; we still need focus traps and ESC-to-close handling.
 - **Responsive limits**: `min-width: 240px` per header pill can overflow on sub-800px screens; evaluate a stacked/mobile layout before shipping.
-- **Translation sweep**: new UI text (e.g., resize tooltip/help copy if added) must follow the 6-language policy when finalizing UX microcopy.
+- **Translation sweep**: new UI text (e.g., resize tooltip/help copy if added) must follow the 8-language policy when finalizing UX microcopy.
 
 ##### Feb 6, 2026 Popup Height Fixes
 - **Context**: The Settings floating panel kept attaching to the top of the viewport unless the user manually dragged the bottom handle first.
@@ -2290,7 +2334,7 @@ Short summary (as of Feb 5):
 
 #### Follow-ups
 - TODO: Convert remaining hardcoded UX constants (min sizes, thresholds) into user-configurable settings where it makes sense.
-- TODO: Add a brief “How to dock/undock” hint (must be translated to 6 languages) if users struggle to discover docking.
+- TODO: Add a brief “How to dock/undock” hint (must be translated to 8 languages) if users struggle to discover docking.
 
 ---
 

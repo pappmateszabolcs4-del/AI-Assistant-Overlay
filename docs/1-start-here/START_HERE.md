@@ -3,9 +3,16 @@
 This folder is for a quick, self-contained onboarding. Use it when you need a fast orientation without jumping across documents.
 
 ## What You Get Here
-- A concise project overview and status.
+- Current feature snapshot (overlay + blocks + notes).
 - Key development rules and safety constraints.
 - A short release readiness checklist.
+
+## Current Snapshot (May 10, 2026)
+- Overlay uses a block-based layout with detachable block windows.
+- Notes support multiple entries with rename + pin, stored locally.
+- History, note, and info panels are separate movable windows.
+- Hotkey: `Ctrl+Shift+K` toggles overlay visibility.
+- UI supported in 8 languages (hu/en/de/ru/fr/zh/it/pl).
 
 ## How to Use It
 - If you need a high-level status, read this file only.

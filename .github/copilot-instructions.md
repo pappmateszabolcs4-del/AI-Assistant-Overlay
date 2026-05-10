@@ -6,7 +6,7 @@
 	- Electron desktop overlay for game assistance
 	- OpenAI GPT + Vision API integration
 	- Real-time game detection (Windows)
-	- Multi-language support (HU, EN, DE, RU, FR, ZH)
+	- Multi-language support (HU, EN, DE, RU, FR, ZH, IT, PL)
 
 - [x] Scaffold the Project
 	- Main process: main.js (~1290 lines)
@@ -70,7 +70,7 @@
 - localStorage for history (20-item limit, persistent across reloads).
 - Collapsible UI sections for compact overlay (1100x500, grid layout).
 - Inline history expansion (no popups, no focus stealing, game-safe).
-- All user-facing text must be translated to 6 languages (hu, en, de, ru, fr, zh) and added to uiText.
+- All user-facing text must be translated to 8 languages (hu, en, de, ru, fr, zh, it, pl) and added to uiText.
 - Custom modal dialogs only; never use native confirm/alert/prompt.
 - All window bounds clamped to visible work area.
 - High-frequency IPC (move/resize) is fire-and-forget, rAF-throttled.

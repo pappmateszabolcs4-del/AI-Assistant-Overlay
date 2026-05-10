@@ -99,7 +99,7 @@ git push origin v1.0
 - [x] All code complete and tested
 - [x] All features working (audio, vision, game detection)
 - [x] Bug fixes applied (orphan handlers, duplicates, etc)
-- [x] Multi-language support (6 languages)
+- [x] Multi-language support (8 languages)
 - [x] Comprehensive documentation (6,000+ words)
 - [x] Security audit passed (0 vulnerabilities)
 - [x] Performance benchmarked (acceptable)
@@ -132,7 +132,7 @@ git push origin v1.0
 1. **Never auto-delete backup files** - They're precious
 2. **Always update the learnings log** - Keep historical record
 3. **Test in Terraria** - Real-world validation
-4. **Keep 6-language support** - Market requirement
+4. **Keep 8-language support** - Market requirement
 5. **Document all decisions** - For future reference
 
 ### Development Rules
@@ -190,7 +190,7 @@ Status: ✅ WORKING
 ### Add a New Feature
 1. Implement in main.js or overlay.html
 2. Run `npm run check` to detect patterns
-3. Add translations to all 6 languages
+3. Add translations to all 8 languages
 4. Test with Terraria gameplay
 5. Document in the learnings log
 6. Create backup (vX+1)

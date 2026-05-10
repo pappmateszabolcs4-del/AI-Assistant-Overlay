@@ -9,8 +9,9 @@ Electron-based desktop overlay assistant for video games on Windows. It detects 
 - **OpenAI text assistant** for game-specific guidance.
 - **Vision analysis** for screenshots.
 - **Whisper speech-to-text** for voice input.
-- **Block-based layout**: move blocks between panels and detach them into block windows.
+- **Block-based layout** with detachable block windows.
 - **Pinned history** and **note/info panels** as separate windows.
+- **Dynamic notes** with multiple named entries and pinned notes.
 - **Conversation history** stored in localStorage.
 - **Hotkey support**: `Ctrl + Shift + K`.
 
@@ -18,8 +19,8 @@ Electron-based desktop overlay assistant for video games on Windows. It detects 
 
 ## 🌍 Languages
 
-- **UI languages**: `hu`, `en`, `de`, `ru`, `fr`, `zh`, `es`, `it`, `pl`.
-- **Runtime UI fallback**: missing labels are auto-translated on demand.
+- **UI languages**: `hu`, `en`, `de`, `ru`, `fr`, `zh`, `it`, `pl`.
+- **Runtime UI fallback**: missing labels auto-translate on demand.
 - **AI response language** follows the selected UI language.
 
 ---
@@ -32,6 +33,7 @@ Electron-based desktop overlay assistant for video games on Windows. It detects 
 4) Sends requests to OpenAI (chat, Whisper STT, Vision).
 5) Renders results inside movable blocks or detached block windows.
 6) Persists layout, history, and settings locally.
+7) Notes are stored locally and can be switched/pinned.
 
 ---
 

@@ -120,6 +120,11 @@ This audit was conducted on Feb 5. The following notable improvements were added
 - Removed the widget manager system and widget window IPC in favor of blocks.
 - Free-layout state now persists under block-specific keys with legacy migration.
 
+### Notes & Info Panels
+- Notes now support multiple entries with rename + pin.
+- Note preview reflects the active note in overlay + block windows.
+- Note panel uses a custom dropdown to avoid always-on-top click issues.
+
 ---
 
 ## 📋 AUDIT METHODOLOGY
@@ -270,6 +275,8 @@ Languages Tested:
 - Russian (ru-RU): ✅ Works (with English fallback)
 - French (fr-FR): ✅ Works (with English fallback)
 - Chinese (zh-CN): ✅ Works (with English fallback)
+- Italian (it-IT): ✅ Works (with English fallback)
+- Polish (pl-PL): ✅ Works (with English fallback)
 
 Fallback Logic: If requested voice unavailable → use en-US
 Result: Never fails, always produces audio output
@@ -825,7 +832,7 @@ This is a **solid, professionally-built application** that genuinely helps gamer
 | Code written | ~3,700 lines |
 | Bugs fixed | 6 critical |
 | Features completed | 8 major |
-| Languages supported | 6 |
+| Languages supported | 8 |
 | Documentation written | 2,500+ lines |
 | Tests passed | 50+ manual |
 | Performance benchmarks | 10+ metrics |

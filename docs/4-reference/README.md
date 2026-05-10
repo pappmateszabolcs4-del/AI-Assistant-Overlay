@@ -11,8 +11,10 @@ Modern Electron-based desktop application for gaming assistance with voice recog
 - ⚙️ **Customizable Settings** - Multi-language support, themes, hotkeys
 - 🪟 **Frameless Window** - Custom titlebar with drag/resize support
 - 🔄 **Auto-start** - Windows startup integration
-- 🌍 **Multi-language** - English, Magyar, Deutsch, Русский, Français, 中文
+- 🌍 **Multi-language** - English, Magyar, Deutsch, Русский, Français, 中文, Italiano, Polski
 - 🎯 **Game Specialization Levels** - 1-5 detail levels for AI responses
+- 🧱 **Block Layout** - Movable blocks with detachable block windows
+- 📝 **Dynamic Notes** - Multiple notes with rename + pin
 
 ## How to run
 

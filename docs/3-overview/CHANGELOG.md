@@ -6,6 +6,24 @@
 
 ---
 
+## [1.0.24] - 2026-05-10 (Dynamic Notes + Custom Dropdown)
+
+### ✅ Added
+
+- Multi-note system with pinned notes and active note tracking.
+- Custom note selector dropdown to avoid always-on-top click issues.
+
+### 🔧 Changed
+
+- Note preview now reflects the active note content.
+- Note panel actions (rename/new/delete) operate on active note entry.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+---
+
 ## [1.0.23] - 2026-05-10 (TTS Volume Control)
 
 ### ✅ Added
@@ -646,7 +664,7 @@ Known Issues: 2-3 (for v1.1)
 | Bugs Fixed | 6 critical |
 | Features Completed | 8 major |
 | Tests Executed | 50+ manual scenarios |
-| Languages Supported | 6 |
+| Languages Supported | 8 |
 | Backups Created | 5 versions (v1-v5) |
 | Code Quality Improvement | +39% (6/10 → 8.35/10) |
 
@@ -665,7 +683,7 @@ Known Issues: 2-3 (for v1.1)
 ✅ 8.35/10 code quality (professional MVP standard)  
 ✅ Zero critical bugs (thorough fix and testing)  
 ✅ 100% feature completeness (all promised features working)  
-✅ 6-language support (professional localization)  
+✅ 8-language support (professional localization)  
 ✅ Comprehensive documentation (3,361 lines)  
 
 ### Deployment

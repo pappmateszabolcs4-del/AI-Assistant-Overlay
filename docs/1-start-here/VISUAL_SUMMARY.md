@@ -12,10 +12,12 @@ App
 ```
 
 ## Key Capabilities
-- Overlay assistance with history, settings, and contextual responses.
+- Overlay assistance with block-based layout and detachable block windows.
+- History, note, and info panels as separate movable windows.
 - Game context detection via active window and dataset matching.
 - Audio transcription via Whisper; image analysis via Vision.
-- Multi-language UI (6 languages).
+- Dynamic notes (multiple entries, rename + pin).
+- Multi-language UI (8 languages).
 
 ## Quality Snapshot
 - Code quality: 8.35/10
