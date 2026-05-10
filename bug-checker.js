@@ -168,12 +168,17 @@ function runBugChecker() {
   let highIssues = 0;
   
   const overlayHtmlPath = path.join(__dirname, 'overlay.html');
+  const blockHtmlPath = path.join(__dirname, 'block.html');
   const overlayHtmlContent = fs.existsSync(overlayHtmlPath)
     ? fs.readFileSync(overlayHtmlPath, 'utf-8')
     : null;
-  const overlayDomIds = overlayHtmlContent
-    ? new Set([...overlayHtmlContent.matchAll(/\bid\s*=\s*['"]([^'"]+)['"]/g)].map(m => m[1]))
-    : new Set();
+  const blockHtmlContent = fs.existsSync(blockHtmlPath)
+    ? fs.readFileSync(blockHtmlPath, 'utf-8')
+    : null;
+  const overlayDomIds = new Set([
+    ...((overlayHtmlContent || '').matchAll(/\bid\s*=\s*['"]([^'"]+)['"]/g)).map(m => m[1]),
+    ...((blockHtmlContent || '').matchAll(/\bid\s*=\s*['"]([^'"]+)['"]/g)).map(m => m[1])
+  ]);
 
   filesToCheck.forEach(file => {
     const filePath = path.join(__dirname, file.path);
