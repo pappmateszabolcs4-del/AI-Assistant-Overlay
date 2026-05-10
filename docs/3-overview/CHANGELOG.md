@@ -6,6 +6,27 @@
 
 ---
 
+## [1.0.25] - 2026-05-10 (History Search + Block Window Support)
+
+### ✅ Added
+
+- History search input with pinned-only toggle and result meta.
+- Block window history search UI to match overlay behavior.
+
+### 🔧 Changed
+
+- Pinned history windows now sync with the active search query and pinned-only filter.
+
+### 🐛 Fixed
+
+- bug-checker now includes block-only history IDs to avoid false orphan warnings.
+
+### 🧾 Notes
+
+- Tests: `npm run check`.
+
+---
+
 ## [1.0.24] - 2026-05-10 (Dynamic Notes + Custom Dropdown)
 
 ### ✅ Added

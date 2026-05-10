@@ -29,6 +29,14 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     `,
     'history-list': `
       <div class="block-item" id="block-history-list" data-block-id="history-list" data-block-home="history" data-block-title-key="history">
+        <div class="history-search" id="historySearch">
+          <input type="text" id="historySearchInput" placeholder="" />
+          <label class="history-search-toggle">
+            <input type="checkbox" id="historyPinnedOnlyToggle" />
+            <span id="historyPinnedOnlyLabel"></span>
+          </label>
+        </div>
+        <div class="history-search-meta" id="historySearchMeta"></div>
         <div id="historyList"></div>
       </div>
     `,

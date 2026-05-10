@@ -1452,6 +1452,44 @@ Add "real" prefix to forbidden terms to preserve gaming vocabulary.
 
 ---
 
+### 2026-05-10 (Night)
+
+#### Summary
+- What changed: Added history search/filter with pinned-only toggle in overlay and block windows; synced pinned history filtering; refreshed docs.
+- Why: Large histories needed fast filtering, and block windows had to match overlay behavior.
+- Impact: Search works consistently across overlay, block windows, and pinned history with clear result feedback.
+
+#### Details
+- Added search input, pinned-only toggle, and result meta to history list UI.
+- Implemented normalized search with debounce and pinned-only filtering in history renderer.
+- Synced pinned history windows with the active query and pinned-only state.
+- Added translation keys for new history search strings across 8 languages.
+
+#### Files touched
+- [overlay.html](overlay.html)
+- [overlay.css](overlay.css)
+- [src/renderer/overlay/history.js](src/renderer/overlay/history.js)
+- [src/renderer/overlay/block-app.js](src/renderer/overlay/block-app.js)
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+- [bug-checker.js](bug-checker.js)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/3-overview/PROJECT_STATUS.md](docs/3-overview/PROJECT_STATUS.md)
+- [docs/2-technical/AUDIT_REPORT.md](docs/2-technical/AUDIT_REPORT.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- npm run check
+
+#### Follow-ups
+- None
+
+---
+
 #### Issue 13: Game Context Detection (Feb 5, 2026 Evening)
 **Feature**: Auto-detect what game the user is playing and hyper-focus AI responses
 

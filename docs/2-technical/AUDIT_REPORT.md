@@ -115,6 +115,7 @@ This audit was conducted on Feb 5. The following notable improvements were added
 ### Block Layout System
 - Overlay content is now organized into movable blocks that can be detached into block windows.
 - Block windows support drag, resize, and dock-back with drop previews.
+- History search/filter and pinned-only toggle are available in overlay and block windows.
 
 ### Cleanup: Legacy Widgets
 - Removed the widget manager system and widget window IPC in favor of blocks.

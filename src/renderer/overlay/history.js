@@ -16,11 +16,51 @@ var pinnedHistoryBoxes = []; // [{ ts, x, y, width, height }], screen coords
 // History controls (removed - now in tab)
 let historyList = document.getElementById('historyList');
 let clearHistoryBtn = document.getElementById('clearHistoryBtn');
+let historySearchInput = document.getElementById('historySearchInput');
+let historyPinnedOnlyToggle = document.getElementById('historyPinnedOnlyToggle');
+let historySearchMeta = document.getElementById('historySearchMeta');
 let historyElementsReady = false;
+let historySearchQuery = '';
+let historyPinnedOnly = false;
+let historySearchTimer = null;
+
+function normalizeSearchText(text) {
+  return String(text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function historyEntryMatches(entry, normalizedQuery) {
+  if (!normalizedQuery) return true;
+  const haystack = normalizeSearchText(`${entry.question || ''} ${entry.answer || ''}`);
+  return haystack.includes(normalizedQuery);
+}
+
+function updateHistorySearchLabels() {
+  if (historySearchInput) {
+    historySearchInput.placeholder = t().historySearchPlaceholder || '';
+  }
+  if (historyPinnedOnlyToggle) {
+    const label = document.getElementById('historyPinnedOnlyLabel');
+    if (label) label.textContent = t().historyPinnedOnlyLabel || label.textContent || '';
+  }
+}
+
+function updateHistorySearchMeta(count) {
+  if (!historySearchMeta) return;
+  const template = t().historySearchResults || 'Results: {count}';
+  historySearchMeta.textContent = template.replace('{count}', String(count));
+}
 
 function initHistoryElements() {
   historyList = document.getElementById('historyList');
   clearHistoryBtn = document.getElementById('clearHistoryBtn');
+  historySearchInput = document.getElementById('historySearchInput');
+  historyPinnedOnlyToggle = document.getElementById('historyPinnedOnlyToggle');
+  historySearchMeta = document.getElementById('historySearchMeta');
   if (clearHistoryBtn && !clearHistoryBtn.__historyBound) {
     clearHistoryBtn.__historyBound = true;
     on(clearHistoryBtn, 'click', () => {
@@ -39,6 +79,25 @@ function initHistoryElements() {
       );
     });
   }
+  if (historySearchInput && !historySearchInput.__historySearchBound) {
+    historySearchInput.__historySearchBound = true;
+    on(historySearchInput, 'input', () => {
+      if (historySearchTimer) clearTimeout(historySearchTimer);
+      historySearchTimer = setTimeout(() => {
+        historySearchTimer = null;
+        historySearchQuery = historySearchInput.value || '';
+        renderHistory();
+      }, 150);
+    });
+  }
+  if (historyPinnedOnlyToggle && !historyPinnedOnlyToggle.__historySearchBound) {
+    historyPinnedOnlyToggle.__historySearchBound = true;
+    on(historyPinnedOnlyToggle, 'change', () => {
+      historyPinnedOnly = !!historyPinnedOnlyToggle.checked;
+      renderHistory();
+    });
+  }
+  updateHistorySearchLabels();
   historyElementsReady = true;
 }
 
@@ -104,10 +163,15 @@ function getHistoryEntryByTimestamp(ts) {
   return conversationHistory.find((e) => e && e.timestamp === ts) || null;
 }
 
-function syncPinnedHistoryWindows() {
+function syncPinnedHistoryWindows(filterQuery = '') {
+  const normalizedQuery = normalizeSearchText(filterQuery);
   pinnedHistoryBoxes.forEach((box) => {
     const entry = getHistoryEntryByTimestamp(box.ts);
     if (!entry) return;
+    if (normalizedQuery && !historyEntryMatches(entry, normalizedQuery)) {
+      fireAndForget(IPC_CHANNELS.PINNED_HISTORY_CLOSE, box.ts);
+      return;
+    }
     const date = new Date(entry.timestamp);
     const timeStr = date.toLocaleString(currentLanguage === 'hu' ? 'hu-HU' : 'en-US', {
       month: 'short',
@@ -421,7 +485,24 @@ function addToHistory(question, answer, hasImage = false) {
 function renderHistory() {
   if (!historyElementsReady) initHistoryElements();
   if (!historyList) return;
+  updateHistorySearchLabels();
   historyList.textContent = '';
+
+  const pinnedSet = new Set(pinnedHistoryBoxes.map((b) => b.ts));
+  const normalizedQuery = normalizeSearchText(historySearchQuery);
+  let entries = conversationHistory.slice();
+
+  if (historyPinnedOnly) {
+    entries = entries.filter((entry) => pinnedSet.has(entry.timestamp));
+  } else {
+    entries = entries.filter((entry) => !pinnedSet.has(entry.timestamp));
+  }
+
+  if (normalizedQuery) {
+    entries = entries.filter((entry) => historyEntryMatches(entry, normalizedQuery));
+  }
+
+  updateHistorySearchMeta(entries.length);
 
   if (conversationHistory.length === 0) {
     const empty = document.createElement('p');
@@ -433,10 +514,20 @@ function renderHistory() {
     return;
   }
 
-  conversationHistory.forEach((entry, index) => {
-    if (pinnedHistoryBoxes.some((b) => b.ts === entry.timestamp)) {
-      return;
+  if (entries.length === 0) {
+    const empty = document.createElement('p');
+    empty.style.color = '#8ba3c0';
+    empty.style.textAlign = 'center';
+    empty.style.padding = '20px';
+    empty.textContent = t().historySearchNoResults || t().noHistory;
+    historyList.appendChild(empty);
+    if (!__isDetachedPanelWindow && !isBlockWindow) {
+      syncPinnedHistoryWindows(historySearchQuery);
     }
+    return;
+  }
+
+  entries.forEach((entry, index) => {
     const date = new Date(entry.timestamp);
     const timeStr = date.toLocaleString(currentLanguage === 'hu' ? 'hu-HU' : 'en-US', {
       month: 'short',
@@ -445,6 +536,7 @@ function renderHistory() {
       minute: '2-digit'
     });
     const imageIndicator = entry.hasImage ? '📸 ' : '';
+    const pinIndicator = pinnedSet.has(entry.timestamp) ? '📌 ' : '';
     const normalizedAnswer = (entry.answer || '').replace(/\s+/g, ' ').trim();
     const previewAnswer = normalizedAnswer.length > 140 ? `${normalizedAnswer.slice(0, 140)}…` : normalizedAnswer;
     const isExpanded = expandedHistoryKey === entry.timestamp;
@@ -456,7 +548,7 @@ function renderHistory() {
     const questionEl = document.createElement('div');
     questionEl.className = 'history-question';
     const questionStrong = document.createElement('strong');
-    questionStrong.textContent = `❓ ${imageIndicator}${entry.question}`;
+    questionStrong.textContent = `❓ ${pinIndicator}${imageIndicator}${entry.question}`;
     questionEl.appendChild(questionStrong);
 
     const previewEl = document.createElement('div');
@@ -630,14 +722,18 @@ function renderHistory() {
 
     on(item, 'click', () => {
       if (Date.now() < suppressClickUntil) return;
-      toggleHistoryItem(index);
+      toggleHistoryItem(entry.timestamp);
     });
     historyList.appendChild(item);
   });
+
+  if (!__isDetachedPanelWindow && !isBlockWindow) {
+    syncPinnedHistoryWindows(historySearchQuery);
+  }
 }
 
-function toggleHistoryItem(index) {
-  const entry = conversationHistory[index];
+function toggleHistoryItem(timestamp) {
+  const entry = getHistoryEntryByTimestamp(timestamp);
   if (!entry) return;
   expandedHistoryKey = expandedHistoryKey === entry.timestamp ? null : entry.timestamp;
   renderHistory();

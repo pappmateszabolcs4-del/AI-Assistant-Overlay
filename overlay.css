@@ -909,6 +909,49 @@
       opacity: 1;
     }
 
+    .history-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    #historySearchInput {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.3);
+      background: rgba(20, 24, 31, 0.85);
+      color: #f5f7fa;
+      font-size: 0.85em;
+    }
+
+    #historySearchInput::placeholder {
+      color: rgba(245, 247, 250, 0.5);
+    }
+
+    .history-search-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8em;
+      color: #c9d4ea;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .history-search-toggle input {
+      width: 14px;
+      height: 14px;
+    }
+
+    .history-search-meta {
+      font-size: 0.78em;
+      color: #8ba3c0;
+      margin-bottom: 8px;
+    }
+
     body.pulling-history, body.pulling-history * {
       user-select: none !important;
       -webkit-user-select: none !important;

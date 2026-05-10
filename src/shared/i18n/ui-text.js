@@ -70,6 +70,10 @@ const UI_TEXT = {
     historyHideDetails: 'Részletek elrejtése',
     historyPopupQuestion: '❓ Kérdés',
     historyPopupAnswer: '💬 Válasz',
+    historySearchPlaceholder: 'Keresés az előzményekben...',
+    historyPinnedOnlyLabel: 'Csak rögzítettek',
+    historySearchResults: 'Találat: {count}',
+    historySearchNoResults: 'Nincs találat',
     tabAsk: '💬 Kérdezz',
     tabHistory: '📜 Előzmények',
     tabSettings: '⚙️ Beállítások',
@@ -235,6 +239,10 @@ const UI_TEXT = {
     historyHideDetails: 'Hide details',
     historyPopupQuestion: '❓ Question',
     historyPopupAnswer: '💬 Answer',
+    historySearchPlaceholder: 'Search history...',
+    historyPinnedOnlyLabel: 'Pinned only',
+    historySearchResults: 'Results: {count}',
+    historySearchNoResults: 'No results',
     tabAsk: '💬 Ask',
     tabHistory: '📜 History',
     tabSettings: '⚙️ Settings',
@@ -400,6 +408,10 @@ const UI_TEXT = {
     historyHideDetails: 'Details ausblenden',
     historyPopupQuestion: '❓ Frage',
     historyPopupAnswer: '💬 Antwort',
+    historySearchPlaceholder: 'Verlauf durchsuchen...',
+    historyPinnedOnlyLabel: 'Nur angeheftete',
+    historySearchResults: 'Treffer: {count}',
+    historySearchNoResults: 'Keine Treffer',
     tabAsk: '💬 Fragen',
     tabHistory: '📜 Verlauf',
     tabSettings: '⚙️ Einstellungen',
@@ -565,6 +577,10 @@ const UI_TEXT = {
     historyHideDetails: 'Скрыть детали',
     historyPopupQuestion: '❓ Вопрос',
     historyPopupAnswer: '💬 Ответ',
+    historySearchPlaceholder: 'Поиск по истории...',
+    historyPinnedOnlyLabel: 'Только закрепленные',
+    historySearchResults: 'Найдено: {count}',
+    historySearchNoResults: 'Нет результатов',
     tabAsk: '💬 Спросить',
     tabHistory: '📜 История',
     tabSettings: '⚙️ Настройки',
@@ -730,6 +746,10 @@ const UI_TEXT = {
     historyHideDetails: 'Masquer les détails',
     historyPopupQuestion: '❓ Question',
     historyPopupAnswer: '💬 Réponse',
+    historySearchPlaceholder: 'Rechercher dans l’historique...',
+    historyPinnedOnlyLabel: 'Épinglées uniquement',
+    historySearchResults: 'Résultats : {count}',
+    historySearchNoResults: 'Aucun résultat',
     tabAsk: '💬 Demander',
     tabHistory: '📜 Historique',
     tabSettings: '⚙️ Paramètres',
@@ -895,6 +915,10 @@ const UI_TEXT = {
     historyHideDetails: '收起详情',
     historyPopupQuestion: '❓ 问题',
     historyPopupAnswer: '💬 回答',
+    historySearchPlaceholder: '搜索历史...',
+    historyPinnedOnlyLabel: '仅固定',
+    historySearchResults: '结果: {count}',
+    historySearchNoResults: '没有结果',
     tabAsk: '💬 提问',
     tabHistory: '📜 历史',
     tabSettings: '⚙️ 设置',
@@ -992,8 +1016,18 @@ const UI_TEXT = {
     confirmNo: '✕ 取消'
   },
   es: {},
-  it: {},
-  pl: {}
+  it: {
+    historySearchPlaceholder: 'Cerca nella cronologia...',
+    historyPinnedOnlyLabel: 'Solo fissati',
+    historySearchResults: 'Risultati: {count}',
+    historySearchNoResults: 'Nessun risultato'
+  },
+  pl: {
+    historySearchPlaceholder: 'Szukaj w historii...',
+    historyPinnedOnlyLabel: 'Tylko przypięte',
+    historySearchResults: 'Wyniki: {count}',
+    historySearchNoResults: 'Brak wyników'
+  }
 };
 
 function normalizeLang(lang) {

@@ -11,6 +11,7 @@ Last updated: 2026-05-10
 ## Recently completed
 
 - [x] Add volume control for TTS
+- [x] History search/filter with pinned-only toggle (overlay + block windows)
 - [x] Basic unit tests (3-5 critical paths)
 - [x] Reduce offline IGDB dataset size (minify/prune/gzip) without losing match quality
 - [x] Unify UI translation sources (overlay/index/detached/aux windows)
@@ -49,8 +50,6 @@ Last updated: 2026-05-10
   - Save/apply per detected game: layout mode, panel order (and optionally open/detached state)
 - [ ] Prompt templates per game
   - One-click question templates tailored to the detected game (e.g., "next steps", "build advice", "boss prep")
-- [ ] Pinned history search/filter
-  - Keyword search across history questions/answers; optional pinned-only filter
 - [ ] Hotkey customization UI
 - [ ] Accessibility keyboard navigation
 - [ ] Multi-account support

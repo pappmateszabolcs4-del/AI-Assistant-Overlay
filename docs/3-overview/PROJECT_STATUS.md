@@ -29,6 +29,7 @@ Recent work focused on “serious app” UX and game-safe behavior:
 Recent work focused on block layout and notes quality:
 - ✅ Block-based layout with detachable block windows (lightweight renderer).
 - ✅ History sync into block windows (localStorage + IPC bridge).
+- ✅ History search/filter with pinned-only toggle across overlay + block windows.
 - ✅ Notes upgraded to multiple entries with rename + pin.
 - ✅ Note preview and info panel behavior aligned with new UI.
 
@@ -78,6 +79,8 @@ Recent work focused on block layout and notes quality:
 - ✅ Russian (ru) - Professional translation
 - ✅ French (fr) - Professional translation
 - ✅ Chinese (zh) - Professional translation
+- ✅ Italian (it) - Professional translation
+- ✅ Polish (pl) - Professional translation
 
 ### Security & Privacy
 - ✅ API key management via OS Credential Manager (keytar)
