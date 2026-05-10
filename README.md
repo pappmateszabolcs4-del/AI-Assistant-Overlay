@@ -12,7 +12,7 @@ Electron-based desktop overlay assistant for video games on Windows. It detects 
 - **Block-based layout** with detachable block windows.
 - **Pinned history** and **note/info panels** as separate windows.
 - **Dynamic notes** with multiple named entries and pinned notes.
-- **Conversation history** stored in localStorage.
+- **Conversation history** stored in localStorage with search and pinned-only filtering.
 - **Hotkey support**: `Ctrl + Shift + K`.
 
 ---

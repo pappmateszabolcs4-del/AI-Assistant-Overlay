@@ -15,6 +15,7 @@ Modern Electron-based desktop application for gaming assistance with voice recog
 - 🎯 **Game Specialization Levels** - 1-5 detail levels for AI responses
 - 🧱 **Block Layout** - Movable blocks with detachable block windows
 - 📝 **Dynamic Notes** - Multiple notes with rename + pin
+- 🔎 **History Search** - Filter history with pinned-only toggle (overlay + block windows)
 
 ## How to run
 

@@ -14,6 +14,7 @@ App
 ## Key Capabilities
 - Overlay assistance with block-based layout and detachable block windows.
 - History, note, and info panels as separate movable windows.
+- History search/filter with pinned-only toggle (overlay + block windows).
 - Game context detection via active window and dataset matching.
 - Audio transcription via Whisper; image analysis via Vision.
 - Dynamic notes (multiple entries, rename + pin).
@@ -26,5 +27,5 @@ App
 
 ## Release Readiness
 - Core features complete.
-- Known issues documented.
-- Installer and signing remain.
+- Known issues documented in the TODO list.
+- Installer and signing remain (operational tasks).
