@@ -16,7 +16,8 @@ const registry = {
     overlayDetachGuardActive: false,
     overlayHideDuringLoad: false,
     overlayIgnoreMoveUntil: 0,
-    lastOverlayRaiseAt: 0
+    lastOverlayRaiseAt: 0,
+    overlayAppliedSavedPosition: false
   },
   game: {
     currentDetectedGame: null,
@@ -34,14 +35,18 @@ const registry = {
     detachedSelfHealTimer: null,
     detachedSelfHealUntil: 0,
     detachedPanelWindows: new Map(),
-    detachedPanelLastBounds: new Map()
+    detachedPanelLastBounds: new Map(),
+    detachedPanelPerfStarts: new Map()
   },
   pinned: {
-    pinnedHistoryWindows: new Map()
+    pinnedHistoryWindows: new Map(),
+    pinnedHistoryPerfStarts: new Map()
   },
   blocks: {
     detachedBlockWindows: new Map(),
-    blockLastBounds: new Map()
+    blockLastBounds: new Map(),
+    blockPerfStarts: new Map(),
+    blockPrewarmStarted: false
   },
   note: {
     notePanelWin: null,

@@ -19,6 +19,38 @@
   const blockId = (params.get('block') || '').toLowerCase();
   if (!blockId) return;
 
+  function logBlockPerf(event, extra) {
+    try {
+      fireAndForget(IPC_CHANNELS.OVERLAY_PERF_SAMPLE, {
+        event,
+        role: 'block',
+        blockId,
+        ...extra
+      });
+    } catch (_) {}
+  }
+
+  logBlockPerf('block-renderer-init');
+
+  try {
+    window.addEventListener('error', (ev) => {
+      const msg = ev && ev.message ? String(ev.message) : 'error';
+      logBlockPerf('block-renderer-error', {
+        message: msg,
+        filename: ev && ev.filename ? String(ev.filename) : null,
+        lineno: ev && typeof ev.lineno === 'number' ? ev.lineno : null,
+        colno: ev && typeof ev.colno === 'number' ? ev.colno : null
+      });
+    });
+    window.addEventListener('unhandledrejection', (ev) => {
+      let reason = null;
+      try {
+        reason = ev && ev.reason ? String(ev.reason) : null;
+      } catch (_) {}
+      logBlockPerf('block-renderer-rejection', { reason });
+    });
+  } catch (_) {}
+
   const BLOCK_LAYOUTS_KEY = STORAGE_KEYS.BLOCK_LAYOUTS;
   const BLOCK_FREE_LAYOUT_KEY = STORAGE_KEYS.BLOCK_FREE_LAYOUT;
   const LEGACY_FREE_LAYOUT_KEY = 'overlayWidgetCompositionMode';
@@ -127,7 +159,8 @@
     return true;
   }
 
-  const blockEl = document.querySelector(`.block-item[data-block-id="${blockId}"]`);
+  let blockEl = null;
+  let blockAttached = false;
 
   const shell = document.createElement('div');
   shell.className = 'block-window';
@@ -155,18 +188,65 @@
   const body = document.createElement('div');
   body.className = 'block-window-body';
 
-  if (blockEl) {
-    blockEl.classList.remove('block-hidden');
-    body.appendChild(blockEl);
-  } else {
-    const fallback = document.createElement('div');
-    fallback.textContent = `Missing block: ${blockId}`;
-    body.appendChild(fallback);
+  function attachBlock() {
+    if (blockAttached) return;
+    blockEl = document.querySelector(`.block-item[data-block-id="${blockId}"]`);
+    if (blockEl) {
+      blockEl.classList.remove('block-hidden');
+      body.appendChild(blockEl);
+    } else {
+      const fallback = document.createElement('div');
+      fallback.textContent = `Missing block: ${blockId}`;
+      body.appendChild(fallback);
+    }
+    title.textContent = getBlockTitle(blockEl);
+    blockAttached = true;
+    logBlockPerf('block-renderer-attach', { hasBlock: !!blockEl });
+  }
+
+  function signalReady() {
+    logBlockPerf('block-renderer-ready');
+    try { ipcRenderer.send(IPC_CHANNELS.BLOCK_WINDOW_READY, { blockId }); } catch (_) {}
+  }
+
+  function attachAndSignalReady() {
+    attachBlock();
+    try {
+      if (document.visibilityState === 'visible') {
+        setTimeout(signalReady, 0);
+      } else {
+        signalReady();
+      }
+    } catch (_) {
+      signalReady();
+    }
   }
 
   shell.appendChild(header);
   shell.appendChild(body);
   document.body.appendChild(shell);
+
+  // Failsafe: if the open event is missed, attach and signal ready anyway.
+  try {
+    requestAnimationFrame(() => {
+      if (!blockAttached) {
+        logBlockPerf('block-renderer-failsafe');
+        attachAndSignalReady();
+      }
+    });
+  } catch (_) {
+    if (!blockAttached) {
+      logBlockPerf('block-renderer-failsafe');
+      attachAndSignalReady();
+    }
+  }
+
+  ipcRenderer.on(IPC_CHANNELS.BLOCK_WINDOW_OPEN, (_event, payload) => {
+    const pid = payload && payload.blockId ? String(payload.blockId).trim().toLowerCase() : '';
+    if (pid && pid !== blockId) return;
+    logBlockPerf('block-renderer-open');
+    attachAndSignalReady();
+  });
 
   const resizeRight = document.createElement('div');
   resizeRight.className = 'block-resize-handle block-resize-handle-right';

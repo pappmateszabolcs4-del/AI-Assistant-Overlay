@@ -57,6 +57,7 @@ const IPC_CHANNELS = {
   OVERLAY_LAYOUT_SET: 'overlay-layout-set',
   OVERLAY_LAYOUT_UPDATED: 'overlay-layout-updated',
   OVERLAY_BOUNDS_UPDATED: 'overlay-bounds-updated',
+  OVERLAY_PERF_SAMPLE: 'overlay-perf-sample',
   GET_GAME_CONTEXT: 'get-game-context',
   SET_AUTO_START: 'set-auto-start',
   GET_AUTO_START: 'get-auto-start',
@@ -75,11 +76,14 @@ const IPC_CHANNELS = {
   BLOCK_WINDOW_CLOSE: 'block-window-close',
   BLOCK_WINDOW_MOVE: 'block-window-move',
   BLOCK_WINDOW_SET_BOUNDS: 'block-window-set-bounds',
+  BLOCK_WINDOW_READY: 'block-window-ready',
   BLOCK_WINDOW_DROP_TARGET: 'block-window-drop-target',
   BLOCK_WINDOW_DROP_PREVIEW: 'block-window-drop-preview',
   REQUEST_BLOCK_DROP_RECTS: 'request-block-drop-rects',
   RESPONSE_BLOCK_DROP_RECTS: 'response-block-drop-rects',
-  CLEANUP_OVERLAY: 'cleanup-overlay'
+  CLEANUP_OVERLAY: 'cleanup-overlay',
+  HISTORY_GET: 'history-get',
+  HISTORY_SET: 'history-set'
 };
 
 module.exports = {

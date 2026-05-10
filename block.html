@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Block</title>
+  <link rel="stylesheet" href="overlay.css">
+</head>
+<body>
+  <div id="block-root"></div>
+  <div id="pinnedSections" style="display: none;"></div>
+
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal-content">
+      <div class="modal-title" id="modalTitle">⚠️ Megerősítés</div>
+      <div class="modal-message" id="modalMessage"></div>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-cancel" id="modalCancel">Mégse</button>
+        <button class="modal-btn modal-btn-confirm" id="modalConfirm">Törlés</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./src/renderer/overlay/ipc-helpers.js"></script>
+  <script src="./src/renderer/overlay/boot.js"></script>
+  <script src="./src/renderer/overlay/translations.js"></script>
+  <script src="./src/renderer/overlay/history.js"></script>
+  <script src="./src/renderer/overlay/block-app.js"></script>
+  <script src="./src/renderer/overlay/blocks-window.js"></script>
+</body>
+</html>

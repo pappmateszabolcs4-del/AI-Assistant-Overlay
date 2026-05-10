@@ -63,6 +63,7 @@ function registerPinnedIpc(deps) {
       try { w.destroy(); } catch (_) {}
     }
     pinned.pinnedHistoryWindows.delete(key);
+    pinned.pinnedHistoryPerfStarts.delete(key);
     return { success: true };
   });
 
@@ -146,6 +147,7 @@ function registerPinnedIpc(deps) {
     if (shouldUnpin && Number.isFinite(ts)) {
       try { w.destroy(); } catch (_) {}
       pinned.pinnedHistoryWindows.delete(ts);
+      pinned.pinnedHistoryPerfStarts.delete(ts);
       if (core.overlayWin && !core.overlayWin.isDestroyed()) {
         core.overlayWin.webContents.send(IPC_CHANNELS.PINNED_HISTORY_UNPINNED, { ts });
       }

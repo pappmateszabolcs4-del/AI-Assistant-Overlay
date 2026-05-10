@@ -132,7 +132,7 @@ if (!__isDetachedPanelWindow) {
       // Use scrollHeight (not client-rect) and keep the extra padding small.
       // This avoids the ~88px floor caused by min-height(80) + fudge(8).
       const measured = Math.max(60, Math.round((container.scrollHeight || container.getBoundingClientRect().height) + 2));
-      sendOverlayResizeBatched({ height: measured });
+      sendOverlayResizeBatched({ height: measured, __debug: { reason: 'header-only-resize' } });
     });
   }
 
@@ -145,11 +145,12 @@ if (!__isDetachedPanelWindow) {
       // Use scrollHeight so we measure the full layout height even if the
       // current BrowserWindow is still small (otherwise we get a clipped "sliver").
       const measured = Math.max(110, Math.round((container.scrollHeight || container.getBoundingClientRect().height) + 8));
-      sendOverlayResizeBatched({ height: measured });
+      sendOverlayResizeBatched({ height: measured, __debug: { reason: 'dock-preview-resize' } });
     });
   }
 
   function updateHeaderOnlyMode() {
+    if (isDetachGestureActive) return;
     const should = areAllPanelsDetached();
     const preview = !!(dockPreviewActive && should);
 
@@ -180,7 +181,7 @@ if (!__isDetachedPanelWindow) {
       document.body.classList.remove('header-only');
       const restore = Math.max(200, Math.round(headerOnlyPrevHeight || 500));
       headerOnlyPrevHeight = null;
-      sendOverlayResizeBatched({ height: restore });
+      sendOverlayResizeBatched({ height: restore, __debug: { reason: 'header-only-restore' } });
     }
   }
 

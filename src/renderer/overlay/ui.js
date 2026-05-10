@@ -1060,14 +1060,44 @@ function updateOverlayText() {
   if (notePanelLabel) notePanelLabel.textContent = t().notePanelBtn || notePanelLabel.textContent;
   const compositionModeLabel = document.getElementById('compositionModeLabel');
   if (compositionModeLabel) compositionModeLabel.textContent = t().compositionModeLabel || compositionModeLabel.textContent;
+  const perfHudLabel = document.getElementById('perfHudLabel');
+  if (perfHudLabel) perfHudLabel.textContent = t().perfHudLabel || perfHudLabel.textContent;
   document.getElementById('resetLayoutBtn').textContent = t().resetLayout;
   const notePanelBtn = document.getElementById('notePanelBtn');
-  if (notePanelBtn) notePanelBtn.textContent = t().notePanelBtn || '📝 Note panel';
+  if (notePanelBtn) notePanelBtn.textContent = t().notePanelEdit || t().notePanelBtn || '✏️ Edit';
+  updateNotePanelPreview();
+  try { window.__updatePerfHudLabel && window.__updatePerfHudLabel(); } catch (_) {}
   updateLayoutToggleText();
   updatePlaceholder();
   renderHistory(); // Re-render history with new language
   updatePinnedUI();
   syncPinnedHistoryWindows();
+}
+
+function updateNotePanelPreview() {
+  const notePanelPreview = document.getElementById('notePanelPreview');
+  if (!notePanelPreview) return;
+  let text = '';
+  try {
+    const rawList = localStorage.getItem(STORAGE_KEYS.NOTES_LIST);
+    const list = rawList ? JSON.parse(rawList) : [];
+    const activeId = localStorage.getItem(STORAGE_KEYS.NOTES_ACTIVE_ID);
+    if (Array.isArray(list) && list.length) {
+      const active = list.find((note) => note && note.id === activeId) || list[0];
+      text = active && typeof active.content === 'string' ? active.content : '';
+    } else {
+      text = localStorage.getItem(STORAGE_KEYS.NOTE_PANEL_TEXT) || '';
+    }
+  } catch (_) {
+    text = '';
+  }
+  if (text && text.trim()) {
+    notePanelPreview.textContent = text;
+    notePanelPreview.classList.remove('is-empty');
+  } else {
+    notePanelPreview.textContent = t().notePanelPlaceholder || '';
+    notePanelPreview.classList.add('is-empty');
+  }
 }
 
 function readSpeechRateSetting() {
@@ -1483,6 +1513,13 @@ window.clearAllData = function() {
 // the main overlay can "jump" to the detached window position after Ctrl+R/reset.
 
 let suppressOverlayPositionPersistence = false;
+let pendingApplySavedPosition = 0;
+let overlayPositionTouched = false;
+let applySavedStartedAt = 0;
+
+window.__markOverlayPositionTouched = function __markOverlayPositionTouched() {
+  overlayPositionTouched = true;
+};
 
 function suppressOverlayPositionPersistenceNow() {
   suppressOverlayPositionPersistence = true;
@@ -1490,6 +1527,17 @@ function suppressOverlayPositionPersistenceNow() {
 
 function applySavedOverlayPosition() {
   if (__isDetachedPanelWindow) return;
+  if (overlayPositionTouched) return;
+  const now = Date.now();
+  if (!applySavedStartedAt) applySavedStartedAt = now;
+  if (now - applySavedStartedAt > 1200) return;
+  if (typeof __bootingMainOverlay !== 'undefined' && __bootingMainOverlay) {
+    if (pendingApplySavedPosition < 5) {
+      pendingApplySavedPosition += 1;
+      setTimeout(applySavedOverlayPosition, 200);
+    }
+    return;
+  }
   const rawX = localStorage.getItem(STORAGE_KEYS.OVERLAY_POSITION_X);
   const rawY = localStorage.getItem(STORAGE_KEYS.OVERLAY_POSITION_Y);
   if (rawX === null || rawY === null) return;
@@ -1501,13 +1549,11 @@ function applySavedOverlayPosition() {
     const clampedX = Math.min(Math.max(savedX, 0), Math.max(0, viewportWidth - window.innerWidth));
     const clampedY = Math.min(Math.max(savedY, 0), Math.max(0, viewportHeight - window.innerHeight));
     // Apply immediately so the window doesn't visibly "jump" after showing.
-    sendOverlayResizeBatched({ x: clampedX, y: clampedY });
+    sendOverlayResizeBatched({ x: clampedX, y: clampedY, __debug: { reason: 'apply-saved-position' } });
   }
 }
 
-if (!__isDetachedPanelWindow) {
-  applySavedOverlayPosition();
-}
+// Saved overlay position is applied once by the main process on load.
 
 let lastWindowX = window.screenX;
 let lastWindowY = window.screenY;
@@ -1547,6 +1593,12 @@ if (notePanelBtn) {
     });
   });
 }
+
+window.addEventListener('storage', (ev) => {
+  if (!ev) return;
+  if (ev.key !== STORAGE_KEYS.NOTE_PANEL_TEXT && ev.key !== STORAGE_KEYS.NOTES_LIST && ev.key !== STORAGE_KEYS.NOTES_ACTIVE_ID) return;
+  updateNotePanelPreview();
+});
 
 // Reset layout function
 const resetLayoutBtn = document.getElementById('resetLayoutBtn');
@@ -1594,6 +1646,9 @@ on(resetLayoutBtn, 'click', () => {
       localStorage.removeItem(STORAGE_KEYS.PINNED_TABS);
       localStorage.removeItem(PINNED_HISTORY_KEY);
       localStorage.removeItem(NOTE_PANEL_BOUNDS_KEY);
+      localStorage.removeItem(STORAGE_KEYS.BLOCK_LAYOUTS);
+      localStorage.removeItem(STORAGE_KEYS.BLOCK_FREE_LAYOUT);
+      localStorage.removeItem('overlayWidgetCompositionMode');
 
       // Unpin all tabs
       pinnedTabs.clear();
@@ -1603,6 +1658,17 @@ on(resetLayoutBtn, 'click', () => {
       fireAndForget(IPC_CHANNELS.PINNED_HISTORY_CLOSE_ALL);
       fireAndForget(IPC_CHANNELS.NOTE_PANEL_CLOSE);
       fireAndForget(IPC_CHANNELS.DETACHED_PANEL_CLOSE_ALL);
+      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'ask-main' });
+      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'history-list' });
+      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'history-actions' });
+      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'spec' });
+      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'tts' });
+      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'data' });
+      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'game-ignore' });
+      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'layout' });
+      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'note' });
+      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'free-layout' });
+      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'version' });
 
       // Send reset position to main process
       fireAndForget(IPC_CHANNELS.WINDOW_ACTION, 'reset-position');

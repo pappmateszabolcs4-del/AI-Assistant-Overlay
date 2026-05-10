@@ -39,6 +39,7 @@ function createIpcRegistrar(deps) {
     createBlockWindow,
     closeBlockWindow,
     updateBlockWindowBounds,
+      markBlockWindowReady,
     closeAllDetachedPanelWindows,
     closeAllPinnedHistoryWindows,
     closeAllBlockWindows,
@@ -316,6 +317,7 @@ function createIpcRegistrar(deps) {
       createBlockWindow,
       closeBlockWindow,
       updateBlockWindowBounds,
+      markBlockWindowReady,
       getBlockDropTargetPanelIdAtScreenPoint
     });
 

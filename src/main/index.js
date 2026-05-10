@@ -138,7 +138,9 @@ const {
   closeAllBlockWindows,
   createBlockWindow,
   closeBlockWindow,
-  updateBlockWindowBounds
+  updateBlockWindowBounds,
+  prewarmBlockWindows,
+  markBlockWindowReady
 } = blockWindows;
 
 const overlayManager = createOverlayManager({
@@ -150,6 +152,7 @@ const overlayManager = createOverlayManager({
   bringDetachedPanelWindowsToFront,
   bringPinnedHistoryWindowsToFront,
   bringBlockWindowsToFront,
+  prewarmBlockWindows,
   closeAllPinnedHistoryWindows,
   closeAllDetachedPanelWindows,
   closeAllBlockWindows,
@@ -162,6 +165,7 @@ const overlayManager = createOverlayManager({
 const mainWindowManager = createMainWindowManager({
   registry,
   BrowserWindow,
+  closeAllPinnedHistoryWindows,
   closeAllDetachedPanelWindows,
   closeAllBlockWindows,
   notePanel
@@ -242,7 +246,8 @@ const ipcRegistrar = createIpcRegistrar({
   isCursorInsideOverlayChildWindow,
   stopOverlayMouseForwardGate,
   startOverlayMouseForwardGate,
-  createOverlayWindow
+  createOverlayWindow,
+  markBlockWindowReady
 });
 
 const { registerIpcHandlers } = ipcRegistrar;

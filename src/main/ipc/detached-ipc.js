@@ -1,4 +1,5 @@
 const { IPC_CHANNELS } = require('../../shared/ipc-channels');
+const { appendOverlayPerf } = require('../utils/overlay-perf-log');
 
 function registerDetachedIpc(deps) {
   const {
@@ -20,6 +21,17 @@ function registerDetachedIpc(deps) {
 
   ipcMain.handle(IPC_CHANNELS.DETACHED_PANEL_OPEN, async (_event, payload) => {
     try {
+      const pid = normalizePanelId(payload && payload.panelId);
+      if (pid && !(payload && payload.prewarm)) {
+        detached.detachedPanelPerfStarts.set(pid, Date.now());
+        try {
+          appendOverlayPerf({
+            t: new Date().toISOString(),
+            event: 'detached-open',
+            panelId: pid
+          });
+        } catch (_) {}
+      }
       createDetachedPanelWindow(payload || {});
       sendDetachedPanelsStateToOverlay();
       return { success: true };
@@ -94,6 +106,17 @@ function registerDetachedIpc(deps) {
       } catch (_) {}
       w.__detachedCreatedAt = null;
     }
+
+    try {
+      const startedAt = detached.detachedPanelPerfStarts.get(pid) || null;
+      const dtMs = startedAt ? Math.max(0, Date.now() - startedAt) : null;
+      appendOverlayPerf({
+        t: new Date().toISOString(),
+        event: 'detached-ready',
+        panelId: pid,
+        dtMs
+      });
+    } catch (_) {}
   });
 
   // While dragging a detached panel back to dock, temporarily show docking targets in the main overlay.

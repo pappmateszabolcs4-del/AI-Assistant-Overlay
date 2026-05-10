@@ -18,10 +18,12 @@ const UI_TEXT = {
     infoTitle: 'ℹ️ Infó',
     infoBody: '• Hotkey: Ctrl+Shift+K – overlay megnyit/zár\n' +
       '• Mozgatás: húzd a felső Ablak mozgatása sávot\n' +
-      '• Panelek: Külön ablak → külön ablak; visszadokkolás: Dokkolás vagy húzd vissza a fő overlay tetejére\n' +
+      '• Blokkok: húzd a blokkokat panelek között vagy külön ablakba\n' +
+      '• Jegyzetek: több jegyzet, átnevezés + rögzítés; választás legördülőből\n' +
+      '• Panelek: Info/Jegyzet/Előzmények külön ablak; visszadokkolás: Dokkolás vagy húzd a fő overlay tetejére\n' +
       '• Mikrofon: Whisper (OpenAI) – többnyelvű; a hang az API-n keresztül kerül feldolgozásra\n' +
       '• Screenshot: csatolj képet → Vision elemzés\n' +
-      '• Adatok: előzmények localStorage-ben; a törlés gombok eltávolítják',
+      '• Adatok: előzmények/jegyzetek localStorage-ben; a törlés gombok eltávolítják',
     mic: '🎤 Mikrofon',
     micBtn: '🎤 Mikrofon',
     micBtnStop: '⏹️ Leállítás',
@@ -86,11 +88,27 @@ const UI_TEXT = {
     layoutCompact: 'Kompakt (2+1)',
     layoutStacked: 'Stackelt',
     compositionModeLabel: 'Composition mód (szabad keverés)',
+    perfHudLabel: '⚡ Overlay teljesítmény HUD',
     pinnedLimitReached: '⚠️ Maximum 3 fixált doboz lehet egyszerre.',
     pinnedHistoryTitle: '📌 Fixált előzmény',
     notePanelBtn: '📝 Jegyzet panel',
+    notePanelEdit: '✏️ Szerkesztés',
     notePanelTitle: '📝 Jegyzet',
     notePanelPlaceholder: 'Írj ide jegyzetet...',
+    notePanelSelectLabel: 'Jegyzet:',
+    notePanelNew: '➕ Új',
+    notePanelRename: '✏️ Átnevezés',
+    notePanelDelete: '🗑️ Törlés',
+    notePanelPinnedGroup: '📌 Rögzítve',
+    notePanelAllGroup: '📄 Jegyzetek',
+    notePanelSearchPlaceholder: 'Keresés jegyzetekben...',
+    notePanelDefaultTitle: 'Jegyzet',
+    notePanelStatusSaved: 'Mentve',
+    notePanelStatusSaving: 'Mentés...',
+    notePanelUpdatedLabel: 'Utolsó módosítás:',
+    notePanelDeleteConfirm: 'Biztosan törlöd ezt a jegyzetet?',
+    notePanelPin: '📌 Rögzítés',
+    notePanelUnpin: '📌 Rögzítés feloldása',
     responseReady: '✅ Válasz megérkezett',
     genericErrorPrefix: '❌ Hiba: ',
     apiErrorPrefix: '❌ API hiba: ',
@@ -164,11 +182,13 @@ const UI_TEXT = {
     infoBtnTitle: 'ℹ️ Info',
     infoTitle: 'ℹ️ Info',
     infoBody: '• Hotkey: Ctrl+Shift+K – open/close the overlay\n' +
-      '• Move: drag the top Move overlay pill\n' +
-      '• Panels: use Detach to open a separate window; re-dock via Dock or drag back to the top of the main overlay\n' +
+      '• Move: drag the top Move overlay handle\n' +
+      '• Blocks: drag blocks between panels or detach to block windows\n' +
+      '• Notes: multiple notes with rename + pin; select from the dropdown\n' +
+      '• Panels: Info/Note/History can be separate windows; re-dock via Dock or drag to the top of the main overlay\n' +
       '• Microphone: Whisper (OpenAI) – multi-language; audio is processed via the API\n' +
       '• Screenshot: attach an image → Vision analysis\n' +
-      '• Data: history is stored in localStorage; clear buttons remove it',
+      '• Data: history/notes are stored in localStorage; clear buttons remove them',
     mic: '🎤 Microphone',
     micBtn: '🎤 Microphone',
     micBtnStop: '⏹️ Stop',
@@ -233,11 +253,27 @@ const UI_TEXT = {
     layoutCompact: 'Compact (2+1)',
     layoutStacked: 'Stacked',
     compositionModeLabel: 'Composition mode (free mixing)',
+    perfHudLabel: '⚡ Overlay performance HUD',
     pinnedLimitReached: '⚠️ Max 3 pinned boxes at once.',
     pinnedHistoryTitle: '📌 Pinned history',
     notePanelBtn: '📝 Note panel',
+    notePanelEdit: '✏️ Edit',
     notePanelTitle: '📝 Note',
     notePanelPlaceholder: 'Write a note...',
+    notePanelSelectLabel: 'Note:',
+    notePanelNew: '➕ New',
+    notePanelRename: '✏️ Rename',
+    notePanelDelete: '🗑️ Delete',
+    notePanelPinnedGroup: '📌 Pinned',
+    notePanelAllGroup: '📄 Notes',
+    notePanelSearchPlaceholder: 'Search notes...',
+    notePanelDefaultTitle: 'Note',
+    notePanelStatusSaved: 'Saved',
+    notePanelStatusSaving: 'Saving...',
+    notePanelUpdatedLabel: 'Last updated:',
+    notePanelDeleteConfirm: 'Are you sure you want to delete this note?',
+    notePanelPin: '📌 Pin',
+    notePanelUnpin: '📌 Unpin',
     responseReady: '✅ Answer received',
     genericErrorPrefix: '❌ Error: ',
     apiErrorPrefix: '❌ API error: ',
@@ -311,11 +347,13 @@ const UI_TEXT = {
     infoBtnTitle: 'ℹ️ Info',
     infoTitle: 'ℹ️ Info',
     infoBody: '• Hotkey: Ctrl+Shift+K – Overlay öffnen/schließen\n' +
-      '• Bewegen: am oberen Move overlay-Pill ziehen\n' +
-      '• Panels: Detach öffnet ein separates Fenster; zurück via Dock oder oben ins Haupt-Overlay ziehen\n' +
+      '• Bewegen: am oberen Move-Overlay-Griff ziehen\n' +
+      '• Blöcke: zwischen Panels ziehen oder als Block-Fenster abkoppeln\n' +
+      '• Notizen: mehrere Notizen mit Umbenennen + Anheften; Auswahl im Dropdown\n' +
+      '• Panels: Info/Notiz/Verlauf als separate Fenster; zurück via Dock oder oben ins Haupt-Overlay ziehen\n' +
       '• Mikrofon: Whisper (OpenAI) – mehrsprachig; Audio wird über die API verarbeitet\n' +
       '• Screenshot: Bild anhängen → Vision-Analyse\n' +
-      '• Daten: Verlauf in localStorage; Lösch-Buttons entfernen ihn',
+      '• Daten: Verlauf/Notizen in localStorage; Lösch-Buttons entfernen sie',
     mic: '🎤 Mikrofon',
     micBtn: '🎙️ Mikrofon',
     micBtnStop: '⏹️ Stopp',
@@ -380,11 +418,27 @@ const UI_TEXT = {
     layoutCompact: 'Kompakt (2+1)',
     layoutStacked: 'Gestapelt',
     compositionModeLabel: 'Kompositionsmodus (freies Mischen)',
+    perfHudLabel: '⚡ Overlay-Performance HUD',
     pinnedLimitReached: '⚠️ Maximal 3 angeheftete Boxen gleichzeitig.',
     pinnedHistoryTitle: '📌 Angehefteter Verlauf',
     notePanelBtn: '📝 Notizfeld',
+    notePanelEdit: '✏️ Bearbeiten',
     notePanelTitle: '📝 Notiz',
     notePanelPlaceholder: 'Notiz schreiben...',
+    notePanelSelectLabel: 'Notiz:',
+    notePanelNew: '➕ Neu',
+    notePanelRename: '✏️ Umbenennen',
+    notePanelDelete: '🗑️ Löschen',
+    notePanelPinnedGroup: '📌 Angeheftet',
+    notePanelAllGroup: '📄 Notizen',
+    notePanelSearchPlaceholder: 'Notizen durchsuchen...',
+    notePanelDefaultTitle: 'Notiz',
+    notePanelStatusSaved: 'Gespeichert',
+    notePanelStatusSaving: 'Speichern...',
+    notePanelUpdatedLabel: 'Zuletzt geändert:',
+    notePanelDeleteConfirm: 'Möchten Sie diese Notiz wirklich löschen?',
+    notePanelPin: '📌 Anheften',
+    notePanelUnpin: '📌 Lösen',
     responseReady: '✅ Antwort eingetroffen',
     genericErrorPrefix: '❌ Fehler: ',
     apiErrorPrefix: '❌ API-Fehler: ',
@@ -458,11 +512,13 @@ const UI_TEXT = {
     infoBtnTitle: 'ℹ️ Инфо',
     infoTitle: 'ℹ️ Инфо',
     infoBody: '• Горячая клавиша: Ctrl+Shift+K — открыть/закрыть оверлей\n' +
-      '• Перемещение: перетащите верхнюю плашку Move overlay\n' +
-      '• Панели: Detach — отдельное окно; обратно через Dock или перетащите к верхней части основного оверлея\n' +
+      '• Перемещение: перетащите верхнюю ручку Move overlay\n' +
+      '• Блоки: перетаскивайте между панелями или отделяйте в блок‑окна\n' +
+      '• Заметки: несколько заметок с переименованием и закреплением; выбор в списке\n' +
+      '• Панели: Инфо/Заметки/История — отдельные окна; вернуть через Dock или перетащить наверх оверлея\n' +
       '• Микрофон: Whisper (OpenAI) — многоязычно; аудио обрабатывается через API\n' +
-      '• Скриншот: прикрепите изображение → Vision-анализ\n' +
-      '• Данные: история хранится в localStorage; кнопки очистки удаляют её',
+      '• Скриншот: прикрепите изображение → Vision‑анализ\n' +
+      '• Данные: история/заметки в localStorage; кнопки очистки удаляют их',
     mic: '🎤 Микрофон',
     micBtn: '🎙️ Микрофон',
     micBtnStop: '⏹️ Стоп',
@@ -527,11 +583,27 @@ const UI_TEXT = {
     layoutCompact: 'Компактно (2+1)',
     layoutStacked: 'Стеком',
     compositionModeLabel: 'Композиционный режим (свободное смешение)',
+    perfHudLabel: '⚡ HUD производительности оверлея',
     pinnedLimitReached: '⚠️ Максимум 3 закреплённых блока одновременно.',
     pinnedHistoryTitle: '📌 Закреплённая история',
     notePanelBtn: '📝 Заметка',
+    notePanelEdit: '✏️ Редактировать',
     notePanelTitle: '📝 Заметка',
     notePanelPlaceholder: 'Напишите заметку...',
+    notePanelSelectLabel: 'Заметка:',
+    notePanelNew: '➕ Новая',
+    notePanelRename: '✏️ Переименовать',
+    notePanelDelete: '🗑️ Удалить',
+    notePanelPinnedGroup: '📌 Закреплённые',
+    notePanelAllGroup: '📄 Заметки',
+    notePanelSearchPlaceholder: 'Поиск заметок...',
+    notePanelDefaultTitle: 'Заметка',
+    notePanelStatusSaved: 'Сохранено',
+    notePanelStatusSaving: 'Сохранение...',
+    notePanelUpdatedLabel: 'Последнее изменение:',
+    notePanelDeleteConfirm: 'Удалить эту заметку?',
+    notePanelPin: '📌 Закрепить',
+    notePanelUnpin: '📌 Открепить',
     responseReady: '✅ Ответ получен',
     genericErrorPrefix: '❌ Ошибка: ',
     apiErrorPrefix: '❌ Ошибка API: ',
@@ -605,11 +677,13 @@ const UI_TEXT = {
     infoBtnTitle: 'ℹ️ Info',
     infoTitle: 'ℹ️ Info',
     infoBody: '• Raccourci : Ctrl+Shift+K — ouvrir/fermer l\'overlay\n' +
-      '• Déplacer : faites glisser la pastille Move overlay\n' +
-      '• Panneaux : Detach ouvre une fenêtre séparée ; retour via Dock ou en glissant en haut de l\'overlay principal\n' +
+      '• Déplacer : faites glisser la poignée Move overlay\n' +
+      '• Blocs : déplacer entre panneaux ou détacher en fenêtres de bloc\n' +
+      '• Notes : plusieurs notes, renommage + épinglage ; sélection via la liste\n' +
+      '• Panneaux : Info/Note/Historique en fenêtres séparées ; retour via Dock ou glisser en haut de l\'overlay\n' +
       '• Micro : Whisper (OpenAI) — multi-langues ; l\'audio est traité via l\'API\n' +
       '• Screenshot : joindre une image → analyse Vision\n' +
-      '• Données : l\'historique est dans localStorage ; les boutons de suppression l\'effacent',
+      '• Données : historique/notes dans localStorage ; les boutons de suppression effacent',
     mic: '🎤 Micro',
     micBtn: '🎙️ Microphone',
     micBtnStop: '⏹️ Arrêter',
@@ -674,11 +748,27 @@ const UI_TEXT = {
     layoutCompact: 'Compact (2+1)',
     layoutStacked: 'Empilé',
     compositionModeLabel: 'Mode composition (mix libre)',
+    perfHudLabel: '⚡ HUD performance de l’overlay',
     pinnedLimitReached: '⚠️ Maximum 3 boîtes épinglées à la fois.',
     pinnedHistoryTitle: '📌 Historique épinglé',
     notePanelBtn: '📝 Notes',
+    notePanelEdit: '✏️ Modifier',
     notePanelTitle: '📝 Note',
     notePanelPlaceholder: 'Écrivez une note...',
+    notePanelSelectLabel: 'Note :',
+    notePanelNew: '➕ Nouvelle',
+    notePanelRename: '✏️ Renommer',
+    notePanelDelete: '🗑️ Supprimer',
+    notePanelPinnedGroup: '📌 Épinglées',
+    notePanelAllGroup: '📄 Notes',
+    notePanelSearchPlaceholder: 'Rechercher des notes...',
+    notePanelDefaultTitle: 'Note',
+    notePanelStatusSaved: 'Enregistré',
+    notePanelStatusSaving: 'Enregistrement...',
+    notePanelUpdatedLabel: 'Dernière modification :',
+    notePanelDeleteConfirm: 'Supprimer cette note ?',
+    notePanelPin: '📌 Épingler',
+    notePanelUnpin: '📌 Désépingler',
     responseReady: '✅ Réponse reçue',
     genericErrorPrefix: '❌ Erreur: ',
     apiErrorPrefix: '❌ Erreur API: ',
@@ -752,11 +842,13 @@ const UI_TEXT = {
     infoBtnTitle: 'ℹ️ 信息',
     infoTitle: 'ℹ️ 信息',
     infoBody: '• 热键：Ctrl+Shift+K — 打开/关闭覆盖层\n' +
-      '• 移动：拖动顶部 Move overlay\n' +
-      '• 面板：使用 Detach 分离为独立窗口；通过 Dock 或拖回主覆盖层顶部重新停靠\n' +
+      '• 移动：拖动顶部 Move overlay 手柄\n' +
+      '• 区块：在面板间拖拽或分离为区块窗口\n' +
+      '• 便笺：多条便笺，可重命名 + 固定；在下拉列表中选择\n' +
+      '• 面板：信息/便笺/历史为独立窗口；通过 Dock 或拖回覆盖层顶部停靠\n' +
       '• 麦克风：Whisper（OpenAI）— 多语言；音频通过 API 处理\n' +
       '• 截图：附加图片 → Vision 分析\n' +
-      '• 数据：历史记录存储在 localStorage；清除按钮会删除',
+      '• 数据：历史/便笺保存在 localStorage；清除按钮会删除',
     mic: '🎤 麦克风',
     micBtn: '🎙️ 麦克风',
     micBtnStop: '⏹️ 停止',
@@ -821,11 +913,27 @@ const UI_TEXT = {
     layoutCompact: '紧凑 (2+1)',
     layoutStacked: '堆叠',
     compositionModeLabel: '组合模式（自由混合）',
+    perfHudLabel: '⚡ 叠加层性能 HUD',
     pinnedLimitReached: '⚠️ 最多同时固定 3 个盒子。',
     pinnedHistoryTitle: '📌 固定历史',
     notePanelBtn: '📝 便笺',
+    notePanelEdit: '✏️ 编辑',
     notePanelTitle: '📝 便笺',
     notePanelPlaceholder: '写下笔记...',
+    notePanelSelectLabel: '便笺：',
+    notePanelNew: '➕ 新建',
+    notePanelRename: '✏️ 重命名',
+    notePanelDelete: '🗑️ 删除',
+    notePanelPinnedGroup: '📌 已固定',
+    notePanelAllGroup: '📄 便笺',
+    notePanelSearchPlaceholder: '搜索便笺...',
+    notePanelDefaultTitle: '便笺',
+    notePanelStatusSaved: '已保存',
+    notePanelStatusSaving: '保存中...',
+    notePanelUpdatedLabel: '最近更新：',
+    notePanelDeleteConfirm: '确定删除此便笺吗？',
+    notePanelPin: '📌 固定',
+    notePanelUnpin: '📌 取消固定',
     responseReady: '✅ 已收到回答',
     genericErrorPrefix: '❌ 错误：',
     apiErrorPrefix: '❌ API 错误：',

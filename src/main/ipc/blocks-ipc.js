@@ -8,6 +8,7 @@ function registerBlockIpc(deps) {
     createBlockWindow,
     closeBlockWindow,
     updateBlockWindowBounds,
+    markBlockWindowReady,
     getBlockDropTargetPanelIdAtScreenPoint
   } = deps;
 
@@ -49,6 +50,12 @@ function registerBlockIpc(deps) {
     const blockId = String(payload && payload.blockId || '').trim();
     if (!blockId) return;
     updateBlockWindowBounds(blockId, payload);
+  });
+
+  ipcMain.on(IPC_CHANNELS.BLOCK_WINDOW_READY, (event, payload) => {
+    const blockId = String(payload && payload.blockId || '').trim();
+    if (!blockId) return;
+    markBlockWindowReady(blockId, event.sender);
   });
 
   ipcMain.handle(IPC_CHANNELS.BLOCK_WINDOW_DROP_TARGET, async (_event, payload) => {

@@ -1,5 +1,6 @@
 const { screen } = require('electron');
 const { IPC_CHANNELS } = require('../../shared/ipc-channels');
+const { appendOverlayPerf } = require('../utils/overlay-perf-log');
 
 function createPinnedWindowsManager(deps) {
   const {
@@ -44,6 +45,7 @@ function createPinnedWindowsManager(deps) {
       try { w.destroy(); } catch (_) {}
     });
     pinned.pinnedHistoryWindows.clear();
+    pinned.pinnedHistoryPerfStarts.clear();
   }
 
   function createPinnedHistoryWindow(payload) {
@@ -52,9 +54,25 @@ function createPinnedWindowsManager(deps) {
 
     const existing = pinned.pinnedHistoryWindows.get(ts);
     if (existing && !existing.isDestroyed()) {
+      try {
+        appendOverlayPerf({
+          t: new Date().toISOString(),
+          event: 'pinned-open-existing',
+          ts
+        });
+      } catch (_) {}
       try { existing.webContents.send(IPC_CHANNELS.PINNED_HISTORY_UPDATE, payload); } catch (_) {}
       return existing;
     }
+
+    pinned.pinnedHistoryPerfStarts.set(ts, Date.now());
+    try {
+      appendOverlayPerf({
+        t: new Date().toISOString(),
+        event: 'pinned-open',
+        ts
+      });
+    } catch (_) {}
 
     const bounds = payload && payload.bounds ? payload.bounds : null;
     const width = Math.max(260, Math.round((bounds && bounds.width) || 420));
@@ -91,6 +109,16 @@ function createPinnedWindowsManager(deps) {
     pinnedWin.loadFile('pinned-history.html');
     pinnedWin.webContents.on('did-finish-load', () => {
       try { pinnedWin.webContents.send(IPC_CHANNELS.PINNED_HISTORY_INIT, payload); } catch (_) {}
+      try {
+        const startedAt = pinned.pinnedHistoryPerfStarts.get(ts) || null;
+        const dtMs = startedAt ? Math.max(0, Date.now() - startedAt) : null;
+        appendOverlayPerf({
+          t: new Date().toISOString(),
+          event: 'pinned-ready',
+          ts,
+          dtMs
+        });
+      } catch (_) {}
     });
 
     // Keep pinned panels above the overlay window.
@@ -119,6 +147,17 @@ function createPinnedWindowsManager(deps) {
       if (typeof pinnedWin.showInactive === 'function') pinnedWin.showInactive();
       else pinnedWin.show();
       try { pinnedWin.moveTop(); } catch (_) {}
+      try {
+        const startedAt = pinned.pinnedHistoryPerfStarts.get(ts) || null;
+        const dtMs = startedAt ? Math.max(0, Date.now() - startedAt) : null;
+        appendOverlayPerf({
+          t: new Date().toISOString(),
+          event: 'pinned-shown',
+          ts,
+          dtMs
+        });
+        if (startedAt) pinned.pinnedHistoryPerfStarts.delete(ts);
+      } catch (_) {}
     } catch (_) {}
 
     return pinnedWin;

@@ -109,6 +109,236 @@
       gap: 8px;
     }
 
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .note-select {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .note-select label {
+      font-size: 12px;
+      color: rgba(245, 247, 250, 0.75);
+      white-space: nowrap;
+    }
+
+    .note-select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1 1 auto;
+      min-width: 0;
+      position: relative;
+    }
+
+    .note-select-btn {
+      flex: 1 1 auto;
+      min-width: 0;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(91, 158, 255, 0.35);
+      border-radius: 8px;
+      color: #f5f7fa;
+      padding: 6px 10px;
+      font-size: 12px;
+      line-height: 1.2;
+      text-align: left;
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .note-select-btn:focus {
+      outline: none;
+      border-color: rgba(91, 158, 255, 0.7);
+    }
+
+    .note-select-value {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .note-select-caret {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .note-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: rgba(20, 25, 38, 0.95);
+      border: 1px solid rgba(91, 158, 255, 0.35);
+      border-radius: 10px;
+      padding: 8px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 20;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .note-dropdown.open {
+      display: flex;
+    }
+
+    .note-list {
+      max-height: 220px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding-right: 4px;
+    }
+
+    .note-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .note-list::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.35);
+      border-radius: 4px;
+    }
+
+    .note-group-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(245, 247, 250, 0.5);
+      margin: 6px 4px 2px;
+    }
+
+    .note-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #f5f7fa;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid transparent;
+      font-size: 12px;
+    }
+
+    .note-item:hover {
+      background: rgba(91, 158, 255, 0.18);
+      border-color: rgba(91, 158, 255, 0.4);
+    }
+
+    .note-item.active {
+      background: rgba(91, 158, 255, 0.24);
+      border-color: rgba(91, 158, 255, 0.55);
+    }
+
+    .note-item-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .note-item-pin {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+    }
+
+    .icon-btn {
+      appearance: none;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(91, 158, 255, 0.35);
+      border-radius: 8px;
+      width: 32px;
+      height: 28px;
+      cursor: pointer;
+      color: #f5f7fa;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .icon-btn:hover {
+      background: #252d3d;
+      color: #5b9eff;
+    }
+
+    .icon-btn.danger {
+      border-color: rgba(255, 100, 100, 0.45);
+      color: #ff8a8a;
+    }
+
+    .icon-btn.danger:hover {
+      background: rgba(255, 100, 100, 0.16);
+      color: #ffb0b0;
+    }
+
+    .icon-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .icon-btn.active {
+      background: rgba(91, 158, 255, 0.18);
+      color: #5b9eff;
+    }
+
+    .note-search {
+      display: none;
+    }
+
+    .note-search input {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.35);
+      background: rgba(255, 255, 255, 0.06);
+      color: #f5f7fa;
+      padding: 6px 10px;
+      font-size: 12px;
+      user-select: text;
+    }
+
+    .note-search input::placeholder {
+      color: rgba(245, 247, 250, 0.5);
+    }
+
+    .note-title {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid rgba(91, 158, 255, 0.35);
+      background: rgba(255, 255, 255, 0.06);
+      color: #f5f7fa;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      user-select: text;
+    }
+
+    .note-title::placeholder {
+      color: rgba(245, 247, 250, 0.5);
+      font-weight: 500;
+    }
+
     textarea {
       flex: 1 1 auto;
       width: 100%;
@@ -124,8 +354,104 @@
       user-select: text;
     }
 
+    textarea::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    textarea::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    textarea::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 4px;
+    }
+
     textarea::placeholder {
       color: rgba(245, 247, 250, 0.55);
+    }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11px;
+      color: rgba(245, 247, 250, 0.7);
+    }
+
+    .footer span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 12, 18, 0.6);
+      z-index: 999;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      width: min(320px, 90vw);
+      background: rgba(22, 27, 40, 0.92);
+      border: 1px solid rgba(91, 158, 255, 0.35);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .modal-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .modal-message {
+      font-size: 12px;
+      color: rgba(245, 247, 250, 0.78);
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .modal-btn {
+      appearance: none;
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.35);
+      background: rgba(255, 255, 255, 0.06);
+      color: #f5f7fa;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .modal-btn:hover {
+      background: #252d3d;
+      color: #5b9eff;
+    }
+
+    .modal-btn-danger {
+      border-color: rgba(255, 100, 100, 0.45);
+      color: #ffb0b0;
+    }
+
+    .modal-btn-danger:hover {
+      background: rgba(255, 100, 100, 0.16);
+      color: #ffd1d1;
     }
 
     .resize-handle {
@@ -274,7 +600,48 @@
       <div class="resize-handle resize-handle-corner" id="resizeCorner"></div>
 
       <div class="body">
+        <div class="toolbar">
+          <div class="note-select">
+            <label for="noteSelectBtn" id="noteSelectLabel">Note:</label>
+            <div class="note-select-wrap">
+              <button class="note-select-btn" id="noteSelectBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                <span class="note-select-value" id="noteSelectValue"></span>
+                <span class="note-select-caret" aria-hidden="true">▾</span>
+              </button>
+              <button class="icon-btn" id="pinToggleBtn" title="Pin" aria-label="Pin">📌</button>
+              <div class="note-dropdown" id="noteDropdown">
+                <div class="note-search" id="noteSearchRow">
+                  <input type="text" id="noteSearch" placeholder="Search notes..." />
+                </div>
+                <div class="note-list" id="noteList" role="listbox"></div>
+              </div>
+            </div>
+          </div>
+          <div class="toolbar-actions">
+            <button class="icon-btn" id="newNoteBtn" title="New" aria-label="New">➕</button>
+            <button class="icon-btn" id="renameNoteBtn" title="Rename" aria-label="Rename">✏️</button>
+            <button class="icon-btn danger" id="deleteNoteBtn" title="Delete" aria-label="Delete">🗑️</button>
+          </div>
+        </div>
+
+        <input type="text" id="noteTitle" class="note-title" placeholder="Note" />
         <textarea id="noteText" placeholder="Write a note..."></textarea>
+
+        <div class="footer">
+          <span id="saveStatus">Saved</span>
+          <span id="updatedAt">Last updated:</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal">
+      <div class="modal-title" id="modalTitle">⚠️ Confirmation</div>
+      <div class="modal-message" id="modalMessage"></div>
+      <div class="modal-buttons">
+        <button class="modal-btn" id="modalCancel">Cancel</button>
+        <button class="modal-btn modal-btn-danger" id="modalConfirm">Delete</button>
       </div>
     </div>
   </div>
@@ -289,6 +656,25 @@
     const closeBtn = document.getElementById('closeBtn');
     const dragHeader = document.getElementById('dragHeader');
     const noteText = document.getElementById('noteText');
+    const noteSelectLabel = document.getElementById('noteSelectLabel');
+    const noteSelectBtn = document.getElementById('noteSelectBtn');
+    const noteSelectValue = document.getElementById('noteSelectValue');
+    const noteDropdown = document.getElementById('noteDropdown');
+    const noteList = document.getElementById('noteList');
+    const pinToggleBtn = document.getElementById('pinToggleBtn');
+    const newNoteBtn = document.getElementById('newNoteBtn');
+    const renameNoteBtn = document.getElementById('renameNoteBtn');
+    const deleteNoteBtn = document.getElementById('deleteNoteBtn');
+    const noteSearchRow = document.getElementById('noteSearchRow');
+    const noteSearch = document.getElementById('noteSearch');
+    const noteTitle = document.getElementById('noteTitle');
+    const saveStatus = document.getElementById('saveStatus');
+    const updatedAt = document.getElementById('updatedAt');
+    const confirmModal = document.getElementById('confirmModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const modalConfirm = document.getElementById('modalConfirm');
+    const modalCancel = document.getElementById('modalCancel');
 
     const resizeLeft = document.getElementById('resizeLeft');
     const resizeRight = document.getElementById('resizeRight');
@@ -296,6 +682,8 @@
     const resizeCorner = document.getElementById('resizeCorner');
 
     const NOTE_TEXT_KEY = STORAGE_KEYS.NOTE_PANEL_TEXT;
+    const NOTES_LIST_KEY = STORAGE_KEYS.NOTES_LIST;
+    const NOTES_ACTIVE_ID_KEY = STORAGE_KEYS.NOTES_ACTIVE_ID;
     const LANG_KEY = STORAGE_KEYS.OVERLAY_LANGUAGE;
 
     let currentLang = 'en';
@@ -304,19 +692,306 @@
       onUpdate: () => applyI18n()
     });
 
+    let notes = [];
+    let activeNoteId = null;
+    let searchTerm = '';
+    let pendingConfirmAction = null;
+    let isRendering = false;
+    let saveTimer = null;
+    let dropdownOpen = false;
+
     function applyI18n() {
       const t = i18n.t();
       if (t.notePanelTitle) titleEl.textContent = t.notePanelTitle;
       if (t.notePanelPlaceholder) noteText.placeholder = t.notePanelPlaceholder;
+      if (noteSelectLabel) noteSelectLabel.textContent = t.notePanelSelectLabel || noteSelectLabel.textContent;
+      if (noteSearch) noteSearch.placeholder = t.notePanelSearchPlaceholder || noteSearch.placeholder;
+      if (noteTitle) noteTitle.placeholder = t.notePanelDefaultTitle || noteTitle.placeholder;
+      if (newNoteBtn) {
+        const label = t.notePanelNew || '➕ New';
+        newNoteBtn.title = label;
+        newNoteBtn.setAttribute('aria-label', label);
+      }
+      if (renameNoteBtn) {
+        const label = t.notePanelRename || '✏️ Rename';
+        renameNoteBtn.title = label;
+        renameNoteBtn.setAttribute('aria-label', label);
+      }
+      if (deleteNoteBtn) {
+        const label = t.notePanelDelete || '🗑️ Delete';
+        deleteNoteBtn.title = label;
+        deleteNoteBtn.setAttribute('aria-label', label);
+      }
       if (t.btnClose) {
         closeBtn.title = t.btnClose;
         closeBtn.setAttribute('aria-label', t.btnClose);
       }
+      renderAll();
     }
 
     function setLanguage(nextLang) {
       currentLang = nextLang || 'en';
       i18n.setLang(currentLang);
+    }
+
+    function getLocaleTag(lang) {
+      switch (lang) {
+        case 'hu': return 'hu-HU';
+        case 'de': return 'de-DE';
+        case 'ru': return 'ru-RU';
+        case 'fr': return 'fr-FR';
+        case 'zh': return 'zh-CN';
+        case 'en':
+        default: return 'en-US';
+      }
+    }
+
+    function formatUpdatedAt(ts) {
+      if (!ts) return '';
+      const locale = getLocaleTag(currentLang);
+      try {
+        return new Date(ts).toLocaleString(locale);
+      } catch (_) {
+        return new Date(ts).toLocaleString();
+      }
+    }
+
+    function normalizeNotes(list) {
+      if (!Array.isArray(list)) return [];
+      return list
+        .filter((note) => note && typeof note === 'object')
+        .map((note) => ({
+          id: String(note.id || ''),
+          title: String(note.title || ''),
+          content: String(note.content || ''),
+          pinned: !!note.pinned,
+          updatedAt: Number.isFinite(Number(note.updatedAt)) ? Number(note.updatedAt) : Date.now()
+        }))
+        .filter((note) => note.id);
+    }
+
+    function readNotesList() {
+      try {
+        const raw = localStorage.getItem(NOTES_LIST_KEY);
+        if (!raw) return [];
+        return normalizeNotes(JSON.parse(raw));
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function writeNotesList(list) {
+      try {
+        localStorage.setItem(NOTES_LIST_KEY, JSON.stringify(list));
+      } catch (_) {}
+    }
+
+    function getStoredActiveId() {
+      try {
+        return localStorage.getItem(NOTES_ACTIVE_ID_KEY);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function setStoredActiveId(id) {
+      activeNoteId = id;
+      try {
+        localStorage.setItem(NOTES_ACTIVE_ID_KEY, id);
+      } catch (_) {}
+    }
+
+    function buildDefaultTitle(list) {
+      const t = i18n.t();
+      const base = t.notePanelDefaultTitle || 'Note';
+      let index = 1;
+      let title = `${base} ${index}`;
+      const hasTitle = (value) => list.some((note) => (note.title || '') === value);
+      while (hasTitle(title)) {
+        index += 1;
+        title = `${base} ${index}`;
+      }
+      return title;
+    }
+
+    function createNote(list, content = '') {
+      return {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+        title: buildDefaultTitle(list),
+        content: String(content || ''),
+        pinned: false,
+        updatedAt: Date.now()
+      };
+    }
+
+    function ensureNotes() {
+      let list = readNotesList();
+      if (!list.length) {
+        let legacy = '';
+        try { legacy = localStorage.getItem(NOTE_TEXT_KEY) || ''; } catch (_) {}
+        const created = createNote([], legacy);
+        list = [created];
+        writeNotesList(list);
+        setStoredActiveId(created.id);
+      }
+
+      const storedActive = activeNoteId || getStoredActiveId();
+      if (!storedActive || !list.some((note) => note.id === storedActive)) {
+        setStoredActiveId(list[0].id);
+      }
+      return list;
+    }
+
+    function getActiveNote(list) {
+      if (!list.length) return null;
+      const id = activeNoteId || getStoredActiveId();
+      return list.find((note) => note.id === id) || list[0];
+    }
+
+    function setLegacyNoteText(note) {
+      try {
+        localStorage.setItem(NOTE_TEXT_KEY, String((note && note.content) || ''));
+      } catch (_) {}
+    }
+
+    function setSaveStatus(state) {
+      if (!saveStatus) return;
+      const t = i18n.t();
+      saveStatus.textContent = state === 'saving'
+        ? (t.notePanelStatusSaving || 'Saving...')
+        : (t.notePanelStatusSaved || 'Saved');
+    }
+
+    function updateUpdatedAt(note) {
+      if (!updatedAt) return;
+      const t = i18n.t();
+      const label = t.notePanelUpdatedLabel || 'Last updated:';
+      const time = note && note.updatedAt ? formatUpdatedAt(note.updatedAt) : '';
+      updatedAt.textContent = time ? `${label} ${time}` : label;
+    }
+
+    function updatePinButton(note) {
+      if (!pinToggleBtn) return;
+      const t = i18n.t();
+      const pinned = !!(note && note.pinned);
+      const label = pinned ? (t.notePanelUnpin || '📌 Unpin') : (t.notePanelPin || '📌 Pin');
+      pinToggleBtn.title = label;
+      pinToggleBtn.setAttribute('aria-label', label);
+      pinToggleBtn.classList.toggle('active', pinned);
+    }
+
+    function updateDeleteButton(list) {
+      if (!deleteNoteBtn) return;
+      deleteNoteBtn.disabled = (list.length <= 1);
+    }
+
+    function updateSearchVisibility(list) {
+      if (!noteSearchRow || !noteSearch) return;
+      if (list.length >= 20) {
+        noteSearchRow.style.display = 'block';
+      } else {
+        noteSearchRow.style.display = 'none';
+        searchTerm = '';
+        noteSearch.value = '';
+      }
+    }
+
+    function setDropdownOpen(next) {
+      dropdownOpen = !!next;
+      if (noteDropdown) noteDropdown.classList.toggle('open', dropdownOpen);
+      if (noteSelectBtn) noteSelectBtn.setAttribute('aria-expanded', dropdownOpen ? 'true' : 'false');
+      if (dropdownOpen) {
+        updateSearchVisibility(notes);
+        if (noteSearchRow && noteSearchRow.style.display !== 'none' && noteSearch) {
+          noteSearch.focus();
+          noteSearch.select();
+        }
+      }
+    }
+
+    function renderNoteDropdown(list, activeNote) {
+      if (!noteList) return;
+      const t = i18n.t();
+      const activeTitle = activeNote ? (activeNote.title || t.notePanelDefaultTitle || 'Note') : (t.notePanelDefaultTitle || 'Note');
+      if (noteSelectValue) noteSelectValue.textContent = activeTitle;
+
+      const needle = (searchTerm || '').trim().toLowerCase();
+      let filtered = list;
+      if (needle) {
+        filtered = list.filter((note) => {
+          const title = (note.title || '').toLowerCase();
+          const content = (note.content || '').toLowerCase();
+          return title.includes(needle) || content.includes(needle);
+        });
+      }
+
+      if (activeNote && !filtered.some((note) => note.id === activeNote.id)) {
+        filtered = [activeNote, ...filtered];
+      }
+
+      const pinned = filtered.filter((note) => note.pinned);
+      const normal = filtered.filter((note) => !note.pinned);
+
+      noteList.innerHTML = '';
+
+      function addGroup(label, items) {
+        if (!items.length) return;
+        const groupTitle = document.createElement('div');
+        groupTitle.className = 'note-group-title';
+        groupTitle.textContent = label;
+        noteList.appendChild(groupTitle);
+
+        items.forEach((note) => {
+          const item = document.createElement('div');
+          item.className = `note-item${activeNote && note.id === activeNote.id ? ' active' : ''}`;
+          item.dataset.id = note.id;
+          item.setAttribute('role', 'option');
+          item.setAttribute('aria-selected', activeNote && note.id === activeNote.id ? 'true' : 'false');
+
+          const title = document.createElement('div');
+          title.className = 'note-item-title';
+          title.textContent = note.title || t.notePanelDefaultTitle || 'Note';
+
+          const pin = document.createElement('div');
+          pin.className = 'note-item-pin';
+          pin.textContent = note.pinned ? '📌' : '';
+
+          item.appendChild(title);
+          item.appendChild(pin);
+          noteList.appendChild(item);
+        });
+      }
+
+      addGroup(t.notePanelPinnedGroup || 'Pinned', pinned);
+      addGroup(t.notePanelAllGroup || 'Notes', normal);
+    }
+
+    function renderActiveNote(note) {
+      isRendering = true;
+      if (noteTitle) noteTitle.value = note ? (note.title || '') : '';
+      if (noteText) noteText.value = note ? (note.content || '') : '';
+      isRendering = false;
+      updatePinButton(note);
+      updateDeleteButton(notes);
+      updateUpdatedAt(note);
+      setSaveStatus('saved');
+    }
+
+    function persistNotes() {
+      const active = getActiveNote(notes);
+      if (!active) return;
+      writeNotesList(notes);
+      setStoredActiveId(active.id);
+      setLegacyNoteText(active);
+      updateUpdatedAt(active);
+    }
+
+    function renderAll() {
+      notes = ensureNotes();
+      const active = getActiveNote(notes);
+      renderNoteDropdown(notes, active);
+      renderActiveNote(active);
+      updateSearchVisibility(notes);
     }
 
     function syncClickThrough(allowThrough) {
@@ -394,33 +1069,202 @@
       applyPayload(payload);
     });
 
-    function loadText() {
-      try {
-        const raw = localStorage.getItem(NOTE_TEXT_KEY);
-        if (raw != null) noteText.value = raw;
-      } catch (_) {}
-    }
-
     try {
       const storedLang = localStorage.getItem(LANG_KEY);
       if (storedLang) setLanguage(storedLang);
     } catch (_) {}
     applyI18n();
 
-    let saveTimer = null;
     function scheduleSave() {
       if (saveTimer) clearTimeout(saveTimer);
+      setSaveStatus('saving');
       saveTimer = setTimeout(() => {
         saveTimer = null;
-        try { localStorage.setItem(NOTE_TEXT_KEY, String(noteText.value || '')); } catch (_) {}
-      }, 150);
+        persistNotes();
+        setSaveStatus('saved');
+      }, 200);
     }
 
-    loadText();
+    function flushSave() {
+      if (!saveTimer) return;
+      clearTimeout(saveTimer);
+      saveTimer = null;
+      persistNotes();
+      setSaveStatus('saved');
+    }
 
-    noteText.addEventListener('input', () => {
-      scheduleSave();
+    if (noteText) {
+      noteText.addEventListener('input', () => {
+        if (isRendering) return;
+        const active = getActiveNote(notes);
+        if (!active) return;
+        active.content = String(noteText.value || '');
+        active.updatedAt = Date.now();
+        scheduleSave();
+      });
+    }
+
+    if (noteTitle) {
+      noteTitle.addEventListener('input', () => {
+        if (isRendering) return;
+        const active = getActiveNote(notes);
+        if (!active) return;
+        active.title = String(noteTitle.value || '');
+        active.updatedAt = Date.now();
+        renderNoteDropdown(notes, active);
+        scheduleSave();
+      });
+
+      noteTitle.addEventListener('blur', () => {
+        const active = getActiveNote(notes);
+        if (!active) return;
+        const trimmed = String(noteTitle.value || '').trim();
+        if (!trimmed) {
+          active.title = buildDefaultTitle(notes);
+          noteTitle.value = active.title;
+          renderNoteDropdown(notes, active);
+          scheduleSave();
+        }
+      });
+    }
+
+    if (noteSelectBtn) {
+      noteSelectBtn.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        setDropdownOpen(!dropdownOpen);
+      });
+    }
+
+    if (noteList) {
+      noteList.addEventListener('click', (ev) => {
+        const item = ev.target && ev.target.closest ? ev.target.closest('.note-item') : null;
+        if (!item) return;
+        const nextId = item.dataset.id;
+        if (!nextId) return;
+        flushSave();
+        setStoredActiveId(nextId);
+        renderAll();
+        setDropdownOpen(false);
+      });
+    }
+
+    document.addEventListener('click', (ev) => {
+      if (!dropdownOpen) return;
+      const target = ev.target;
+      if (noteDropdown && noteDropdown.contains(target)) return;
+      if (noteSelectBtn && noteSelectBtn.contains(target)) return;
+      if (pinToggleBtn && pinToggleBtn.contains(target)) return;
+      setDropdownOpen(false);
     });
+
+    document.addEventListener('keydown', (ev) => {
+      if (!dropdownOpen) return;
+      if (ev.key === 'Escape') {
+        ev.preventDefault();
+        setDropdownOpen(false);
+      }
+    });
+
+    if (noteSearch) {
+      noteSearch.addEventListener('input', () => {
+        searchTerm = String(noteSearch.value || '');
+        const active = getActiveNote(notes);
+        renderNoteDropdown(notes, active);
+      });
+    }
+
+    if (pinToggleBtn) {
+      pinToggleBtn.addEventListener('click', () => {
+        const active = getActiveNote(notes);
+        if (!active) return;
+        active.pinned = !active.pinned;
+        active.updatedAt = Date.now();
+        persistNotes();
+        renderNoteDropdown(notes, active);
+        updatePinButton(active);
+      });
+    }
+
+    if (newNoteBtn) {
+      newNoteBtn.addEventListener('click', () => {
+        flushSave();
+        const created = createNote(notes);
+        notes = [...notes, created];
+        setStoredActiveId(created.id);
+        writeNotesList(notes);
+        setLegacyNoteText(created);
+        renderAll();
+        if (noteTitle) {
+          noteTitle.focus();
+          noteTitle.select();
+        }
+      });
+    }
+
+    if (renameNoteBtn) {
+      renameNoteBtn.addEventListener('click', () => {
+        if (!noteTitle) return;
+        noteTitle.focus();
+        noteTitle.select();
+      });
+    }
+
+    function showConfirmModal(message, onConfirm) {
+      if (!confirmModal) return;
+      const t = i18n.t();
+      modalTitle.textContent = t.confirmTitle || '⚠️ Confirmation';
+      modalMessage.textContent = message;
+      modalCancel.textContent = t.btnCancel || 'Cancel';
+      modalConfirm.textContent = t.btnDelete || 'Delete';
+      pendingConfirmAction = onConfirm;
+      confirmModal.classList.add('active');
+    }
+
+    function hideConfirmModal() {
+      if (!confirmModal) return;
+      confirmModal.classList.remove('active');
+      pendingConfirmAction = null;
+    }
+
+    if (modalCancel) {
+      modalCancel.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        hideConfirmModal();
+      });
+    }
+
+    if (modalConfirm) {
+      modalConfirm.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        if (pendingConfirmAction) pendingConfirmAction();
+        hideConfirmModal();
+      });
+    }
+
+    if (deleteNoteBtn) {
+      deleteNoteBtn.addEventListener('click', () => {
+        if (deleteNoteBtn.disabled) return;
+        const t = i18n.t();
+        const message = t.notePanelDeleteConfirm || 'Are you sure you want to delete this note?';
+        showConfirmModal(message, () => {
+          const active = getActiveNote(notes);
+          if (!active) return;
+          notes = notes.filter((note) => note.id !== active.id);
+          if (!notes.length) {
+            const created = createNote([]);
+            notes = [created];
+            setStoredActiveId(created.id);
+          } else {
+            setStoredActiveId(notes[0].id);
+          }
+          writeNotesList(notes);
+          const nextActive = getActiveNote(notes);
+          setLegacyNoteText(nextActive);
+          renderAll();
+        });
+      });
+    }
 
     closeBtn.addEventListener('pointerdown', (ev) => {
       ev.preventDefault();

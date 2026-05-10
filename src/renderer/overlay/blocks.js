@@ -286,6 +286,7 @@ function applyLayouts() {
 function ensureDragHandle(blockId, el) {
   if (!el || el.querySelector('.block-drag-handle')) return;
   el.dataset.blockId = blockId;
+  el.classList.add('has-drag-handle');
   const handle = document.createElement('div');
   handle.className = 'block-drag-handle';
   handle.setAttribute('role', 'button');

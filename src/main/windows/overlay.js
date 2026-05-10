@@ -1,4 +1,7 @@
 const { IPC_CHANNELS } = require('../../shared/ipc-channels');
+const { STORAGE_KEYS } = require('../../shared/storage-keys');
+const { clampWindowToWorkArea } = require('../utils/bounds');
+const { appendOverlayDebug } = require('../utils/overlay-debug-log');
 
 function createOverlayManager(deps) {
   const {
@@ -10,6 +13,7 @@ function createOverlayManager(deps) {
     bringDetachedPanelWindowsToFront,
     bringPinnedHistoryWindowsToFront,
     bringBlockWindowsToFront,
+    prewarmBlockWindows,
     closeAllPinnedHistoryWindows,
     closeAllDetachedPanelWindows,
     closeAllBlockWindows,
@@ -33,8 +37,48 @@ function createOverlayManager(deps) {
       const target = screen.getPrimaryDisplay().workArea;
       const x = Math.round(target.x + Math.max(0, (target.width - bounds.width) / 2));
       const y = Math.round(target.y + Math.max(0, (target.height - bounds.height) / 2));
+      try {
+        appendOverlayDebug({
+          t: new Date().toISOString(),
+          event: 'overlay-recenter',
+          reason: forceCenter ? 'force-center' : 'not-visible',
+          from: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
+          to: { x, y, width: bounds.width, height: bounds.height }
+        });
+      } catch (_) {}
       core.overlayWin.setBounds({ ...bounds, x, y });
     }
+  }
+
+  async function applySavedOverlayPositionOnce() {
+    if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
+    if (overlay.overlayAppliedSavedPosition) return;
+    overlay.overlayAppliedSavedPosition = true;
+
+    let saved = null;
+    try {
+      const script = `(() => {\n` +
+        `  try {\n` +
+        `    return {\n` +
+        `      x: localStorage.getItem(${JSON.stringify(STORAGE_KEYS.OVERLAY_POSITION_X)}),\n` +
+        `      y: localStorage.getItem(${JSON.stringify(STORAGE_KEYS.OVERLAY_POSITION_Y)})\n` +
+        `    };\n` +
+        `  } catch (_) { return { x: null, y: null }; }\n` +
+        `})();`;
+      saved = await core.overlayWin.webContents.executeJavaScript(script, true);
+    } catch (_) {
+      return;
+    }
+
+    const rawX = saved && saved.x != null ? Number(saved.x) : null;
+    const rawY = saved && saved.y != null ? Number(saved.y) : null;
+    if (!Number.isFinite(rawX) || !Number.isFinite(rawY)) return;
+
+    try {
+      const bounds = core.overlayWin.getBounds();
+      const clamped = clampWindowToWorkArea(rawX, rawY, bounds.width, bounds.height, 0);
+      core.overlayWin.setBounds({ ...bounds, x: clamped.x, y: clamped.y });
+    } catch (_) {}
   }
 
   function shouldOpenOverlayDevTools() {
@@ -351,6 +395,7 @@ function createOverlayManager(deps) {
     core.overlayWin.webContents.on('did-start-loading', () => {
       if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
       overlay.overlayIgnoreMoveUntil = Date.now() + 1500;
+      overlay.overlayAppliedSavedPosition = false;
       if (!overlay.overlayVirtualVisible) {
         overlay.overlayHideDuringLoad = false;
         return;
@@ -363,6 +408,10 @@ function createOverlayManager(deps) {
       if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
       core.overlayWin.webContents.send(IPC_CHANNELS.SET_LANGUAGE, getCurrentLanguage());
       sendDetachedPanelsStateToOverlay();
+
+      // Block prewarm disabled: only create block windows on demand.
+
+      applySavedOverlayPositionOnce().catch(() => {});
 
       try {
         const b = core.overlayWin.getBounds();

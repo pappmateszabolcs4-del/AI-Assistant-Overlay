@@ -23,7 +23,7 @@ function __maybeFinishBoot() {
   try { document.body.classList.remove('booting'); } catch (_) {}
 }
 
-if (!__isDetachedPanelWindow) {
+if (!__isDetachedPanelWindow && !__isBlockWindow) {
   try { document.body.classList.add('booting'); } catch (_) {}
   // Failsafe: do not stay invisible forever if IPC is delayed.
   try {

@@ -138,6 +138,23 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.20);
     }
 
+    .perf-hud {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: rgba(15, 20, 32, 0.72);
+      border: 1px solid rgba(91, 158, 255, 0.35);
+      color: #f5f7fa;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      pointer-events: none;
+      z-index: 200;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    }
+
     @media (max-width: 560px) {
       .drag-handle {
         width: calc(100% - 160px);
@@ -254,8 +271,51 @@
       position: relative;
     }
 
+    .block-item.has-drag-handle {
+      padding-top: 26px;
+    }
+
     .block-item.block-hidden {
       display: none;
+    }
+
+    .note-preview {
+      margin-top: 8px;
+      margin-bottom: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(15, 20, 32, 0.5);
+      border: 1px solid rgba(91, 158, 255, 0.2);
+      color: #f5f7fa;
+      font-size: 0.85em;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      max-height: 110px;
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.35) transparent;
+    }
+
+    .note-preview.is-empty {
+      color: rgba(245, 247, 250, 0.55);
+      font-style: italic;
+    }
+
+    .note-preview::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .note-preview::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .note-preview::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.35);
+      border-radius: 3px;
+    }
+
+    .note-preview::-webkit-scrollbar-thumb:hover {
+      background: rgba(91, 158, 255, 0.55);
     }
 
     .tts-volume {
@@ -287,13 +347,13 @@
 
     .block-drag-handle {
       position: absolute;
-      top: 8px;
-      right: 8px;
+      top: 5px;
+      right: 10px;
       width: 18px;
       height: 18px;
       border-radius: 6px;
-      border: 1px solid rgba(91, 158, 255, 0.35);
-      background: rgba(15, 20, 32, 0.7);
+      border: 1px solid rgba(91, 158, 255, 0.28);
+      background: rgba(15, 20, 32, 0.55);
       color: #c9d4ea;
       display: flex;
       align-items: center;
@@ -306,6 +366,11 @@
 
     .block-drag-handle:active {
       cursor: grabbing;
+    }
+
+    .block-drag-handle:hover {
+      border-color: rgba(91, 158, 255, 0.55);
+      background: rgba(24, 31, 49, 0.7);
     }
 
     .block-drag-handle::before {
@@ -328,8 +393,34 @@
       display: block;
     }
 
+    body.block-mode {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+    }
+
+    body.block-mode::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    body.block-mode::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    body.block-mode::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 3px;
+    }
+
+    body.block-mode::-webkit-scrollbar-thumb:hover {
+      background: rgba(91, 158, 255, 0.6);
+    }
+
     body.block-mode #overlay-container {
       display: none;
+    }
+
+    body.block-mode #block-root {
+      display: block;
     }
 
     body.block-mode .drag-handle,
@@ -402,6 +493,10 @@
       flex-direction: column;
       gap: 10px;
       height: 100%;
+    }
+
+    #block-root {
+      padding: 10px;
     }
 
     .block-resize-handle {
@@ -574,6 +669,50 @@
     button {
       -webkit-app-region: no-drag;
       cursor: auto;
+    }
+
+    textarea {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+    }
+
+    textarea::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    textarea::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    textarea::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 3px;
+    }
+
+    textarea::-webkit-scrollbar-thumb:hover {
+      background: rgba(91, 158, 255, 0.6);
+    }
+
+    body.block-mode textarea {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(91, 158, 255, 0.4) transparent;
+    }
+
+    body.block-mode textarea::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    body.block-mode textarea::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    body.block-mode textarea::-webkit-scrollbar-thumb {
+      background: rgba(91, 158, 255, 0.4);
+      border-radius: 3px;
+    }
+
+    body.block-mode textarea::-webkit-scrollbar-thumb:hover {
+      background: rgba(91, 158, 255, 0.6);
     }
 
     #askBtn {

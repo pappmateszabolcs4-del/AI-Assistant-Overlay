@@ -43,7 +43,32 @@ let prevOverflowY = null;
 let isDetachGestureActive = false;
 
 function sendOverlayResize(bounds) {
-  fireAndForget(IPC_CHANNELS.RESIZE_OVERLAY, bounds);
+  fireAndForget(IPC_CHANNELS.RESIZE_OVERLAY, attachOverlayDebug(bounds, 'direct'));
+}
+
+function attachOverlayDebug(bounds, mode, reason) {
+  if (!bounds || typeof bounds !== 'object') return bounds;
+  const debug = bounds.__debug || {};
+  return {
+    ...bounds,
+    __debug: {
+      ...debug,
+      reason: debug.reason || reason || undefined,
+      mode: mode || debug.mode || 'direct',
+      ts: Date.now(),
+      state: {
+        isResizing: !!isResizing,
+        isWindowDragging: !!isWindowDragging,
+        isDetachGestureActive: !!isDetachGestureActive,
+        booting: !!(typeof __bootingMainOverlay !== 'undefined' && __bootingMainOverlay)
+      }
+    }
+  };
+}
+
+function hasMeaningfulBounds(bounds) {
+  if (!bounds || typeof bounds !== 'object') return false;
+  return Object.keys(bounds).some((key) => key !== '__debug');
 }
 
 function boundsChanged(next) {
@@ -70,6 +95,7 @@ function cancelPendingOverlayResize() {
 }
 
 function sendOverlayResizeBatched(bounds) {
+  bounds = attachOverlayDebug(bounds, 'batched');
   // During panel detach drags, ignore any attempt to move the main overlay.
   // This prevents a one-time "jump" if some stale drag/resize state tries to flush x/y.
   if (isDetachGestureActive && bounds && (bounds.x !== undefined || bounds.y !== undefined)) {
@@ -77,7 +103,7 @@ function sendOverlayResizeBatched(bounds) {
     delete sanitized.x;
     delete sanitized.y;
     bounds = sanitized;
-    if (!Object.keys(bounds).length) return;
+    if (!hasMeaningfulBounds(bounds)) return;
   }
 
   // During boot/reload, never send x/y moves. The BrowserWindow already has the
@@ -87,7 +113,7 @@ function sendOverlayResizeBatched(bounds) {
     delete sanitized.x;
     delete sanitized.y;
     bounds = sanitized;
-    if (!Object.keys(bounds).length) return;
+    if (!hasMeaningfulBounds(bounds)) return;
   }
   pendingResize = { ...pendingResize, ...bounds };
   if (!resizeFrame) {
@@ -198,12 +224,12 @@ function doResize(e) {
     }
     const computedWidth = startRightEdge - newX;
     const roundedWidth = Math.round(computedWidth);
-    sendOverlayResizeBatched({ x: Math.round(newX), width: roundedWidth });
+    sendOverlayResizeBatched({ x: Math.round(newX), width: roundedWidth, __debug: { reason: 'resize-left' } });
     return;
   } else if (resizeDirection === 'right') {
-    sendOverlayResizeBatched({ width: roundedWidth });
+    sendOverlayResizeBatched({ width: roundedWidth, __debug: { reason: 'resize-right' } });
   } else if (resizeDirection === 'bottom') {
-    sendOverlayResizeBatched({ height: roundedHeight });
+    sendOverlayResizeBatched({ height: roundedHeight, __debug: { reason: 'resize-bottom' } });
   }
 }
 
@@ -214,7 +240,13 @@ function stopResize(e) {
 
   if (isResizing) {
     // Send a final precise size on mouseup
-    const finalBounds = { width: Math.round(window.innerWidth), height: Math.round(window.innerHeight), x: window.screenX, y: window.screenY };
+    const finalBounds = {
+      width: Math.round(window.innerWidth),
+      height: Math.round(window.innerHeight),
+      x: window.screenX,
+      y: window.screenY,
+      __debug: { reason: 'resize-end' }
+    };
     sendOverlayResize(finalBounds);
     lastSentBounds = { ...lastSentBounds, ...finalBounds };
   }
@@ -287,6 +319,8 @@ function beginWindowDrag(event) {
   event.preventDefault();
   event.stopPropagation();
 
+  try { window.__markOverlayPositionTouched && window.__markOverlayPositionTouched(); } catch (_) {}
+
   // Keep the overlay interactive for the full drag; otherwise hover-eval can
   // flip click-through mid-gesture and leave drag listeners stuck.
   if (!windowDragForcedInteractive) {
@@ -334,7 +368,7 @@ function handleWindowDragMove(event) {
   const deltaY = event.screenY - dragStartScreenY;
   const nextX = Math.round(windowStartX + deltaX);
   const nextY = Math.round(windowStartY + deltaY);
-  sendOverlayResizeBatched({ x: nextX, y: nextY });
+  sendOverlayResizeBatched({ x: nextX, y: nextY, __debug: { reason: 'window-drag-move' } });
 }
 
 function endWindowDrag(event) {
@@ -342,7 +376,7 @@ function endWindowDrag(event) {
     return;
   }
   cancelWindowDrag();
-  sendOverlayResize({ x: window.screenX, y: window.screenY });
+  sendOverlayResize({ x: window.screenX, y: window.screenY, __debug: { reason: 'window-drag-end' } });
 }
 
 if (!__skipOverlayResize && dragHandle) {

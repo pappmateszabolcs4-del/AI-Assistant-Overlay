@@ -87,11 +87,13 @@ function createDetachedWindowsManager(deps) {
       try { w.destroy(); } catch (_) {}
     });
     detached.detachedPanelWindows.clear();
+    detached.detachedPanelPerfStarts.clear();
   }
 
   function deactivateDetachedPanelWindow(panelId) {
     const pid = normalizePanelId(panelId);
     if (!pid) return;
+    detached.detachedPanelPerfStarts.delete(pid);
     const w = detached.detachedPanelWindows.get(pid);
     if (!w || w.isDestroyed()) {
       detached.detachedPanelWindows.delete(pid);

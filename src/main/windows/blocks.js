@@ -1,5 +1,6 @@
 const { screen } = require('electron');
 const { IPC_CHANNELS } = require('../../shared/ipc-channels');
+const { appendOverlayPerf } = require('../utils/overlay-perf-log');
 
 const MIN_BLOCK_WIDTH = 260;
 const MIN_BLOCK_HEIGHT = 160;
@@ -27,6 +28,14 @@ function createBlockWindowsManager(deps) {
       if (!w || w.isDestroyed()) return;
       try {
         if (visible) {
+          if (w.__blockActive === false || w.__blockReady === false) {
+            try { w.setIgnoreMouseEvents(true); } catch (_) {}
+            if (typeof w.setOpacity === 'function') {
+              try { w.setOpacity(0); } catch (_) {}
+            }
+            try { w.hide(); } catch (_) {}
+            return;
+          }
           if (typeof w.showInactive === 'function') w.showInactive();
           else w.show();
           try { w.moveTop(); } catch (_) {}
@@ -41,10 +50,12 @@ function createBlockWindowsManager(deps) {
     const w = blocks.detachedBlockWindows.get(blockId);
     if (!w || w.isDestroyed()) {
       blocks.detachedBlockWindows.delete(blockId);
+      blocks.blockPerfStarts.delete(blockId);
       return;
     }
     try { w.destroy(); } catch (_) {}
     blocks.detachedBlockWindows.delete(blockId);
+    blocks.blockPerfStarts.delete(blockId);
   }
 
   function closeAllBlockWindows() {
@@ -53,6 +64,11 @@ function createBlockWindowsManager(deps) {
       try { w.destroy(); } catch (_) {}
     });
     blocks.detachedBlockWindows.clear();
+    blocks.blockPerfStarts.clear();
+  }
+
+  function prewarmBlockWindows() {
+    // Disabled: block windows are created on demand to avoid startup lag.
   }
 
   function createBlockWindow(payload) {
@@ -61,9 +77,65 @@ function createBlockWindowsManager(deps) {
 
     const existing = getBlockWindow(blockId);
     if (existing && !existing.isDestroyed()) {
+      if (true) {
+        if (!blocks.blockPerfStarts.has(blockId)) {
+          blocks.blockPerfStarts.set(blockId, Date.now());
+        }
+        try {
+          appendOverlayPerf({
+            t: new Date().toISOString(),
+            event: 'block-open',
+            blockId
+          });
+        } catch (_) {}
+        try { existing.__blockActive = true; } catch (_) {}
+        try {
+          const b = existing.getBounds();
+          const next = payload && payload.bounds ? payload.bounds : null;
+          const rawX = next && typeof next.x === 'number' ? Math.round(next.x) : b.x;
+          const rawY = next && typeof next.y === 'number' ? Math.round(next.y) : b.y;
+          const rawW = next && typeof next.width === 'number' ? Math.round(next.width) : b.width;
+          const rawH = next && typeof next.height === 'number' ? Math.round(next.height) : b.height;
+          const width = Math.max(MIN_BLOCK_WIDTH, rawW);
+          const height = Math.max(MIN_BLOCK_HEIGHT, rawH);
+          const clamped = clampWindowToWorkArea(rawX, rawY, width, height, 0);
+          existing.setBounds({ x: clamped.x, y: clamped.y, width, height });
+        } catch (_) {}
+
+        if (existing.__blockReady && !existing.__blockShown) {
+          try {
+            if (typeof existing.showInactive === 'function') existing.showInactive();
+            else existing.show();
+            try { existing.moveTop(); } catch (_) {}
+            try { existing.setIgnoreMouseEvents(false); } catch (_) {}
+            if (typeof existing.setOpacity === 'function') {
+              try { existing.setOpacity(1); } catch (_) {}
+            }
+            existing.__blockShown = true;
+            const startedAt = blocks.blockPerfStarts.get(blockId) || null;
+            const dtMs = startedAt ? Math.max(0, Date.now() - startedAt) : null;
+            appendOverlayPerf({
+              t: new Date().toISOString(),
+              event: 'block-shown',
+              blockId,
+              dtMs
+            });
+            if (startedAt) blocks.blockPerfStarts.delete(blockId);
+          } catch (_) {}
+        }
+      }
       try { existing.webContents.send(IPC_CHANNELS.BLOCK_WINDOW_OPEN, payload || {}); } catch (_) {}
       return existing;
     }
+
+    blocks.blockPerfStarts.set(blockId, Date.now());
+    try {
+      appendOverlayPerf({
+        t: new Date().toISOString(),
+        event: 'block-open',
+        blockId
+      });
+    } catch (_) {}
 
     const bounds = payload && payload.bounds ? payload.bounds : blocks.blockLastBounds.get(blockId) || null;
     const width = Math.max(MIN_BLOCK_WIDTH, Math.round((bounds && bounds.width) || 360));
@@ -103,11 +175,19 @@ function createBlockWindowsManager(deps) {
     });
 
     blockWin.__blockId = blockId;
+    blockWin.__blockReady = false;
+    blockWin.__blockActive = true;
+    blockWin.__blockShown = false;
     blocks.detachedBlockWindows.set(blockId, blockWin);
 
-    blockWin.loadFile('overlay.html', { query: { role: 'block', block: blockId } });
+    blockWin.loadFile('block.html', { query: { role: 'block', block: blockId } });
     blockWin.webContents.on('did-finish-load', () => {
       try { blockWin.webContents.send(IPC_CHANNELS.SET_LANGUAGE, getCurrentLanguage()); } catch (_) {}
+      try {
+        if (blockWin.__blockActive) {
+          blockWin.webContents.send(IPC_CHANNELS.BLOCK_WINDOW_OPEN, { blockId });
+        }
+      } catch (_) {}
     });
 
     try {
@@ -121,11 +201,11 @@ function createBlockWindowsManager(deps) {
       blocks.detachedBlockWindows.delete(blockId);
     });
 
-    try {
-      if (typeof blockWin.showInactive === 'function') blockWin.showInactive();
-      else blockWin.show();
-      try { blockWin.moveTop(); } catch (_) {}
-    } catch (_) {}
+    try { blockWin.setIgnoreMouseEvents(true); } catch (_) {}
+    if (typeof blockWin.setOpacity === 'function') {
+      try { blockWin.setOpacity(0); } catch (_) {}
+    }
+    try { blockWin.hide(); } catch (_) {}
 
     return blockWin;
   }
@@ -145,13 +225,56 @@ function createBlockWindowsManager(deps) {
     blocks.blockLastBounds.set(blockId, { x: clamped.x, y: clamped.y, width, height });
   }
 
+  function markBlockWindowReady(blockId, senderWebContents) {
+    const w = getBlockWindow(blockId);
+    if (!w || w.isDestroyed()) return;
+    if (senderWebContents && w.webContents && senderWebContents.id !== w.webContents.id) return;
+    if (w.__blockReady) return;
+    w.__blockReady = true;
+
+    try {
+      const startedAt = blocks.blockPerfStarts.get(blockId) || null;
+      const dtMs = startedAt ? Math.max(0, Date.now() - startedAt) : null;
+      appendOverlayPerf({
+        t: new Date().toISOString(),
+        event: 'block-ready',
+        blockId,
+        dtMs
+      });
+    } catch (_) {}
+
+    if (w.__blockActive && !w.__blockShown) {
+      try {
+        if (typeof w.showInactive === 'function') w.showInactive();
+        else w.show();
+        try { w.moveTop(); } catch (_) {}
+        try { w.setIgnoreMouseEvents(false); } catch (_) {}
+        if (typeof w.setOpacity === 'function') {
+          try { w.setOpacity(1); } catch (_) {}
+        }
+        w.__blockShown = true;
+        const startedAt = blocks.blockPerfStarts.get(blockId) || null;
+        const dtMs = startedAt ? Math.max(0, Date.now() - startedAt) : null;
+        appendOverlayPerf({
+          t: new Date().toISOString(),
+          event: 'block-shown',
+          blockId,
+          dtMs
+        });
+        if (startedAt) blocks.blockPerfStarts.delete(blockId);
+      } catch (_) {}
+    }
+  }
+
   return {
     bringBlockWindowsToFront,
     setBlockWindowsVisible,
     closeBlockWindow,
     closeAllBlockWindows,
     createBlockWindow,
-    updateBlockWindowBounds
+    updateBlockWindowBounds,
+    prewarmBlockWindows,
+    markBlockWindowReady
   };
 }
 

@@ -69,7 +69,6 @@ function createHotkeyManager(deps) {
         setBlockWindowsVisible(true);
         setDetachedPanelWindowsVisible(true);
         reconcileDetachedPanelWindowsVisibility('hotkey create+show');
-        notePanel.setNotePanelVisible(true);
         overlay.lastOverlayRaiseAt = now;
         if (core.overlayWin && !core.overlayWin.isDestroyed()) {
           core.overlayWin.webContents.send(IPC_CHANNELS.SET_LANGUAGE, getCurrentLanguage());

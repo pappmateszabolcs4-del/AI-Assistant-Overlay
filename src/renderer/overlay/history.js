@@ -14,8 +14,35 @@ const PINNED_HISTORY_MAX = 3;
 var pinnedHistoryBoxes = []; // [{ ts, x, y, width, height }], screen coords
 
 // History controls (removed - now in tab)
-const historyList = document.getElementById('historyList');
-const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+let historyList = document.getElementById('historyList');
+let clearHistoryBtn = document.getElementById('clearHistoryBtn');
+let historyElementsReady = false;
+
+function initHistoryElements() {
+  historyList = document.getElementById('historyList');
+  clearHistoryBtn = document.getElementById('clearHistoryBtn');
+  if (clearHistoryBtn && !clearHistoryBtn.__historyBound) {
+    clearHistoryBtn.__historyBound = true;
+    on(clearHistoryBtn, 'click', () => {
+      showConfirmModal(
+        t().confirmTitle,
+        t().confirmClearHistory,
+        () => {
+          conversationHistory = [];
+          expandedHistoryKey = null;
+          saveHistory();
+          renderHistory();
+          if (typeof status !== 'undefined' && status) {
+            status.textContent = t().historyCleared;
+          }
+        }
+      );
+    });
+  }
+  historyElementsReady = true;
+}
+
+window.__initHistoryElements = initHistoryElements;
 
 // Tab controls (legacy - kept for pinning functionality)
 // The tab buttons and contents are no longer in the DOM, so we skip initialization
@@ -322,6 +349,9 @@ tabBtns.forEach(btn => {
 
 // Load history from localStorage
 function loadHistory() {
+  if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow) {
+    return;
+  }
   const saved = localStorage.getItem(STORAGE_KEYS.CONVERSATION_HISTORY);
   console.log('[HISTORY] Loading from localStorage:', saved ? `${saved.length} chars, ${JSON.parse(saved).length} items` : 'NULL');
   if (saved) {
@@ -339,8 +369,32 @@ function loadHistory() {
 
 // Save history to localStorage
 function saveHistory() {
+  if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow) {
+    fireAndForget(IPC_CHANNELS.HISTORY_SET, conversationHistory);
+    return;
+  }
   localStorage.setItem(STORAGE_KEYS.CONVERSATION_HISTORY, JSON.stringify(conversationHistory));
   console.log('[HISTORY] Saved to localStorage:', conversationHistory.length, 'items');
+}
+
+async function syncHistoryFromMain() {
+  if (typeof __isBlockWindow === 'undefined' || !__isBlockWindow) return;
+  try {
+    const res = await invokeMain(IPC_CHANNELS.HISTORY_GET);
+    if (res && res.success && Array.isArray(res.history)) {
+      conversationHistory = res.history;
+      if (!historyElementsReady) initHistoryElements();
+      renderHistory();
+    }
+  } catch (_) {}
+}
+
+window.syncHistoryFromMain = syncHistoryFromMain;
+
+if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow) {
+  setTimeout(() => {
+    try { syncHistoryFromMain(); } catch (_) {}
+  }, 0);
 }
 
 // Add to history
@@ -365,6 +419,8 @@ function addToHistory(question, answer, hasImage = false) {
 
 // Render history list
 function renderHistory() {
+  if (!historyElementsReady) initHistoryElements();
+  if (!historyList) return;
   historyList.textContent = '';
 
   if (conversationHistory.length === 0) {
@@ -591,20 +647,7 @@ function toggleHistoryItem(index) {
 localStorage.removeItem(LEGACY_HISTORY_POPUP_PINNED);
 localStorage.removeItem(LEGACY_HISTORY_POPUP_LAST_INDEX);
 
-// Clear history button
-on(clearHistoryBtn, 'click', () => {
-  showConfirmModal(
-    t().confirmTitle,
-    t().confirmClearHistory,
-    () => {
-      conversationHistory = [];
-      expandedHistoryKey = null;
-      saveHistory();
-      renderHistory();
-      status.textContent = t().historyCleared;
-    }
-  );
-});
+if (!historyElementsReady) initHistoryElements();
 
 // Export history
 window.exportHistory = function() {

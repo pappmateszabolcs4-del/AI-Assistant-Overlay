@@ -1,4 +1,7 @@
 const { IPC_CHANNELS } = require('../../shared/ipc-channels');
+const { STORAGE_KEYS } = require('../../shared/storage-keys');
+const { appendOverlayDebug } = require('../utils/overlay-debug-log');
+const { appendOverlayPerf } = require('../utils/overlay-perf-log');
 
 function registerOverlayIpc(deps) {
   const {
@@ -201,7 +204,7 @@ function registerOverlayIpc(deps) {
         try { startDetachedPanelPrewarm(); } catch (_) {}
       }, 250);
     } catch (_) {}
-    notePanel.setNotePanelVisible(true);
+    // Note panel is manual-only now; do not auto-show on overlay open.
     return { success: true, visible: !!(core.overlayWin && overlay.overlayVirtualVisible) };
   });
 
@@ -303,12 +306,85 @@ function registerOverlayIpc(deps) {
       height
     };
 
+    try {
+      const hasMoveReq = !!(bounds && (Number.isFinite(bounds.x) || Number.isFinite(bounds.y)));
+      const moved = next.x !== current.x || next.y !== current.y;
+      const ignoredMove = ignoreMoves && hasMoveReq;
+      if (moved || ignoredMove) {
+        appendOverlayDebug({
+          t: new Date().toISOString(),
+          event: 'overlay-resize',
+          ignoreMoves,
+          current: { x: current.x, y: current.y, width: current.width, height: current.height },
+          request: {
+            x: bounds && Number.isFinite(bounds.x) ? Math.round(bounds.x) : null,
+            y: bounds && Number.isFinite(bounds.y) ? Math.round(bounds.y) : null,
+            width: bounds && Number.isFinite(bounds.width) ? Math.round(bounds.width) : null,
+            height: bounds && Number.isFinite(bounds.height) ? Math.round(bounds.height) : null
+          },
+          raw: { x: rawX, y: rawY, width: rawW, height: rawH },
+          clamped: { x: clamped.x, y: clamped.y },
+          next,
+          debug: bounds && bounds.__debug ? bounds.__debug : null
+        });
+      }
+    } catch (_) {}
+
     try { core.overlayWin.setBounds(next); } catch (_) {}
     return { success: true };
   });
 
   ipcMain.on(IPC_CHANNELS.OVERLAY_DETACH_GUARD, (_event, active) => {
     overlay.overlayDetachGuardActive = !!active;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.OVERLAY_PERF_SAMPLE, (_event, payload) => {
+    try {
+      if (!payload || typeof payload !== 'object') return;
+      appendOverlayPerf({
+        t: new Date().toISOString(),
+        ...payload
+      });
+    } catch (_) {}
+    return { success: true };
+  });
+
+  ipcMain.handle(IPC_CHANNELS.HISTORY_GET, async () => {
+    try {
+      if (!core.overlayWin || core.overlayWin.isDestroyed()) {
+        return { success: false, history: [] };
+      }
+      const raw = await core.overlayWin.webContents.executeJavaScript(
+        `localStorage.getItem(${JSON.stringify(STORAGE_KEYS.CONVERSATION_HISTORY)})`,
+        true
+      );
+      if (!raw) return { success: true, history: [] };
+      const parsed = JSON.parse(raw);
+      return { success: true, history: Array.isArray(parsed) ? parsed : [] };
+    } catch (_) {
+      return { success: false, history: [] };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.HISTORY_SET, async (_event, payload) => {
+    try {
+      if (!core.overlayWin || core.overlayWin.isDestroyed()) {
+        return { success: false };
+      }
+      const list = Array.isArray(payload) ? payload : [];
+      const raw = JSON.stringify(list);
+      await core.overlayWin.webContents.executeJavaScript(
+        `localStorage.setItem(${JSON.stringify(STORAGE_KEYS.CONVERSATION_HISTORY)}, ${JSON.stringify(raw)});`,
+        true
+      );
+      await core.overlayWin.webContents.executeJavaScript(
+        `try { if (typeof loadHistory === 'function') loadHistory(); if (typeof renderHistory === 'function') renderHistory(); } catch (_) {}`,
+        true
+      );
+      return { success: true };
+    } catch (_) {
+      return { success: false };
+    }
   });
 
   ipcMain.handle(IPC_CHANNELS.GET_GAME_CONTEXT, async () => {
