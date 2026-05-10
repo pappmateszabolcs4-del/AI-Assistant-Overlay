@@ -111,14 +111,6 @@ const bugPatterns = [
   },
   // Orphan Event Handler is checked with a custom scan in overlay.html (see runBugChecker).
   {
-    name: 'History Popup Usage (Problematic)',
-    severity: 'HIGH',
-    pattern: /open-history-popup|createHistoryPopupWindow/,
-    types: ['renderer', 'main'],
-    description: 'History popup is still in use but causes game freezing (see LEARNINGS.md Issue 14)',
-    fix: 'Replace popup with inline expansion in history list to avoid focus stealing.'
-  },
-  {
     name: 'Large Commented Code Blocks',
     severity: 'LOW',
     pattern: /\/\*[\s\S]{200,}?\*\//,

@@ -4,6 +4,9 @@ var conversationHistory = []; // History array
 var expandedHistoryKey = null; // Currently expanded history entry timestamp
 var pinnedTabs = new Set(); // Set of pinned tab IDs
 
+const LEGACY_HISTORY_POPUP_PINNED = 'historyPopupPinned';
+const LEGACY_HISTORY_POPUP_LAST_INDEX = 'historyPopupLastIndex';
+
 // Pinned history boxes (drag out from history list)
 // NOTE: these are rendered as separate always-on-top windows (not limited by overlay window size).
 const PINNED_HISTORY_KEY = STORAGE_KEYS.PINNED_HISTORY;
@@ -585,8 +588,8 @@ function toggleHistoryItem(index) {
 }
 
 // Legacy popup state cleanup (inline history replaces external popup)
-localStorage.removeItem(STORAGE_KEYS.HISTORY_POPUP_PINNED);
-localStorage.removeItem(STORAGE_KEYS.HISTORY_POPUP_LAST_INDEX);
+localStorage.removeItem(LEGACY_HISTORY_POPUP_PINNED);
+localStorage.removeItem(LEGACY_HISTORY_POPUP_LAST_INDEX);
 
 // Clear history button
 on(clearHistoryBtn, 'click', () => {
