@@ -298,7 +298,9 @@ const lifecycleManager = createLifecycleManager({
   closeAllPinnedHistoryWindows,
   closeAllBlockWindows,
   notePanel,
-  registerHotkey
+  registerHotkey,
+  detectCurrentGame,
+  tryGetDisplayForGameWindow
 });
 
 lifecycleManager.setupAppLifecycle();
