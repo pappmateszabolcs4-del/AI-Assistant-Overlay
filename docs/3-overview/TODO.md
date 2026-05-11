@@ -4,8 +4,6 @@ Last updated: 2026-05-11
 
 ## Top candidates (next)
 
- - [ ] Per-game layout profiles
-  - Save/apply per detected game: layout mode, panel order (and optionally open/detached state)
  - [ ] Multi-monitor optimization (full scope)
   - [x] Display registry: stable displayId, workArea/bounds, scaleFactor, rotation
   - [x] Canonical layout: per-monitor normalized rects (x,y,w,h in 0..1)
@@ -57,18 +55,7 @@ Last updated: 2026-05-11
 
 ## UX
 
-- [ ] Per-game layout profiles
-  - Save/apply per detected game: layout mode, panel order (and optionally open/detached state)
-- [ ] Multi-monitor optimization (full scope)
-  - [x] Display registry: stable displayId, workArea/bounds, scaleFactor, rotation
-  - [x] Canonical layout: per-monitor normalized rects (x,y,w,h in 0..1)
-  - [x] DPI-aware restore: map normalized rects to monitor workArea
-  - [~] Game-monitor binding: overlay follows active game display (initial placement only)
-  - [x] Hot-plug + reflow: clamp/reposition on monitor change
-  - [x] Recovery rules: fallback to primary if target monitor is missing
-  - [~] Storage migration: convert legacy absolute positions (overlay/note/pinned only)
-  - [ ] Optional debug map: visualize monitors + window anchors
-- [ ] Game-aware detection + UX (long-term)
+ - [ ] Game-aware detection + UX (long-term)
   - Multi-signal detection: window title + exe + process path + window class + recent focus
   - Title normalization + fuzzy match (strip launcher/edition/suffix noise)
   - Augment data sources: IGDB + Steam/Epic/GoG metadata for exe/display-name mapping
@@ -79,6 +66,19 @@ Last updated: 2026-05-11
     - Template source + fallback to generic prompts when missing
   - Stickiness: keep last recognized game for a short window to avoid flapping
   - Optional vision fallback with explicit consent + privacy guardrails
+ - [ ] Per-game layout profiles
+  - Save/apply per detected game: layout mode, panel order (and optionally open/detached state)
+  - Depends on Coupled UX (Unknown -> mapping) for reliable game identity
+- [ ] Multi-monitor optimization (full scope)
+  - [x] Display registry: stable displayId, workArea/bounds, scaleFactor, rotation
+  - [x] Canonical layout: per-monitor normalized rects (x,y,w,h in 0..1)
+  - [x] DPI-aware restore: map normalized rects to monitor workArea
+  - [~] Game-monitor binding: overlay follows active game display (initial placement only)
+  - [x] Hot-plug + reflow: clamp/reposition on monitor change
+  - [x] Recovery rules: fallback to primary if target monitor is missing
+  - [~] Storage migration: convert legacy absolute positions (overlay/note/pinned only)
+  - [ ] Optional debug map: visualize monitors + window anchors
+
 - [ ] Hotkey customization UI
 - [ ] Accessibility keyboard navigation
 - [ ] Multi-account support
