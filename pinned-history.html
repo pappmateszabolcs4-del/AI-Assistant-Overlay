@@ -51,32 +51,6 @@
       background: transparent;
     }
 
-    .resize-handle-left {
-      left: 0;
-      top: 0;
-      width: 10px;
-      height: 100%;
-      cursor: ew-resize;
-    }
-
-    .resize-handle-left::before {
-      content: '';
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: 2px;
-      height: 32px;
-      border-radius: 2px;
-      background: rgba(91, 158, 255, 0.18);
-      pointer-events: none;
-      transition: background 0.15s ease;
-    }
-
-    .resize-handle-left:hover::before {
-      background: rgba(91, 158, 255, 0.18);
-    }
-
     .resize-handle-right {
       right: 0;
       top: 0;
@@ -245,7 +219,6 @@
         <div id="title">📌 Pinned history</div>
         <div class="meta" id="meta">…</div>
       </div>
-      <div class="resize-handle resize-handle-left" id="resizeLeft"></div>
       <div class="resize-handle resize-handle-right" id="resizeRight"></div>
       <div class="resize-handle resize-handle-bottom" id="resizeBottom"></div>
       <div class="resize-handle resize-handle-corner" id="resizeCorner"></div>
@@ -272,7 +245,6 @@
     const qTextEl = document.getElementById('qText');
     const aTextEl = document.getElementById('aText');
 
-    const resizeLeft = document.getElementById('resizeLeft');
     const resizeRight = document.getElementById('resizeRight');
     const resizeBottom = document.getElementById('resizeBottom');
     const resizeCorner = document.getElementById('resizeCorner');
@@ -497,9 +469,6 @@
       } else if (resizeState.edge === 'corner') {
         nextW = b.width + dx;
         nextH = b.height + dy;
-      } else if (resizeState.edge === 'left') {
-        nextX = b.x + dx;
-        nextW = b.width - dx;
       }
 
       nextW = Math.max(MIN_WIDTH, Math.round(nextW));
@@ -527,9 +496,6 @@
       let nextX = window.screenX;
       let nextY = window.screenY;
 
-      if (edge === 'left') {
-        nextX = Math.round(currentRight - nextW);
-      }
       // For right/bottom/corner, keep x/y fixed.
 
       requestSetBounds({ x: Math.round(nextX), y: Math.round(nextY), width: Math.round(nextW), height: Math.round(nextH) });
@@ -608,7 +574,6 @@
 
     // Resize handles
     const resizeHandles = [
-      { el: resizeLeft, edge: 'left' },
       { el: resizeRight, edge: 'right' },
       { el: resizeBottom, edge: 'bottom' },
       { el: resizeCorner, edge: 'corner' }

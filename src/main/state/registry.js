@@ -17,8 +17,6 @@ const registry = {
     overlayHideDuringLoad: false,
     overlayIgnoreMoveUntil: 0,
     lastOverlayRaiseAt: 0,
-    overlayResizeLeftAnchorRightEdge: null,
-    overlayResizeLeftAnchorAt: 0
   },
   game: {
     currentDetectedGame: null,

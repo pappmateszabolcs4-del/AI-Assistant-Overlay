@@ -468,32 +468,6 @@
       background: transparent;
     }
 
-    .resize-handle-left {
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 10px;
-      cursor: ew-resize;
-    }
-
-    .resize-handle-left::before {
-      content: '';
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: 2px;
-      height: 32px;
-      border-radius: 2px;
-      background: rgba(91, 158, 255, 0.18);
-      pointer-events: none;
-      transition: background 0.15s ease;
-    }
-
-    .resize-handle-left:hover::before {
-      background: rgba(91, 158, 255, 0.18);
-    }
-
     .resize-handle-right {
       right: 0;
       top: 0;
@@ -594,7 +568,6 @@
         </div>
       </div>
 
-      <div class="resize-handle resize-handle-left" id="resizeLeft"></div>
       <div class="resize-handle resize-handle-right" id="resizeRight"></div>
       <div class="resize-handle resize-handle-bottom" id="resizeBottom"></div>
       <div class="resize-handle resize-handle-corner" id="resizeCorner"></div>
@@ -676,7 +649,6 @@
     const modalConfirm = document.getElementById('modalConfirm');
     const modalCancel = document.getElementById('modalCancel');
 
-    const resizeLeft = document.getElementById('resizeLeft');
     const resizeRight = document.getElementById('resizeRight');
     const resizeBottom = document.getElementById('resizeBottom');
     const resizeCorner = document.getElementById('resizeCorner');
@@ -1397,23 +1369,11 @@
 
       if (resizeState.edge === 'right') {
         nextW = b.width + dx;
-      } else if (resizeState.edge === 'left') {
-        nextW = b.width - dx;
-        nextX = b.x + dx;
       } else if (resizeState.edge === 'bottom') {
         nextH = b.height + dy;
       } else if (resizeState.edge === 'corner') {
         nextW = b.width + dx;
         nextH = b.height + dy;
-      }
-
-      // If we hit min size while resizing from the left, preserve the right edge.
-      if (resizeState.edge === 'left') {
-        const rawW = Math.round(nextW);
-        if (rawW < MIN_WIDTH) {
-          nextW = MIN_WIDTH;
-          nextX = b.x + (b.width - MIN_WIDTH);
-        }
       }
 
       nextW = Math.max(MIN_WIDTH, Math.round(nextW));
@@ -1442,7 +1402,6 @@
     }
 
     const resizeHandles = [
-      { el: resizeLeft, edge: 'left' },
       { el: resizeRight, edge: 'right' },
       { el: resizeBottom, edge: 'bottom' },
       { el: resizeCorner, edge: 'corner' }

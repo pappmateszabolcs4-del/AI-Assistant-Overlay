@@ -177,14 +177,6 @@
       pointer-events: auto;
     }
 
-    .resize-handle-left {
-      left: 0;
-      top: 0;
-      width: 8px;
-      height: 100%;
-      cursor: col-resize;
-    }
-
     .resize-handle-right {
       right: 0;
       top: 0;
@@ -205,14 +197,12 @@
       display: none; /* bottom resize removed from main header */
     }
 
-    .resize-handle-left:hover,
     .resize-handle-right:hover,
     .resize-handle-bottom:hover {
       background: transparent;
     }
 
     /* Subtle resize affordance: faint grip lines on edges */
-    .resize-handle-left::before,
     .resize-handle-right::before {
       content: '';
       position: absolute;
@@ -228,7 +218,6 @@
       transition: background 0.15s ease;
     }
 
-    .resize-handle-left:hover::before,
     .resize-handle-right:hover::before {
       background: rgba(91, 158, 255, 0.18);
     }
@@ -433,7 +422,6 @@
     }
 
     body.block-mode .drag-handle,
-    body.block-mode .resize-handle-left,
     body.block-mode .resize-handle-right,
     body.block-mode .info-btn-container,
     body.block-mode .close-btn-container,
@@ -1777,14 +1765,6 @@
       -webkit-user-select: none;
     }
 
-    body.panel-mode .detached-resize-handle-left {
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 10px;
-      cursor: ew-resize;
-    }
-
     body.panel-mode .detached-resize-handle-right {
       right: 0;
       top: 0;
@@ -1802,13 +1782,11 @@
     }
 
     /* Subtle resize affordance in detached windows */
-    body.panel-mode .detached-resize-handle-left:hover,
     body.panel-mode .detached-resize-handle-right:hover,
     body.panel-mode .detached-resize-handle-corner:hover {
       background: transparent;
     }
 
-    body.panel-mode .detached-resize-handle-left::before,
     body.panel-mode .detached-resize-handle-right::before {
       content: '';
       position: absolute;
@@ -1823,7 +1801,6 @@
       transition: background 0.15s ease;
     }
 
-    body.panel-mode .detached-resize-handle-left:hover::before,
     body.panel-mode .detached-resize-handle-right:hover::before {
       background: rgba(91, 158, 255, 0.18);
     }

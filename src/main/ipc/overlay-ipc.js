@@ -295,52 +295,16 @@ function registerOverlayIpc(deps) {
     let wantsY = !!(bounds && Number.isFinite(bounds.y));
     let wantsW = !!(bounds && Number.isFinite(bounds.width));
     let wantsH = !!(bounds && Number.isFinite(bounds.height));
-    const resizeEdge = bounds && bounds.__debug ? bounds.__debug.edge : null;
-    const resizeReason = bounds && bounds.__debug ? bounds.__debug.reason : null;
-    const cursorScreenX = bounds && Number.isFinite(bounds.cursorScreenX)
-      ? Math.round(bounds.cursorScreenX)
-      : null;
-    const startRightEdge = bounds && Number.isFinite(bounds.startRightEdge)
-      ? Math.round(bounds.startRightEdge)
-      : null;
 
     let rawX = (!ignoreMoves && wantsX) ? Math.round(bounds.x) : current.x;
     const rawY = (!ignoreMoves && wantsY) ? Math.round(bounds.y) : current.y;
     let rawW = wantsW ? Math.round(bounds.width) : current.width;
     let rawH = wantsH ? Math.round(bounds.height) : current.height;
     const resizeDir = bounds && bounds.__debug ? bounds.__debug.dir : null;
-    if (resizeDir === 'left' || resizeDir === 'right') {
+    if (resizeDir === 'right') {
       rawH = current.height;
     }
 
-    if (!ignoreMoves && resizeEdge === 'left') {
-      if (Number.isFinite(startRightEdge)) {
-        overlay.overlayResizeLeftAnchorRightEdge = startRightEdge;
-        overlay.overlayResizeLeftAnchorAt = Date.now();
-      }
-      const anchoredRightEdge = Number.isFinite(overlay.overlayResizeLeftAnchorRightEdge)
-        ? overlay.overlayResizeLeftAnchorRightEdge
-        : current.x + current.width;
-      const pointerX = Number.isFinite(cursorScreenX)
-        ? cursorScreenX
-        : (screen && typeof screen.getCursorScreenPoint === 'function')
-          ? Math.round(screen.getCursorScreenPoint().x)
-          : null;
-      if (Number.isFinite(pointerX)) {
-        rawX = pointerX;
-        wantsX = true;
-        wantsW = true;
-        const nextW = Math.round(anchoredRightEdge - pointerX);
-        rawW = Number.isFinite(nextW) ? nextW : rawW;
-      } else if (wantsW && !wantsX) {
-        rawX = Math.round(current.x + (current.width - rawW));
-      }
-    }
-
-    if (resizeEdge !== 'left' || resizeReason === 'resize-end') {
-      overlay.overlayResizeLeftAnchorRightEdge = null;
-      overlay.overlayResizeLeftAnchorAt = 0;
-    }
 
     let width = Math.max(450, rawW);
     let height = Math.max(140, rawH);
@@ -367,11 +331,6 @@ function registerOverlayIpc(deps) {
     if (area) {
       width = Math.min(width, Math.max(450, area.width));
       height = Math.min(height, Math.max(140, area.height));
-      if (!ignoreMoves && resizeEdge === 'left') {
-        const rightEdge = current.x + current.width;
-        rawX = Math.round(rightEdge - width);
-        wantsX = true;
-      }
     }
 
     const clamped = clampWindowToWorkArea(rawX, rawY, width, height, 0);

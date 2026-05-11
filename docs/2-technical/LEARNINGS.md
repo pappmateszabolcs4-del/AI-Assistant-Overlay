@@ -1033,6 +1033,43 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 
 ---
 
+### 2026-05-11 (Evening)
+
+#### Summary
+- What changed: Removed left-edge resize handles across main overlay, detached panels, note/info/pinned windows, and main window; stabilized detached panel drag bounds; added hover geometry fallback; refreshed backup script to folder-based backups with include/exclude and manifest.
+- Why: Left-edge resize jitter and right-edge dead zones persisted; backup script no longer matched project structure.
+- Impact: More predictable resizing, fewer hover dead zones, and reliable backups aligned with current repo layout.
+
+#### Details
+- Implementation notes: Detached drag now uses fixed bounds to avoid DPI auto-resize; click-through hover uses a rect-based fallback; main IPC left-resize anchor logic removed.
+- Edge cases: Main overlay now resizes only from right/bottom; backup script excludes backups and node_modules by default.
+
+#### Files touched
+- [src/main/ipc/detached-ipc.js](src/main/ipc/detached-ipc.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/main/state/registry.js](src/main/state/registry.js)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/renderer/overlay/window-resize.js](src/renderer/overlay/window-resize.js)
+- [overlay.html](overlay.html)
+- [overlay.css](overlay.css)
+- [index.html](index.html)
+- [note-panel.html](note-panel.html)
+- [info-panel.html](info-panel.html)
+- [pinned-history.html](pinned-history.html)
+- [scripts/make-backup.ps1](scripts/make-backup.ps1)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Backups directory cleared with explicit user approval; new backup created with updated script.
+
+#### Verification
+- Tests: `npm run check`.
+
+#### Follow-ups
+- TODO: None.
+
+---
+
 ### 2026-02-05 (Evening → Night)
 
 #### Updates (Feb 5, 2026 - Evening)

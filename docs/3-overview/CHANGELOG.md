@@ -6,20 +6,21 @@
 
 ---
 
-## [1.0.25] - 2026-05-10 (History Search + Block Window Support)
+## [1.0.27] - 2026-05-11 (Resize Cleanup + Backup Refresh)
 
 ### ✅ Added
 
-- History search input with pinned-only toggle and result meta.
-- Block window history search UI to match overlay behavior.
+- Backup script now supports include/exclude lists, folder-based backups, and per-run manifests.
 
 ### 🔧 Changed
 
-- Pinned history windows now sync with the active search query and pinned-only filter.
+- Detached panel drag now keeps fixed bounds to prevent DPI-driven auto-resize across monitors.
+- Popup open logic expands the main overlay when too short to avoid tiny dropdowns.
 
 ### 🐛 Fixed
 
-- bug-checker now includes block-only history IDs to avoid false orphan warnings.
+- Click-through hover now uses a geometry fallback to prevent right-edge dead zones.
+- Left-edge resize handles removed across main overlay, detached panels, and aux windows.
 
 ### 🧾 Notes
 
@@ -48,6 +49,27 @@
 
 - Left-edge resize stability on transparent overlays is improved but still shows clipping/jitter under continuous updates; a two-window handle + content approach is planned.
 - Tests: Not run (not requested).
+
+---
+
+## [1.0.25] - 2026-05-10 (History Search + Block Window Support)
+
+### ✅ Added
+
+- History search input with pinned-only toggle and result meta.
+- Block window history search UI to match overlay behavior.
+
+### 🔧 Changed
+
+- Pinned history windows now sync with the active search query and pinned-only filter.
+
+### 🐛 Fixed
+
+- bug-checker now includes block-only history IDs to avoid false orphan warnings.
+
+### 🧾 Notes
+
+- Tests: `npm run check`.
 
 ---
 

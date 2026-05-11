@@ -216,12 +216,7 @@ try {
 
 function getPopupMaxHeightPx() {
   const gutter = 12;
-  const overlayHost = document.getElementById('overlay-container');
-  const hostRect = overlayHost ? overlayHost.getBoundingClientRect() : null;
-  const baseHeight = hostRect && hostRect.height ? hostRect.height : window.innerHeight;
-  const viewportCap = Math.round(window.innerHeight * 0.78);
-  const cap = Math.min(baseHeight, viewportCap, window.innerHeight);
-  return Math.max(260, Math.round(cap - gutter * 2));
+  return Math.max(260, Math.round(window.innerHeight - gutter * 2));
 }
 
 function syncClickThrough(allowThrough) {
@@ -264,13 +259,29 @@ function popForceInteractive() {
       return;
     }
     const el = document.elementFromPoint(lastPointerClientX, lastPointerClientY);
-    overlayHovered = isInteractiveTarget(el);
+    overlayHovered = isInteractiveTarget(el) || isPointOverInteractiveRect(lastPointerClientX, lastPointerClientY);
     syncClickThrough(!overlayHovered);
   }, 0);
 }
 
 window.__pushForceInteractive = pushForceInteractive;
 window.__popForceInteractive = popForceInteractive;
+
+const INTERACTIVE_SELECTOR = [
+  '#dragHandle',
+  '.resize-handle-right',
+  '.resize-handle-bottom',
+  '.section-header',
+  '.section-content',
+  '.popup-resize-handle',
+  '.history-item',
+  'button',
+  'input',
+  'select',
+  'textarea',
+  'a[href]',
+  '[role="button"]'
+].join(',');
 
 function isInteractiveTarget(target) {
   if (!target) return false;
@@ -284,29 +295,35 @@ function isInteractiveTarget(target) {
 
   // Only treat specific UI elements as interactive.
   // This prevents the whole overlay window from blocking clicks in "empty" areas.
-  const interactiveSelector = [
-    '#dragHandle',
-    '.resize-handle-left',
-    '.resize-handle-right',
-    '.resize-handle-bottom',
-    '.section-header',
-    '.section-content',
-    '.popup-resize-handle',
-    '.history-item',
-    'button',
-    'input',
-    'select',
-    'textarea',
-    'a[href]',
-    '[role="button"]'
-  ].join(',');
-
-  const hit = el.closest(interactiveSelector);
+  const hit = el.closest(INTERACTIVE_SELECTOR);
   if (!hit) return false;
   // Ensure it's within our overlay UI
   if (overlayContainer && overlayContainer.contains(hit)) return true;
   if (floatingHost && floatingHost.contains(hit)) return true;
   if (confirmModal && confirmModal.contains(hit)) return true;
+  return false;
+}
+
+function isPointOverInteractiveRect(clientX, clientY) {
+  if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return false;
+  const roots = [];
+  if (overlayContainer) roots.push(overlayContainer);
+  if (floatingHost) roots.push(floatingHost);
+  if (confirmModal) roots.push(confirmModal);
+
+  for (const root of roots) {
+    const nodes = root.querySelectorAll(INTERACTIVE_SELECTOR);
+    for (const node of nodes) {
+      if (!node || typeof node.getBoundingClientRect !== 'function') continue;
+      if (node.getClientRects().length === 0) continue;
+      const rect = node.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) continue;
+      if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+        return true;
+      }
+    }
+  }
+
   return false;
 }
 
@@ -376,7 +393,7 @@ function evaluateHoverFromPoint(clientX, clientY) {
     return;
   }
   const el = document.elementFromPoint(clientX, clientY);
-  overlayHovered = isInteractiveTarget(el);
+  overlayHovered = isInteractiveTarget(el) || isPointOverInteractiveRect(clientX, clientY);
   syncClickThrough(!overlayHovered);
 }
 
@@ -533,6 +550,16 @@ function toggleSection(event, headerBtn) {
   section.__floatingContent = content;
   content.__anchorBtn = headerBtn;
 
+  const shouldExpandForPopup = !__isDetachedPanelWindow
+    && !section.classList.contains('panel-detached')
+    && !document.body.classList.contains('header-only')
+    && !document.body.classList.contains('dock-preview')
+    && window.innerHeight < 240;
+
+  if (shouldExpandForPopup) {
+    try { sendOverlayResizeBatched({ height: 500, __debug: { reason: 'popup-open-expand' } }); } catch (_) {}
+  }
+
   toggle.classList.add('open');
   positionPopup(content, headerBtn);
 }
@@ -677,14 +704,11 @@ if (__isDetachedPanelWindow) {
   try {
     const host = document.getElementById('overlay-container');
     if (host) {
-      const left = document.createElement('div');
-      left.className = 'detached-resize-handle detached-resize-handle-left';
       const right = document.createElement('div');
       right.className = 'detached-resize-handle detached-resize-handle-right';
       const corner = document.createElement('div');
       corner.className = 'detached-resize-handle detached-resize-handle-corner';
 
-      host.appendChild(left);
       host.appendChild(right);
       host.appendChild(corner);
 
@@ -693,7 +717,6 @@ if (__isDetachedPanelWindow) {
       const headerEl = document.querySelector('.collapsible-section.panel-active .section-header');
       const headerH = headerEl ? Math.max(0, Math.ceil(headerEl.getBoundingClientRect().height)) : 0;
       if (headerH > 0) {
-        left.style.top = `${headerH}px`;
         right.style.top = `${headerH}px`;
       }
 
@@ -755,21 +778,9 @@ if (__isDetachedPanelWindow) {
 
         if (edgeResizeState.edge === 'right') {
           nextW = b.width + dx;
-        } else if (edgeResizeState.edge === 'left') {
-          nextW = b.width - dx;
-          nextX = b.x + dx;
         } else if (edgeResizeState.edge === 'corner') {
           nextW = b.width + dx;
           nextH = b.height + dy;
-        }
-
-        // Min-size + preserve right edge when resizing from left.
-        if (edgeResizeState.edge === 'left') {
-          const rawW = Math.round(nextW);
-          if (rawW < MIN_W) {
-            nextW = MIN_W;
-            nextX = b.x + (b.width - MIN_W);
-          }
         }
 
         nextW = Math.max(MIN_W, Math.round(nextW));
@@ -797,7 +808,6 @@ if (__isDetachedPanelWindow) {
       }
 
       const edgeHandles = [
-        { el: left, edge: 'left' },
         { el: right, edge: 'right' },
         { el: corner, edge: 'corner' }
       ];

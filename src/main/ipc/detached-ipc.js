@@ -195,14 +195,17 @@ function registerDetachedIpc(deps) {
     const w = detached.detachedPanelWindows.get(pid);
     if (!w || w.isDestroyed()) return;
     const b = w.getBounds();
+    const desired = detached.detachedPanelDesiredBounds.get(pid) || { width: b.width, height: b.height };
     const nextX = typeof x === 'number' ? Math.round(x) : b.x;
     const nextY = typeof y === 'number' ? Math.round(y) : b.y;
     try {
-      const clamped = clampWindowToWorkArea(nextX, nextY, b.width, b.height, 0);
-      w.setPosition(clamped.x, clamped.y);
-      try { captureWindowLayout(`detached:${pid}`, { x: clamped.x, y: clamped.y, width: b.width, height: b.height }); } catch (_) {}
+      const width = Math.max(200, Math.round(desired.width || b.width));
+      const height = Math.max(120, Math.round(desired.height || b.height));
+      const clamped = clampWindowToWorkArea(nextX, nextY, width, height, 0);
+      w.setBounds({ x: clamped.x, y: clamped.y, width, height });
+      try { captureWindowLayout(`detached:${pid}`, { x: clamped.x, y: clamped.y, width, height }); } catch (_) {}
     } catch (_) {
-      try { w.setPosition(nextX, nextY); } catch (_) {}
+      try { w.setBounds({ x: nextX, y: nextY, width: b.width, height: b.height }); } catch (_) {}
     }
   });
 

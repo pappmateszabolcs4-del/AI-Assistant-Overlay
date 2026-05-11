@@ -2,7 +2,6 @@
 
 // Resize handle logic
 const overlayContainer = document.getElementById('overlay-container');
-const leftHandle = document.querySelector('.resize-handle-left');
 const rightHandle = document.querySelector('.resize-handle-right');
 const bottomHandle = document.querySelector('.resize-handle-bottom');
 const dragHandle = document.getElementById('dragHandle');
@@ -29,7 +28,6 @@ let resizePointerId = null;
 let resizeHandleEl = null;
 let startPointerScreenX = 0;
 let startPointerScreenY = 0;
-let startRightEdge = 0;
 let resizeForcedInteractive = false;
 
 // Resize IPC batching to avoid jitter/lag (one send per animation frame)
@@ -142,7 +140,6 @@ function startResize(e, direction) {
   resizeHandleEl = e.currentTarget || null;
   startPointerScreenX = e.screenX;
   startPointerScreenY = e.screenY;
-  startRightEdge = startWindowX + startWindowWidth;
   // Hide scrollbars during resize to avoid width-dependent layout shifts
   prevOverflowY = overlayContainer.style.overflowY;
   overlayContainer.style.overflowY = 'hidden';
@@ -150,13 +147,6 @@ function startResize(e, direction) {
     try {
       resizeHandleEl.setPointerCapture(resizePointerId);
     } catch (_) {}
-  }
-  if (direction === 'left') {
-    sendOverlayResize({
-      cursorScreenX: typeof e.screenX === 'number' ? Math.round(e.screenX) : undefined,
-      startRightEdge: Number.isFinite(startRightEdge) ? Math.round(startRightEdge) : undefined,
-      __debug: { reason: 'resize-start', edge: 'left', dir: 'left' }
-    });
   }
   e.preventDefault();
   e.stopPropagation();
@@ -215,13 +205,7 @@ function doResize(e) {
   const roundedWidth = Math.round(newWidth);
   const roundedHeight = Math.round(newHeight);
 
-  if (resizeDirection === 'left') {
-    sendOverlayResizeBatched({
-      cursorScreenX: typeof e.screenX === 'number' ? Math.round(e.screenX) : undefined,
-      __debug: { reason: 'resize-left', edge: 'left', dir: 'left' }
-    });
-    return;
-  } else if (resizeDirection === 'right') {
+  if (resizeDirection === 'right') {
     sendOverlayResizeBatched({ width: roundedWidth, __debug: { reason: 'resize-right', edge: 'right' } });
   } else if (resizeDirection === 'bottom') {
     sendOverlayResizeBatched({ height: roundedHeight, __debug: { reason: 'resize-bottom' } });
@@ -235,17 +219,12 @@ function stopResize(e) {
 
   if (isResizing) {
     // Send a final precise size on mouseup
-    const finalBounds = resizeDirection === 'left'
-      ? {
-        cursorScreenX: typeof e.screenX === 'number' ? Math.round(e.screenX) : undefined,
-        __debug: { reason: 'resize-end', dir: 'left', edge: 'left' }
-      }
-      : {
-        width: Math.round(window.innerWidth),
-        height: Math.round(window.innerHeight),
-        cursorScreenX: typeof e.screenX === 'number' ? Math.round(e.screenX) : undefined,
-        __debug: { reason: 'resize-end', dir: resizeDirection, edge: resizeDirection }
-      };
+    const finalBounds = {
+      width: Math.round(window.innerWidth),
+      height: Math.round(window.innerHeight),
+      cursorScreenX: typeof e.screenX === 'number' ? Math.round(e.screenX) : undefined,
+      __debug: { reason: 'resize-end', dir: resizeDirection, edge: resizeDirection }
+    };
     sendOverlayResize(finalBounds);
     lastSentBounds = { ...lastSentBounds, ...finalBounds };
   }
@@ -271,7 +250,6 @@ function stopResize(e) {
 }
 
 if (!__skipOverlayResize) {
-  on(leftHandle, 'pointerdown', (e) => startResize(e, 'left'));
   on(rightHandle, 'pointerdown', (e) => startResize(e, 'right'));
   // Bottom resize handle is intentionally not used on the main overlay.
   on(document, 'pointermove', doResize);
