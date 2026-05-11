@@ -5,6 +5,8 @@ function createNotePanelManager(deps) {
     registry,
     BrowserWindow,
     clampWindowToWorkArea,
+    captureWindowLayout,
+    resolveLayoutBounds,
     getPreferredOverlayDisplay,
     getCurrentLanguage
   } = deps;
@@ -78,8 +80,8 @@ function createNotePanelManager(deps) {
     }
 
     const bounds = (payload && payload.bounds) ? payload.bounds : (note.notePanelLastBounds || null);
-    const width = Math.max(240, Math.round((bounds && bounds.width) || 420));
-    const height = Math.max(140, Math.round((bounds && bounds.height) || 280));
+    let width = Math.max(240, Math.round((bounds && bounds.width) || 420));
+    let height = Math.max(140, Math.round((bounds && bounds.height) || 280));
     let x = typeof (bounds && bounds.x) === 'number' ? Math.round(bounds.x) : undefined;
     let y = typeof (bounds && bounds.y) === 'number' ? Math.round(bounds.y) : undefined;
 
@@ -92,6 +94,16 @@ function createNotePanelManager(deps) {
         y = Math.round(area.y + Math.max(0, (area.height - height) / 2));
       } catch (_) {}
     }
+
+    try {
+      const layoutBounds = resolveLayoutBounds ? resolveLayoutBounds('note-panel', { x, y, width, height }) : null;
+      if (layoutBounds) {
+        x = layoutBounds.x;
+        y = layoutBounds.y;
+        width = layoutBounds.width || width;
+        height = layoutBounds.height || height;
+      }
+    } catch (_) {}
 
     const clampedPos = (typeof x === 'number' && typeof y === 'number')
       ? clampWindowToWorkArea(x, y, width, height, 0)
@@ -137,6 +149,10 @@ function createNotePanelManager(deps) {
 
     // Start click-through; the renderer enables interactivity on hover.
     try { note.notePanelWin.setIgnoreMouseEvents(true, { forward: true }); } catch (_) {}
+
+    try {
+      captureWindowLayout('note-panel', note.notePanelWin.getBounds());
+    } catch (_) {}
 
     return note.notePanelWin;
   }

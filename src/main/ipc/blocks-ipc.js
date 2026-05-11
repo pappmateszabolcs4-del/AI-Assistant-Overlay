@@ -5,6 +5,7 @@ function registerBlockIpc(deps) {
     ipcMain,
     registry,
     clampWindowToWorkArea,
+    captureWindowLayout,
     createBlockWindow,
     closeBlockWindow,
     updateBlockWindowBounds,
@@ -44,6 +45,7 @@ function registerBlockIpc(deps) {
     const clamped = clampWindowToWorkArea(rawX, rawY, b.width, b.height, 0);
     try { w.setPosition(clamped.x, clamped.y); } catch (_) {}
     blocks.blockLastBounds.set(blockId, { x: clamped.x, y: clamped.y, width: b.width, height: b.height });
+    try { captureWindowLayout(`block:${blockId}`, { x: clamped.x, y: clamped.y, width: b.width, height: b.height }); } catch (_) {}
   });
 
   ipcMain.on(IPC_CHANNELS.BLOCK_WINDOW_SET_BOUNDS, (_event, payload) => {

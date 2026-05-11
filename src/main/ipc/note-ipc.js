@@ -6,7 +6,8 @@ function registerNoteIpc(deps) {
     BrowserWindow,
     registry,
     clampWindowToWorkArea,
-    notePanel
+    notePanel,
+    captureWindowLayout
   } = deps;
 
   const { note } = registry;
@@ -36,6 +37,7 @@ function registerNoteIpc(deps) {
     const clamped = clampWindowToWorkArea(targetX, targetY, b.width, b.height, 0);
     try { w.setPosition(clamped.x, clamped.y); } catch (_) {}
     note.notePanelLastBounds = { x: clamped.x, y: clamped.y, width: b.width, height: b.height };
+    try { captureWindowLayout('note-panel', note.notePanelLastBounds); } catch (_) {}
   });
 
   ipcMain.on(IPC_CHANNELS.NOTE_PANEL_SET_BOUNDS, (event, nextBounds) => {
@@ -57,6 +59,7 @@ function registerNoteIpc(deps) {
 
     try { w.setBounds({ x: clampedPos.x, y: clampedPos.y, width, height }); } catch (_) {}
     note.notePanelLastBounds = { x: clampedPos.x, y: clampedPos.y, width, height };
+    try { captureWindowLayout('note-panel', note.notePanelLastBounds); } catch (_) {}
   });
 
   ipcMain.on(IPC_CHANNELS.NOTE_PANEL_COMMIT_BOUNDS, (event) => {
@@ -68,6 +71,7 @@ function registerNoteIpc(deps) {
     try { w.setPosition(clamped.x, clamped.y); } catch (_) {}
     const finalBounds = w.getBounds();
     note.notePanelLastBounds = { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height };
+    try { captureWindowLayout('note-panel', note.notePanelLastBounds); } catch (_) {}
   });
 }
 

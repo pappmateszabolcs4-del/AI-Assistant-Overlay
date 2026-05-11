@@ -14,6 +14,7 @@ const { createOverlayManager } = require('./windows/overlay');
 const { createMainWindowManager } = require('./windows/main-window');
 const { createHotkeyManager } = require('./app/hotkeys');
 const { createLifecycleManager } = require('./app/lifecycle');
+const { createWindowLayoutManager } = require('./utils/window-layout');
 const { createDetachedStateSender } = require('./windows/detached-state');
 const { createGameDetectService } = require('./services/game-detect');
 const { createOpenAIService } = require('./services/openai');
@@ -62,6 +63,19 @@ const detachedVisibility = createDetachedVisibilityManager({
   registry
 });
 
+const windowLayout = createWindowLayoutManager({
+  registry,
+  screen
+});
+
+const {
+  updateDisplaySnapshot,
+  captureWindowLayout,
+  reflowAllWindows,
+  resolveLayoutBounds,
+  loadLayoutsFromStorage
+} = windowLayout;
+
 const {
   setBringDetachedPanelWindowsToFront,
   setCreateDetachedPanelWindow,
@@ -76,6 +90,8 @@ const notePanel = createNotePanelManager({
   registry,
   BrowserWindow,
   clampWindowToWorkArea,
+  captureWindowLayout,
+  resolveLayoutBounds,
   getPreferredOverlayDisplay,
   getCurrentLanguage: () => registry.game.currentLanguage
 });
@@ -84,6 +100,8 @@ const infoPanel = createInfoPanelManager({
   registry,
   BrowserWindow,
   clampWindowToWorkArea,
+  captureWindowLayout,
+  resolveLayoutBounds,
   getPreferredOverlayDisplay,
   getCurrentLanguage: () => registry.game.currentLanguage
 });
@@ -92,6 +110,8 @@ const detachedPanels = createDetachedWindowsManager({
   registry,
   BrowserWindow,
   clampWindowToWorkArea,
+  captureWindowLayout,
+  resolveLayoutBounds,
   getPreferredOverlayDisplay,
   getCurrentLanguage: () => registry.game.currentLanguage,
   sendDetachedPanelsStateToOverlay,
@@ -102,7 +122,9 @@ const detachedPanels = createDetachedWindowsManager({
 const pinnedHistory = createPinnedWindowsManager({
   registry,
   BrowserWindow,
-  clampWindowToWorkArea
+  clampWindowToWorkArea,
+  captureWindowLayout,
+  resolveLayoutBounds
 });
 
 
@@ -110,6 +132,8 @@ const blockWindows = createBlockWindowsManager({
   registry,
   BrowserWindow,
   clampWindowToWorkArea,
+  captureWindowLayout,
+  resolveLayoutBounds,
   getCurrentLanguage: () => registry.game.currentLanguage
 });
 
@@ -149,6 +173,10 @@ const overlayManager = createOverlayManager({
   screen,
   rectsOverlap,
   notePanel,
+  captureWindowLayout,
+  resolveLayoutBounds,
+  loadLayoutsFromStorage,
+  reflowAllWindows,
   bringDetachedPanelWindowsToFront,
   bringPinnedHistoryWindowsToFront,
   bringBlockWindowsToFront,
@@ -213,6 +241,7 @@ const ipcRegistrar = createIpcRegistrar({
   screen,
   registry,
   clampWindowToWorkArea,
+  captureWindowLayout,
   ensureOverlayWithinVisibleBounds,
   detectCurrentGame,
   tryGetDisplayForGameWindow,
@@ -264,6 +293,8 @@ const lifecycleManager = createLifecycleManager({
   createOverlayWindow,
   ensureOverlayWithinVisibleBounds,
   reassertOverlayTopmost,
+  updateDisplaySnapshot,
+  reflowAllWindows,
   closeAllPinnedHistoryWindows,
   closeAllBlockWindows,
   notePanel,

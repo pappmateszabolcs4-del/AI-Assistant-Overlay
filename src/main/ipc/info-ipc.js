@@ -6,7 +6,8 @@ function registerInfoIpc(deps) {
     BrowserWindow,
     registry,
     clampWindowToWorkArea,
-    infoPanel
+    infoPanel,
+    captureWindowLayout
   } = deps;
 
   const { info } = registry;
@@ -36,6 +37,7 @@ function registerInfoIpc(deps) {
     const clamped = clampWindowToWorkArea(targetX, targetY, b.width, b.height, 0);
     try { w.setPosition(clamped.x, clamped.y); } catch (_) {}
     info.infoPanelLastBounds = { x: clamped.x, y: clamped.y, width: b.width, height: b.height };
+    try { captureWindowLayout('info-panel', info.infoPanelLastBounds); } catch (_) {}
   });
 
   ipcMain.on(IPC_CHANNELS.INFO_PANEL_SET_BOUNDS, (event, nextBounds) => {
@@ -57,6 +59,7 @@ function registerInfoIpc(deps) {
 
     try { w.setBounds({ x: clampedPos.x, y: clampedPos.y, width, height }); } catch (_) {}
     info.infoPanelLastBounds = { x: clampedPos.x, y: clampedPos.y, width, height };
+    try { captureWindowLayout('info-panel', info.infoPanelLastBounds); } catch (_) {}
   });
 
   ipcMain.on(IPC_CHANNELS.INFO_PANEL_COMMIT_BOUNDS, (event) => {
@@ -68,6 +71,7 @@ function registerInfoIpc(deps) {
     try { w.setPosition(clamped.x, clamped.y); } catch (_) {}
     const finalBounds = w.getBounds();
     info.infoPanelLastBounds = { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height };
+    try { captureWindowLayout('info-panel', info.infoPanelLastBounds); } catch (_) {}
   });
 }
 

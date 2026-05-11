@@ -6,6 +6,8 @@ function createDetachedWindowsManager(deps) {
     registry,
     BrowserWindow,
     clampWindowToWorkArea,
+    captureWindowLayout,
+    resolveLayoutBounds,
     getPreferredOverlayDisplay,
     getCurrentLanguage,
     sendDetachedPanelsStateToOverlay,
@@ -88,6 +90,7 @@ function createDetachedWindowsManager(deps) {
     });
     detached.detachedPanelWindows.clear();
     detached.detachedPanelPerfStarts.clear();
+    detached.detachedPanelDesiredBounds.clear();
   }
 
   function deactivateDetachedPanelWindow(panelId) {
@@ -133,6 +136,7 @@ function createDetachedWindowsManager(deps) {
           const height = Math.max(120, rawH);
           const clamped = clampWindowToWorkArea(rawX, rawY, width, height, 0);
           existing.setBounds({ x: clamped.x, y: clamped.y, width, height });
+          detached.detachedPanelDesiredBounds.set(panelId, { width, height });
         } catch (_) {}
 
         // If already ready, show immediately and notify overlay to hide the slot.
@@ -172,8 +176,8 @@ function createDetachedWindowsManager(deps) {
     const fallback = defaultSizes[panelId] || { width: 500, height: 500 };
 
     // Allow smaller detached windows; size is also clamped during interactive resize.
-    const width = Math.max(200, Math.round((bounds && bounds.width) || fallback.width));
-    const height = Math.max(120, Math.round((bounds && bounds.height) || fallback.height));
+    let width = Math.max(200, Math.round((bounds && bounds.width) || fallback.width));
+    let height = Math.max(120, Math.round((bounds && bounds.height) || fallback.height));
     let x = typeof (bounds && bounds.x) === 'number' ? Math.round(bounds.x) : undefined;
     let y = typeof (bounds && bounds.y) === 'number' ? Math.round(bounds.y) : undefined;
 
@@ -185,6 +189,16 @@ function createDetachedWindowsManager(deps) {
         y = Math.round(area.y + Math.max(0, (area.height - height) / 2));
       } catch (_) {}
     }
+
+    try {
+      const layoutBounds = resolveLayoutBounds(`detached:${panelId}`, { x, y, width, height });
+      if (layoutBounds) {
+        x = layoutBounds.x;
+        y = layoutBounds.y;
+        width = layoutBounds.width || width;
+        height = layoutBounds.height || height;
+      }
+    } catch (_) {}
 
     const clampedPos = (typeof x === 'number' && typeof y === 'number')
       ? clampWindowToWorkArea(x, y, width, height, 0)
@@ -236,6 +250,11 @@ function createDetachedWindowsManager(deps) {
 
     detachedWin.__detachedPanelId = panelId;
     detached.detachedPanelWindows.set(panelId, detachedWin);
+    detached.detachedPanelDesiredBounds.set(panelId, { width, height });
+
+    try {
+      captureWindowLayout(`detached:${panelId}`, detachedWin.getBounds());
+    } catch (_) {}
 
     detachedWin.loadFile('overlay.html', { query: { role: 'detached', panel: panelId } });
     detachedWin.webContents.on('did-finish-load', () => {

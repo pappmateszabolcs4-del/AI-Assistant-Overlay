@@ -5,6 +5,8 @@ function createInfoPanelManager(deps) {
     registry,
     BrowserWindow,
     clampWindowToWorkArea,
+    captureWindowLayout,
+    resolveLayoutBounds,
     getPreferredOverlayDisplay,
     getCurrentLanguage
   } = deps;
@@ -66,8 +68,8 @@ function createInfoPanelManager(deps) {
     }
 
     const bounds = (payload && payload.bounds) ? payload.bounds : (info.infoPanelLastBounds || null);
-    const width = Math.max(240, Math.round((bounds && bounds.width) || 440));
-    const height = Math.max(140, Math.round((bounds && bounds.height) || 300));
+    let width = Math.max(240, Math.round((bounds && bounds.width) || 440));
+    let height = Math.max(140, Math.round((bounds && bounds.height) || 300));
     let x = typeof (bounds && bounds.x) === 'number' ? Math.round(bounds.x) : undefined;
     let y = typeof (bounds && bounds.y) === 'number' ? Math.round(bounds.y) : undefined;
 
@@ -79,6 +81,16 @@ function createInfoPanelManager(deps) {
         y = Math.round(area.y + Math.max(0, (area.height - height) / 2));
       } catch (_) {}
     }
+
+    try {
+      const layoutBounds = resolveLayoutBounds ? resolveLayoutBounds('info-panel', { x, y, width, height }) : null;
+      if (layoutBounds) {
+        x = layoutBounds.x;
+        y = layoutBounds.y;
+        width = layoutBounds.width || width;
+        height = layoutBounds.height || height;
+      }
+    } catch (_) {}
 
     const clampedPos = (typeof x === 'number' && typeof y === 'number')
       ? clampWindowToWorkArea(x, y, width, height, 0)
@@ -124,6 +136,10 @@ function createInfoPanelManager(deps) {
 
     // Start click-through; the renderer enables interactivity on hover.
     try { info.infoPanelWin.setIgnoreMouseEvents(true, { forward: true }); } catch (_) {}
+
+    try {
+      captureWindowLayout('info-panel', info.infoPanelWin.getBounds());
+    } catch (_) {}
 
     return info.infoPanelWin;
   }

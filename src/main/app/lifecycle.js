@@ -13,6 +13,8 @@ function createLifecycleManager(deps) {
     createOverlayWindow,
     ensureOverlayWithinVisibleBounds,
     reassertOverlayTopmost,
+    updateDisplaySnapshot,
+    reflowAllWindows,
     closeAllPinnedHistoryWindows,
     closeAllDetachedPanelWindows,
     closeAllBlockWindows,
@@ -29,9 +31,12 @@ function createLifecycleManager(deps) {
 
       createWindow();
       createOverlayWindow();
+      try { updateDisplaySnapshot('startup'); } catch (_) {}
 
       const handleDisplayChange = () => {
         if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
+        try { updateDisplaySnapshot('display-change'); } catch (_) {}
+        try { reflowAllWindows(); } catch (_) {}
         ensureOverlayWithinVisibleBounds();
         if (overlay.overlayVirtualVisible) {
           reassertOverlayTopmost();

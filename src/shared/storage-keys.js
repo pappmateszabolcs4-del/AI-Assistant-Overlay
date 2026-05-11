@@ -18,6 +18,7 @@ const STORAGE_KEYS = {
   NOTES_ACTIVE_ID: 'notesActiveId',
   CONVERSATION_HISTORY: 'conversationHistory',
   UI_TEXT_OVERRIDES: 'uiTextOverrides',
+  WINDOW_LAYOUTS: 'windowLayouts',
   BLOCK_LAYOUTS: 'overlayBlockLayouts',
   BLOCK_FREE_LAYOUT: 'overlayBlockFreeLayout'
 };

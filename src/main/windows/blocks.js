@@ -6,7 +6,7 @@ const MIN_BLOCK_WIDTH = 260;
 const MIN_BLOCK_HEIGHT = 160;
 
 function createBlockWindowsManager(deps) {
-  const { registry, BrowserWindow, clampWindowToWorkArea, getCurrentLanguage } = deps;
+  const { registry, BrowserWindow, clampWindowToWorkArea, captureWindowLayout, resolveLayoutBounds, getCurrentLanguage } = deps;
   const { blocks } = registry;
 
   function getBlockWindow(blockId) {
@@ -138,8 +138,8 @@ function createBlockWindowsManager(deps) {
     } catch (_) {}
 
     const bounds = payload && payload.bounds ? payload.bounds : blocks.blockLastBounds.get(blockId) || null;
-    const width = Math.max(MIN_BLOCK_WIDTH, Math.round((bounds && bounds.width) || 360));
-    const height = Math.max(MIN_BLOCK_HEIGHT, Math.round((bounds && bounds.height) || 240));
+    let width = Math.max(MIN_BLOCK_WIDTH, Math.round((bounds && bounds.width) || 360));
+    let height = Math.max(MIN_BLOCK_HEIGHT, Math.round((bounds && bounds.height) || 240));
     let x = typeof (bounds && bounds.x) === 'number' ? Math.round(bounds.x) : undefined;
     let y = typeof (bounds && bounds.y) === 'number' ? Math.round(bounds.y) : undefined;
 
@@ -150,6 +150,16 @@ function createBlockWindowsManager(deps) {
         y = Math.round(area.y + Math.max(0, (area.height - height) / 2));
       } catch (_) {}
     }
+
+    try {
+      const layoutBounds = resolveLayoutBounds(`block:${blockId}`, { x, y, width, height });
+      if (layoutBounds) {
+        x = layoutBounds.x;
+        y = layoutBounds.y;
+        width = layoutBounds.width || width;
+        height = layoutBounds.height || height;
+      }
+    } catch (_) {}
 
     const clampedPos = (typeof x === 'number' && typeof y === 'number')
       ? clampWindowToWorkArea(x, y, width, height, 0)
@@ -179,6 +189,10 @@ function createBlockWindowsManager(deps) {
     blockWin.__blockActive = true;
     blockWin.__blockShown = false;
     blocks.detachedBlockWindows.set(blockId, blockWin);
+
+    try {
+      captureWindowLayout(`block:${blockId}`, blockWin.getBounds());
+    } catch (_) {}
 
     blockWin.loadFile('block.html', { query: { role: 'block', block: blockId } });
     blockWin.webContents.on('did-finish-load', () => {
@@ -223,6 +237,9 @@ function createBlockWindowsManager(deps) {
     const clamped = clampWindowToWorkArea(rawX, rawY, width, height, 0);
     try { w.setBounds({ x: clamped.x, y: clamped.y, width, height }); } catch (_) {}
     blocks.blockLastBounds.set(blockId, { x: clamped.x, y: clamped.y, width, height });
+    try {
+      captureWindowLayout(`block:${blockId}`, { x: clamped.x, y: clamped.y, width, height });
+    } catch (_) {}
   }
 
   function markBlockWindowReady(blockId, senderWebContents) {

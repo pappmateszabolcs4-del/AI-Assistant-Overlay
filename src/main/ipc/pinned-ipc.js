@@ -6,6 +6,7 @@ function registerPinnedIpc(deps) {
     BrowserWindow,
     registry,
     clampWindowToWorkArea,
+    captureWindowLayout,
     createPinnedHistoryWindow,
     closeAllPinnedHistoryWindows,
     shouldUnpinAtScreenPoint
@@ -30,6 +31,7 @@ function registerPinnedIpc(deps) {
     const nextX = typeof x === 'number' ? Math.round(x) : w.getBounds().x;
     const nextY = typeof y === 'number' ? Math.round(y) : w.getBounds().y;
     try { w.setPosition(nextX, nextY); } catch (_) {}
+    try { captureWindowLayout(`pinned:${key}`, { x: nextX, y: nextY, width: w.getBounds().width, height: w.getBounds().height }); } catch (_) {}
     return { success: true };
   });
 
@@ -40,6 +42,7 @@ function registerPinnedIpc(deps) {
     const nextX = typeof x === 'number' ? Math.round(x) : w.getBounds().x;
     const nextY = typeof y === 'number' ? Math.round(y) : w.getBounds().y;
     try { w.setPosition(nextX, nextY); } catch (_) {}
+    try { captureWindowLayout(`pinned:${key}`, { x: nextX, y: nextY, width: w.getBounds().width, height: w.getBounds().height }); } catch (_) {}
   });
 
   ipcMain.handle(IPC_CHANNELS.PINNED_HISTORY_END_DRAG, async (_event, ts) => {
@@ -80,6 +83,7 @@ function registerPinnedIpc(deps) {
     const targetY = pos && typeof pos.y === 'number' ? Math.round(pos.y) : b.y;
     const clamped = clampWindowToWorkArea(targetX, targetY, b.width, b.height, 0);
     try { w.setPosition(clamped.x, clamped.y); } catch (_) {}
+    try { captureWindowLayout(`pinned:${w.__pinnedHistoryTs}`, { x: clamped.x, y: clamped.y, width: b.width, height: b.height }); } catch (_) {}
     return { success: true };
   });
 
@@ -92,6 +96,7 @@ function registerPinnedIpc(deps) {
     const targetY = pos && typeof pos.y === 'number' ? Math.round(pos.y) : b.y;
     const clamped = clampWindowToWorkArea(targetX, targetY, b.width, b.height, 0);
     try { w.setPosition(clamped.x, clamped.y); } catch (_) {}
+    try { captureWindowLayout(`pinned:${w.__pinnedHistoryTs}`, { x: clamped.x, y: clamped.y, width: b.width, height: b.height }); } catch (_) {}
   });
 
   // High-frequency resize updates for pinned windows.
@@ -113,6 +118,7 @@ function registerPinnedIpc(deps) {
     const clampedPos = clampWindowToWorkArea(rawX, rawY, width, height, 0);
 
     try { w.setBounds({ x: clampedPos.x, y: clampedPos.y, width, height }); } catch (_) {}
+    try { captureWindowLayout(`pinned:${w.__pinnedHistoryTs}`, { x: clampedPos.x, y: clampedPos.y, width, height }); } catch (_) {}
   });
 
   // Persist the current bounds back to the overlay (without unpin checks).
@@ -129,6 +135,7 @@ function registerPinnedIpc(deps) {
       ts,
       bounds: { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height }
     });
+    try { captureWindowLayout(`pinned:${ts}`, finalBounds); } catch (_) {}
   });
 
   ipcMain.handle(IPC_CHANNELS.PINNED_HISTORY_DROP, async (event, payload) => {
@@ -164,6 +171,7 @@ function registerPinnedIpc(deps) {
         ts,
         bounds: { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height }
       });
+      try { captureWindowLayout(`pinned:${ts}`, finalBounds); } catch (_) {}
     }
 
     return { success: true, unpinned: false };

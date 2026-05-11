@@ -6,7 +6,9 @@ function createPinnedWindowsManager(deps) {
   const {
     registry,
     BrowserWindow,
-    clampWindowToWorkArea
+    clampWindowToWorkArea,
+    captureWindowLayout,
+    resolveLayoutBounds
   } = deps;
 
   const { pinned } = registry;
@@ -75,20 +77,32 @@ function createPinnedWindowsManager(deps) {
     } catch (_) {}
 
     const bounds = payload && payload.bounds ? payload.bounds : null;
-    const width = Math.max(260, Math.round((bounds && bounds.width) || 420));
-    const height = Math.max(160, Math.round((bounds && bounds.height) || 300));
+    let width = Math.max(260, Math.round((bounds && bounds.width) || 420));
+    let height = Math.max(160, Math.round((bounds && bounds.height) || 300));
     const x = typeof (bounds && bounds.x) === 'number' ? Math.round(bounds.x) : undefined;
     const y = typeof (bounds && bounds.y) === 'number' ? Math.round(bounds.y) : undefined;
 
-    const clampedPos = (typeof x === 'number' && typeof y === 'number')
-      ? clampWindowToWorkArea(x, y, width, height, 0)
+    let nextX = x;
+    let nextY = y;
+    try {
+      const layoutBounds = resolveLayoutBounds ? resolveLayoutBounds(`pinned:${ts}`, { x, y, width, height }) : null;
+      if (layoutBounds) {
+        nextX = layoutBounds.x;
+        nextY = layoutBounds.y;
+        width = layoutBounds.width || width;
+        height = layoutBounds.height || height;
+      }
+    } catch (_) {}
+
+    const clampedPos = (typeof nextX === 'number' && typeof nextY === 'number')
+      ? clampWindowToWorkArea(nextX, nextY, width, height, 0)
       : null;
 
     const pinnedWin = new BrowserWindow({
       width,
       height,
-      x: clampedPos ? clampedPos.x : x,
-      y: clampedPos ? clampedPos.y : y,
+      x: clampedPos ? clampedPos.x : nextX,
+      y: clampedPos ? clampedPos.y : nextY,
       frame: false,
       transparent: true,
       backgroundColor: '#00000000',
@@ -105,6 +119,10 @@ function createPinnedWindowsManager(deps) {
 
     pinnedWin.__pinnedHistoryTs = ts;
     pinned.pinnedHistoryWindows.set(ts, pinnedWin);
+
+    try {
+      captureWindowLayout(`pinned:${ts}`, pinnedWin.getBounds());
+    } catch (_) {}
 
     pinnedWin.loadFile('pinned-history.html');
     pinnedWin.webContents.on('did-finish-load', () => {

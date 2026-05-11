@@ -627,6 +627,7 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
           localStorage.removeItem(STORAGE_KEYS.OVERLAY_LAYOUT_MODE);
           localStorage.removeItem(STORAGE_KEYS.PINNED_TABS);
           localStorage.removeItem(STORAGE_KEYS.PINNED_HISTORY);
+          localStorage.removeItem(STORAGE_KEYS.WINDOW_LAYOUTS);
           localStorage.removeItem(STORAGE_KEYS.NOTE_PANEL_BOUNDS);
           localStorage.removeItem(STORAGE_KEYS.BLOCK_LAYOUTS);
           localStorage.removeItem(STORAGE_KEYS.BLOCK_FREE_LAYOUT);

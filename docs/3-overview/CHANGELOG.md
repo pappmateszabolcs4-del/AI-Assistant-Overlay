@@ -27,6 +27,30 @@
 
 ---
 
+## [1.0.26] - 2026-05-11 (Per-Monitor Layouts + Resize Stabilization)
+
+### ✅ Added
+
+- Per-monitor normalized window layout persistence with automatic reflow on display changes.
+- Layout capture for overlay, pinned history, detached panels, note/info panels, and block windows.
+
+### 🔧 Changed
+
+- Overlay position persistence moved to the main process (renderer no longer writes overlay X/Y).
+- Popup max height now uses overlay container metrics with a viewport cap.
+- Drag handle styling now reflects drag-ready state when native drag is enabled.
+
+### 🐛 Fixed
+
+- Reduced multi-monitor drift by anchoring window bounds to workArea-normalized layouts.
+
+### 🧾 Notes
+
+- Left-edge resize stability on transparent overlays is improved but still shows clipping/jitter under continuous updates; a two-window handle + content approach is planned.
+- Tests: Not run (not requested).
+
+---
+
 ## [1.0.24] - 2026-05-10 (Dynamic Notes + Custom Dropdown)
 
 ### ✅ Added

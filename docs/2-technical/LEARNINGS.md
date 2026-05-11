@@ -1490,6 +1490,53 @@ Add "real" prefix to forbidden terms to preserve gaming vocabulary.
 
 ---
 
+### 2026-05-11 (Night)
+
+#### Summary
+- What changed: Introduced per-monitor normalized window layout persistence and reflow on display changes; moved overlay position persistence into the main process; added left-edge resize anchoring in main with cursor-driven bounds.
+- Why: Prevent multi-monitor drift, restore layouts after hot-plug, and reduce left-edge resize jitter on transparent overlays.
+- Impact: Window bounds now persist by display/workArea; overlay drag/resize behavior is more stable, but left-edge resize still shows clipping/jitter when updated at 60fps.
+
+#### Details
+- Added a window layout manager that normalizes bounds to display workArea and rehydrates on display changes.
+- Persisted layout updates from overlay, pinned, detached, note/info, and block windows.
+- Left-edge resize now anchors to a fixed right edge and uses cursor screen X for bounds in main.
+- Renderer no longer persists overlay position directly; main now owns layout persistence.
+
+#### Files touched
+- [src/main/utils/window-layout.js](src/main/utils/window-layout.js)
+- [src/shared/storage-keys.js](src/shared/storage-keys.js)
+- [src/main/index.js](src/main/index.js)
+- [src/main/app/lifecycle.js](src/main/app/lifecycle.js)
+- [src/main/windows/overlay.js](src/main/windows/overlay.js)
+- [src/main/windows/detached.js](src/main/windows/detached.js)
+- [src/main/windows/pinned.js](src/main/windows/pinned.js)
+- [src/main/windows/note.js](src/main/windows/note.js)
+- [src/main/windows/info.js](src/main/windows/info.js)
+- [src/main/windows/blocks.js](src/main/windows/blocks.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/main/ipc/detached-ipc.js](src/main/ipc/detached-ipc.js)
+- [src/main/ipc/pinned-ipc.js](src/main/ipc/pinned-ipc.js)
+- [src/main/ipc/note-ipc.js](src/main/ipc/note-ipc.js)
+- [src/main/ipc/info-ipc.js](src/main/ipc/info-ipc.js)
+- [src/main/ipc/blocks-ipc.js](src/main/ipc/blocks-ipc.js)
+- [src/main/ipc/register.js](src/main/ipc/register.js)
+- [src/main/state/registry.js](src/main/state/registry.js)
+- [src/renderer/overlay/window-resize.js](src/renderer/overlay/window-resize.js)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/renderer/overlay/block-app.js](src/renderer/overlay/block-app.js)
+- [overlay.css](overlay.css)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Tests not run (not requested)
+
+#### Follow-ups
+- Decide on a long-term left-edge resize strategy (two-window handle + content or temporary opaque during resize).
+
 #### Issue 13: Game Context Detection (Feb 5, 2026 Evening)
 **Feature**: Auto-detect what game the user is playing and hyper-focus AI responses
 

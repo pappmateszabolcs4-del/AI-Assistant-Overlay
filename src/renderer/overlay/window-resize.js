@@ -73,7 +73,7 @@ function hasMeaningfulBounds(bounds) {
 
 function boundsChanged(next) {
   if (!lastSentBounds) return true;
-  const keys = ['x', 'y', 'width', 'height'];
+  const keys = ['x', 'y', 'width', 'height', 'cursorScreenX'];
   return keys.some((k) => next[k] !== undefined && next[k] !== lastSentBounds[k]);
 }
 
@@ -151,6 +151,13 @@ function startResize(e, direction) {
       resizeHandleEl.setPointerCapture(resizePointerId);
     } catch (_) {}
   }
+  if (direction === 'left') {
+    sendOverlayResize({
+      cursorScreenX: typeof e.screenX === 'number' ? Math.round(e.screenX) : undefined,
+      startRightEdge: Number.isFinite(startRightEdge) ? Math.round(startRightEdge) : undefined,
+      __debug: { reason: 'resize-start', edge: 'left', dir: 'left' }
+    });
+  }
   e.preventDefault();
   e.stopPropagation();
 }
@@ -186,23 +193,21 @@ function doResize(e) {
 
   const deltaX = e.clientX - startX;
   const deltaY = e.clientY - startY;
-  const deltaScreenX = e.screenX - startPointerScreenX;
-  const deltaScreenY = e.screenY - startPointerScreenY;
   let newWidth = startWidth;
   let newHeight = startHeight;
 
   if (resizeDirection === 'right') {
-    newWidth = startWidth + deltaScreenX;
+    newWidth = startWidth + deltaX;
   } else if (resizeDirection === 'bottom') {
-    newHeight = startHeight + deltaScreenY;
+    newHeight = startHeight + deltaY;
   }
 
   const minWidth = 450;
   const minHeight = 80;
   const availWidth = window.screen && (window.screen.availWidth || window.screen.width) ? Math.max(window.screen.availWidth || 0, window.screen.width || 0) : 0;
   const availHeight = window.screen && (window.screen.availHeight || window.screen.height) ? Math.max(window.screen.availHeight || 0, window.screen.height || 0) : 0;
-  const maxWidth = availWidth > 0 ? Math.max(minWidth, availWidth * 2) : Number.MAX_SAFE_INTEGER;
-  const maxHeight = availHeight > 0 ? Math.max(minHeight, availHeight * 2) : Number.MAX_SAFE_INTEGER;
+  const maxWidth = availWidth > 0 ? Math.max(minWidth, availWidth) : Number.MAX_SAFE_INTEGER;
+  const maxHeight = availHeight > 0 ? Math.max(minHeight, availHeight) : Number.MAX_SAFE_INTEGER;
   newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
   newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
 
@@ -211,23 +216,13 @@ function doResize(e) {
   const roundedHeight = Math.round(newHeight);
 
   if (resizeDirection === 'left') {
-    const minWidth = 450;
-    const minHeight = 80;
-    const availWidth = window.screen && (window.screen.availWidth || window.screen.width) ? Math.max(window.screen.availWidth || 0, window.screen.width || 0) : 0;
-    const maxWidth = availWidth > 0 ? Math.max(minWidth, availWidth * 2) : Number.MAX_SAFE_INTEGER;
-    let newX = startWindowX + deltaScreenX;
-    const maxLeft = startRightEdge - minWidth;
-    newX = Math.min(newX, maxLeft);
-    if (isFinite(maxWidth)) {
-      const minLeft = startRightEdge - maxWidth;
-      newX = Math.max(newX, minLeft);
-    }
-    const computedWidth = startRightEdge - newX;
-    const roundedWidth = Math.round(computedWidth);
-    sendOverlayResizeBatched({ x: Math.round(newX), width: roundedWidth, __debug: { reason: 'resize-left' } });
+    sendOverlayResizeBatched({
+      cursorScreenX: typeof e.screenX === 'number' ? Math.round(e.screenX) : undefined,
+      __debug: { reason: 'resize-left', edge: 'left', dir: 'left' }
+    });
     return;
   } else if (resizeDirection === 'right') {
-    sendOverlayResizeBatched({ width: roundedWidth, __debug: { reason: 'resize-right' } });
+    sendOverlayResizeBatched({ width: roundedWidth, __debug: { reason: 'resize-right', edge: 'right' } });
   } else if (resizeDirection === 'bottom') {
     sendOverlayResizeBatched({ height: roundedHeight, __debug: { reason: 'resize-bottom' } });
   }
@@ -240,13 +235,17 @@ function stopResize(e) {
 
   if (isResizing) {
     // Send a final precise size on mouseup
-    const finalBounds = {
-      width: Math.round(window.innerWidth),
-      height: Math.round(window.innerHeight),
-      x: window.screenX,
-      y: window.screenY,
-      __debug: { reason: 'resize-end' }
-    };
+    const finalBounds = resizeDirection === 'left'
+      ? {
+        cursorScreenX: typeof e.screenX === 'number' ? Math.round(e.screenX) : undefined,
+        __debug: { reason: 'resize-end', dir: 'left', edge: 'left' }
+      }
+      : {
+        width: Math.round(window.innerWidth),
+        height: Math.round(window.innerHeight),
+        cursorScreenX: typeof e.screenX === 'number' ? Math.round(e.screenX) : undefined,
+        __debug: { reason: 'resize-end', dir: resizeDirection, edge: resizeDirection }
+      };
     sendOverlayResize(finalBounds);
     lastSentBounds = { ...lastSentBounds, ...finalBounds };
   }
@@ -281,6 +280,8 @@ if (!__skipOverlayResize) {
 }
 
 // Manual window dragging fallback to ensure reliable movement on transparent overlays
+const USE_NATIVE_WINDOW_DRAG = true;
+let dragHandleForcedInteractive = false;
 let isWindowDragging = false;
 let windowDragPointerId = null;
 let dragStartScreenX = 0;
@@ -343,6 +344,7 @@ function beginWindowDrag(event) {
 }
 
 function handleWindowDragMove(event) {
+  if (USE_NATIVE_WINDOW_DRAG) return;
   if (!isWindowDragging) {
     return;
   }
@@ -372,6 +374,7 @@ function handleWindowDragMove(event) {
 }
 
 function endWindowDrag(event) {
+  if (USE_NATIVE_WINDOW_DRAG) return;
   if (!isWindowDragging || (windowDragPointerId !== null && event.pointerId !== windowDragPointerId)) {
     return;
   }
@@ -379,6 +382,19 @@ function endWindowDrag(event) {
   sendOverlayResize({ x: window.screenX, y: window.screenY, __debug: { reason: 'window-drag-end' } });
 }
 
-if (!__skipOverlayResize && dragHandle) {
+if (!__skipOverlayResize && dragHandle && !USE_NATIVE_WINDOW_DRAG) {
   on(dragHandle, 'pointerdown', beginWindowDrag);
+}
+
+if (!__skipOverlayResize && dragHandle && USE_NATIVE_WINDOW_DRAG) {
+  on(dragHandle, 'pointerenter', () => {
+    if (dragHandleForcedInteractive) return;
+    dragHandleForcedInteractive = true;
+    try { window.__pushForceInteractive && window.__pushForceInteractive(); } catch (_) {}
+  });
+  on(dragHandle, 'pointerleave', () => {
+    if (!dragHandleForcedInteractive) return;
+    dragHandleForcedInteractive = false;
+    try { window.__popForceInteractive && window.__popForceInteractive(); } catch (_) {}
+  });
 }

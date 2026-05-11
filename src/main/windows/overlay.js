@@ -10,6 +10,10 @@ function createOverlayManager(deps) {
     screen,
     rectsOverlap,
     notePanel,
+    captureWindowLayout,
+    resolveLayoutBounds,
+    loadLayoutsFromStorage,
+    reflowAllWindows,
     bringDetachedPanelWindowsToFront,
     bringPinnedHistoryWindowsToFront,
     bringBlockWindowsToFront,
@@ -26,6 +30,29 @@ function createOverlayManager(deps) {
   const { core, overlay, detached, pinned, blocks, note, info } = registry;
 
   const OVERLAY_TOPMOST_PULSE_MS = 900;
+  const OVERLAY_LAYOUT_CAPTURE_DELAY_MS = 120;
+  let overlayLayoutCaptureTimer = null;
+  let overlayDragReady = false;
+  function setOverlayDragReady(ready) {
+    const next = !!ready;
+    if (next === overlayDragReady) return;
+    overlayDragReady = next;
+    if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
+    try {
+      core.overlayWin.webContents.send(IPC_CHANNELS.OVERLAY_DRAG_READY, { ready: next });
+    } catch (_) {}
+  }
+
+  function scheduleOverlayLayoutCapture() {
+    if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
+    if (overlayLayoutCaptureTimer) return;
+    overlayLayoutCaptureTimer = setTimeout(() => {
+      overlayLayoutCaptureTimer = null;
+      try {
+        captureWindowLayout('overlay', core.overlayWin.getBounds());
+      } catch (_) {}
+    }, OVERLAY_LAYOUT_CAPTURE_DELAY_MS);
+  }
 
   function ensureOverlayWithinVisibleBounds(forceCenter = false) {
     if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
@@ -50,37 +77,6 @@ function createOverlayManager(deps) {
     }
   }
 
-  async function applySavedOverlayPositionOnce() {
-    if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
-    if (overlay.overlayAppliedSavedPosition) return;
-    overlay.overlayAppliedSavedPosition = true;
-
-    let saved = null;
-    try {
-      const script = `(() => {\n` +
-        `  try {\n` +
-        `    return {\n` +
-        `      x: localStorage.getItem(${JSON.stringify(STORAGE_KEYS.OVERLAY_POSITION_X)}),\n` +
-        `      y: localStorage.getItem(${JSON.stringify(STORAGE_KEYS.OVERLAY_POSITION_Y)})\n` +
-        `    };\n` +
-        `  } catch (_) { return { x: null, y: null }; }\n` +
-        `})();`;
-      saved = await core.overlayWin.webContents.executeJavaScript(script, true);
-    } catch (_) {
-      return;
-    }
-
-    const rawX = saved && saved.x != null ? Number(saved.x) : null;
-    const rawY = saved && saved.y != null ? Number(saved.y) : null;
-    if (!Number.isFinite(rawX) || !Number.isFinite(rawY)) return;
-
-    try {
-      const bounds = core.overlayWin.getBounds();
-      const clamped = clampWindowToWorkArea(rawX, rawY, bounds.width, bounds.height, 0);
-      core.overlayWin.setBounds({ ...bounds, x: clamped.x, y: clamped.y });
-    } catch (_) {}
-  }
-
   function shouldOpenOverlayDevTools() {
     const flag = String(process.env.DEBUG_OVERLAY || '').toLowerCase();
     return flag === '1' || flag === 'true' || flag === 'yes';
@@ -97,6 +93,16 @@ function createOverlayManager(deps) {
     const bh = Number(bounds.height);
     if (![bx, by, bw, bh].every(Number.isFinite)) return false;
     return x >= bx && x <= (bx + bw) && y >= by && y <= (by + bh);
+  }
+
+  function isPointInDragHandleZone(pt, bounds) {
+    if (!pt || !bounds) return false;
+    const zoneHeight = 32;
+    const maxWidth = Math.max(120, Math.min(380, Math.max(0, bounds.width - 160)));
+    const zoneWidth = Math.max(120, maxWidth);
+    const zoneX = Math.round(bounds.x + Math.max(0, (bounds.width - zoneWidth) / 2));
+    const zoneY = Math.round(bounds.y);
+    return pt.x >= zoneX && pt.x <= (zoneX + zoneWidth) && pt.y >= zoneY && pt.y <= (zoneY + zoneHeight);
   }
 
   function isWindowActivelyVisible(w) {
@@ -235,8 +241,23 @@ function createOverlayManager(deps) {
           stopOverlayMouseForwardGate();
           return;
         }
+        // Keep drag-ready state updated even when click-through is disabled.
+        try {
+          const pt = screen.getCursorScreenPoint();
+          const b = core.overlayWin.getBounds();
+          if (pt && b && isPointInDragHandleZone(pt, b)) {
+            setOverlayDragReady(true);
+            if (overlay.clickThrough && overlay.overlayMouseForwardEnabled) {
+              overlay.overlayMouseForwardEnabled = false;
+              core.overlayWin.setIgnoreMouseEvents(false);
+            }
+            return;
+          }
+        } catch (_) {}
+
+        setOverlayDragReady(false);
         if (!overlay.clickThrough) {
-          stopOverlayMouseForwardGate();
+          overlay.overlayMouseForwardEnabled = false;
           return;
         }
 
@@ -288,6 +309,7 @@ function createOverlayManager(deps) {
     if (!overlay.overlayVirtualVisible) {
       stopOverlayTopmostPulse();
       stopOverlayMouseForwardGate();
+      setOverlayDragReady(false);
       try { core.overlayWin.setIgnoreMouseEvents(true, { forward: true }); } catch (_) {}
       if (canOpacity) {
         try { core.overlayWin.setOpacity(0); } catch (_) {}
@@ -379,6 +401,16 @@ function createOverlayManager(deps) {
       }
     });
 
+    try {
+      const entry = registry.layout && registry.layout.windowLayouts
+        ? registry.layout.windowLayouts.get('overlay')
+        : null;
+      if (entry) {
+        const nextBounds = resolveLayoutBounds('overlay', core.overlayWin.getBounds());
+        if (nextBounds) core.overlayWin.setBounds(nextBounds);
+      }
+    } catch (_) {}
+
     core.overlayWin.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
       if (permission === 'media') {
         callback(true);
@@ -395,7 +427,6 @@ function createOverlayManager(deps) {
     core.overlayWin.webContents.on('did-start-loading', () => {
       if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
       overlay.overlayIgnoreMoveUntil = Date.now() + 1500;
-      overlay.overlayAppliedSavedPosition = false;
       if (!overlay.overlayVirtualVisible) {
         overlay.overlayHideDuringLoad = false;
         return;
@@ -411,7 +442,16 @@ function createOverlayManager(deps) {
 
       // Block prewarm disabled: only create block windows on demand.
 
-      applySavedOverlayPositionOnce().catch(() => {});
+      if (typeof loadLayoutsFromStorage === 'function') {
+        try {
+          Promise.resolve(loadLayoutsFromStorage()).then(() => {
+            if (typeof reflowAllWindows === 'function') {
+              try { reflowAllWindows(); } catch (_) {}
+            }
+          }).catch(() => {});
+        } catch (_) {}
+      }
+      try { scheduleOverlayLayoutCapture(); } catch (_) {}
 
       try {
         const b = core.overlayWin.getBounds();
@@ -452,6 +492,15 @@ function createOverlayManager(deps) {
 
       try { startDetachedSelfHealPulse(3000, 250); } catch (_) {}
     });
+
+    try {
+      core.overlayWin.on('move', () => {
+        scheduleOverlayLayoutCapture();
+      });
+      core.overlayWin.on('resize', () => {
+        scheduleOverlayLayoutCapture();
+      });
+    } catch (_) {}
 
     try {
       core.overlayWin.setAlwaysOnTop(true, 'screen-saver', 1);

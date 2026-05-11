@@ -216,7 +216,12 @@ try {
 
 function getPopupMaxHeightPx() {
   const gutter = 12;
-  return Math.max(260, window.innerHeight - gutter * 2);
+  const overlayHost = document.getElementById('overlay-container');
+  const hostRect = overlayHost ? overlayHost.getBoundingClientRect() : null;
+  const baseHeight = hostRect && hostRect.height ? hostRect.height : window.innerHeight;
+  const viewportCap = Math.round(window.innerHeight * 0.78);
+  const cap = Math.min(baseHeight, viewportCap, window.innerHeight);
+  return Math.max(260, Math.round(cap - gutter * 2));
 }
 
 function syncClickThrough(allowThrough) {
@@ -1512,65 +1517,13 @@ window.clearAllData = function() {
 // Detached panel windows use the same origin/localStorage, so if they write these keys,
 // the main overlay can "jump" to the detached window position after Ctrl+R/reset.
 
-let suppressOverlayPositionPersistence = false;
-let pendingApplySavedPosition = 0;
-let overlayPositionTouched = false;
-let applySavedStartedAt = 0;
-
-window.__markOverlayPositionTouched = function __markOverlayPositionTouched() {
-  overlayPositionTouched = true;
-};
+window.__markOverlayPositionTouched = function __markOverlayPositionTouched() {};
 
 function suppressOverlayPositionPersistenceNow() {
-  suppressOverlayPositionPersistence = true;
+  // No-op: position persistence handled in main process.
 }
 
-function applySavedOverlayPosition() {
-  if (__isDetachedPanelWindow) return;
-  if (overlayPositionTouched) return;
-  const now = Date.now();
-  if (!applySavedStartedAt) applySavedStartedAt = now;
-  if (now - applySavedStartedAt > 1200) return;
-  if (typeof __bootingMainOverlay !== 'undefined' && __bootingMainOverlay) {
-    if (pendingApplySavedPosition < 5) {
-      pendingApplySavedPosition += 1;
-      setTimeout(applySavedOverlayPosition, 200);
-    }
-    return;
-  }
-  const rawX = localStorage.getItem(STORAGE_KEYS.OVERLAY_POSITION_X);
-  const rawY = localStorage.getItem(STORAGE_KEYS.OVERLAY_POSITION_Y);
-  if (rawX === null || rawY === null) return;
-  const savedX = Number(rawX);
-  const savedY = Number(rawY);
-  if (!Number.isNaN(savedX) && !Number.isNaN(savedY) && Number.isFinite(savedX) && Number.isFinite(savedY)) {
-    const viewportWidth = window.screen.availWidth || window.innerWidth;
-    const viewportHeight = window.screen.availHeight || window.innerHeight;
-    const clampedX = Math.min(Math.max(savedX, 0), Math.max(0, viewportWidth - window.innerWidth));
-    const clampedY = Math.min(Math.max(savedY, 0), Math.max(0, viewportHeight - window.innerHeight));
-    // Apply immediately so the window doesn't visibly "jump" after showing.
-    sendOverlayResizeBatched({ x: clampedX, y: clampedY, __debug: { reason: 'apply-saved-position' } });
-  }
-}
-
-// Saved overlay position is applied once by the main process on load.
-
-let lastWindowX = window.screenX;
-let lastWindowY = window.screenY;
-
-function trackWindowPosition() {
-  if (!__isDetachedPanelWindow && !suppressOverlayPositionPersistence) {
-    if (window.screenX !== lastWindowX || window.screenY !== lastWindowY) {
-      lastWindowX = window.screenX;
-      lastWindowY = window.screenY;
-      localStorage.setItem(STORAGE_KEYS.OVERLAY_POSITION_X, lastWindowX);
-      localStorage.setItem(STORAGE_KEYS.OVERLAY_POSITION_Y, lastWindowY);
-    }
-  }
-  requestAnimationFrame(trackWindowPosition);
-}
-
-trackWindowPosition();
+// Overlay position persistence now lives in the main process (normalized per-monitor layout).
 
 const dragHandleFlushThreshold = 32; // px from top of monitor where the grip should compress
 
@@ -1599,6 +1552,15 @@ window.addEventListener('storage', (ev) => {
   if (ev.key !== STORAGE_KEYS.NOTE_PANEL_TEXT && ev.key !== STORAGE_KEYS.NOTES_LIST && ev.key !== STORAGE_KEYS.NOTES_ACTIVE_ID) return;
   updateNotePanelPreview();
 });
+
+if (dragHandle) {
+  try {
+    ipcRenderer.on(IPC_CHANNELS.OVERLAY_DRAG_READY, (_event, payload) => {
+      const ready = !!(payload && payload.ready);
+      dragHandle.classList.toggle('drag-ready', ready);
+    });
+  } catch (_) {}
+}
 
 // Reset layout function
 const resetLayoutBtn = document.getElementById('resetLayoutBtn');
@@ -1646,6 +1608,7 @@ on(resetLayoutBtn, 'click', () => {
       localStorage.removeItem(STORAGE_KEYS.PINNED_TABS);
       localStorage.removeItem(PINNED_HISTORY_KEY);
       localStorage.removeItem(NOTE_PANEL_BOUNDS_KEY);
+      localStorage.removeItem(STORAGE_KEYS.WINDOW_LAYOUTS);
       localStorage.removeItem(STORAGE_KEYS.BLOCK_LAYOUTS);
       localStorage.removeItem(STORAGE_KEYS.BLOCK_FREE_LAYOUT);
       localStorage.removeItem('overlayWidgetCompositionMode');

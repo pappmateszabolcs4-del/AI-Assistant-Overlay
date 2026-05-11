@@ -1,14 +1,20 @@
 # ✅ TODO / Backlog
 
-Last updated: 2026-05-10
+Last updated: 2026-05-11
 
 ## Top candidates (next)
 
  - [ ] Per-game layout profiles
   - Save/apply per detected game: layout mode, panel order (and optionally open/detached state)
- - [ ] Multi-monitor optimization
-  - Ensure overlay + block windows respect per-monitor work areas and DPI
-  - Persist per-monitor positions and restore safely
+ - [ ] Multi-monitor optimization (full scope)
+  - Display registry: stable displayId, workArea/bounds, scaleFactor, rotation
+  - Canonical layout: per-monitor normalized rects (x,y,w,h in 0..1)
+  - DPI-aware restore: map normalized rects to monitor workArea
+  - Game-monitor binding: overlay follows active game display
+  - Hot-plug + reflow: clamp/reposition on monitor change
+  - Recovery rules: fallback to primary if target monitor is missing
+  - Storage migration: convert legacy absolute positions
+  - Optional debug map: visualize monitors + window anchors
 
 
 ## Recently completed
@@ -53,9 +59,15 @@ Last updated: 2026-05-10
 
 - [ ] Per-game layout profiles
   - Save/apply per detected game: layout mode, panel order (and optionally open/detached state)
-- [ ] Multi-monitor optimization
-  - Ensure overlay + block windows respect per-monitor work areas and DPI
-  - Persist per-monitor positions and restore safely
+- [ ] Multi-monitor optimization (full scope)
+  - Display registry: stable displayId, workArea/bounds, scaleFactor, rotation
+  - Canonical layout: per-monitor normalized rects (x,y,w,h in 0..1)
+  - DPI-aware restore: map normalized rects to monitor workArea
+  - Game-monitor binding: overlay follows active game display
+  - Hot-plug + reflow: clamp/reposition on monitor change
+  - Recovery rules: fallback to primary if target monitor is missing
+  - Storage migration: convert legacy absolute positions
+  - Optional debug map: visualize monitors + window anchors
 - [ ] Prompt templates per game
   - One-click question templates tailored to the detected game (e.g., "next steps", "build advice", "boss prep")
 - [ ] Hotkey customization UI

@@ -79,11 +79,11 @@
       width: min(380px, calc(100% - 160px));
       height: 28px;
       margin: 0 auto 4px;
-      cursor: grab;
+      cursor: default;
       background: transparent;
       border: none;
       transition: all 0.2s ease;
-      -webkit-app-region: no-drag; /* Allow JS to capture pointer events for manual dragging */
+      -webkit-app-region: drag; /* Native drag to avoid DPI drift across monitors */
       pointer-events: auto;
       z-index: 5;
       display: flex;
@@ -91,6 +91,15 @@
       justify-content: center;
       user-select: none;
       touch-action: none;
+    }
+
+    .drag-handle.drag-ready {
+      cursor: grab;
+    }
+
+    .drag-handle.drag-ready::before {
+      border-color: rgba(91, 158, 255, 0.85);
+      background: rgba(24, 31, 49, 0.78);
     }
 
     .drag-handle::before {

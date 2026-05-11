@@ -1,6 +1,6 @@
 # COMPREHENSIVE AUDIT REPORT
 
-**Date**: May 10, 2026  
+**Date**: May 11, 2026  
 **Reviewer**: GitHub Copilot  
 **Project**: AI Game Assistant v1.0  
 **Scope**: Current-state audit (architecture, security, UX, performance, tests, docs)  
@@ -10,7 +10,7 @@
 
 ## Executive Summary
 
-The codebase is stable and feature-complete for v1.0. The overlay now uses a block-based layout with detachable block windows, multi-note support, history search/filter, and unified i18n across all windows. Primary remaining work is operational (installer, signing, release workflow). Key technical risks are limited automated UI test coverage and reliance on manual smoke tests.
+The codebase is stable and feature-complete for v1.0. The overlay now uses a block-based layout with detachable block windows, multi-note support, history search/filter, and unified i18n across all windows. Primary remaining work is operational (installer, signing, release workflow). Key technical risks are limited automated UI test coverage and left-edge resize instability on transparent overlays.
 
 ---
 
@@ -47,6 +47,7 @@ This audit covers:
 **Risks / Gaps**:
 - Debug tooling still present (see openDevTools in [src/main/windows/overlay.js](src/main/windows/overlay.js)).
 - Limited automated tests for main-process flows (manual smoke tests still required).
+- Left-edge resize remains unstable under continuous updates on transparent overlays (plan: two-window handle + content or temporary opaque resize).
 
 ### Renderer
 
@@ -108,6 +109,7 @@ This audit covers:
 - Overlay is stable during gameplay
 - Game detection is fast and runs on key points (startup, hotkey, overlay show)
 - Block windows are lightweight and perform well
+- Per-monitor window layouts persist and reflow on display changes
 
 **Risks / Gaps**:
 - No repeatable automated performance benchmarks in CI
@@ -151,6 +153,9 @@ This audit covers:
 - TTS volume control
 - Block layout + block windows refinements
 - Unified i18n across overlay, pinned history, note/info
+- Per-monitor normalized layout persistence + reflow on display changes
+- Main-process overlay position persistence (renderer no longer writes overlay X/Y)
+- Left-edge resize anchoring in main (cursor-driven bounds)
 
 ---
 

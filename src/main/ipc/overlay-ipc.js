@@ -8,6 +8,7 @@ function registerOverlayIpc(deps) {
     app,
     BrowserWindow,
     ipcMain,
+    screen,
     registry,
     clampWindowToWorkArea,
     ensureOverlayWithinVisibleBounds,
@@ -290,18 +291,94 @@ function registerOverlayIpc(deps) {
     }
     const current = core.overlayWin.getBounds();
     const ignoreMoves = overlay.overlayDetachGuardActive || Date.now() < overlay.overlayIgnoreMoveUntil;
-    const rawX = (!ignoreMoves && bounds && Number.isFinite(bounds.x)) ? Math.round(bounds.x) : current.x;
-    const rawY = (!ignoreMoves && bounds && Number.isFinite(bounds.y)) ? Math.round(bounds.y) : current.y;
-    const rawW = (bounds && Number.isFinite(bounds.width)) ? Math.round(bounds.width) : current.width;
-    const rawH = (bounds && Number.isFinite(bounds.height)) ? Math.round(bounds.height) : current.height;
+    let wantsX = !!(bounds && Number.isFinite(bounds.x));
+    let wantsY = !!(bounds && Number.isFinite(bounds.y));
+    let wantsW = !!(bounds && Number.isFinite(bounds.width));
+    let wantsH = !!(bounds && Number.isFinite(bounds.height));
+    const resizeEdge = bounds && bounds.__debug ? bounds.__debug.edge : null;
+    const resizeReason = bounds && bounds.__debug ? bounds.__debug.reason : null;
+    const cursorScreenX = bounds && Number.isFinite(bounds.cursorScreenX)
+      ? Math.round(bounds.cursorScreenX)
+      : null;
+    const startRightEdge = bounds && Number.isFinite(bounds.startRightEdge)
+      ? Math.round(bounds.startRightEdge)
+      : null;
 
-    const width = Math.max(240, rawW);
-    const height = Math.max(140, rawH);
+    let rawX = (!ignoreMoves && wantsX) ? Math.round(bounds.x) : current.x;
+    const rawY = (!ignoreMoves && wantsY) ? Math.round(bounds.y) : current.y;
+    let rawW = wantsW ? Math.round(bounds.width) : current.width;
+    let rawH = wantsH ? Math.round(bounds.height) : current.height;
+    const resizeDir = bounds && bounds.__debug ? bounds.__debug.dir : null;
+    if (resizeDir === 'left' || resizeDir === 'right') {
+      rawH = current.height;
+    }
+
+    if (!ignoreMoves && resizeEdge === 'left') {
+      if (Number.isFinite(startRightEdge)) {
+        overlay.overlayResizeLeftAnchorRightEdge = startRightEdge;
+        overlay.overlayResizeLeftAnchorAt = Date.now();
+      }
+      const anchoredRightEdge = Number.isFinite(overlay.overlayResizeLeftAnchorRightEdge)
+        ? overlay.overlayResizeLeftAnchorRightEdge
+        : current.x + current.width;
+      const pointerX = Number.isFinite(cursorScreenX)
+        ? cursorScreenX
+        : (screen && typeof screen.getCursorScreenPoint === 'function')
+          ? Math.round(screen.getCursorScreenPoint().x)
+          : null;
+      if (Number.isFinite(pointerX)) {
+        rawX = pointerX;
+        wantsX = true;
+        wantsW = true;
+        const nextW = Math.round(anchoredRightEdge - pointerX);
+        rawW = Number.isFinite(nextW) ? nextW : rawW;
+      } else if (wantsW && !wantsX) {
+        rawX = Math.round(current.x + (current.width - rawW));
+      }
+    }
+
+    if (resizeEdge !== 'left' || resizeReason === 'resize-end') {
+      overlay.overlayResizeLeftAnchorRightEdge = null;
+      overlay.overlayResizeLeftAnchorAt = 0;
+    }
+
+    let width = Math.max(450, rawW);
+    let height = Math.max(140, rawH);
+    let targetDisplay = null;
+    try {
+      if (screen && typeof screen.getDisplayMatching === 'function') {
+        targetDisplay = screen.getDisplayMatching({
+          x: current.x,
+          y: current.y,
+          width: current.width,
+          height: current.height
+        });
+      }
+    } catch (_) {}
+    if (!targetDisplay && screen && typeof screen.getDisplayNearestPoint === 'function') {
+      try {
+        targetDisplay = screen.getDisplayNearestPoint({
+          x: current.x + Math.round(current.width / 2),
+          y: current.y + Math.round(current.height / 2)
+        });
+      } catch (_) {}
+    }
+    const area = targetDisplay && targetDisplay.workArea ? targetDisplay.workArea : null;
+    if (area) {
+      width = Math.min(width, Math.max(450, area.width));
+      height = Math.min(height, Math.max(140, area.height));
+      if (!ignoreMoves && resizeEdge === 'left') {
+        const rightEdge = current.x + current.width;
+        rawX = Math.round(rightEdge - width);
+        wantsX = true;
+      }
+    }
+
     const clamped = clampWindowToWorkArea(rawX, rawY, width, height, 0);
 
     const next = {
-      x: ignoreMoves ? current.x : clamped.x,
-      y: ignoreMoves ? current.y : clamped.y,
+      x: ignoreMoves ? current.x : (wantsX ? clamped.x : current.x),
+      y: ignoreMoves ? current.y : (wantsY ? clamped.y : current.y),
       width,
       height
     };

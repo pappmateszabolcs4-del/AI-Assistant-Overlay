@@ -16,6 +16,7 @@ function createIpcRegistrar(deps) {
     screen,
     registry,
     clampWindowToWorkArea,
+    captureWindowLayout,
     ensureOverlayWithinVisibleBounds,
     detectCurrentGame,
     tryGetDisplayForGameWindow,
@@ -39,7 +40,7 @@ function createIpcRegistrar(deps) {
     createBlockWindow,
     closeBlockWindow,
     updateBlockWindowBounds,
-      markBlockWindowReady,
+    markBlockWindowReady,
     closeAllDetachedPanelWindows,
     closeAllPinnedHistoryWindows,
     closeAllBlockWindows,
@@ -291,6 +292,7 @@ function createIpcRegistrar(deps) {
       screen,
       registry,
       clampWindowToWorkArea,
+      captureWindowLayout,
       normalizePanelId,
       createDetachedPanelWindow,
       sendDetachedPanelsStateToOverlay,
@@ -305,6 +307,7 @@ function createIpcRegistrar(deps) {
       BrowserWindow,
       registry,
       clampWindowToWorkArea,
+      captureWindowLayout,
       createPinnedHistoryWindow,
       closeAllPinnedHistoryWindows,
       shouldUnpinAtScreenPoint
@@ -314,6 +317,7 @@ function createIpcRegistrar(deps) {
       ipcMain,
       registry,
       clampWindowToWorkArea,
+      captureWindowLayout,
       createBlockWindow,
       closeBlockWindow,
       updateBlockWindowBounds,
@@ -326,7 +330,8 @@ function createIpcRegistrar(deps) {
       BrowserWindow,
       registry,
       clampWindowToWorkArea,
-      notePanel
+      notePanel,
+      captureWindowLayout
     });
 
     registerInfoIpc({
@@ -334,7 +339,8 @@ function createIpcRegistrar(deps) {
       BrowserWindow,
       registry,
       clampWindowToWorkArea,
-      infoPanel
+      infoPanel,
+      captureWindowLayout
     });
 
     registerOpenAiIpc({

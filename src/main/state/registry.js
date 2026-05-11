@@ -17,7 +17,8 @@ const registry = {
     overlayHideDuringLoad: false,
     overlayIgnoreMoveUntil: 0,
     lastOverlayRaiseAt: 0,
-    overlayAppliedSavedPosition: false
+    overlayResizeLeftAnchorRightEdge: null,
+    overlayResizeLeftAnchorAt: 0
   },
   game: {
     currentDetectedGame: null,
@@ -36,6 +37,7 @@ const registry = {
     detachedSelfHealUntil: 0,
     detachedPanelWindows: new Map(),
     detachedPanelLastBounds: new Map(),
+    detachedPanelDesiredBounds: new Map(),
     detachedPanelPerfStarts: new Map()
   },
   pinned: {
@@ -57,6 +59,13 @@ const registry = {
     infoPanelWin: null,
     infoPanelLastBounds: null,
     infoPanelVirtualVisible: false
+  },
+  layout: {
+    windowLayouts: new Map(),
+    lastDisplaySnapshot: [],
+    lastDisplaySnapshotAt: 0,
+    lastDisplaySnapshotReason: 'init',
+    loadedFromStorage: false
   }
 };
 

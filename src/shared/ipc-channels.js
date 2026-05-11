@@ -54,6 +54,7 @@ const IPC_CHANNELS = {
   OVERLAY_DOCK_PREVIEW: 'overlay-dock-preview',
   OVERLAY_PANEL_SWAP: 'overlay-panel-swap',
   OVERLAY_CURSOR_SCREEN_POINT: 'overlay-cursor-screen-point',
+  OVERLAY_DRAG_READY: 'overlay-drag-ready',
   OVERLAY_LAYOUT_SET: 'overlay-layout-set',
   OVERLAY_LAYOUT_UPDATED: 'overlay-layout-updated',
   OVERLAY_BOUNDS_UPDATED: 'overlay-bounds-updated',

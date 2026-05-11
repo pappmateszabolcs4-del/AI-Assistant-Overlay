@@ -8,6 +8,7 @@ function registerDetachedIpc(deps) {
     screen,
     registry,
     clampWindowToWorkArea,
+    captureWindowLayout,
     normalizePanelId,
     createDetachedPanelWindow,
     sendDetachedPanelsStateToOverlay,
@@ -199,6 +200,7 @@ function registerDetachedIpc(deps) {
     try {
       const clamped = clampWindowToWorkArea(nextX, nextY, b.width, b.height, 0);
       w.setPosition(clamped.x, clamped.y);
+      try { captureWindowLayout(`detached:${pid}`, { x: clamped.x, y: clamped.y, width: b.width, height: b.height }); } catch (_) {}
     } catch (_) {
       try { w.setPosition(nextX, nextY); } catch (_) {}
     }
@@ -224,6 +226,7 @@ function registerDetachedIpc(deps) {
     try { w.setPosition(clamped.x, clamped.y); } catch (_) {}
     const finalBounds = w.getBounds();
     detached.detachedPanelLastBounds.set(pid, { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height });
+    try { captureWindowLayout(`detached:${pid}`, detached.detachedPanelLastBounds.get(pid)); } catch (_) {}
 
     return { success: true };
   });
@@ -234,10 +237,14 @@ function registerDetachedIpc(deps) {
     const pid = w.__detachedPanelId;
     if (!normalizePanelId(pid)) return;
     const b = w.getBounds();
+
+    const desired = detached.detachedPanelDesiredBounds.get(pid) || { width: b.width, height: b.height };
+    const hasWidth = nextBounds && typeof nextBounds.width === 'number';
+    const hasHeight = nextBounds && typeof nextBounds.height === 'number';
     const rawX = nextBounds && typeof nextBounds.x === 'number' ? Math.round(nextBounds.x) : b.x;
     const rawY = nextBounds && typeof nextBounds.y === 'number' ? Math.round(nextBounds.y) : b.y;
-    const rawW = nextBounds && typeof nextBounds.width === 'number' ? Math.round(nextBounds.width) : b.width;
-    const rawH = nextBounds && typeof nextBounds.height === 'number' ? Math.round(nextBounds.height) : b.height;
+    const rawW = hasWidth ? Math.round(nextBounds.width) : desired.width;
+    const rawH = hasHeight ? Math.round(nextBounds.height) : desired.height;
 
     const MIN_W = 200;
     const MIN_H = 120;
@@ -276,6 +283,10 @@ function registerDetachedIpc(deps) {
 
     try { w.setBounds({ x, y, width, height }); } catch (_) {}
     detached.detachedPanelLastBounds.set(pid, { x, y, width, height });
+    if (hasWidth || hasHeight) {
+      detached.detachedPanelDesiredBounds.set(pid, { width, height });
+    }
+    try { captureWindowLayout(`detached:${pid}`, { x, y, width, height }); } catch (_) {}
   });
 
   ipcMain.handle(IPC_CHANNELS.DETACHED_PANEL_DROP, async (event, payload) => {
@@ -352,6 +363,7 @@ function registerDetachedIpc(deps) {
     try { w.setPosition(clamped.x, clamped.y); } catch (_) {}
     const finalBounds = w.getBounds();
     detached.detachedPanelLastBounds.set(pid, { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height });
+    try { captureWindowLayout(`detached:${pid}`, detached.detachedPanelLastBounds.get(pid)); } catch (_) {}
 
     return { success: true, docked: false };
   });
