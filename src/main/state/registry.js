@@ -28,7 +28,10 @@ const registry = {
     currentSpeechRate: 100,
     lastGameDetectAt: 0,
     lastKnownGameDisplayId: null,
-    lastKnownGameDisplayAt: 0
+    lastKnownGameDisplayAt: 0,
+    lastDetectedWindowBounds: null,
+    lastDetectedWindowAt: 0,
+    lastDetectedWindowTitle: null
   },
   detached: {
     detachedWindowsDesiredVisible: true,

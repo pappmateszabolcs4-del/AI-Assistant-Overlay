@@ -6,6 +6,26 @@
 
 ---
 
+## [1.0.29] - 2026-05-15 (Game Detect Worker)
+
+### ✅ Added
+
+- Dedicated game-detect worker process to keep PowerShell calls off the main thread.
+
+### 🔧 Changed
+
+- Game detection now uses async worker responses with caching and rate limits.
+
+### 🐛 Fixed
+
+- Eliminated periodic drag stutter caused by synchronous game detection.
+
+### 🧾 Notes
+
+- Tests: Not run (manual verification only).
+
+---
+
 ## [1.0.28] - 2026-05-15 (Multi-Monitor Stability Pass)
 
 ### ✅ Added

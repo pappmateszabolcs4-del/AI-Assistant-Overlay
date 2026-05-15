@@ -1101,6 +1101,40 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 
 ---
 
+### 2026-05-15 (Night)
+
+#### Summary
+- What changed: Moved game detection into a worker process with caching and async responses.
+- Why: Sync PowerShell calls were blocking the main thread and causing periodic drag stutter.
+- Impact: Smooth dragging across overlays while preserving game detection behavior.
+
+#### Details
+- Implementation notes: Main process now rate-limits detection requests, caches window bounds, and reads results from a child process.
+- Edge cases: Worker timeouts reset the process to avoid stuck inflight requests.
+
+#### Files touched
+- [src/main/services/game-detect.js](src/main/services/game-detect.js)
+- [src/main/services/game-detect-worker.js](src/main/services/game-detect-worker.js)
+- [src/main/services/game-detect-core.js](src/main/services/game-detect-core.js)
+- [src/main/state/registry.js](src/main/state/registry.js)
+- [src/main/windows/overlay.js](src/main/windows/overlay.js)
+- [src/main/windows/detached-visibility.js](src/main/windows/detached-visibility.js)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Manual: drag stutter no longer reproducible with game detection enabled.
+
+#### Follow-ups
+- TODO: Remove debug flags if no longer needed.
+
+---
+
 ### 2026-02-05 (Evening → Night)
 
 #### Updates (Feb 5, 2026 - Evening)

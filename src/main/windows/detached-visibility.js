@@ -1,4 +1,10 @@
 const { PANEL_IDS } = require('../../shared/panels');
+const { appendOverlayDebug } = require('../utils/overlay-debug-log');
+
+const DEBUG_STUTTER_LOG = String(process.env.DEBUG_STUTTER_LOG || '').toLowerCase() === '1'
+  || String(process.env.DEBUG_STUTTER_LOG || '').toLowerCase() === 'true';
+const DISABLE_SELF_HEAL = String(process.env.DISABLE_SELF_HEAL || '').toLowerCase() === '1'
+  || String(process.env.DISABLE_SELF_HEAL || '').toLowerCase() === 'true';
 
 function createDetachedVisibilityManager(deps) {
   const { registry } = deps;
@@ -101,12 +107,20 @@ function createDetachedVisibilityManager(deps) {
   }
 
   function startDetachedSelfHealPulse(durationMs = 2500, intervalMs = 250) {
+    if (DISABLE_SELF_HEAL) return;
     try {
       const now = Date.now();
       detached.detachedSelfHealUntil = Math.max(detached.detachedSelfHealUntil || 0, now + Math.max(200, durationMs));
       if (detached.detachedSelfHealTimer) return;
       detached.detachedSelfHealTimer = setInterval(() => {
         try {
+          if (DEBUG_STUTTER_LOG) {
+            appendOverlayDebug({
+              t: new Date().toISOString(),
+              event: 'pulse-detached-self-heal',
+              intervalMs: Math.max(100, intervalMs)
+            });
+          }
           if (Date.now() >= detached.detachedSelfHealUntil) {
             try { clearInterval(detached.detachedSelfHealTimer); } catch (_) {}
             detached.detachedSelfHealTimer = null;

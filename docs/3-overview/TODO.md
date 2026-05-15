@@ -17,6 +17,7 @@ Last updated: 2026-05-15
 
 ## Recently completed
 
+- [x] Worker-based game detection to remove drag stutter
 - [x] Add volume control for TTS
 - [x] History search/filter with pinned-only toggle (overlay + block windows)
 - [x] Basic unit tests (3-5 critical paths)

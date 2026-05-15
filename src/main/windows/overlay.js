@@ -3,6 +3,13 @@ const { STORAGE_KEYS } = require('../../shared/storage-keys');
 const { clampWindowToWorkArea } = require('../utils/bounds');
 const { appendOverlayDebug } = require('../utils/overlay-debug-log');
 
+const DEBUG_STUTTER_LOG = String(process.env.DEBUG_STUTTER_LOG || '').toLowerCase() === '1'
+  || String(process.env.DEBUG_STUTTER_LOG || '').toLowerCase() === 'true';
+const DISABLE_TOPMOST_PULSE = String(process.env.DISABLE_TOPMOST_PULSE || '').toLowerCase() === '1'
+  || String(process.env.DISABLE_TOPMOST_PULSE || '').toLowerCase() === 'true';
+const DISABLE_MOUSE_FORWARD_GATE = String(process.env.DISABLE_MOUSE_FORWARD_GATE || '').toLowerCase() === '1'
+  || String(process.env.DISABLE_MOUSE_FORWARD_GATE || '').toLowerCase() === 'true';
+
 function createOverlayManager(deps) {
   const {
     registry,
@@ -31,6 +38,8 @@ function createOverlayManager(deps) {
 
   const OVERLAY_TOPMOST_PULSE_MS = 900;
   const OVERLAY_LAYOUT_CAPTURE_DELAY_MS = 120;
+  let lastTopmostPulseLogAt = 0;
+  let lastMouseGateLogAt = 0;
   let overlayLayoutCaptureTimer = null;
   let overlayDragReady = false;
   function setOverlayDragReady(ready) {
@@ -234,9 +243,21 @@ function createOverlayManager(deps) {
   }
 
   function startOverlayMouseForwardGate() {
+    if (DISABLE_MOUSE_FORWARD_GATE) return;
     if (overlay.overlayMouseForwardGateTimer) return;
     overlay.overlayMouseForwardGateTimer = setInterval(() => {
       try {
+        if (DEBUG_STUTTER_LOG) {
+          const now = Date.now();
+          if ((now - lastMouseGateLogAt) >= 1000) {
+            lastMouseGateLogAt = now;
+            appendOverlayDebug({
+              t: new Date().toISOString(),
+              event: 'pulse-mouse-forward-gate',
+              intervalMs: 60
+            });
+          }
+        }
         if (!core.overlayWin || core.overlayWin.isDestroyed() || !overlay.overlayVirtualVisible) {
           stopOverlayMouseForwardGate();
           return;
@@ -286,9 +307,21 @@ function createOverlayManager(deps) {
   }
 
   function startOverlayTopmostPulse() {
+    if (DISABLE_TOPMOST_PULSE) return;
     if (overlay.overlayTopmostPulseTimer) return;
     overlay.overlayTopmostPulseTimer = setInterval(() => {
       try {
+        if (DEBUG_STUTTER_LOG) {
+          const now = Date.now();
+          if ((now - lastTopmostPulseLogAt) >= 400) {
+            lastTopmostPulseLogAt = now;
+            appendOverlayDebug({
+              t: new Date().toISOString(),
+              event: 'pulse-topmost',
+              intervalMs: OVERLAY_TOPMOST_PULSE_MS
+            });
+          }
+        }
         if (!core.overlayWin || core.overlayWin.isDestroyed() || !overlay.overlayVirtualVisible) return;
         reassertOverlayTopmost();
       } catch (_) {}

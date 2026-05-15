@@ -28,9 +28,12 @@ function createLifecycleManager(deps) {
   const { core, overlay, game } = registry;
 
   const GAME_DISPLAY_FOLLOW_INTERVAL_MS = 1500;
+  const GAME_DISPLAY_FOLLOW_DISABLED = String(process.env.DISABLE_GAME_FOLLOW || '').toLowerCase() === '1'
+    || String(process.env.DISABLE_GAME_FOLLOW || '').toLowerCase() === 'true';
   const GAME_DISPLAY_FOLLOW_MIN_MOVE_MS = 1200;
   const GAME_DISPLAY_FOLLOW_STABLE_HITS = 2;
   const GAME_DISPLAY_FOLLOW_STABLE_MS = 1000;
+  const GAME_DISPLAY_FOLLOW_MIN_DELTA_PX = 8;
   let pendingTargetDisplayId = null;
   let pendingTargetSince = 0;
   let pendingTargetHits = 0;
@@ -149,12 +152,17 @@ function createLifecycleManager(deps) {
     const nextBounds = computeFollowBounds(currentBounds, currentDisplay, targetDisplay);
     if (!nextBounds) return;
 
+    const dx = Math.abs(nextBounds.x - currentBounds.x);
+    const dy = Math.abs(nextBounds.y - currentBounds.y);
+    if (dx < GAME_DISPLAY_FOLLOW_MIN_DELTA_PX && dy < GAME_DISPLAY_FOLLOW_MIN_DELTA_PX) return;
+
     overlay.lastGameFollowAt = now;
     overlay.overlayIgnoreMoveUntil = now + 600;
     try { core.overlayWin.setBounds(nextBounds); } catch (_) {}
   }
 
   function startGameDisplayFollow() {
+    if (GAME_DISPLAY_FOLLOW_DISABLED) return;
     if (overlay.gameDisplayFollowTimer) return;
     overlay.gameDisplayFollowTimer = setInterval(() => {
       try { followGameDisplayIfNeeded(); } catch (_) {}
