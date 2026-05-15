@@ -8,7 +8,7 @@ Last updated: 2026-05-15
   - [x] Display registry: stable displayId, workArea/bounds, scaleFactor, rotation
   - [x] Canonical layout: per-monitor normalized rects (x,y,w,h in 0..1)
   - [x] DPI-aware restore: map normalized rects to monitor workArea
-  - [~] Game-monitor binding: overlay follows active game display (stabilized, still tuning)
+  - [x] Game-monitor binding: overlay follows active game display
   - [x] Hot-plug + reflow: clamp/reposition on monitor change
   - [x] Recovery rules: fallback to primary if target monitor is missing
   - [x] Storage migration: convert legacy absolute positions (overlay/note/info/pinned/detached/block)
@@ -75,7 +75,7 @@ Last updated: 2026-05-15
   - [x] Display registry: stable displayId, workArea/bounds, scaleFactor, rotation
   - [x] Canonical layout: per-monitor normalized rects (x,y,w,h in 0..1)
   - [x] DPI-aware restore: map normalized rects to monitor workArea
-  - [~] Game-monitor binding: overlay follows active game display (stabilized, still tuning)
+  - [x] Game-monitor binding: overlay follows active game display
   - [x] Hot-plug + reflow: clamp/reposition on monitor change
   - [x] Recovery rules: fallback to primary if target monitor is missing
   - [x] Storage migration: convert legacy absolute positions (overlay/note/info/pinned/detached/block)

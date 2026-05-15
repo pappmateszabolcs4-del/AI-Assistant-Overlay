@@ -73,6 +73,7 @@ function createOverlayManager(deps) {
           to: { x, y, width: bounds.width, height: bounds.height }
         });
       } catch (_) {}
+      overlay.lastOverlayProgrammaticMoveAt = Date.now();
       core.overlayWin.setBounds({ ...bounds, x, y });
     }
   }
@@ -365,6 +366,7 @@ function createOverlayManager(deps) {
     const area = display.workArea;
     const x = Math.round(area.x + Math.max(0, (area.width - b.width) / 2));
     const y = Math.round(area.y + Math.max(0, (area.height - b.height) / 2));
+    overlay.lastOverlayProgrammaticMoveAt = Date.now();
     try { core.overlayWin.setPosition(x, y); } catch (_) {}
   }
 
@@ -407,7 +409,10 @@ function createOverlayManager(deps) {
         : null;
       if (entry) {
         const nextBounds = resolveLayoutBounds('overlay', core.overlayWin.getBounds());
-        if (nextBounds) core.overlayWin.setBounds(nextBounds);
+        if (nextBounds) {
+          overlay.lastOverlayProgrammaticMoveAt = Date.now();
+          core.overlayWin.setBounds(nextBounds);
+        }
       }
     } catch (_) {}
 
@@ -495,9 +500,21 @@ function createOverlayManager(deps) {
 
     try {
       core.overlayWin.on('move', () => {
+        const now = Date.now();
+        const ignoreUserMove = now < overlay.overlayIgnoreMoveUntil
+          || (now - (overlay.lastOverlayProgrammaticMoveAt || 0)) < 300;
+        if (!ignoreUserMove) {
+          overlay.lastOverlayUserMoveAt = now;
+        }
         scheduleOverlayLayoutCapture();
       });
       core.overlayWin.on('resize', () => {
+        const now = Date.now();
+        const ignoreUserMove = now < overlay.overlayIgnoreMoveUntil
+          || (now - (overlay.lastOverlayProgrammaticMoveAt || 0)) < 300;
+        if (!ignoreUserMove) {
+          overlay.lastOverlayUserMoveAt = now;
+        }
         scheduleOverlayLayoutCapture();
       });
     } catch (_) {}

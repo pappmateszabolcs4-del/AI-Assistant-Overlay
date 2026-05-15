@@ -6,6 +6,20 @@
 
 ---
 
+## [1.0.31] - 2026-05-15 (Game Monitor Binding Fix)
+
+### 🔧 Changed
+
+- Game display follow now refreshes detection when bounds are stale.
+- Bounds lookup uses the matched window title to map to the correct monitor.
+- Overlay follow defers after user moves to avoid immediate snap-back.
+
+### 🧾 Notes
+
+- Tests: Manual multi-monitor verification.
+
+---
+
 ## [1.0.30] - 2026-05-15 (Game Detect Trigger Tuning)
 
 ### 🔧 Changed

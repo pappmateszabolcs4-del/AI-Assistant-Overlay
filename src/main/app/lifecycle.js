@@ -21,6 +21,7 @@ function createLifecycleManager(deps) {
     closeAllBlockWindows,
     notePanel,
     registerHotkey,
+    detectCurrentGame,
     tryGetDisplayForGameWindow
   } = deps;
 
@@ -33,9 +34,13 @@ function createLifecycleManager(deps) {
   const GAME_DISPLAY_FOLLOW_STABLE_HITS = 2;
   const GAME_DISPLAY_FOLLOW_STABLE_MS = 1000;
   const GAME_DISPLAY_FOLLOW_MIN_DELTA_PX = 8;
+  const GAME_DISPLAY_FOLLOW_USER_GRACE_MS = 6000;
+  const GAME_WINDOW_BOUNDS_MAX_AGE_MS = 5000;
+  const GAME_DISPLAY_FOLLOW_DETECT_MIN_MS = 2500;
   let pendingTargetDisplayId = null;
   let pendingTargetSince = 0;
   let pendingTargetHits = 0;
+  let lastFollowDetectAt = 0;
 
   function clamp01(value) {
     const v = Number(value);
@@ -114,8 +119,19 @@ function createLifecycleManager(deps) {
     if (!overlay.overlayVirtualVisible) return;
     if (overlay.overlayDetachGuardActive) return;
     if (Date.now() < overlay.overlayIgnoreMoveUntil) return;
+    if (overlay.lastOverlayUserMoveAt && (Date.now() - overlay.lastOverlayUserMoveAt) < GAME_DISPLAY_FOLLOW_USER_GRACE_MS) return;
 
     if (!game.currentDetectedGame) return;
+
+    const now = Date.now();
+    const lastBoundsAt = game.lastDetectedWindowAt || 0;
+    if ((now - lastBoundsAt) > GAME_WINDOW_BOUNDS_MAX_AGE_MS) {
+      if ((now - lastFollowDetectAt) >= GAME_DISPLAY_FOLLOW_DETECT_MIN_MS) {
+        lastFollowDetectAt = now;
+        try { detectCurrentGame(true); } catch (_) {}
+      }
+      return;
+    }
 
     const targetDisplay = tryGetDisplayForGameWindow(game.currentDetectedGame)
       || getRecentGameDisplayFromState();
@@ -144,7 +160,6 @@ function createLifecycleManager(deps) {
     const currentDisplay = getDisplayForBounds(currentBounds);
     if (currentDisplay && currentDisplay.id === targetDisplay.id) return;
 
-    const now = Date.now();
     if ((now - overlay.lastGameFollowAt) < GAME_DISPLAY_FOLLOW_MIN_MOVE_MS) return;
 
     const nextBounds = computeFollowBounds(currentBounds, currentDisplay, targetDisplay);
@@ -156,6 +171,7 @@ function createLifecycleManager(deps) {
 
     overlay.lastGameFollowAt = now;
     overlay.overlayIgnoreMoveUntil = now + 600;
+    overlay.lastOverlayProgrammaticMoveAt = now;
     try { core.overlayWin.setBounds(nextBounds); } catch (_) {}
   }
 

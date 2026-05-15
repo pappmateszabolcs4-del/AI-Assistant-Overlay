@@ -59,9 +59,11 @@ function getWindowBoundsForTitle(title) {
 function detectGame(ignoreList) {
   const activeTitle = getActiveWindowTitle();
   let detectedGame = null;
+  let matchedTitle = '';
 
   if (activeTitle) {
     detectedGame = extractGameName(activeTitle, ignoreList);
+    if (detectedGame) matchedTitle = activeTitle;
   }
 
   if (!detectedGame) {
@@ -70,15 +72,17 @@ function detectGame(ignoreList) {
       const game = extractGameName(title, ignoreList);
       if (game) {
         detectedGame = game;
+        matchedTitle = title;
         break;
       }
     }
   }
 
-  const bounds = detectedGame ? getWindowBoundsForTitle(detectedGame) : null;
+  const bounds = matchedTitle ? getWindowBoundsForTitle(matchedTitle) : null;
 
   return {
     activeTitle,
+    matchedTitle,
     gameName: detectedGame,
     bounds
   };
