@@ -1,5 +1,6 @@
 const { screen } = require('electron');
 const { STORAGE_KEYS } = require('../../shared/storage-keys');
+const { appendOverlayDebug } = require('./overlay-debug-log');
 
 const DEFAULT_MIN = { width: 120, height: 80 };
 
@@ -85,6 +86,8 @@ function createWindowLayoutManager(deps) {
   const screenApi = injectedScreen || screen;
   const layoutState = registry.layout;
   let persistTimer = null;
+  let lastDebugMapAt = 0;
+  const DEBUG_MAP_MIN_INTERVAL_MS = 1200;
 
   function getDisplays() {
     try {
@@ -114,6 +117,177 @@ function createWindowLayoutManager(deps) {
     }));
     layoutState.lastDisplaySnapshotAt = Date.now();
     layoutState.lastDisplaySnapshotReason = reason || 'unknown';
+  }
+
+  function rectsOverlap(a, b) {
+    if (!a || !b) return false;
+    const ax2 = a.x + a.width;
+    const ay2 = a.y + a.height;
+    const bx2 = b.x + b.width;
+    const by2 = b.y + b.height;
+    return ax2 > b.x && bx2 > a.x && ay2 > b.y && by2 > a.y;
+  }
+
+  function safeBounds(bounds) {
+    if (!bounds) return null;
+    const x = Number(bounds.x);
+    const y = Number(bounds.y);
+    const width = Number(bounds.width);
+    const height = Number(bounds.height);
+    if (![x, y, width, height].every(Number.isFinite)) return null;
+    return { x, y, width, height };
+  }
+
+  function collectWindowAnchors(displays) {
+    const anchors = [];
+    const { core, note, info, detached, pinned, blocks } = registry;
+
+    function addAnchor(key, win) {
+      if (!win || win.isDestroyed()) return;
+      let bounds = null;
+      try { bounds = safeBounds(win.getBounds()); } catch (_) { bounds = null; }
+      if (!bounds) {
+        anchors.push({ key, bounds: null, displayId: null, onScreen: false });
+        return;
+      }
+      const display = getDisplayForBounds(screenApi, displays, bounds);
+      const onScreen = displays.some((d) => d && d.workArea && rectsOverlap(d.workArea, bounds));
+      anchors.push({
+        key,
+        bounds,
+        displayId: display ? display.id : null,
+        onScreen
+      });
+    }
+
+    addAnchor('overlay', core.overlayWin);
+    addAnchor('note-panel', note.notePanelWin);
+    addAnchor('info-panel', info.infoPanelWin);
+
+    if (detached.detachedPanelWindows && detached.detachedPanelWindows.size) {
+      for (const [panelId, win] of detached.detachedPanelWindows.entries()) {
+        addAnchor(`detached:${panelId}`, win);
+      }
+    }
+
+    if (pinned.pinnedHistoryWindows && pinned.pinnedHistoryWindows.size) {
+      for (const [ts, win] of pinned.pinnedHistoryWindows.entries()) {
+        addAnchor(`pinned:${ts}`, win);
+      }
+    }
+
+    if (blocks.detachedBlockWindows && blocks.detachedBlockWindows.size) {
+      for (const [blockId, win] of blocks.detachedBlockWindows.entries()) {
+        addAnchor(`block:${blockId}`, win);
+      }
+    }
+
+    return anchors;
+  }
+
+  function collectLayoutEntries() {
+    const entries = [];
+    for (const [key, value] of layoutState.windowLayouts.entries()) {
+      if (!value || !value.normalized) continue;
+      entries.push({
+        key: String(key),
+        displayId: value.displayId,
+        normalized: value.normalized,
+        updatedAt: value.updatedAt || null
+      });
+    }
+    return entries;
+  }
+
+  function validateDebugMap(map, displays) {
+    const issues = [];
+    const displayIds = new Set(displays.map((d) => d && d.id).filter((v) => v != null));
+
+    for (const d of displays) {
+      if (!d || !d.bounds || !d.workArea) {
+        issues.push({ code: 'display-missing-bounds', displayId: d && d.id });
+        continue;
+      }
+      if (d.bounds.width <= 0 || d.bounds.height <= 0) {
+        issues.push({ code: 'display-zero-bounds', displayId: d.id });
+      }
+      if (d.workArea.width <= 0 || d.workArea.height <= 0) {
+        issues.push({ code: 'display-zero-workarea', displayId: d.id });
+      }
+      if (d.workArea.width > d.bounds.width || d.workArea.height > d.bounds.height) {
+        issues.push({ code: 'workarea-larger-than-bounds', displayId: d.id });
+      }
+    }
+
+    for (const entry of map.layouts) {
+      if (entry.displayId != null && !displayIds.has(entry.displayId)) {
+        issues.push({ code: 'layout-missing-display', key: entry.key, displayId: entry.displayId });
+      }
+      const n = entry.normalized || {};
+      const vals = [n.x, n.y, n.width, n.height].map((v) => Number(v));
+      if (!vals.every(Number.isFinite)) {
+        issues.push({ code: 'layout-invalid-normalized', key: entry.key });
+        continue;
+      }
+      const outOfRange = vals.some((v) => v < -0.01 || v > 1.01);
+      if (outOfRange) {
+        issues.push({ code: 'layout-normalized-out-of-range', key: entry.key, normalized: n });
+      }
+    }
+
+    for (const anchor of map.windows) {
+      if (!anchor.bounds) {
+        issues.push({ code: 'window-missing-bounds', key: anchor.key });
+        continue;
+      }
+      if (!anchor.onScreen) {
+        issues.push({ code: 'window-offscreen', key: anchor.key, bounds: anchor.bounds });
+      }
+      if (anchor.displayId == null) {
+        issues.push({ code: 'window-no-display-match', key: anchor.key, bounds: anchor.bounds });
+      }
+    }
+
+    const lastGameDisplayId = registry.game && registry.game.lastKnownGameDisplayId;
+    if (lastGameDisplayId != null && !displayIds.has(lastGameDisplayId)) {
+      issues.push({ code: 'game-display-missing', displayId: lastGameDisplayId });
+    }
+
+    return issues;
+  }
+
+  function logDisplayDebugMap(reason) {
+    const now = Date.now();
+    if ((now - lastDebugMapAt) < DEBUG_MAP_MIN_INTERVAL_MS) return;
+    lastDebugMapAt = now;
+
+    const displays = getDisplays();
+    const windows = collectWindowAnchors(displays);
+    const layouts = collectLayoutEntries();
+    const issues = validateDebugMap({ windows, layouts }, displays);
+
+    appendOverlayDebug({
+      t: new Date().toISOString(),
+      event: 'display-debug-map',
+      reason: reason || 'unknown',
+      summary: {
+        displayCount: displays.length,
+        windowCount: windows.length,
+        layoutCount: layouts.length,
+        issuesCount: issues.length
+      },
+      displays: displays.map((d) => ({
+        id: d.id,
+        bounds: d.bounds,
+        workArea: d.workArea,
+        scaleFactor: d.scaleFactor,
+        rotation: d.rotation,
+        isPrimary: d.id === (getPrimaryDisplay() && getPrimaryDisplay().id)
+      })),
+      windows,
+      layouts,
+      issues
+    });
   }
 
   function serializeLayouts() {
@@ -172,8 +346,14 @@ function createWindowLayoutManager(deps) {
         layouts: localStorage.getItem(${JSON.stringify(STORAGE_KEYS.WINDOW_LAYOUTS)}),
         overlayX: localStorage.getItem(${JSON.stringify(STORAGE_KEYS.OVERLAY_POSITION_X)}),
         overlayY: localStorage.getItem(${JSON.stringify(STORAGE_KEYS.OVERLAY_POSITION_Y)}),
+        overlayW: localStorage.getItem('overlayWidth'),
+        overlayH: localStorage.getItem('overlayHeight'),
+        overlayBounds: localStorage.getItem('overlayBounds'),
         noteBounds: localStorage.getItem(${JSON.stringify(STORAGE_KEYS.NOTE_PANEL_BOUNDS)}),
-        pinnedHistory: localStorage.getItem(${JSON.stringify(STORAGE_KEYS.PINNED_HISTORY)})
+        infoBounds: localStorage.getItem('infoPanelBounds'),
+        pinnedHistory: localStorage.getItem(${JSON.stringify(STORAGE_KEYS.PINNED_HISTORY)}),
+        detachedBounds: localStorage.getItem('detachedPanelBounds'),
+        blockBounds: localStorage.getItem('blockWindowBounds')
       }; } catch (_) { return {}; } })()`;
       raw = await win.webContents.executeJavaScript(script, true);
     } catch (_) {
@@ -182,6 +362,20 @@ function createWindowLayoutManager(deps) {
 
     let migrated = false;
     let loaded = false;
+
+    function parseBoundsCandidate(value) {
+      let parsed = value;
+      if (typeof value === 'string') {
+        try { parsed = JSON.parse(value); } catch (_) { parsed = null; }
+      }
+      if (!parsed || typeof parsed !== 'object') return null;
+      const x = Number(parsed.x);
+      const y = Number(parsed.y);
+      const width = Number(parsed.width);
+      const height = Number(parsed.height);
+      if (![x, y, width, height].every(Number.isFinite)) return null;
+      return { x, y, width, height };
+    }
 
     if (raw && raw.layouts) {
       try {
@@ -195,19 +389,39 @@ function createWindowLayoutManager(deps) {
 
     const overlayX = raw && raw.overlayX != null ? Number(raw.overlayX) : null;
     const overlayY = raw && raw.overlayY != null ? Number(raw.overlayY) : null;
-    if (Number.isFinite(overlayX) && Number.isFinite(overlayY) && win && !win.isDestroyed()) {
+    const overlayBounds = raw && raw.overlayBounds ? parseBoundsCandidate(raw.overlayBounds) : null;
+    if (overlayBounds && win && !win.isDestroyed()) {
+      try {
+        captureWindowLayout('overlay', overlayBounds);
+        migrated = true;
+      } catch (_) {}
+    } else if (Number.isFinite(overlayX) && Number.isFinite(overlayY) && win && !win.isDestroyed()) {
       try {
         const b = win.getBounds();
-        captureWindowLayout('overlay', { x: overlayX, y: overlayY, width: b.width, height: b.height });
+        const overlayW = raw && raw.overlayW != null ? Number(raw.overlayW) : b.width;
+        const overlayH = raw && raw.overlayH != null ? Number(raw.overlayH) : b.height;
+        const width = Number.isFinite(overlayW) ? overlayW : b.width;
+        const height = Number.isFinite(overlayH) ? overlayH : b.height;
+        captureWindowLayout('overlay', { x: overlayX, y: overlayY, width, height });
         migrated = true;
       } catch (_) {}
     }
 
     if (raw && raw.noteBounds) {
       try {
-        const note = JSON.parse(raw.noteBounds);
-        if (note && Number.isFinite(note.x) && Number.isFinite(note.y) && Number.isFinite(note.width) && Number.isFinite(note.height)) {
+        const note = parseBoundsCandidate(raw.noteBounds);
+        if (note) {
           captureWindowLayout('note-panel', note);
+          migrated = true;
+        }
+      } catch (_) {}
+    }
+
+    if (raw && raw.infoBounds) {
+      try {
+        const info = parseBoundsCandidate(raw.infoBounds);
+        if (info) {
+          captureWindowLayout('info-panel', info);
           migrated = true;
         }
       } catch (_) {}
@@ -234,8 +448,50 @@ function createWindowLayoutManager(deps) {
       } catch (_) {}
     }
 
+    if (raw && raw.detachedBounds) {
+      try {
+        const parsed = JSON.parse(raw.detachedBounds);
+        if (parsed && typeof parsed === 'object') {
+          for (const [panelId, bounds] of Object.entries(parsed)) {
+            const entry = parseBoundsCandidate(bounds);
+            if (!entry) continue;
+            captureWindowLayout(`detached:${panelId}`, entry);
+            migrated = true;
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (raw && raw.blockBounds) {
+      try {
+        const parsed = JSON.parse(raw.blockBounds);
+        if (parsed && typeof parsed === 'object') {
+          for (const [blockId, bounds] of Object.entries(parsed)) {
+            const entry = parseBoundsCandidate(bounds);
+            if (!entry) continue;
+            captureWindowLayout(`block:${blockId}`, entry);
+            migrated = true;
+          }
+        }
+      } catch (_) {}
+    }
+
     if (migrated) {
       persistLayoutsToStorage();
+      try {
+        appendOverlayDebug({
+          t: new Date().toISOString(),
+          event: 'layout-migration',
+          migratedKeys: {
+            overlay: !!(overlayBounds || (Number.isFinite(overlayX) && Number.isFinite(overlayY))),
+            note: !!raw.noteBounds,
+            info: !!raw.infoBounds,
+            pinned: !!raw.pinnedHistory,
+            detached: !!raw.detachedBounds,
+            block: !!raw.blockBounds
+          }
+        });
+      } catch (_) {}
     }
     layoutState.loadedFromStorage = true;
     return loaded || migrated;
@@ -343,7 +599,8 @@ function createWindowLayoutManager(deps) {
     captureWindowLayout,
     reflowAllWindows,
     resolveLayoutBounds,
-    loadLayoutsFromStorage
+    loadLayoutsFromStorage,
+    logDisplayDebugMap
   };
 }
 

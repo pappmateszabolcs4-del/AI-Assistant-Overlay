@@ -15,6 +15,7 @@ function createLifecycleManager(deps) {
     reassertOverlayTopmost,
     updateDisplaySnapshot,
     reflowAllWindows,
+    logDisplayDebugMap,
     closeAllPinnedHistoryWindows,
     closeAllDetachedPanelWindows,
     closeAllBlockWindows,
@@ -28,6 +29,11 @@ function createLifecycleManager(deps) {
 
   const GAME_DISPLAY_FOLLOW_INTERVAL_MS = 1500;
   const GAME_DISPLAY_FOLLOW_MIN_MOVE_MS = 1200;
+  const GAME_DISPLAY_FOLLOW_STABLE_HITS = 2;
+  const GAME_DISPLAY_FOLLOW_STABLE_MS = 1000;
+  let pendingTargetDisplayId = null;
+  let pendingTargetSince = 0;
+  let pendingTargetHits = 0;
 
   function clamp01(value) {
     const v = Number(value);
@@ -114,6 +120,22 @@ function createLifecycleManager(deps) {
       || getRecentGameDisplayFromState();
     if (!targetDisplay || !targetDisplay.workArea) return;
 
+    try {
+      game.lastKnownGameDisplayId = targetDisplay.id;
+      game.lastKnownGameDisplayAt = Date.now();
+    } catch (_) {}
+
+    if (pendingTargetDisplayId !== targetDisplay.id) {
+      pendingTargetDisplayId = targetDisplay.id;
+      pendingTargetSince = Date.now();
+      pendingTargetHits = 1;
+      return;
+    }
+
+    pendingTargetHits += 1;
+    if (pendingTargetHits < GAME_DISPLAY_FOLLOW_STABLE_HITS) return;
+    if ((Date.now() - pendingTargetSince) < GAME_DISPLAY_FOLLOW_STABLE_MS) return;
+
     let currentBounds = null;
     try { currentBounds = core.overlayWin.getBounds(); } catch (_) { currentBounds = null; }
     if (!currentBounds) return;
@@ -153,12 +175,14 @@ function createLifecycleManager(deps) {
       createWindow();
       createOverlayWindow();
       try { updateDisplaySnapshot('startup'); } catch (_) {}
+      try { logDisplayDebugMap('startup'); } catch (_) {}
       startGameDisplayFollow();
 
       const handleDisplayChange = () => {
         if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
         try { updateDisplaySnapshot('display-change'); } catch (_) {}
         try { reflowAllWindows(); } catch (_) {}
+        try { logDisplayDebugMap('display-change'); } catch (_) {}
         ensureOverlayWithinVisibleBounds();
         if (overlay.overlayVirtualVisible) {
           reassertOverlayTopmost();

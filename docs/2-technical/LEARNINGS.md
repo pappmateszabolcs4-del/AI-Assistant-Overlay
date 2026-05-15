@@ -1070,6 +1070,37 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 
 ---
 
+### 2026-05-15 (Evening)
+
+#### Summary
+- What changed: Added display debug map logging with validation, expanded legacy layout migration, and stabilized game-display follow behavior.
+- Why: Needed automated multi-monitor diagnostics and safer migration before tuning binding.
+- Impact: Better visibility into display/layout anomalies and reduced overlay flapping across monitors.
+
+#### Details
+- Implementation notes: Debug map logs window/display anchors plus validation issues; migration now covers overlay, note/info, detached, pinned, and block bounds; game-display follow requires a brief stability window.
+- Edge cases: Legacy bounds are only migrated when values are finite; debug logging is rate-limited.
+
+#### Files touched
+- [src/main/utils/window-layout.js](src/main/utils/window-layout.js)
+- [src/main/app/lifecycle.js](src/main/app/lifecycle.js)
+- [src/main/index.js](src/main/index.js)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Tests: `npm run check`.
+
+#### Follow-ups
+- TODO: Consider a visual debug overlay for monitors + anchors.
+
+---
+
 ### 2026-02-05 (Evening → Night)
 
 #### Updates (Feb 5, 2026 - Evening)

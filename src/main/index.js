@@ -73,7 +73,8 @@ const {
   captureWindowLayout,
   reflowAllWindows,
   resolveLayoutBounds,
-  loadLayoutsFromStorage
+  loadLayoutsFromStorage,
+  logDisplayDebugMap
 } = windowLayout;
 
 const {
@@ -295,6 +296,7 @@ const lifecycleManager = createLifecycleManager({
   reassertOverlayTopmost,
   updateDisplaySnapshot,
   reflowAllWindows,
+  logDisplayDebugMap,
   closeAllPinnedHistoryWindows,
   closeAllBlockWindows,
   notePanel,

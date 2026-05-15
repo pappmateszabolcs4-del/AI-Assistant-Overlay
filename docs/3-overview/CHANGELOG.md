@@ -6,6 +6,26 @@
 
 ---
 
+## [1.0.28] - 2026-05-15 (Multi-Monitor Stability Pass)
+
+### ✅ Added
+
+- Display debug map logging with validation to detect off-screen windows and layout anomalies.
+
+### 🔧 Changed
+
+- Storage migration now covers legacy bounds for overlay, note/info panels, detached panels, pinned history, and block windows.
+
+### 🐛 Fixed
+
+- Reduced game-display follow flapping by requiring short stability confirmation before moving the overlay.
+
+### 🧾 Notes
+
+- Tests: `npm run check`.
+
+---
+
 ## [1.0.27] - 2026-05-11 (Resize Cleanup + Backup Refresh)
 
 ### ✅ Added

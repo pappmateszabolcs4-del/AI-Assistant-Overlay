@@ -1,6 +1,6 @@
 # ✅ TODO / Backlog
 
-Last updated: 2026-05-11
+Last updated: 2026-05-15
 
 ## Top candidates (next)
 
@@ -8,11 +8,11 @@ Last updated: 2026-05-11
   - [x] Display registry: stable displayId, workArea/bounds, scaleFactor, rotation
   - [x] Canonical layout: per-monitor normalized rects (x,y,w,h in 0..1)
   - [x] DPI-aware restore: map normalized rects to monitor workArea
-  - [~] Game-monitor binding: overlay follows active game display (initial placement only)
+  - [~] Game-monitor binding: overlay follows active game display (stabilized, still tuning)
   - [x] Hot-plug + reflow: clamp/reposition on monitor change
   - [x] Recovery rules: fallback to primary if target monitor is missing
-  - [~] Storage migration: convert legacy absolute positions (overlay/note/pinned only)
-  - [ ] Optional debug map: visualize monitors + window anchors
+  - [x] Storage migration: convert legacy absolute positions (overlay/note/info/pinned/detached/block)
+  - [~] Debug map logging + validation (no visual overlay yet)
 
 
 ## Recently completed
@@ -73,11 +73,11 @@ Last updated: 2026-05-11
   - [x] Display registry: stable displayId, workArea/bounds, scaleFactor, rotation
   - [x] Canonical layout: per-monitor normalized rects (x,y,w,h in 0..1)
   - [x] DPI-aware restore: map normalized rects to monitor workArea
-  - [~] Game-monitor binding: overlay follows active game display (initial placement only)
+  - [~] Game-monitor binding: overlay follows active game display (stabilized, still tuning)
   - [x] Hot-plug + reflow: clamp/reposition on monitor change
   - [x] Recovery rules: fallback to primary if target monitor is missing
-  - [~] Storage migration: convert legacy absolute positions (overlay/note/pinned only)
-  - [ ] Optional debug map: visualize monitors + window anchors
+  - [x] Storage migration: convert legacy absolute positions (overlay/note/info/pinned/detached/block)
+  - [~] Debug map logging + validation (no visual overlay yet)
 
 - [ ] Hotkey customization UI
 - [ ] Accessibility keyboard navigation
