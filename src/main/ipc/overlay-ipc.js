@@ -425,7 +425,10 @@ function registerOverlayIpc(deps) {
 
   ipcMain.handle(IPC_CHANNELS.GET_GAME_CONTEXT, async () => {
     if (!game.currentDetectedGame) {
-      try { detectCurrentGame(false); } catch (_) {}
+      const now = Date.now();
+      if ((now - (game.lastGameDetectAt || 0)) > 3000) {
+        try { detectCurrentGame(true); } catch (_) {}
+      }
     }
     return game.currentDetectedGame;
   });

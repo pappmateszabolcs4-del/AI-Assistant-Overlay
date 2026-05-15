@@ -1131,7 +1131,40 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 - Manual: drag stutter no longer reproducible with game detection enabled.
 
 #### Follow-ups
-- TODO: Remove debug flags if no longer needed.
+- TODO: None.
+
+---
+
+### 2026-05-15 (Night)
+
+#### Summary
+- What changed: Switched game detection to event-driven triggers and removed stutter debug flags.
+- Why: Reduce background work and avoid unnecessary detection during AI requests.
+- Impact: Lower overhead during drag while keeping game context accurate.
+
+#### Details
+- Implementation notes: Follow loop no longer calls detect; GET_GAME_CONTEXT uses a stale guard; OpenAI path uses cached context only.
+- Edge cases: If context is missing, text-based matching still fills gaps.
+
+#### Files touched
+- [src/main/app/lifecycle.js](src/main/app/lifecycle.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [src/main/windows/overlay.js](src/main/windows/overlay.js)
+- [src/main/windows/detached-visibility.js](src/main/windows/detached-visibility.js)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Manual: drag still smooth; game context resolves via cached or text match.
+
+#### Follow-ups
+- TODO: None.
 
 ---
 

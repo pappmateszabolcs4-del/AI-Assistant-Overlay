@@ -6,6 +6,23 @@
 
 ---
 
+## [1.0.30] - 2026-05-15 (Game Detect Trigger Tuning)
+
+### 🔧 Changed
+
+- Game detection now runs only on event-driven triggers (no follow-loop polling).
+- OpenAI requests no longer trigger detection; cached context + text fallback only.
+
+### 🧹 Cleaned
+
+- Removed stutter diagnostic flags and pulse logging.
+
+### 🧾 Notes
+
+- Tests: Not run (manual verification only).
+
+---
+
 ## [1.0.29] - 2026-05-15 (Game Detect Worker)
 
 ### ✅ Added

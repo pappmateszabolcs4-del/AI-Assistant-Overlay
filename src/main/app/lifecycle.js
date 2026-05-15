@@ -21,7 +21,6 @@ function createLifecycleManager(deps) {
     closeAllBlockWindows,
     notePanel,
     registerHotkey,
-    detectCurrentGame,
     tryGetDisplayForGameWindow
   } = deps;
 
@@ -116,7 +115,6 @@ function createLifecycleManager(deps) {
     if (overlay.overlayDetachGuardActive) return;
     if (Date.now() < overlay.overlayIgnoreMoveUntil) return;
 
-    try { detectCurrentGame(false); } catch (_) {}
     if (!game.currentDetectedGame) return;
 
     const targetDisplay = tryGetDisplayForGameWindow(game.currentDetectedGame)

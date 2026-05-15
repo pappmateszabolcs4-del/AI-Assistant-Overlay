@@ -130,14 +130,8 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
       if (!openai) {
         throw new Error('OpenAI nincs inicializálva! Állítsd be az API kulcsot a Settings panelen.');
       }
-      // Prefer explicit renderer-provided context, but fall back to main-process detection.
+      // Prefer explicit renderer-provided context, but fall back to cached detection.
       let resolvedGameContext = gameContext || game.currentDetectedGame;
-      if (!resolvedGameContext) {
-        try {
-          detectCurrentGame(true);
-          resolvedGameContext = game.currentDetectedGame;
-        } catch (_) {}
-      }
       if (!resolvedGameContext && typeof matchGameFromText === 'function') {
         resolvedGameContext = matchGameFromText(text);
       }

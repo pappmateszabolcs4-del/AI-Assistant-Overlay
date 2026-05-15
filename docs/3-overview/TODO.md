@@ -17,6 +17,7 @@ Last updated: 2026-05-15
 
 ## Recently completed
 
+- [x] Game-detect triggers tuned to event-driven flow
 - [x] Worker-based game detection to remove drag stutter
 - [x] Add volume control for TTS
 - [x] History search/filter with pinned-only toggle (overlay + block windows)
