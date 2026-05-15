@@ -5,6 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "dev": "set APP_ENV=development && electron .",
+    "prod": "set APP_ENV=production && electron .",
     "build:games": "node scripts/build-igdb-dataset.js",
     "validate:games": "node scripts/validate-game-detect.js",
     "package": "electron-forge package",
