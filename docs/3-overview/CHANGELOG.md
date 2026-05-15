@@ -6,6 +6,43 @@
 
 ---
 
+## [1.0.35] - 2026-05-15 (Reset Layout Transaction)
+
+### 🐛 Fixed
+
+- Reset layout now runs as a main-process transaction to avoid resize races.
+
+### 🧾 Notes
+
+- Tests: Manual (reset flow).
+
+---
+
+## [1.0.34] - 2026-05-15 (Debug Map UX Polish)
+
+### 🔧 Changed
+
+- Debug map is now floating, draggable, and constrained to the overlay bounds.
+- Confirm modal no longer dims the background and is draggable.
+
+### 🧾 Notes
+
+- Tests: Manual (toggle + drag).
+
+---
+
+## [1.0.33] - 2026-05-15 (Debug Map Visual Overlay)
+
+### ✅ Added
+
+- Visual debug map overlay for display/workArea + window bounds and issues.
+
+### 🧾 Notes
+
+- Tests: Manual (toggle + refresh).
+
+---
+
 ## [1.0.32] - 2026-05-15 (IGDB Data Strategy Notes)
 
 ### 🧾 Notes

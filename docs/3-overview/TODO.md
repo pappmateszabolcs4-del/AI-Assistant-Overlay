@@ -12,7 +12,7 @@ Last updated: 2026-05-15
   - [x] Hot-plug + reflow: clamp/reposition on monitor change
   - [x] Recovery rules: fallback to primary if target monitor is missing
   - [x] Storage migration: convert legacy absolute positions (overlay/note/info/pinned/detached/block)
-  - [~] Debug map logging + validation (no visual overlay yet)
+  - [x] Debug map logging + visual overlay
 
 ## IGDB data strategy (pending decision)
 
@@ -93,7 +93,7 @@ Last updated: 2026-05-15
   - [x] Hot-plug + reflow: clamp/reposition on monitor change
   - [x] Recovery rules: fallback to primary if target monitor is missing
   - [x] Storage migration: convert legacy absolute positions (overlay/note/info/pinned/detached/block)
-  - [~] Debug map logging + validation (no visual overlay yet)
+  - [x] Debug map logging + visual overlay
 
 - [ ] Hotkey customization UI
 - [ ] Accessibility keyboard navigation

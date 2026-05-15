@@ -1228,6 +1228,109 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 
 ---
 
+### 2026-05-15 (Night)
+
+#### Summary
+- What changed: Added a visual debug map overlay for multi-monitor layouts.
+- Why: Quick diagnosis of offscreen windows, layout mismatches, and display mapping issues.
+- Impact: Faster debugging without reading log files.
+
+#### Details
+- Implementation notes: IPC returns display map; renderer draws monitors/workAreas and window bounds on a canvas.
+- Edge cases: Overlay shows a fallback message if data is unavailable.
+
+#### Files touched
+- [src/main/utils/window-layout.js](src/main/utils/window-layout.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/main/ipc/register.js](src/main/ipc/register.js)
+- [src/main/index.js](src/main/index.js)
+- [src/shared/ipc-channels.js](src/shared/ipc-channels.js)
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+- [src/renderer/overlay/debug-map.js](src/renderer/overlay/debug-map.js)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [overlay.html](overlay.html)
+- [overlay.css](overlay.css)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Manual: toggle debug map, refresh data, verify labels.
+
+#### Follow-ups
+- TODO: None.
+
+---
+
+### 2026-05-15 (Night)
+
+#### Summary
+- What changed: Reset layout now runs as a main-process transaction.
+- Why: Avoid renderer/main race conditions that stretched the overlay.
+- Impact: Reset no longer jumps to the top or stretches.
+
+#### Details
+- Implementation notes: New reset IPC guarded against resize during reset; main clears layout storage and reloads.
+- Edge cases: Overlay ignores resize IPC while reset is active.
+
+#### Files touched
+- [src/shared/ipc-channels.js](src/shared/ipc-channels.js)
+- [src/main/state/registry.js](src/main/state/registry.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/renderer/overlay/block-app.js](src/renderer/overlay/block-app.js)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Manual: reset layout no longer stretches or jumps.
+
+#### Follow-ups
+- TODO: None.
+
+---
+
+### 2026-05-15 (Night)
+
+#### Summary
+- What changed: Debug map overlay made floating and draggable with bounded sizing.
+- Why: Avoid full-screen dimming and clipping inside the overlay container.
+- Impact: Debug map stays visible and movable without blocking the UI.
+
+#### Details
+- Implementation notes: Transparent backdrop, draggable header, and size clamping; confirm modal is draggable and no longer dims.
+- Edge cases: Panel recenters on resize to avoid overflow.
+
+#### Files touched
+- [overlay.css](overlay.css)
+- [overlay.html](overlay.html)
+- [src/renderer/overlay/debug-map.js](src/renderer/overlay/debug-map.js)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+- [src/main/utils/window-layout.js](src/main/utils/window-layout.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/main/ipc/register.js](src/main/ipc/register.js)
+- [src/main/index.js](src/main/index.js)
+- [src/shared/ipc-channels.js](src/shared/ipc-channels.js)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Manual: debug map toggle/drag; confirm modal drag.
+
+#### Follow-ups
+- TODO: None.
+
+---
+
 ### 2026-02-05 (Evening → Night)
 
 #### Updates (Feb 5, 2026 - Evening)
