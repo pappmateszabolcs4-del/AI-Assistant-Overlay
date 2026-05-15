@@ -1077,6 +1077,11 @@ function updateOverlayText() {
   if (compositionModeLabel) compositionModeLabel.textContent = t().compositionModeLabel || compositionModeLabel.textContent;
   const perfHudLabel = document.getElementById('perfHudLabel');
   if (perfHudLabel) perfHudLabel.textContent = t().perfHudLabel || perfHudLabel.textContent;
+  const debugMapLabel = document.getElementById('debugMapLabel');
+  if (debugMapLabel) debugMapLabel.textContent = t().debugMapLabel || debugMapLabel.textContent;
+  if (typeof window.__updateDebugMapText === 'function') {
+    try { window.__updateDebugMapText(); } catch (_) {}
+  }
   document.getElementById('resetLayoutBtn').textContent = t().resetLayout;
   const notePanelBtn = document.getElementById('notePanelBtn');
   if (notePanelBtn) notePanelBtn.textContent = t().notePanelEdit || t().notePanelBtn || '✏️ Edit';
@@ -1466,6 +1471,52 @@ if (gameIgnoreResetBtn) {
 // Clear all data
 // Custom modal functions
 let pendingConfirmAction = null;
+const modalContent = confirmModal ? confirmModal.querySelector('.modal-content') : null;
+let modalDragState = null;
+
+function centerConfirmModal() {
+  if (!modalContent) return;
+  const rect = modalContent.getBoundingClientRect();
+  const left = Math.max(12, Math.round((window.innerWidth - rect.width) / 2));
+  const top = Math.max(12, Math.round((window.innerHeight - rect.height) / 2));
+  modalContent.style.left = `${left}px`;
+  modalContent.style.top = `${top}px`;
+}
+
+function beginModalDrag(ev) {
+  if (!modalContent || !modalTitle) return;
+  if (ev.button !== 0) return;
+  const rect = modalContent.getBoundingClientRect();
+  modalDragState = {
+    pointerId: ev.pointerId,
+    startX: ev.clientX,
+    startY: ev.clientY,
+    startLeft: rect.left,
+    startTop: rect.top,
+    width: rect.width,
+    height: rect.height
+  };
+  try { modalTitle.setPointerCapture(ev.pointerId); } catch (_) {}
+  ev.preventDefault();
+}
+
+function moveModalDrag(ev) {
+  if (!modalDragState || ev.pointerId !== modalDragState.pointerId) return;
+  const dx = ev.clientX - modalDragState.startX;
+  const dy = ev.clientY - modalDragState.startY;
+  const maxLeft = Math.max(12, window.innerWidth - modalDragState.width - 12);
+  const maxTop = Math.max(12, window.innerHeight - modalDragState.height - 12);
+  const nextLeft = Math.min(maxLeft, Math.max(12, modalDragState.startLeft + dx));
+  const nextTop = Math.min(maxTop, Math.max(12, modalDragState.startTop + dy));
+  modalContent.style.left = `${Math.round(nextLeft)}px`;
+  modalContent.style.top = `${Math.round(nextTop)}px`;
+}
+
+function endModalDrag(ev) {
+  if (!modalDragState || ev.pointerId !== modalDragState.pointerId) return;
+  try { modalTitle && modalTitle.releasePointerCapture(ev.pointerId); } catch (_) {}
+  modalDragState = null;
+}
 
 const closeConfirmModal = () => {
   if (!confirmModal.classList.contains('active')) {
@@ -1473,7 +1524,6 @@ const closeConfirmModal = () => {
     return;
   }
   confirmModal.classList.remove('active');
-  fireAndForget(IPC_CHANNELS.WINDOW_ACTION, 'restore-temp');
   pendingConfirmAction = null;
 };
 
@@ -1499,8 +1549,15 @@ function showConfirmModal(title, message, onConfirm, confirmBtnText = null) {
   modalCancel.textContent = t().btnCancel;
   modalConfirm.textContent = confirmBtnText || t().btnDelete;
   pendingConfirmAction = onConfirm;
-  fireAndForget(IPC_CHANNELS.WINDOW_ACTION, 'maximize-temp');
   confirmModal.classList.add('active');
+  centerConfirmModal();
+}
+
+if (modalTitle) {
+  on(modalTitle, 'pointerdown', beginModalDrag);
+  on(modalTitle, 'pointermove', moveModalDrag);
+  on(modalTitle, 'pointerup', endModalDrag);
+  on(modalTitle, 'pointercancel', endModalDrag);
 }
 
 window.clearAllData = function() {

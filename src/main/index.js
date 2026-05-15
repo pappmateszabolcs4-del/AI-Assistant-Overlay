@@ -74,7 +74,8 @@ const {
   reflowAllWindows,
   resolveLayoutBounds,
   loadLayoutsFromStorage,
-  logDisplayDebugMap
+  logDisplayDebugMap,
+  getDisplayDebugMap
 } = windowLayout;
 
 const {
@@ -277,7 +278,8 @@ const ipcRegistrar = createIpcRegistrar({
   stopOverlayMouseForwardGate,
   startOverlayMouseForwardGate,
   createOverlayWindow,
-  markBlockWindowReady
+  markBlockWindowReady,
+  getDisplayDebugMap
 });
 
 const { registerIpcHandlers } = ipcRegistrar;

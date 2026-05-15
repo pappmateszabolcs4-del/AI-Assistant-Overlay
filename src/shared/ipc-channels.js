@@ -59,6 +59,7 @@ const IPC_CHANNELS = {
   OVERLAY_LAYOUT_UPDATED: 'overlay-layout-updated',
   OVERLAY_BOUNDS_UPDATED: 'overlay-bounds-updated',
   OVERLAY_PERF_SAMPLE: 'overlay-perf-sample',
+  GET_DISPLAY_DEBUG_MAP: 'get-display-debug-map',
   GET_GAME_CONTEXT: 'get-game-context',
   SET_AUTO_START: 'set-auto-start',
   GET_AUTO_START: 'get-auto-start',

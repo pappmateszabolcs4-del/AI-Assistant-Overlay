@@ -31,7 +31,8 @@ function registerOverlayIpc(deps) {
     isCursorInsideOverlayChildWindow,
     stopOverlayMouseForwardGate,
     startOverlayMouseForwardGate,
-    createOverlayWindow
+    createOverlayWindow,
+    getDisplayDebugMap
   } = deps;
 
   const { core, overlay, detached, note, info, game } = registry;
@@ -283,6 +284,18 @@ function registerOverlayIpc(deps) {
       core.overlayWin.webContents.send(IPC_CHANNELS.SET_SPEECH_RATE, nextRate);
     }
     return { success: true };
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GET_DISPLAY_DEBUG_MAP, async () => {
+    if (typeof getDisplayDebugMap !== 'function') {
+      return { success: false, error: 'debug-map-unavailable' };
+    }
+    try {
+      const map = getDisplayDebugMap('overlay');
+      return { success: true, map };
+    } catch (err) {
+      return { success: false, error: err && err.message ? err.message : 'debug-map-failed' };
+    }
   });
 
   ipcMain.handle(IPC_CHANNELS.RESIZE_OVERLAY, async (_event, bounds) => {

@@ -51,7 +51,8 @@ function createIpcRegistrar(deps) {
     isCursorInsideOverlayChildWindow,
     stopOverlayMouseForwardGate,
     startOverlayMouseForwardGate,
-    createOverlayWindow
+    createOverlayWindow,
+    getDisplayDebugMap
   } = deps;
 
   const { core, detached, overlay } = registry;
@@ -283,7 +284,8 @@ function createIpcRegistrar(deps) {
       isCursorInsideOverlayChildWindow,
       stopOverlayMouseForwardGate,
       startOverlayMouseForwardGate,
-      createOverlayWindow
+      createOverlayWindow,
+      getDisplayDebugMap
     });
 
     registerDetachedIpc({

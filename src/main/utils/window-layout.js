@@ -260,16 +260,20 @@ function createWindowLayoutManager(deps) {
     const now = Date.now();
     if ((now - lastDebugMapAt) < DEBUG_MAP_MIN_INTERVAL_MS) return;
     lastDebugMapAt = now;
+    const map = buildDisplayDebugMap(reason || 'unknown');
+    if (!map) return;
+    appendOverlayDebug(map);
+  }
 
+  function buildDisplayDebugMap(reason) {
     const displays = getDisplays();
     const windows = collectWindowAnchors(displays);
     const layouts = collectLayoutEntries();
     const issues = validateDebugMap({ windows, layouts }, displays);
-
-    appendOverlayDebug({
+    return {
       t: new Date().toISOString(),
       event: 'display-debug-map',
-      reason: reason || 'unknown',
+      reason: reason || 'manual',
       summary: {
         displayCount: displays.length,
         windowCount: windows.length,
@@ -287,7 +291,15 @@ function createWindowLayoutManager(deps) {
       windows,
       layouts,
       issues
-    });
+    };
+  }
+
+  function getDisplayDebugMap(reason) {
+    try {
+      return buildDisplayDebugMap(reason || 'ipc');
+    } catch (_) {
+      return null;
+    }
   }
 
   function serializeLayouts() {
@@ -600,7 +612,8 @@ function createWindowLayoutManager(deps) {
     reflowAllWindows,
     resolveLayoutBounds,
     loadLayoutsFromStorage,
-    logDisplayDebugMap
+    logDisplayDebugMap,
+    getDisplayDebugMap
   };
 }
 

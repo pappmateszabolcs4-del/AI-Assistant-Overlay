@@ -190,6 +190,13 @@
               </label>
             </div>
 
+            <div class="specialization-container block-item" id="block-debug-map" data-block-id="debug-map" data-block-home="settings" data-block-title-key="debugMapLabel" style="margin-top: 12px;">
+              <div class="specialization-label">
+                <span id="debugMapLabel">🧭 Debug map</span>
+              </div>
+              <button class="reset-layout-btn" id="debugMapToggleBtn"></button>
+            </div>
+
             <div class="specialization-container block-item" id="block-version" data-block-id="version" data-block-home="settings" data-block-title-key="versionLabel" style="margin-top: 12px;">
               <div class="specialization-label">
                 <span id="versionLabel">ℹ️ Verzió:</span>
@@ -209,6 +216,27 @@
   </div><!-- Close overlay-container -->
 
   <div id="block-stash" style="display: none;"></div>
+
+  <div id="debugMapOverlay" class="debug-map-overlay" style="display: none;">
+    <div class="debug-map-panel">
+      <div class="debug-map-header">
+        <div class="debug-map-title" id="debugMapTitle">🧭 Debug map</div>
+        <div class="debug-map-actions">
+          <button class="debug-map-btn" id="debugMapRefreshBtn">↻ Refresh</button>
+          <button class="debug-map-btn" id="debugMapCloseBtn">✕</button>
+        </div>
+      </div>
+      <div class="debug-map-body">
+        <div class="debug-map-canvas-wrap">
+          <canvas id="debugMapCanvas"></canvas>
+        </div>
+        <div class="debug-map-issues">
+          <div class="debug-map-issues-title" id="debugMapIssuesTitle">Issues</div>
+          <div id="debugMapIssuesList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Floating host for dropdown panels -->
   <div id="floating-panels"></div>
@@ -238,6 +266,7 @@
   <script src="./src/renderer/overlay/blocks.js"></script>
   <script src="./src/renderer/overlay/blocks-window.js"></script>
   <script src="./src/renderer/overlay/ui.js"></script>
+  <script src="./src/renderer/overlay/debug-map.js"></script>
   <script src="./src/renderer/overlay/detach.js"></script>
   <script src="./src/renderer/overlay/ipc.js"></script>
 </body>
