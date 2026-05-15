@@ -18,6 +18,7 @@ const registry = {
     overlayIgnoreMoveUntil: 0,
     lastOverlayUserMoveAt: 0,
     lastOverlayProgrammaticMoveAt: 0,
+    resetInProgress: false,
     lastOverlayRaiseAt: 0,
     gameDisplayFollowTimer: null,
     lastGameFollowAt: 0,

@@ -622,24 +622,7 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
         t().confirmTitle,
         t().resetLayout,
         () => {
-          localStorage.removeItem(STORAGE_KEYS.OVERLAY_POSITION_X);
-          localStorage.removeItem(STORAGE_KEYS.OVERLAY_POSITION_Y);
-          localStorage.removeItem(STORAGE_KEYS.OVERLAY_LAYOUT_MODE);
-          localStorage.removeItem(STORAGE_KEYS.PINNED_TABS);
-          localStorage.removeItem(STORAGE_KEYS.PINNED_HISTORY);
-          localStorage.removeItem(STORAGE_KEYS.WINDOW_LAYOUTS);
-          localStorage.removeItem(STORAGE_KEYS.NOTE_PANEL_BOUNDS);
-          localStorage.removeItem(STORAGE_KEYS.BLOCK_LAYOUTS);
-          localStorage.removeItem(STORAGE_KEYS.BLOCK_FREE_LAYOUT);
-          localStorage.removeItem('overlayWidgetCompositionMode');
-
-          fireAndForget(IPC_CHANNELS.PINNED_HISTORY_CLOSE_ALL);
-          fireAndForget(IPC_CHANNELS.NOTE_PANEL_CLOSE);
-          fireAndForget(IPC_CHANNELS.DETACHED_PANEL_CLOSE_ALL);
-          fireAndForget(IPC_CHANNELS.WINDOW_ACTION, 'reset-position');
-          setTimeout(() => {
-            try { location.reload(); } catch (_) {}
-          }, 100);
+          fireAndForget(IPC_CHANNELS.RESET_LAYOUT);
         },
         t().btnReset
       );

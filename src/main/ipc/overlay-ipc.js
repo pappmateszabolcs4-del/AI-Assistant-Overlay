@@ -302,6 +302,9 @@ function registerOverlayIpc(deps) {
     if (!core.overlayWin || core.overlayWin.isDestroyed()) {
       return { success: false, error: 'overlay-missing' };
     }
+    if (overlay.resetInProgress) {
+      return { success: true, ignored: true };
+    }
     const current = core.overlayWin.getBounds();
     const ignoreMoves = overlay.overlayDetachGuardActive || Date.now() < overlay.overlayIgnoreMoveUntil;
     let wantsX = !!(bounds && Number.isFinite(bounds.x));
@@ -380,6 +383,68 @@ function registerOverlayIpc(deps) {
     } catch (_) {}
 
     try { core.overlayWin.setBounds(next); } catch (_) {}
+    return { success: true };
+  });
+
+  ipcMain.handle(IPC_CHANNELS.RESET_LAYOUT, async () => {
+    if (!core.overlayWin || core.overlayWin.isDestroyed()) {
+      return { success: false, error: 'overlay-missing' };
+    }
+
+    overlay.resetInProgress = true;
+    overlay.overlayIgnoreMoveUntil = Date.now() + 2000;
+
+    try {
+      if (registry.layout && registry.layout.windowLayouts) {
+        registry.layout.windowLayouts.clear();
+      }
+    } catch (_) {}
+
+    try { setPinnedHistoryWindowsVisible(false); } catch (_) {}
+    try { setBlockWindowsVisible(false); } catch (_) {}
+    try { setDetachedPanelWindowsVisible(false); } catch (_) {}
+    try { notePanel.setNotePanelVisible(false); } catch (_) {}
+
+    try {
+      const keys = [
+        STORAGE_KEYS.OVERLAY_POSITION_X,
+        STORAGE_KEYS.OVERLAY_POSITION_Y,
+        STORAGE_KEYS.OVERLAY_LAYOUT_MODE,
+        STORAGE_KEYS.PINNED_TABS,
+        STORAGE_KEYS.PINNED_HISTORY,
+        STORAGE_KEYS.NOTE_PANEL_BOUNDS,
+        STORAGE_KEYS.WINDOW_LAYOUTS,
+        STORAGE_KEYS.BLOCK_LAYOUTS,
+        STORAGE_KEYS.BLOCK_FREE_LAYOUT,
+        'overlayWidgetCompositionMode',
+        'overlayBounds',
+        'overlayWidth',
+        'overlayHeight',
+        'infoPanelBounds',
+        'detachedPanelBounds',
+        'blockWindowBounds'
+      ];
+      const script = `(() => { try { const keys = ${JSON.stringify(keys)}; keys.forEach((k) => localStorage.removeItem(k)); return true; } catch (_) { return false; } })()`;
+      await core.overlayWin.webContents.executeJavaScript(script, true);
+    } catch (_) {}
+
+    try {
+      core.overlayWin.setSize(1100, 500);
+      ensureOverlayWithinVisibleBounds(true);
+    } catch (_) {}
+
+    setTimeout(() => {
+      try {
+        if (core.overlayWin && !core.overlayWin.isDestroyed()) {
+          core.overlayWin.reload();
+        }
+      } catch (_) {}
+    }, 150);
+
+    setTimeout(() => {
+      overlay.resetInProgress = false;
+    }, 2000);
+
     return { success: true };
   });
 

@@ -1646,67 +1646,8 @@ on(resetLayoutBtn, 'click', () => {
       try { cancelWindowDrag && cancelWindowDrag(); } catch (_) {}
       try { cancelPendingOverlayResize && cancelPendingOverlayResize(); } catch (_) {}
 
-      // Visually hide the overlay immediately so header slots or layout jumps
-      // during reset are never seen by the user.
-      try {
-        document.body.style.opacity = '0';
-      } catch (_) {}
-
-      // Belt-and-suspenders: hide the main overlay container and sections
-      // immediately so no header/dockable area can flash during reset.
-      try {
-        const container = document.getElementById('overlay-container');
-        if (container) container.style.display = 'none';
-      } catch (_) {}
-      try {
-        const sections = document.querySelector('.sections-container');
-        if (sections) sections.style.display = 'none';
-      } catch (_) {}
-
-      // Also ask main to hide the overlay window itself (virtual visibility off)
-      // so any BrowserWindow size/position changes happen fully off-screen.
-      // NOTE: do not toggle virtual visibility here; otherwise after reload the
-      // overlay can remain hidden until the user re-opens it.
-
-      // Clear all layout-related localStorage
-      localStorage.removeItem(STORAGE_KEYS.OVERLAY_POSITION_X);
-      localStorage.removeItem(STORAGE_KEYS.OVERLAY_POSITION_Y);
-      localStorage.removeItem(LAYOUT_STORAGE_KEY);
-      localStorage.removeItem(STORAGE_KEYS.PINNED_TABS);
-      localStorage.removeItem(PINNED_HISTORY_KEY);
-      localStorage.removeItem(NOTE_PANEL_BOUNDS_KEY);
-      localStorage.removeItem(STORAGE_KEYS.WINDOW_LAYOUTS);
-      localStorage.removeItem(STORAGE_KEYS.BLOCK_LAYOUTS);
-      localStorage.removeItem(STORAGE_KEYS.BLOCK_FREE_LAYOUT);
-      localStorage.removeItem('overlayWidgetCompositionMode');
-
-      // Unpin all tabs
-      pinnedTabs.clear();
-      pinnedHistoryBoxes = [];
-
-      // Close any pinned windows
-      fireAndForget(IPC_CHANNELS.PINNED_HISTORY_CLOSE_ALL);
-      fireAndForget(IPC_CHANNELS.NOTE_PANEL_CLOSE);
-      fireAndForget(IPC_CHANNELS.DETACHED_PANEL_CLOSE_ALL);
-      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'ask-main' });
-      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'history-list' });
-      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'history-actions' });
-      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'spec' });
-      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'tts' });
-      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'data' });
-      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'game-ignore' });
-      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'layout' });
-      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'note' });
-      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'free-layout' });
-      fireAndForget(IPC_CHANNELS.BLOCK_WINDOW_CLOSE, { blockId: 'version' });
-
-      // Send reset position to main process
-      fireAndForget(IPC_CHANNELS.WINDOW_ACTION, 'reset-position');
-
-      // Reload window to reset everything
-      setTimeout(() => {
-        location.reload();
-      }, 100);
+      // Delegate the full reset to the main process to avoid race conditions.
+      fireAndForget(IPC_CHANNELS.RESET_LAYOUT);
     },
     t().btnReset  // Custom button text for reset
   );
