@@ -3,3 +3,4 @@ out/
 .env
 *.log
 backups/
+docs/PRIVATE_SECURITY_PLAN.md

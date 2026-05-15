@@ -4,7 +4,7 @@ Last updated: 2026-05-15
 
 ## Top candidates (next)
 
- - [ ] Multi-monitor optimization (full scope)
+ - [x] Multi-monitor optimization (full scope)
   - [x] Display registry: stable displayId, workArea/bounds, scaleFactor, rotation
   - [x] Canonical layout: per-monitor normalized rects (x,y,w,h in 0..1)
   - [x] DPI-aware restore: map normalized rects to monitor workArea
@@ -85,7 +85,7 @@ Last updated: 2026-05-15
  - [ ] Per-game layout profiles
   - Save/apply per detected game: layout mode, panel order (and optionally open/detached state)
   - Depends on Coupled UX (Unknown -> mapping) for reliable game identity
-- [ ] Multi-monitor optimization (full scope)
+- [x] Multi-monitor optimization (full scope)
   - [x] Display registry: stable displayId, workArea/bounds, scaleFactor, rotation
   - [x] Canonical layout: per-monitor normalized rects (x,y,w,h in 0..1)
   - [x] DPI-aware restore: map normalized rects to monitor workArea
@@ -108,16 +108,6 @@ Last updated: 2026-05-15
 - [ ] Settings export/import (backup + restore)
 - [ ] Startup/perf profiling (release build)
 - [ ] Hotkey conflict detection and messaging
-
-## Security
-
-- [ ] Dependency monitoring + lockfile audit policy (CVE alerts)
-- [ ] Signed release artifacts + checksum publishing
-- [ ] Auto-update security (signed updates + rollback)
-- [ ] IPC payload validation + rate limiting for critical channels
-- [ ] Local data retention policy (history/notes)
-- [ ] Opt-in crash reporting with PII minimization
-- [ ] Electron security hardening checklist (CSP, contextIsolation, sandbox)
 
 ## AI
 
