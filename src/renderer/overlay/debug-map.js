@@ -3,7 +3,7 @@
   if (typeof __isDetachedPanelWindow !== 'undefined' && __isDetachedPanelWindow) return;
   if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow) return;
 
-  const { isDev } = require('../../shared/app-env');
+  const { isDev } = require('./src/shared/app-env');
   if (!isDev()) {
     const blockEl = document.getElementById('block-debug-map');
     if (blockEl) blockEl.style.display = 'none';

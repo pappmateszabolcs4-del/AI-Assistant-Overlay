@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -147,7 +147,9 @@
               <p id="gameIgnoreHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;">
                 Egy sor = egy minta. Ha a cím tartalmazza, nem lesz játéknak nézve.
               </p>
-              <textarea id="gameIgnoreInput" rows="5" style="width: 100%; resize: vertical; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder="Opera\nGoogle Chrome\nMicrosoft Edge"></textarea>
+              <textarea id="gameIgnoreInput" rows="5" style="width: 100%; resize: vertical; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder="Opera
+Google Chrome
+Microsoft Edge"></textarea>
               <div style="display: flex; gap: 8px; margin-top: 8px;">
                 <button id="gameIgnoreApplyBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
                   ✅ Mentés
@@ -183,6 +185,20 @@
               </label>
             </div>
 
+            <div class="specialization-container block-item" id="block-perf" data-block-id="perf" data-block-home="settings" data-block-title-key="perfHudLabel" style="margin-top: 12px;">
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #f5f7fa;">
+                <input type="checkbox" id="perfHudToggle" style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
+                <span id="perfHudLabel">⚡ Overlay teljesítmény HUD</span>
+              </label>
+            </div>
+
+            <div class="specialization-container block-item" id="block-debug-map" data-block-id="debug-map" data-block-home="settings" data-block-title-key="debugMapLabel" style="margin-top: 12px;">
+              <div class="specialization-label">
+                <span id="debugMapLabel">🧭 Debug map</span>
+              </div>
+              <button class="reset-layout-btn" id="debugMapToggleBtn"></button>
+            </div>
+
             <div class="specialization-container block-item" id="block-version" data-block-id="version" data-block-home="settings" data-block-title-key="versionLabel" style="margin-top: 12px;">
               <div class="specialization-label">
                 <span id="versionLabel">ℹ️ Verzió:</span>
@@ -202,6 +218,27 @@
   </div><!-- Close overlay-container -->
 
   <div id="block-stash" style="display: none;"></div>
+
+  <div id="debugMapOverlay" class="debug-map-overlay" style="display: none;">
+    <div class="debug-map-panel">
+      <div class="debug-map-header">
+        <div class="debug-map-title" id="debugMapTitle">🧭 Debug map</div>
+        <div class="debug-map-actions">
+          <button class="debug-map-btn" id="debugMapRefreshBtn">↻ Refresh</button>
+          <button class="debug-map-btn" id="debugMapCloseBtn">✕</button>
+        </div>
+      </div>
+      <div class="debug-map-body">
+        <div class="debug-map-canvas-wrap">
+          <canvas id="debugMapCanvas"></canvas>
+        </div>
+        <div class="debug-map-issues">
+          <div class="debug-map-issues-title" id="debugMapIssuesTitle">Issues</div>
+          <div id="debugMapIssuesList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Floating host for dropdown panels -->
   <div id="floating-panels"></div>
@@ -225,13 +262,14 @@
   <script src="./src/renderer/overlay/panel-order.js"></script>
   <script src="./src/renderer/overlay/window-resize.js"></script>
   <script src="./src/renderer/overlay/translations.js"></script>
+  <script src="./src/renderer/overlay/perf.js"></script>
   <script src="./src/renderer/overlay/settings-controls.js"></script>
   <script src="./src/renderer/overlay/history.js"></script>
   <script src="./src/renderer/overlay/blocks.js"></script>
   <script src="./src/renderer/overlay/blocks-window.js"></script>
   <script src="./src/renderer/overlay/ui.js"></script>
+  <script src="./src/renderer/overlay/debug-map.js"></script>
   <script src="./src/renderer/overlay/detach.js"></script>
   <script src="./src/renderer/overlay/ipc.js"></script>
 </body>
 </html>
-
