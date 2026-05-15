@@ -14,6 +14,20 @@ Last updated: 2026-05-15
   - [x] Storage migration: convert legacy absolute positions (overlay/note/info/pinned/detached/block)
   - [~] Debug map logging + validation (no visual overlay yet)
 
+## IGDB data strategy (pending decision)
+
+- [ ] Runtime cache
+  - Idea: Query IGDB as needed and cache short-term for performance.
+  - Why: Avoid bundled dumps; lower redistribution risk.
+
+- [ ] First-run download
+  - Idea: Installer ships empty; app pulls dataset on first run and stores locally.
+  - Why: More defensible than bundling; still requires commercial clarity.
+
+- [ ] Own backend (recommended long-term)
+  - Idea: Server fetches IGDB and serves clients with strict control.
+  - Why: Best control of licensing, rate limits, and monetization risk.
+
 
 ## Recently completed
 

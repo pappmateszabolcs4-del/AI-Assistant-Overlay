@@ -1200,6 +1200,34 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 
 ---
 
+### 2026-05-15 (Night)
+
+#### Summary
+- What changed: Documented IGDB data strategy options for monetization safety.
+- Why: Offline bundled dumps are risky; wanted clearer paths forward.
+- Impact: Decision backlog captured with recommended long-term direction.
+
+#### Details
+- Implementation notes: Added TODO section with runtime cache, first-run download, own backend.
+- Edge cases: Commercial use may still require partnership.
+
+#### Files touched
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Manual: Documentation update only.
+
+#### Follow-ups
+- TODO: None.
+
+---
+
 ### 2026-02-05 (Evening → Night)
 
 #### Updates (Feb 5, 2026 - Evening)

@@ -6,6 +6,14 @@
 
 ---
 
+## [1.0.32] - 2026-05-15 (IGDB Data Strategy Notes)
+
+### 🧾 Notes
+
+- Documented IGDB data strategy options (runtime cache, first-run download, own backend).
+
+---
+
 ## [1.0.31] - 2026-05-15 (Game Monitor Binding Fix)
 
 ### 🔧 Changed
