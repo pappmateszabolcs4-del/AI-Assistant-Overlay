@@ -3,6 +3,15 @@
   if (typeof __isDetachedPanelWindow !== 'undefined' && __isDetachedPanelWindow) return;
   if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow) return;
 
+  const { isDev } = require('../../shared/app-env');
+  if (!isDev()) {
+    const blockEl = document.getElementById('block-debug-map');
+    if (blockEl) blockEl.style.display = 'none';
+    const overlayEl = document.getElementById('debugMapOverlay');
+    if (overlayEl) overlayEl.style.display = 'none';
+    return;
+  }
+
   const overlayEl = document.getElementById('debugMapOverlay');
   const toggleBtn = document.getElementById('debugMapToggleBtn');
   const refreshBtn = document.getElementById('debugMapRefreshBtn');

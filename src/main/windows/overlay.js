@@ -1,5 +1,6 @@
 const { IPC_CHANNELS } = require('../../shared/ipc-channels');
 const { STORAGE_KEYS } = require('../../shared/storage-keys');
+const { isDev } = require('../../shared/app-env');
 const { clampWindowToWorkArea } = require('../utils/bounds');
 const { appendOverlayDebug } = require('../utils/overlay-debug-log');
 
@@ -79,6 +80,7 @@ function createOverlayManager(deps) {
   }
 
   function shouldOpenOverlayDevTools() {
+    if (!isDev()) return false;
     const flag = String(process.env.DEBUG_OVERLAY || '').toLowerCase();
     return flag === '1' || flag === 'true' || flag === 'yes';
   }

@@ -1,5 +1,6 @@
 const { screen } = require('electron');
 const { STORAGE_KEYS } = require('../../shared/storage-keys');
+const { isDev } = require('../../shared/app-env');
 const { appendOverlayDebug } = require('./overlay-debug-log');
 
 const DEFAULT_MIN = { width: 120, height: 80 };
@@ -257,6 +258,7 @@ function createWindowLayoutManager(deps) {
   }
 
   function logDisplayDebugMap(reason) {
+    if (!isDev()) return;
     const now = Date.now();
     if ((now - lastDebugMapAt) < DEBUG_MAP_MIN_INTERVAL_MS) return;
     lastDebugMapAt = now;
@@ -295,6 +297,7 @@ function createWindowLayoutManager(deps) {
   }
 
   function getDisplayDebugMap(reason) {
+    if (!isDev()) return null;
     try {
       return buildDisplayDebugMap(reason || 'ipc');
     } catch (_) {

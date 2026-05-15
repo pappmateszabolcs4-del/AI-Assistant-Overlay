@@ -3,6 +3,13 @@
   if (typeof __isDetachedPanelWindow !== 'undefined' && __isDetachedPanelWindow) return;
   if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow) return;
 
+  const { isDev } = require('../../shared/app-env');
+  if (!isDev()) {
+    const blockEl = document.getElementById('block-perf');
+    if (blockEl) blockEl.style.display = 'none';
+    return;
+  }
+
   const PERF_KEY = STORAGE_KEYS.OVERLAY_PERF_HUD;
   const toggleEl = document.getElementById('perfHudToggle');
 

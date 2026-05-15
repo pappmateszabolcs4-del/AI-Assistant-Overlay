@@ -1,5 +1,6 @@
 const { IPC_CHANNELS } = require('../../shared/ipc-channels');
 const { STORAGE_KEYS } = require('../../shared/storage-keys');
+const { isDev } = require('../../shared/app-env');
 const { appendOverlayDebug } = require('../utils/overlay-debug-log');
 const { appendOverlayPerf } = require('../utils/overlay-perf-log');
 
@@ -287,6 +288,9 @@ function registerOverlayIpc(deps) {
   });
 
   ipcMain.handle(IPC_CHANNELS.GET_DISPLAY_DEBUG_MAP, async () => {
+    if (!isDev()) {
+      return { success: false, error: 'debug-map-disabled' };
+    }
     if (typeof getDisplayDebugMap !== 'function') {
       return { success: false, error: 'debug-map-unavailable' };
     }
@@ -453,6 +457,9 @@ function registerOverlayIpc(deps) {
   });
 
   ipcMain.handle(IPC_CHANNELS.OVERLAY_PERF_SAMPLE, (_event, payload) => {
+    if (!isDev()) {
+      return { success: true, ignored: true };
+    }
     try {
       if (!payload || typeof payload !== 'object') return;
       appendOverlayPerf({

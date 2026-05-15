@@ -1,6 +1,7 @@
 const { app } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const { isDev } = require('../../shared/app-env');
 
 let cachedLogPath = null;
 
@@ -17,6 +18,7 @@ function ensureLogPath() {
 }
 
 function appendOverlayPerf(entry) {
+  if (!isDev()) return;
   const logPath = ensureLogPath();
   if (!logPath) return;
   try {
