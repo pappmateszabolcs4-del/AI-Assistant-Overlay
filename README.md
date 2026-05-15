@@ -67,6 +67,7 @@ docs/
 scripts/
 main.js
 overlay.html
+overlay.dev.html
 package.json
 ```
 
@@ -96,11 +97,20 @@ Set the key in the **Settings panel** inside the app (stored via keytar).
 npm start
 ```
 
+Dev/Prod modes:
+
+```bash
+npm run dev
+npm run prod
+```
+
 ---
 
 ## 🛠️ NPM Scripts
 
 - `npm start` – start Electron app
+- `npm run dev` – start with `APP_ENV=development`
+- `npm run prod` – start with `APP_ENV=production`
 - `npm test` – run Node test runner
 - `npm run check` – project checks (patterns, IPC, translations, etc.)
 - `npm run cleanup` – maintenance report (does not delete backups)
@@ -125,6 +135,7 @@ This assistant is designed for **video game-related help only**. The prompt poli
 - Build outputs in `out/` should be ignored in GitHub commits.
 - Backups are preserved intentionally (`backups/`); deletion is manual.
 - If game detection fails, the assistant still works with generic game guidance.
+- Dev-only UI (debug map, perf HUD, devtools) is available only in `APP_ENV=development`.
 
 ---
 
