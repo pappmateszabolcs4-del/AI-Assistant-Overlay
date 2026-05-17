@@ -27,14 +27,19 @@ const registry = {
     currentDetectedGame: null,
     currentGameContext: null,
     gameDetectIgnoreList: [],
+    gameDetectMappings: [],
     currentLanguage: 'en',
     currentSpeechRate: 100,
     lastGameDetectAt: 0,
+    lastGameRecognizedAt: 0,
+    lastRecognizedGameName: null,
     lastKnownGameDisplayId: null,
     lastKnownGameDisplayAt: 0,
     lastDetectedWindowBounds: null,
     lastDetectedWindowAt: 0,
-    lastDetectedWindowTitle: null
+    lastDetectedWindowTitle: null,
+    lastActiveWindowTitle: null,
+    lastMatchedWindowTitle: null
   },
   detached: {
     detachedWindowsDesiredVisible: true,

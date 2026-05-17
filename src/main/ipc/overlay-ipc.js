@@ -175,6 +175,13 @@ function registerOverlayIpc(deps) {
   ipcMain.handle(IPC_CHANNELS.OPEN_OVERLAY, async () => {
     createOverlayWindow();
     detached.detachedWindowsDesiredVisible = true;
+    const now = Date.now();
+    const canStickyRestore = !game.currentDetectedGame
+      && game.lastRecognizedGameName
+      && (now - (game.lastGameRecognizedAt || 0)) < 30000;
+    if (canStickyRestore) {
+      game.currentDetectedGame = game.lastRecognizedGameName;
+    }
     if (core.overlayWin && !core.overlayWin.isDestroyed()) {
       try {
         if (!overlay.overlayVirtualVisible) {
@@ -284,6 +291,36 @@ function registerOverlayIpc(deps) {
     if (core.overlayWin && !core.overlayWin.isDestroyed()) {
       core.overlayWin.webContents.send(IPC_CHANNELS.SET_SPEECH_RATE, nextRate);
     }
+    return { success: true };
+  });
+
+  ipcMain.handle(IPC_CHANNELS.SET_GAME_DETECT_MAPPINGS, async (_event, mappings) => {
+    const next = Array.isArray(mappings) ? mappings : [];
+    const cleaned = next
+      .map((entry) => ({
+        match: entry && entry.match ? String(entry.match).trim() : '',
+        gameName: entry && entry.gameName ? String(entry.gameName).trim() : '',
+        updatedAt: entry && entry.updatedAt ? Number(entry.updatedAt) : Date.now()
+      }))
+      .filter((entry) => entry.match && entry.gameName)
+      .slice(0, 200);
+    game.gameDetectMappings = cleaned;
+    return { success: true, count: cleaned.length };
+  });
+
+
+  ipcMain.handle(IPC_CHANNELS.GET_GAME_DETECT_STATUS, async () => {
+    return {
+      success: true,
+      gameName: game.currentDetectedGame || null,
+      activeTitle: game.lastActiveWindowTitle || null,
+      matchedTitle: game.lastMatchedWindowTitle || null,
+      lastDetectAt: game.lastGameDetectAt || 0
+    };
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FORCE_GAME_DETECT, async () => {
+    try { detectCurrentGame(true); } catch (_) {}
     return { success: true };
   });
 

@@ -6,6 +6,8 @@ const { extractGameName, matchGameFromText } = require('./game-detect-core');
 const DETECT_MIN_INTERVAL_MS = 2000;
 const DETECT_INFLIGHT_TIMEOUT_MS = 5000;
 const WINDOW_BOUNDS_MAX_AGE_MS = 5000;
+const GAME_CONTEXT_STICKY_MS = 30000;
+const GAME_CONTEXT_SWITCH_COOLDOWN_MS = 3000;
 
 function createGameDetectService(deps) {
   const { registry, screen } = deps;
@@ -49,16 +51,33 @@ function createGameDetectService(deps) {
 
   function updateGameContext(result) {
     const prev = game.currentDetectedGame;
-    const next = result && result.gameName ? result.gameName : null;
+    const now = Date.now();
+    let next = result && result.gameName ? result.gameName : null;
+    const withinSticky = prev && (now - (game.lastGameRecognizedAt || 0)) < GAME_CONTEXT_STICKY_MS;
+    const canStick = !next && withinSticky;
+    const canCooldownSwitch = next && prev && next !== prev
+      && (now - (game.lastGameRecognizedAt || 0)) < GAME_CONTEXT_SWITCH_COOLDOWN_MS;
+    if (canStick || canCooldownSwitch) {
+      next = prev;
+    }
     game.currentDetectedGame = next;
     game.lastDetectedWindowTitle = result && result.activeTitle ? result.activeTitle : null;
+    game.lastActiveWindowTitle = result && result.activeTitle ? result.activeTitle : null;
+    game.lastMatchedWindowTitle = result && result.matchedTitle
+      ? result.matchedTitle
+      : (canStick ? game.lastMatchedWindowTitle : null);
+    game.lastGameDetectAt = now;
+    if (result && result.gameName && next === result.gameName) {
+      game.lastGameRecognizedAt = now;
+      game.lastRecognizedGameName = result.gameName;
+    }
 
     if (result && result.bounds) {
       game.lastDetectedWindowBounds = {
         gameName: next,
         bounds: result.bounds
       };
-      game.lastDetectedWindowAt = Date.now();
+      game.lastDetectedWindowAt = now;
 
       try {
         const cx = Math.round((result.bounds.left + result.bounds.right) / 2);
@@ -144,9 +163,10 @@ function createGameDetectService(deps) {
     workerBusy = true;
     const id = ++requestSeq;
     const ignoreList = Array.isArray(game.gameDetectIgnoreList) ? game.gameDetectIgnoreList : [];
+    const mappings = Array.isArray(game.gameDetectMappings) ? game.gameDetectMappings : [];
 
     try {
-      worker.send({ type: 'detect', id, ignoreList });
+      worker.send({ type: 'detect', id, ignoreList, mappings });
     } catch (_) {
       resetWorker();
       return;

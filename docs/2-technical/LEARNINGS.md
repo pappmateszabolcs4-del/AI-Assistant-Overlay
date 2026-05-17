@@ -1101,6 +1101,46 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 
 ---
 
+### 2026-05-17 (Evening)
+
+#### Summary
+- What changed: Stabilized game detection with focus-first behavior, startup retry, focus-blur re-detect, background polling, sticky context cooldown, and unknown game mapping refresh; removed UI toggle for global fallback (env-only).
+- Why: Reduce hotkey dependency, prevent flapping, and keep the unknown prompt in sync while minimizing user-facing complexity.
+- Impact: More reliable game context resolution across app/game launch order, cleaner settings UI, and consistent unknown mapping flow.
+
+#### Details
+- Implementation notes: Game detect worker now defaults to focus-first with env-gated fallback; lifecycle adds startup retry and background poll when no game is active; overlay open restores recent game context; unknown prompt status refreshes on an interval.
+- Edge cases: Background polling stops once a game is active; fallback remains opt-in via env; short cooldown prevents rapid switches.
+
+#### Files touched
+- [overlay.html](overlay.html)
+- [overlay.dev.html](overlay.dev.html)
+- [src/main/app/lifecycle.js](src/main/app/lifecycle.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/main/services/game-detect.js](src/main/services/game-detect.js)
+- [src/main/services/game-detect-worker.js](src/main/services/game-detect-worker.js)
+- [src/main/state/registry.js](src/main/state/registry.js)
+- [src/renderer/overlay/ipc.js](src/renderer/overlay/ipc.js)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+- [src/shared/ipc-channels.js](src/shared/ipc-channels.js)
+- [src/shared/storage-keys.js](src/shared/storage-keys.js)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/2-technical/METADATA_POLICY.md](docs/2-technical/METADATA_POLICY.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Tests: Manual (dev run, overlay open, ignore list, unknown mapping, env fallback).
+
+#### Follow-ups
+- TODO: Consider documenting the env-only fallback flag in user-facing docs if needed.
+
+---
+
 ### 2026-05-15 (Night)
 
 #### Summary

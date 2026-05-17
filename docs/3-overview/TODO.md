@@ -1,6 +1,6 @@
 # ✅ TODO / Backlog
 
-Last updated: 2026-05-15
+Last updated: 2026-05-17
 
 ## Top candidates (next)
 
@@ -72,15 +72,19 @@ Last updated: 2026-05-15
 ## UX
 
  - [ ] Game-aware detection + UX (long-term)
+  - Status: focus-first detection, startup retry, focus-blur re-detect, background poll, unknown prompt, and stickiness are implemented.
   - Multi-signal detection: window title + exe + process path + window class + recent focus
+      - Focus-first: only active window drives detection; unknown shows prompt
+      - Optional global fallback (off by default) for non-focused scan
+      - Score-based decision (not pure title match)
   - Title normalization + fuzzy match (strip launcher/edition/suffix noise)
-  - Augment data sources: IGDB + Steam/Epic/GoG metadata for exe/display-name mapping
+    - Augment data sources: IGDB + Steam/Epic/GoG metadata for exe/display-name mapping (see docs/2-technical/METADATA_POLICY.md)
   - Coupled UX: "What game is this?" prompt builds local mapping -> then offer per-game templates (next steps/build/boss)
-    - Local mapping storage (window title/exe/shortcut -> game name)
+      - Local mapping storage (exe + titlePattern -> game name)
     - Unknown prompt UI + IPC (collect answer, persist mapping)
     - Detection hook to prefer learned mapping over Unknown
     - Template source + fallback to generic prompts when missing
-  - Stickiness: keep last recognized game for a short window to avoid flapping
+    - Stickiness: keep last recognized game for a short window (20-30s) to avoid flapping
   - Optional vision fallback with explicit consent + privacy guardrails
  - [ ] Per-game layout profiles
   - Save/apply per detected game: layout mode, panel order (and optionally open/detached state)

@@ -56,20 +56,47 @@ function getWindowBoundsForTitle(title) {
   }
 }
 
-function detectGame(ignoreList) {
+function normalizeMatch(text) {
+  if (!text) return '';
+  return String(text)
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function resolveMappedGame(title, mappings) {
+  if (!title || !Array.isArray(mappings) || !mappings.length) return null;
+  const normalizedTitle = normalizeMatch(title);
+  if (!normalizedTitle) return null;
+  for (const entry of mappings) {
+    if (!entry || !entry.match || !entry.gameName) continue;
+    const needle = normalizeMatch(entry.match);
+    if (!needle) continue;
+    if (normalizedTitle.includes(needle)) {
+      return String(entry.gameName).trim();
+    }
+  }
+  return null;
+}
+
+function detectGame(ignoreList, mappings) {
   const activeTitle = getActiveWindowTitle();
   let detectedGame = null;
   let matchedTitle = '';
 
   if (activeTitle) {
-    detectedGame = extractGameName(activeTitle, ignoreList);
+    detectedGame = resolveMappedGame(activeTitle, mappings) || extractGameName(activeTitle, ignoreList);
     if (detectedGame) matchedTitle = activeTitle;
   }
 
-  if (!detectedGame) {
+  const fallbackEnabled = String(process.env.GAME_DETECT_GLOBAL_FALLBACK || '').toLowerCase() === '1'
+    || String(process.env.GAME_DETECT_GLOBAL_FALLBACK || '').toLowerCase() === 'true';
+
+  if (!detectedGame && fallbackEnabled) {
     const titles = getWindowTitles();
     for (const title of titles) {
-      const game = extractGameName(title, ignoreList);
+      const game = resolveMappedGame(title, mappings) || extractGameName(title, ignoreList);
       if (game) {
         detectedGame = game;
         matchedTitle = title;
@@ -91,12 +118,13 @@ function detectGame(ignoreList) {
 process.on('message', (msg) => {
   if (!msg || msg.type !== 'detect') return;
   const ignoreList = Array.isArray(msg.ignoreList) ? msg.ignoreList : [];
+  const mappings = Array.isArray(msg.mappings) ? msg.mappings : [];
   const t0 = Date.now();
   let payload = null;
   let error = null;
 
   try {
-    payload = detectGame(ignoreList);
+    payload = detectGame(ignoreList, mappings);
   } catch (err) {
     error = err && err.message ? err.message : String(err || 'detect-failed');
   }

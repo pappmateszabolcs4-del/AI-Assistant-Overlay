@@ -1067,6 +1067,19 @@ function updateOverlayText() {
   if (gameIgnoreApplyBtn) gameIgnoreApplyBtn.textContent = t().gameIgnoreApply || gameIgnoreApplyBtn.textContent;
   const gameIgnoreResetBtn = document.getElementById('gameIgnoreResetBtn');
   if (gameIgnoreResetBtn) gameIgnoreResetBtn.textContent = t().gameIgnoreReset || gameIgnoreResetBtn.textContent;
+  const gameMapLabel = document.getElementById('gameMapLabel');
+  if (gameMapLabel) gameMapLabel.textContent = t().gameMapLabel || gameMapLabel.textContent;
+  const gameMapInput = document.getElementById('gameMapInput');
+  if (gameMapInput) gameMapInput.placeholder = t().gameMapPlaceholder || gameMapInput.placeholder;
+  const gameMapSaveBtn = document.getElementById('gameMapSaveBtn');
+  if (gameMapSaveBtn) gameMapSaveBtn.textContent = t().gameMapSave || gameMapSaveBtn.textContent;
+  const gameMapIgnoreBtn = document.getElementById('gameMapIgnoreBtn');
+  if (gameMapIgnoreBtn) gameMapIgnoreBtn.textContent = t().gameMapIgnore || gameMapIgnoreBtn.textContent;
+  const gameMapStatus = document.getElementById('gameMapStatus');
+  const gameMapBlock = document.getElementById('block-game-map');
+  if (gameMapStatus && gameMapBlock && gameMapBlock.dataset.activeTitle) {
+    gameMapStatus.textContent = formatGameMapStatus(gameMapBlock.dataset.activeTitle);
+  }
   const versionLabel = document.getElementById('versionLabel');
   if (versionLabel) versionLabel.textContent = t().versionLabel || versionLabel.textContent;
   const layoutLabel = document.getElementById('layoutLabel');
@@ -1434,6 +1447,75 @@ on(enableTTS, 'change', () => {
 const gameIgnoreInput = document.getElementById('gameIgnoreInput');
 const gameIgnoreApplyBtn = document.getElementById('gameIgnoreApplyBtn');
 const gameIgnoreResetBtn = document.getElementById('gameIgnoreResetBtn');
+const gameMapBlock = document.getElementById('block-game-map');
+const gameMapStatus = document.getElementById('gameMapStatus');
+const gameMapInput = document.getElementById('gameMapInput');
+const gameMapSaveBtn = document.getElementById('gameMapSaveBtn');
+const gameMapIgnoreBtn = document.getElementById('gameMapIgnoreBtn');
+
+function normalizeGameDetectMapping(text) {
+  return String(text || '').trim();
+}
+
+function loadGameDetectMappings() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.GAME_DETECT_MAPPINGS);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function persistGameDetectMappings(list) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.GAME_DETECT_MAPPINGS, JSON.stringify(list));
+  } catch (_) {}
+}
+
+function sendGameDetectMappingsToMain(list) {
+  try { fireAndForget(IPC_CHANNELS.SET_GAME_DETECT_MAPPINGS, list); } catch (_) {}
+}
+
+
+function upsertGameDetectMapping(match, gameName) {
+  const normalizedMatch = normalizeGameDetectMapping(match);
+  const normalizedGame = normalizeGameDetectMapping(gameName);
+  if (!normalizedMatch || !normalizedGame) return false;
+  const list = loadGameDetectMappings();
+  const key = normalizedMatch.toLowerCase();
+  const idx = list.findIndex((entry) => entry && String(entry.match || '').trim().toLowerCase() === key);
+  const entry = { match: normalizedMatch, gameName: normalizedGame, updatedAt: Date.now() };
+  if (idx >= 0) list[idx] = entry;
+  else list.push(entry);
+  persistGameDetectMappings(list);
+  sendGameDetectMappingsToMain(list);
+  return true;
+}
+
+function formatGameMapStatus(title) {
+  const template = t().gameMapStatus || 'Detected window title: {title}';
+  return template.replace('{title}', title || '');
+}
+
+async function refreshGameDetectStatus() {
+  if (!gameMapBlock || !gameMapStatus) return;
+  let status = null;
+  try {
+    status = await invokeMain(IPC_CHANNELS.GET_GAME_DETECT_STATUS);
+  } catch (_) {
+    status = null;
+  }
+  const activeTitle = status && status.success ? status.activeTitle : null;
+  const gameName = status && status.success ? status.gameName : null;
+  if (!activeTitle || gameName) {
+    gameMapBlock.style.display = 'none';
+    return;
+  }
+  gameMapBlock.style.display = 'block';
+  gameMapBlock.dataset.activeTitle = activeTitle;
+  gameMapStatus.textContent = formatGameMapStatus(activeTitle);
+}
 
 function applyGameIgnoreList(list, options = {}) {
   const normalized = Array.isArray(list)
@@ -1455,6 +1537,13 @@ if (gameIgnoreInput) {
   applyGameIgnoreList(loadGameIgnoreList(), { persist: true });
 }
 
+sendGameDetectMappingsToMain(loadGameDetectMappings());
+refreshGameDetectStatus();
+setInterval(() => {
+  if (document.hidden) return;
+  refreshGameDetectStatus();
+}, 2000);
+
 if (gameIgnoreApplyBtn) {
   on(gameIgnoreApplyBtn, 'click', () => {
     const list = normalizeGameIgnoreInput(gameIgnoreInput ? gameIgnoreInput.value : '');
@@ -1465,6 +1554,40 @@ if (gameIgnoreApplyBtn) {
 if (gameIgnoreResetBtn) {
   on(gameIgnoreResetBtn, 'click', () => {
     applyGameIgnoreList(DEFAULT_GAME_IGNORE_TITLES, { persist: true });
+  });
+}
+
+if (gameMapSaveBtn) {
+  on(gameMapSaveBtn, 'click', async () => {
+    if (!gameMapBlock || !gameMapInput) return;
+    const activeTitle = gameMapBlock.dataset.activeTitle;
+    const gameName = normalizeGameDetectMapping(gameMapInput.value);
+    if (!activeTitle || !gameName) return;
+    if (upsertGameDetectMapping(activeTitle, gameName)) {
+      if (gameMapStatus) {
+        gameMapStatus.textContent = (t().gameMapSaved || 'Saved: {game}').replace('{game}', gameName);
+      }
+      gameMapInput.value = '';
+      try { await invokeMain(IPC_CHANNELS.FORCE_GAME_DETECT); } catch (_) {}
+    }
+  });
+}
+
+if (gameMapIgnoreBtn) {
+  on(gameMapIgnoreBtn, 'click', async () => {
+    if (!gameMapBlock) return;
+    const activeTitle = gameMapBlock.dataset.activeTitle;
+    if (!activeTitle) return;
+    const list = normalizeGameIgnoreInput((gameIgnoreInput && gameIgnoreInput.value) || '');
+    const normalized = normalizeGameDetectMapping(activeTitle);
+    if (normalized) {
+      list.push(normalized);
+      applyGameIgnoreList(list, { persist: true });
+      if (gameMapStatus) {
+        gameMapStatus.textContent = t().gameMapIgnored || 'Added to ignore list.';
+      }
+      try { await invokeMain(IPC_CHANNELS.FORCE_GAME_DETECT); } catch (_) {}
+    }
   });
 }
 

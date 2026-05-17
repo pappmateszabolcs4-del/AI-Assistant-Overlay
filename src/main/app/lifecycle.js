@@ -37,10 +37,20 @@ function createLifecycleManager(deps) {
   const GAME_DISPLAY_FOLLOW_USER_GRACE_MS = 6000;
   const GAME_WINDOW_BOUNDS_MAX_AGE_MS = 5000;
   const GAME_DISPLAY_FOLLOW_DETECT_MIN_MS = 2500;
+  const STARTUP_DETECT_WINDOW_MS = 10000;
+  const STARTUP_DETECT_INTERVAL_MS = 1200;
+  const FOCUS_DETECT_DEBOUNCE_MS = 400;
+  const FOCUS_DETECT_MIN_INTERVAL_MS = 1000;
+  const BACKGROUND_DETECT_INTERVAL_MS = 8000;
   let pendingTargetDisplayId = null;
   let pendingTargetSince = 0;
   let pendingTargetHits = 0;
   let lastFollowDetectAt = 0;
+  let startupDetectTimer = null;
+  let startupDetectUntil = 0;
+  let focusDetectTimer = null;
+  let lastFocusDetectAt = 0;
+  let backgroundDetectTimer = null;
 
   function clamp01(value) {
     const v = Number(value);
@@ -189,6 +199,72 @@ function createLifecycleManager(deps) {
     overlay.gameDisplayFollowTimer = null;
   }
 
+  function isAppWindow(win) {
+    if (!win) return false;
+    if (core.win === win || core.overlayWin === win) return true;
+    if (notePanel && notePanel.notePanelWin === win) return true;
+    if (registry.info && registry.info.infoPanelWin === win) return true;
+    if (registry.detached && registry.detached.detachedPanelWindows) {
+      for (const panelWin of registry.detached.detachedPanelWindows.values()) {
+        if (panelWin === win) return true;
+      }
+    }
+    if (registry.pinned && registry.pinned.pinnedHistoryWindows) {
+      for (const pinnedWin of registry.pinned.pinnedHistoryWindows.values()) {
+        if (pinnedWin === win) return true;
+      }
+    }
+    if (registry.blocks && registry.blocks.detachedBlockWindows) {
+      for (const blockWin of registry.blocks.detachedBlockWindows.values()) {
+        if (blockWin === win) return true;
+      }
+    }
+    return false;
+  }
+
+  function scheduleFocusDetect() {
+    const now = Date.now();
+    if ((now - lastFocusDetectAt) < FOCUS_DETECT_MIN_INTERVAL_MS) return;
+    lastFocusDetectAt = now;
+    if (focusDetectTimer) clearTimeout(focusDetectTimer);
+    focusDetectTimer = setTimeout(() => {
+      try { detectCurrentGame(true); } catch (_) {}
+    }, FOCUS_DETECT_DEBOUNCE_MS);
+  }
+
+  function startStartupDetectLoop() {
+    if (startupDetectTimer) return;
+    startupDetectUntil = Date.now() + STARTUP_DETECT_WINDOW_MS;
+    try { detectCurrentGame(true); } catch (_) {}
+    startupDetectTimer = setInterval(() => {
+      if (game.currentDetectedGame) {
+        clearInterval(startupDetectTimer);
+        startupDetectTimer = null;
+        return;
+      }
+      if (Date.now() > startupDetectUntil) {
+        clearInterval(startupDetectTimer);
+        startupDetectTimer = null;
+        return;
+      }
+      try { detectCurrentGame(true); } catch (_) {}
+    }, STARTUP_DETECT_INTERVAL_MS);
+  }
+
+  function startBackgroundDetectLoop() {
+    if (backgroundDetectTimer) return;
+    backgroundDetectTimer = setInterval(() => {
+      if (game.currentDetectedGame) return;
+      try { detectCurrentGame(true); } catch (_) {}
+    }, BACKGROUND_DETECT_INTERVAL_MS);
+  }
+
+  function stopBackgroundDetectLoop() {
+    if (!backgroundDetectTimer) return;
+    clearInterval(backgroundDetectTimer);
+    backgroundDetectTimer = null;
+  }
+
   function setupAppLifecycle() {
     app.whenReady().then(async () => {
       await openaiService.initializeOpenAI();
@@ -199,6 +275,8 @@ function createLifecycleManager(deps) {
       try { updateDisplaySnapshot('startup'); } catch (_) {}
       try { logDisplayDebugMap('startup'); } catch (_) {}
       startGameDisplayFollow();
+      startStartupDetectLoop();
+      startBackgroundDetectLoop();
 
       const handleDisplayChange = () => {
         if (!core.overlayWin || core.overlayWin.isDestroyed()) return;
@@ -213,6 +291,11 @@ function createLifecycleManager(deps) {
       screen.on('display-metrics-changed', handleDisplayChange);
       screen.on('display-added', handleDisplayChange);
       screen.on('display-removed', handleDisplayChange);
+
+      app.on('browser-window-blur', (_event, win) => {
+        if (!isAppWindow(win)) return;
+        scheduleFocusDetect();
+      });
 
       core.win.webContents.once('did-finish-load', () => {
         setTimeout(() => {
@@ -248,6 +331,7 @@ function createLifecycleManager(deps) {
       console.log('[Cleanup] Alkalmazás leállítása...');
 
       stopGameDisplayFollow();
+      stopBackgroundDetectLoop();
 
       try {
         globalShortcut.unregisterAll();

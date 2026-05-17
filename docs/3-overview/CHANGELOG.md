@@ -6,6 +6,24 @@
 
 ---
 
+## [1.0.36] - 2026-05-17 (Game Detect UX Stabilization)
+
+### ✅ Added
+
+- Startup retry loop, focus-blur re-detect, and background polling when no game is active.
+- Unknown game prompt refresh so mappings/ignore stay in sync.
+
+### 🔧 Changed
+
+- Focus-first game detection; global fallback is env-only.
+- Sticky game context with short cooldown to reduce flapping.
+- Main UI overlay open restores last recognized game when recent.
+
+### 🧾 Notes
+
+- Tests: Manual (game detect flow, ignore list, unknown mapping, env fallback).
+
+
 ## [1.0.35] - 2026-05-15 (Reset Layout Transaction)
 
 ### 🐛 Fixed
