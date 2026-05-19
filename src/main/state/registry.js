@@ -39,7 +39,11 @@ const registry = {
     lastDetectedWindowAt: 0,
     lastDetectedWindowTitle: null,
     lastActiveWindowTitle: null,
-    lastMatchedWindowTitle: null
+    lastMatchedWindowTitle: null,
+    lastActiveProcessPath: null,
+    lastActiveProcessName: null,
+    lastActiveProcessId: null,
+    lastDetectedInstallPath: null
   },
   detached: {
     detachedWindowsDesiredVisible: true,

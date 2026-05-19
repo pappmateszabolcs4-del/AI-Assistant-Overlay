@@ -66,6 +66,19 @@ function createGameDetectService(deps) {
     game.lastMatchedWindowTitle = result && result.matchedTitle
       ? result.matchedTitle
       : (canStick ? game.lastMatchedWindowTitle : null);
+    if (result && result.activeProcess) {
+      game.lastActiveProcessPath = result.activeProcess.path || null;
+      game.lastActiveProcessName = result.activeProcess.name || null;
+      game.lastActiveProcessId = Number.isFinite(result.activeProcess.pid) ? result.activeProcess.pid : null;
+      game.lastDetectedInstallPath = result.activeProcess.path
+        ? path.dirname(result.activeProcess.path)
+        : null;
+    } else if (!canStick) {
+      game.lastActiveProcessPath = null;
+      game.lastActiveProcessName = null;
+      game.lastActiveProcessId = null;
+      game.lastDetectedInstallPath = null;
+    }
     game.lastGameDetectAt = now;
     if (result && result.gameName && next === result.gameName) {
       game.lastGameRecognizedAt = now;

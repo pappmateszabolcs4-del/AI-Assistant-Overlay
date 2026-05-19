@@ -2,6 +2,60 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+const GAME_TEMPLATES_PATH = path.join(__dirname, '../../../data/game-templates.json');
+const DEFAULT_GAME_TEMPLATE =
+  'If no specific template is available, ask a short clarification about the player\'s current stage, goals, and constraints, then provide 3-5 actionable next steps with brief reasoning.';
+let cachedGameTemplates = null;
+let warnedMissingTemplates = false;
+
+function normalizeTemplateKey(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function loadGameTemplates() {
+  if (cachedGameTemplates) return cachedGameTemplates;
+  try {
+    if (!fs.existsSync(GAME_TEMPLATES_PATH)) {
+      if (!warnedMissingTemplates) {
+        console.warn(`[GAME-TEMPLATE] Templates not found at ${GAME_TEMPLATES_PATH}. Using generic prompt.`);
+        warnedMissingTemplates = true;
+      }
+      cachedGameTemplates = { templates: [] };
+      return cachedGameTemplates;
+    }
+    const raw = fs.readFileSync(GAME_TEMPLATES_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    const templates = Array.isArray(parsed && parsed.templates) ? parsed.templates : [];
+    cachedGameTemplates = { templates };
+    return cachedGameTemplates;
+  } catch (err) {
+    if (!warnedMissingTemplates) {
+      console.warn(`[GAME-TEMPLATE] Failed to load templates: ${err.message}`);
+      warnedMissingTemplates = true;
+    }
+    cachedGameTemplates = { templates: [] };
+    return cachedGameTemplates;
+  }
+}
+
+function getTemplateForGame(gameName) {
+  if (!gameName) return '';
+  const key = normalizeTemplateKey(gameName);
+  const { templates } = loadGameTemplates();
+  for (const entry of templates) {
+    if (!entry || !entry.game || !entry.template) continue;
+    const entryKey = normalizeTemplateKey(entry.game);
+    if (entryKey && entryKey === key) return String(entry.template).trim();
+    const aliases = Array.isArray(entry.aliases) ? entry.aliases : [];
+    for (const alias of aliases) {
+      if (normalizeTemplateKey(alias) === key) {
+        return String(entry.template).trim();
+      }
+    }
+  }
+  return '';
+}
+
 function createOpenAIService(deps) {
   const {
     OpenAI,
@@ -138,8 +192,14 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
       console.log('[AI] GPT feldolgozás:', text, 'Specialization level:', specializationLevel, 'Has image:', !!imageData, 'Game:', resolvedGameContext || 'Unknown');
       let systemPrompt = getSystemPrompt(lang || getCurrentLanguage(), specializationLevel || 3);
       if (resolvedGameContext) {
-        const gameContextPrompt = `\n\n🎮 GAME CONTEXT DETECTED: The user is currently playing "${resolvedGameContext}". Focus ALL your answers specifically on this game. Provide game-specific tips, strategies, item names, boss mechanics, builds, and gameplay advice that are ONLY relevant to "${resolvedGameContext}". Do NOT give generic gaming advice or information about other games. Stay strictly within the context of "${resolvedGameContext}".`;
+        const gameContextPrompt = `\n\n🎮 GAME CONTEXT DETECTED: The user is currently playing "${resolvedGameContext}". Focus ALL your answers specifically on this game. Provide game-specific tips, strategies, item names, boss mechanics, builds, and gameplay advice that are ONLY relevant to "${resolvedGameContext}". Do NOT give generic gaming advice or information about other games. Stay strictly within the context of "${resolvedGameContext}". If the user asks what game they are playing, answer with "${resolvedGameContext}" and do not say the game is unknown.`;
         systemPrompt += gameContextPrompt;
+        const template = getTemplateForGame(resolvedGameContext);
+        if (template) {
+          systemPrompt += `\n\nGAME TEMPLATE:\n${template}`;
+        } else {
+          systemPrompt += `\n\nGENERAL GAME TEMPLATE:\n${DEFAULT_GAME_TEMPLATE}`;
+        }
         console.log(`[AI] Game context injected: ${resolvedGameContext}`);
       }
       const detailMaps = { 1: 300, 2: 600, 3: 1600, 4: 3200, 5: 4096 };

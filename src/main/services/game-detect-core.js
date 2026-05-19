@@ -175,6 +175,9 @@ const SHORT_STOPWORDS = new Set([
   'a', 'an', 'the', 'and', 'or', 'for', 'to', 'of', 'in', 'on', 'at', 'by', 'from', 'with'
 ]);
 
+const LAUNCHER_SUFFIX_RE = /(steam|epic games|gog|gog galaxy|ubisoft connect|battle\.net|battlenet|ea app|origin|xbox|microsoft store|launcher)$/i;
+const TITLE_NOISE_RE = /(beta|early access|demo|playtest|launcher|update|patch|build|directx|dx\d+)$/i;
+
 function normalizeText(text) {
   if (!text) return '';
   return text
@@ -182,6 +185,36 @@ function normalizeText(text) {
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function normalizeWindowTitle(text) {
+  if (!text) return '';
+  let cleaned = String(text).replace(/[™®]/g, '');
+
+  cleaned = cleaned.replace(/\s*\(([^)]*)\)\s*/g, (match, inner) => {
+    return TITLE_NOISE_RE.test(String(inner || '').trim()) ? ' ' : match;
+  });
+
+  cleaned = cleaned.replace(/\s*\[([^\]]*)\]\s*/g, (match, inner) => {
+    const trimmed = String(inner || '').trim();
+    return TITLE_NOISE_RE.test(trimmed) || LAUNCHER_SUFFIX_RE.test(trimmed) ? ' ' : match;
+  });
+
+  cleaned = cleaned.replace(/\b(v|ver|version)\s*\d+(\.\d+){0,3}\b/gi, ' ');
+
+  const separators = [' - ', ' | ', ' — '];
+  for (const sep of separators) {
+    const idx = cleaned.lastIndexOf(sep);
+    if (idx <= 0) continue;
+    const suffix = cleaned.slice(idx + sep.length).trim();
+    if (LAUNCHER_SUFFIX_RE.test(suffix)) {
+      cleaned = cleaned.slice(0, idx);
+    }
+  }
+
+  cleaned = cleaned.replace(/\s*[-–—]\s*(steam|epic games|gog|gog galaxy|ubisoft connect|battle\.net|battlenet|ea app|origin|xbox|microsoft store)\s*$/i, '');
+
+  return cleaned.replace(/\s+/g, ' ').trim();
 }
 
 function normalizeCompact(text) {
@@ -432,14 +465,21 @@ function extractGameName(windowTitle, ignoreList) {
 
   if (shouldIgnoreWindowTitle(windowTitle, ignoreList)) return null;
 
-  const datasetMatch = matchGameFromText(windowTitle);
+  const normalizedTitle = normalizeWindowTitle(windowTitle) || windowTitle;
+  const datasetMatch = matchGameFromText(normalizedTitle);
   if (datasetMatch) {
     return datasetMatch;
   }
 
   for (const { pattern, name } of GAME_PATTERNS) {
-    if (pattern.test(windowTitle)) {
+    if (pattern.test(normalizedTitle) || pattern.test(windowTitle)) {
       return name;
+    }
+  }
+
+  if (normalizedTitle && normalizedTitle !== windowTitle) {
+    if (normalizedTitle.length > 3) {
+      return normalizedTitle;
     }
   }
 

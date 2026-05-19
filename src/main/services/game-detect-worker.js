@@ -3,6 +3,7 @@ const { execFileSync } = require('child_process');
 const { extractGameName } = require('./game-detect-core');
 
 const ACTIVE_WINDOW_SCRIPT = path.join(__dirname, '..', '..', '..', 'get-active-window.ps1');
+const ACTIVE_PROCESS_SCRIPT = path.join(__dirname, '..', '..', '..', 'get-active-process.ps1');
 const WINDOW_TITLES_SCRIPT = path.join(__dirname, '..', '..', '..', 'get-window-titles.ps1');
 const WINDOW_BOUNDS_SCRIPT = path.join(__dirname, '..', '..', '..', 'get-window-bounds.ps1');
 
@@ -24,6 +25,22 @@ function getActiveWindowTitle() {
     return runPowerShell(ACTIVE_WINDOW_SCRIPT, []);
   } catch (_) {
     return '';
+  }
+}
+
+function getActiveProcessInfo() {
+  try {
+    const raw = runPowerShell(ACTIVE_PROCESS_SCRIPT, []);
+    if (!raw || raw === '{}' ) return null;
+    const data = JSON.parse(raw);
+    if (!data || (!data.path && !data.name && !data.pid)) return null;
+    return {
+      pid: typeof data.pid === 'number' ? data.pid : null,
+      name: typeof data.name === 'string' ? data.name : '',
+      path: typeof data.path === 'string' ? data.path : ''
+    };
+  } catch (_) {
+    return null;
   }
 }
 
@@ -80,14 +97,62 @@ function resolveMappedGame(title, mappings) {
   return null;
 }
 
+const SCORE_TITLE_MATCH = 4;
+const SCORE_MAPPING_MATCH = 6;
+const SCORE_THRESHOLD = 4;
+
+function isDevEnv() {
+  return String(process.env.APP_ENV || '').toLowerCase() === 'development';
+}
+
+function scoreGameTitle(title, ignoreList, mappings) {
+  const mappingMatch = resolveMappedGame(title, mappings);
+  const titleMatch = extractGameName(title, ignoreList);
+  let name = null;
+  let score = 0;
+  const reasons = [];
+
+  if (mappingMatch) {
+    name = mappingMatch;
+    score += SCORE_MAPPING_MATCH;
+    reasons.push('mapping');
+  }
+
+  if (titleMatch) {
+    if (!name) {
+      name = titleMatch;
+      score += SCORE_TITLE_MATCH;
+      reasons.push('title');
+    } else if (titleMatch === name) {
+      score += SCORE_TITLE_MATCH;
+      reasons.push('title');
+    } else {
+      reasons.push('title-mismatch');
+    }
+  }
+
+  return {
+    name,
+    score,
+    reasons
+  };
+}
+
 function detectGame(ignoreList, mappings) {
   const activeTitle = getActiveWindowTitle();
+  const activeProcess = getActiveProcessInfo();
   let detectedGame = null;
   let matchedTitle = '';
 
   if (activeTitle) {
-    detectedGame = resolveMappedGame(activeTitle, mappings) || extractGameName(activeTitle, ignoreList);
-    if (detectedGame) matchedTitle = activeTitle;
+    const scored = scoreGameTitle(activeTitle, ignoreList, mappings);
+    if (scored && scored.name && scored.score >= SCORE_THRESHOLD) {
+      detectedGame = scored.name;
+      matchedTitle = activeTitle;
+      if (isDevEnv()) {
+        console.log(`[GAME-DETECT] Active title score=${scored.score} reasons=${scored.reasons.join(',')}`);
+      }
+    }
   }
 
   const fallbackEnabled = String(process.env.GAME_DETECT_GLOBAL_FALLBACK || '').toLowerCase() === '1'
@@ -95,12 +160,19 @@ function detectGame(ignoreList, mappings) {
 
   if (!detectedGame && fallbackEnabled) {
     const titles = getWindowTitles();
+    let best = null;
     for (const title of titles) {
-      const game = resolveMappedGame(title, mappings) || extractGameName(title, ignoreList);
-      if (game) {
-        detectedGame = game;
-        matchedTitle = title;
-        break;
+      const scored = scoreGameTitle(title, ignoreList, mappings);
+      if (!scored || !scored.name || scored.score < SCORE_THRESHOLD) continue;
+      if (!best || scored.score > best.score) {
+        best = { title, name: scored.name, score: scored.score, reasons: scored.reasons };
+      }
+    }
+    if (best) {
+      detectedGame = best.name;
+      matchedTitle = best.title;
+      if (isDevEnv()) {
+        console.log(`[GAME-DETECT] Fallback title score=${best.score} reasons=${best.reasons.join(',')}`);
       }
     }
   }
@@ -111,6 +183,7 @@ function detectGame(ignoreList, mappings) {
     activeTitle,
     matchedTitle,
     gameName: detectedGame,
+    activeProcess,
     bounds
   };
 }
