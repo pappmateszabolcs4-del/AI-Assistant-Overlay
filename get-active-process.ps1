@@ -18,14 +18,14 @@ try {
         exit 0
     }
 
-    $pid = 0
-    [Win32Proc]::GetWindowThreadProcessId($hwnd, [ref]$pid) | Out-Null
-    if ($pid -le 0) {
+    $processId = 0
+    [Win32Proc]::GetWindowThreadProcessId($hwnd, [ref]$processId) | Out-Null
+    if ($processId -le 0) {
         "{}"
         exit 0
     }
 
-    $proc = Get-Process -Id $pid -ErrorAction SilentlyContinue
+    $proc = Get-Process -Id $processId -ErrorAction SilentlyContinue
     if (-not $proc) {
         "{}"
         exit 0
@@ -36,7 +36,7 @@ try {
     if (-not $path) { $path = "" }
     if (-not $name) { $name = "" }
 
-    @{ pid = $pid; name = $name; path = $path } | ConvertTo-Json -Compress
+    @{ pid = $processId; name = $name; path = $path } | ConvertTo-Json -Compress
 } catch {
     "{}"
 }
