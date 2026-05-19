@@ -4,6 +4,12 @@ Last updated: 2026-05-17
 
 ## Top candidates (next)
 
+- [x] Dev/prod parity: single-source UI + automated diff check (stop drift)
+  - [x] Merge dev/prod UI into one canonical template; dev uses a flag for debug-only UI
+  - [x] Add script to diff dev/prod artifacts and fail on divergence
+  - [x] Add CI/`npm run check` hook for the parity check
+  - [x] Keep dev-only UI limited to debug panels/components
+
  - [x] Multi-monitor optimization (full scope)
   - [x] Display registry: stable displayId, workArea/bounds, scaleFactor, rotation
   - [x] Canonical layout: per-monitor normalized rects (x,y,w,h in 0..1)

@@ -426,8 +426,7 @@ function createOverlayManager(deps) {
       }
     });
 
-    const overlayFile = isDev() ? 'overlay.dev.html' : 'overlay.html';
-    core.overlayWin.loadFile(overlayFile);
+    core.overlayWin.loadFile('overlay.html');
     if (shouldOpenOverlayDevTools()) {
       core.overlayWin.webContents.openDevTools({ mode: 'detach' });
     }

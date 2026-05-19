@@ -200,6 +200,22 @@
               </label>
             </div>
 
+            <!-- dev-only:start -->
+            <div class="specialization-container block-item" id="block-perf" data-block-id="perf" data-block-home="settings" data-block-title-key="perfHudLabel" style="margin-top: 12px;">
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #f5f7fa;">
+                <input type="checkbox" id="perfHudToggle" style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
+                <span id="perfHudLabel">⚡ Overlay teljesítmény HUD</span>
+              </label>
+            </div>
+
+            <div class="specialization-container block-item" id="block-debug-map" data-block-id="debug-map" data-block-home="settings" data-block-title-key="debugMapLabel" style="margin-top: 12px;">
+              <div class="specialization-label">
+                <span id="debugMapLabel">🧭 Debug map</span>
+              </div>
+              <button class="reset-layout-btn" id="debugMapToggleBtn"></button>
+            </div>
+            <!-- dev-only:end -->
+
             <div class="specialization-container block-item" id="block-version" data-block-id="version" data-block-home="settings" data-block-title-key="versionLabel" style="margin-top: 12px;">
               <div class="specialization-label">
                 <span id="versionLabel">ℹ️ Verzió:</span>
@@ -219,6 +235,29 @@
   </div><!-- Close overlay-container -->
 
   <div id="block-stash" style="display: none;"></div>
+
+  <!-- dev-only:start -->
+  <div id="debugMapOverlay" class="debug-map-overlay" style="display: none;">
+    <div class="debug-map-panel">
+      <div class="debug-map-header">
+        <div class="debug-map-title" id="debugMapTitle">🧭 Debug map</div>
+        <div class="debug-map-actions">
+          <button class="debug-map-btn" id="debugMapRefreshBtn">↻ Refresh</button>
+          <button class="debug-map-btn" id="debugMapCloseBtn">✕</button>
+        </div>
+      </div>
+      <div class="debug-map-body">
+        <div class="debug-map-canvas-wrap">
+          <canvas id="debugMapCanvas"></canvas>
+        </div>
+        <div class="debug-map-issues">
+          <div class="debug-map-issues-title" id="debugMapIssuesTitle">Issues</div>
+          <div id="debugMapIssuesList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- dev-only:end -->
 
   <!-- Floating host for dropdown panels -->
   <div id="floating-panels"></div>
@@ -242,11 +281,17 @@
   <script src="./src/renderer/overlay/panel-order.js"></script>
   <script src="./src/renderer/overlay/window-resize.js"></script>
   <script src="./src/renderer/overlay/translations.js"></script>
+  <!-- dev-only:start -->
+  <script src="./src/renderer/overlay/perf.js"></script>
+  <!-- dev-only:end -->
   <script src="./src/renderer/overlay/settings-controls.js"></script>
   <script src="./src/renderer/overlay/history.js"></script>
   <script src="./src/renderer/overlay/blocks.js"></script>
   <script src="./src/renderer/overlay/blocks-window.js"></script>
   <script src="./src/renderer/overlay/ui.js"></script>
+  <!-- dev-only:start -->
+  <script src="./src/renderer/overlay/debug-map.js"></script>
+  <!-- dev-only:end -->
   <script src="./src/renderer/overlay/detach.js"></script>
   <script src="./src/renderer/overlay/ipc.js"></script>
 </body>

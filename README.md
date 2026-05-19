@@ -67,7 +67,6 @@ docs/
 scripts/
 main.js
 overlay.html
-overlay.dev.html
 package.json
 ```
 

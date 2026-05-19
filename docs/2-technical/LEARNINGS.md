@@ -1114,7 +1114,6 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 
 #### Files touched
 - [overlay.html](overlay.html)
-- [overlay.dev.html](overlay.dev.html)
 - [src/main/app/lifecycle.js](src/main/app/lifecycle.js)
 - [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
 - [src/main/services/game-detect.js](src/main/services/game-detect.js)

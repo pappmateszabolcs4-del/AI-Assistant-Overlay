@@ -13,7 +13,8 @@
     "package:win": "electron-forge package --platform=win32 --arch=x64",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "check": "node bug-checker.js",
+    "check": "node bug-checker.js && node scripts/check-dev-prod-parity.js",
+    "check:parity": "node scripts/check-dev-prod-parity.js",
     "cleanup": "node cleanup.js",
     "test": "node --test"
   },
