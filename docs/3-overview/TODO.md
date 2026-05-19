@@ -127,6 +127,18 @@ Last updated: 2026-05-17
 
 ## AI
 
+- [ ] Local diagnostics for AI decisions (intent, game context, template) without telemetry
+  - [ ] Record intent classification outcome (local-only)
+  - [ ] Log resolved game context + detection score
+  - [ ] Log template selection (game template vs generic)
+  - [ ] Add a debug toggle to enable/disable diagnostics
+- [ ] Deterministic shortcuts for common intents (e.g., "what game am I playing")
+- [ ] Intent routing layer (simple router before LLM call)
+- [ ] Model strategy split (text-only vs vision) + timeout fallback
+- [ ] Token budget caps per detail level
+- [ ] Template cache + reload strategy (dev)
+- [ ] User-facing error UX for AI failures (clear, actionable)
+- [ ] Trim/segment strict policy to reduce prompt bloat
 - [ ] AI Vision: Video recording recognition
   - [ ] Define the exact flow: capture (source), sampling rate, and retention policy
   - [ ] Add a dedicated service module (services/vision-video.js) for video frame extraction
