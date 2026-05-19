@@ -19,11 +19,35 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
         </div>
         <img id="screenshotPreview" alt="Screenshot preview" />
         <p class="screenshot-info" id="screenshotInfo"></p>
-
         <p id="status"></p>
         <div id="responseContainer" style="display: none;">
           <p id="answerLabel">🤖 AI Válasz:</p>
           <p id="aiResponse"></p>
+        </div>
+        <div class="vision-consent-block">
+          <label class="vision-consent-toggle">
+            <input type="checkbox" id="visionEnableToggle" style="width: 18px; height: 18px; cursor: pointer;">
+            <span id="visionEnableLabel">Vision elemzes engedelyezese</span>
+          </label>
+          <p class="vision-consent-hint" id="visionConsentHint"></p>
+          <div class="vision-consent-columns">
+            <div class="vision-consent-col">
+              <div class="vision-consent-subtitle" id="visionAllowListLabel">Mindig engedelyezett jatekok</div>
+              <textarea id="visionAllowListInput" rows="4" style="width: 100%; resize: vertical; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;"></textarea>
+            </div>
+            <div class="vision-consent-col">
+              <div class="vision-consent-subtitle" id="visionDenyListLabel">Soha nem engedelyezett jatekok</div>
+              <textarea id="visionDenyListInput" rows="4" style="width: 100%; resize: vertical; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;"></textarea>
+            </div>
+          </div>
+          <div class="vision-consent-actions">
+            <button id="visionConsentSaveBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
+              ✅ Mentés
+            </button>
+            <button id="visionConsentResetBtn" style="flex: 1; padding: 8px; background: rgba(255, 196, 100, 0.15); border: 1px solid rgba(255, 196, 100, 0.35); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
+              🔄 Alaplista
+            </button>
+          </div>
         </div>
       </div>
     `,
@@ -181,6 +205,12 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
   const gameIgnoreApplyBtn = document.getElementById('gameIgnoreApplyBtn');
   const gameIgnoreResetBtn = document.getElementById('gameIgnoreResetBtn');
 
+  const visionEnableToggle = document.getElementById('visionEnableToggle');
+  const visionAllowListInput = document.getElementById('visionAllowListInput');
+  const visionDenyListInput = document.getElementById('visionDenyListInput');
+  const visionConsentSaveBtn = document.getElementById('visionConsentSaveBtn');
+  const visionConsentResetBtn = document.getElementById('visionConsentResetBtn');
+
   const toggleLayoutBtn = document.getElementById('toggleLayoutBtn');
   const resetLayoutBtn = document.getElementById('resetLayoutBtn');
   const notePanelBtn = document.getElementById('notePanelBtn');
@@ -195,6 +225,14 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
   const modalMessage = document.getElementById('modalMessage');
   const modalConfirm = document.getElementById('modalConfirm');
   const modalCancel = document.getElementById('modalCancel');
+
+  const visionConsentModal = document.getElementById('visionConsentModal');
+  const visionConsentTitle = document.getElementById('visionConsentTitle');
+  const visionConsentMessage = document.getElementById('visionConsentMessage');
+  const visionConsentAllowOnce = document.getElementById('visionConsentAllowOnce');
+  const visionConsentAllowAlways = document.getElementById('visionConsentAllowAlways');
+  const visionConsentDenyAlways = document.getElementById('visionConsentDenyAlways');
+  const visionConsentCancel = document.getElementById('visionConsentCancel');
 
   let recording = false;
   let mediaRecorder = null;
@@ -255,6 +293,170 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
   }
 
   globalThis.showConfirmModal = showConfirmModal;
+
+  let visionAllowOnceKey = null;
+
+  function normalizeGameKey(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function parseVisionListInput(text) {
+    const entries = String(text || '')
+      .split(/\n+/)
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+    const unique = [];
+    entries.forEach((entry) => {
+      if (!unique.includes(entry)) unique.push(entry);
+    });
+    return unique;
+  }
+
+  function loadVisionList(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function persistVisionList(key, list) {
+    try {
+      localStorage.setItem(key, JSON.stringify(list || []));
+    } catch (_) {}
+  }
+
+  function isGameInList(gameName, list) {
+    const key = normalizeGameKey(gameName);
+    if (!key) return false;
+    return list.some((entry) => normalizeGameKey(entry) === key);
+  }
+
+  function readVisionEnabled() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.VISION_ENABLED);
+      if (raw === null) return false;
+      return raw === 'true';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function writeVisionEnabled(enabled) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.VISION_ENABLED, enabled ? 'true' : 'false');
+    } catch (_) {}
+  }
+
+  function updateVisionSettingsUI() {
+    if (visionEnableToggle) {
+      visionEnableToggle.checked = readVisionEnabled();
+    }
+    if (visionAllowListInput) {
+      visionAllowListInput.value = loadVisionList(STORAGE_KEYS.VISION_ALLOWLIST).join('\n');
+    }
+    if (visionDenyListInput) {
+      visionDenyListInput.value = loadVisionList(STORAGE_KEYS.VISION_DENYLIST).join('\n');
+    }
+  }
+
+  function closeVisionConsentModal() {
+    if (!visionConsentModal || !visionConsentModal.classList.contains('active')) return;
+    visionConsentModal.classList.remove('active');
+  }
+
+  function showVisionConsentModal(gameName) {
+    if (!visionConsentModal) return Promise.resolve('cancel');
+    const displayName = gameName || (t().visionConsentUnknownGame || 'Unknown game');
+    const template = t().visionConsentModalMessage || 'Allow Vision analysis for "{game}"?';
+    if (visionConsentTitle) visionConsentTitle.textContent = t().visionConsentModalTitle || 'Vision consent';
+    if (visionConsentMessage) visionConsentMessage.textContent = template.replace('{game}', displayName);
+
+    const hasGame = !!normalizeGameKey(gameName);
+    if (visionConsentAllowAlways) visionConsentAllowAlways.style.display = hasGame ? 'inline-flex' : 'none';
+    if (visionConsentDenyAlways) visionConsentDenyAlways.style.display = hasGame ? 'inline-flex' : 'none';
+
+    return new Promise((resolve) => {
+      const finalize = (result) => {
+        closeVisionConsentModal();
+        resolve(result);
+      };
+
+      const onceHandler = () => finalize('once');
+      const allowHandler = () => finalize('allow');
+      const denyHandler = () => finalize('deny');
+      const cancelHandler = () => finalize('cancel');
+
+      if (visionConsentAllowOnce) visionConsentAllowOnce.onclick = onceHandler;
+      if (visionConsentAllowAlways) visionConsentAllowAlways.onclick = allowHandler;
+      if (visionConsentDenyAlways) visionConsentDenyAlways.onclick = denyHandler;
+      if (visionConsentCancel) visionConsentCancel.onclick = cancelHandler;
+
+      visionConsentModal.onclick = (ev) => {
+        if (ev && ev.target === visionConsentModal) cancelHandler();
+      };
+
+      visionConsentModal.classList.add('active');
+    });
+  }
+
+  async function ensureVisionConsent() {
+    if (!readVisionEnabled()) {
+      if (status) status.textContent = t().visionConsentDisabled;
+      return false;
+    }
+
+    if (!currentGameContext) {
+      await requestGameContext();
+    }
+
+    const gameName = currentGameContext || '';
+    const allowList = loadVisionList(STORAGE_KEYS.VISION_ALLOWLIST);
+    const denyList = loadVisionList(STORAGE_KEYS.VISION_DENYLIST);
+
+    if (isGameInList(gameName, denyList)) {
+      if (status) status.textContent = (t().visionConsentDenied || '').replace('{game}', gameName || '');
+      return false;
+    }
+
+    if (isGameInList(gameName, allowList)) {
+      return true;
+    }
+
+    const normalizedKey = normalizeGameKey(gameName);
+    if (visionAllowOnceKey && (visionAllowOnceKey === '__any__' || visionAllowOnceKey === normalizedKey)) {
+      return true;
+    }
+
+    const choice = await showVisionConsentModal(gameName);
+    if (choice === 'once') {
+      visionAllowOnceKey = normalizedKey || '__any__';
+      return true;
+    }
+    if (choice === 'allow' && normalizedKey) {
+      if (!isGameInList(gameName, allowList)) {
+        allowList.push(gameName);
+        persistVisionList(STORAGE_KEYS.VISION_ALLOWLIST, allowList);
+        updateVisionSettingsUI();
+      }
+      return true;
+    }
+    if (choice === 'deny' && normalizedKey) {
+      if (!isGameInList(gameName, denyList)) {
+        denyList.push(gameName);
+        persistVisionList(STORAGE_KEYS.VISION_DENYLIST, denyList);
+        updateVisionSettingsUI();
+      }
+      if (status) status.textContent = (t().visionConsentDenied || '').replace('{game}', gameName || '');
+      return false;
+    }
+
+    if (status && t().visionConsentCanceled) status.textContent = t().visionConsentCanceled;
+    return false;
+  }
 
   function normalizeGameIgnoreInput(text) {
     return String(text || '')
@@ -432,6 +634,23 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     if (gameIgnoreInput) gameIgnoreInput.placeholder = t().gameIgnorePlaceholder || gameIgnoreInput.placeholder;
     if (gameIgnoreApplyBtn) gameIgnoreApplyBtn.textContent = t().gameIgnoreApply || gameIgnoreApplyBtn.textContent;
     if (gameIgnoreResetBtn) gameIgnoreResetBtn.textContent = t().gameIgnoreReset || gameIgnoreResetBtn.textContent;
+    const visionEnableLabel = document.getElementById('visionEnableLabel');
+    if (visionEnableLabel) visionEnableLabel.textContent = t().visionEnableLabel || visionEnableLabel.textContent;
+    const visionConsentHint = document.getElementById('visionConsentHint');
+    if (visionConsentHint) visionConsentHint.textContent = t().visionConsentHint || visionConsentHint.textContent;
+    const visionAllowListLabel = document.getElementById('visionAllowListLabel');
+    if (visionAllowListLabel) visionAllowListLabel.textContent = t().visionAllowListLabel || visionAllowListLabel.textContent;
+    const visionDenyListLabel = document.getElementById('visionDenyListLabel');
+    if (visionDenyListLabel) visionDenyListLabel.textContent = t().visionDenyListLabel || visionDenyListLabel.textContent;
+    if (visionAllowListInput) visionAllowListInput.placeholder = t().visionAllowListPlaceholder || visionAllowListInput.placeholder;
+    if (visionDenyListInput) visionDenyListInput.placeholder = t().visionDenyListPlaceholder || visionDenyListInput.placeholder;
+    if (visionConsentSaveBtn) visionConsentSaveBtn.textContent = t().visionConsentSave || visionConsentSaveBtn.textContent;
+    if (visionConsentResetBtn) visionConsentResetBtn.textContent = t().visionConsentReset || visionConsentResetBtn.textContent;
+    if (visionConsentTitle) visionConsentTitle.textContent = t().visionConsentModalTitle || visionConsentTitle.textContent;
+    if (visionConsentAllowOnce) visionConsentAllowOnce.textContent = t().visionConsentAllowOnce || visionConsentAllowOnce.textContent;
+    if (visionConsentAllowAlways) visionConsentAllowAlways.textContent = t().visionConsentAllowAlways || visionConsentAllowAlways.textContent;
+    if (visionConsentDenyAlways) visionConsentDenyAlways.textContent = t().visionConsentDenyAlways || visionConsentDenyAlways.textContent;
+    if (visionConsentCancel) visionConsentCancel.textContent = t().visionConsentCancel || visionConsentCancel.textContent;
     const versionLabel = document.getElementById('versionLabel');
     if (versionLabel) versionLabel.textContent = t().versionLabel || versionLabel.textContent;
     const layoutLabel = document.getElementById('layoutLabel');
@@ -444,6 +663,7 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     if (questionInput) questionInput.placeholder = t().placeholder;
     if (typeof renderHistory === 'function') renderHistory();
     updateNotePanelPreview();
+    updateVisionSettingsUI();
   }
 
   function updateNotePanelPreview() {
@@ -526,6 +746,11 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
       return;
     }
 
+    if (currentScreenshot) {
+      const allowed = await ensureVisionConsent();
+      if (!allowed) return;
+    }
+
     status.textContent = currentScreenshot ? t().analyzingImage : t().thinking;
     askBtn.disabled = true;
     try {
@@ -596,6 +821,36 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
   if (gameIgnoreResetBtn) {
     on(gameIgnoreResetBtn, 'click', () => {
       applyGameIgnoreList(DEFAULT_GAME_IGNORE_TITLES, { persist: true });
+    });
+  }
+
+  if (visionEnableToggle) {
+    visionEnableToggle.checked = readVisionEnabled();
+    on(visionEnableToggle, 'change', () => {
+      writeVisionEnabled(visionEnableToggle.checked);
+      if (!visionEnableToggle.checked) {
+        visionAllowOnceKey = null;
+      }
+    });
+  }
+
+  if (visionConsentSaveBtn) {
+    on(visionConsentSaveBtn, 'click', () => {
+      const allowList = parseVisionListInput(visionAllowListInput ? visionAllowListInput.value : '');
+      const denyList = parseVisionListInput(visionDenyListInput ? visionDenyListInput.value : '');
+      persistVisionList(STORAGE_KEYS.VISION_ALLOWLIST, allowList);
+      persistVisionList(STORAGE_KEYS.VISION_DENYLIST, denyList);
+      updateVisionSettingsUI();
+      if (status && t().visionConsentSaved) status.textContent = t().visionConsentSaved;
+    });
+  }
+
+  if (visionConsentResetBtn) {
+    on(visionConsentResetBtn, 'click', () => {
+      persistVisionList(STORAGE_KEYS.VISION_ALLOWLIST, []);
+      persistVisionList(STORAGE_KEYS.VISION_DENYLIST, []);
+      updateVisionSettingsUI();
+      if (status && t().visionConsentResetDone) status.textContent = t().visionConsentResetDone;
     });
   }
 
@@ -761,6 +1016,11 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
                 status.textContent = t().thinking;
               }
 
+              if (currentScreenshot) {
+                const allowed = await ensureVisionConsent();
+                if (!allowed) return;
+              }
+
               if (!currentGameContext) {
                 await requestGameContext();
               }
@@ -824,6 +1084,8 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
   if (screenshotBtn) {
     on(screenshotBtn, 'click', async () => {
       try {
+        const allowed = await ensureVisionConsent();
+        if (!allowed) return;
         if (status) status.textContent = t().screenshotInProgress;
         const result = await invokeMain(IPC_CHANNELS.CAPTURE_SCREENSHOT);
         if (result.success) {
@@ -851,6 +1113,7 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
   if (clearImageBtn) {
     on(clearImageBtn, 'click', () => {
       currentScreenshot = null;
+      visionAllowOnceKey = null;
       if (screenshotPreview) {
         screenshotPreview.style.display = 'none';
         screenshotPreview.src = '';

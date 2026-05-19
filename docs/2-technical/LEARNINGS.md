@@ -3094,3 +3094,41 @@ Short summary (as of Feb 5):
 
 #### Follow-ups
 - TODO: None
+
+---
+
+### 2026-05-19 (Evening)
+
+#### Summary
+- What changed: Added a long-term Vision consent system (settings + per-game allow/deny lists) and a consent modal before screenshot/Vision usage.
+- Why: Ensure explicit opt-in for screenshot analysis with clear privacy guardrails.
+- Impact: Vision runs only when enabled and allowed per game; unknown games prompt for one-time consent.
+
+#### Details
+- Implementation notes:
+  - New Settings block for Vision consent with global toggle and per-game allow/deny lists.
+  - Consent modal appears when no per-game decision exists; allow-once is supported.
+  - Screenshot capture and Vision processing are blocked when consent is missing or denied.
+- Edge cases:
+  - Unknown game context limits consent to allow-once until a game is detected.
+
+#### Files touched
+- [overlay.html](overlay.html)
+- [block.html](block.html)
+- [overlay.css](overlay.css)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/renderer/overlay/block-app.js](src/renderer/overlay/block-app.js)
+- [src/renderer/overlay/blocks.js](src/renderer/overlay/blocks.js)
+- [src/shared/storage-keys.js](src/shared/storage-keys.js)
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 (post-change snapshot)
+- Latest snapshot created: `20260519-202907`
+
+#### Verification
+- Not run (manual testing pending).
+
+#### Follow-ups
+- TODO: Validate Vision consent flow in a fullscreen game (screenshot + ask).

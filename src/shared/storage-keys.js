@@ -21,7 +21,10 @@ const STORAGE_KEYS = {
   UI_TEXT_OVERRIDES: 'uiTextOverrides',
   WINDOW_LAYOUTS: 'windowLayouts',
   BLOCK_LAYOUTS: 'overlayBlockLayouts',
-  BLOCK_FREE_LAYOUT: 'overlayBlockFreeLayout'
+  BLOCK_FREE_LAYOUT: 'overlayBlockFreeLayout',
+  VISION_ENABLED: 'visionEnabled',
+  VISION_ALLOWLIST: 'visionAllowlist',
+  VISION_DENYLIST: 'visionDenylist'
 };
 
 module.exports = {

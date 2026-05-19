@@ -79,19 +79,25 @@ Last updated: 2026-05-17
 
  - [ ] Game-aware detection + UX (long-term)
   - Status: focus-first detection, startup retry, focus-blur re-detect, background poll, unknown prompt, and stickiness are implemented.
-  - Multi-signal detection: window title + exe + process path + window class + recent focus
-      - Focus-first: only active window drives detection; unknown shows prompt
-      - Optional global fallback (off by default) for non-focused scan
-      - Score-based decision (not pure title match)
-  - Title normalization + fuzzy match (strip launcher/edition/suffix noise)
-    - Augment data sources: IGDB + Steam/Epic/GoG metadata for exe/display-name mapping (see docs/2-technical/METADATA_POLICY.md)
+  - Long-term detection plan (merged):
+        - [x] Focus-first: only active window drives detection; unknown shows prompt
+        - [x] Optional global fallback (off by default) for non-focused scan (env-only)
+        - [x] Score-based decision (not pure title match)
+        - [x] Title normalization + fuzzy match (strip launcher/edition/suffix noise)
+        - [ ] Minimum-signal rule: title + exe/process path + window class must collectively reach the threshold
+        - [ ] Browser/process category guard: block title-only matches for known browser processes
+        - [ ] Mapping-first priority: prefer exe->game mapping (IGDB/Steam/Epic/GoG + learned), title is secondary
+        - [ ] Stability threshold: require 2-3 consecutive matches before switching games
+        - [ ] Overlay-focused guard: if overlay is active, skip detection and keep last recognized
+        - [ ] Raise score threshold so title-only match is not enough
+      - [ ] Augment data sources: IGDB + Steam/Epic/GoG metadata for exe/display-name mapping (see docs/2-technical/METADATA_POLICY.md)
   - Coupled UX: "What game is this?" prompt builds local mapping -> then offer per-game templates (next steps/build/boss)
-      - Local mapping storage (exe + titlePattern -> game name)
-    - Unknown prompt UI + IPC (collect answer, persist mapping)
-    - Detection hook to prefer learned mapping over Unknown
-    - Template source + fallback to generic prompts when missing
-    - Stickiness: keep last recognized game for a short window (20-30s) to avoid flapping
-  - Optional vision fallback with explicit consent + privacy guardrails
+        - [x] Local mapping storage (exe + titlePattern -> game name)
+      - [x] Unknown prompt UI + IPC (collect answer, persist mapping)
+      - [x] Detection hook to prefer learned mapping over Unknown
+      - [x] Template source + fallback to generic prompts when missing
+      - [x] Stickiness: keep last recognized game for a short window (20-30s) to avoid flapping
+    - [x] Optional vision fallback with explicit consent + privacy guardrails
  - [ ] Per-game layout profiles
   - Save/apply per detected game: layout mode, panel order (and optionally open/detached state)
   - Depends on Coupled UX (Unknown -> mapping) for reliable game identity

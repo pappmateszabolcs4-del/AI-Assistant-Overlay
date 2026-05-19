@@ -862,6 +862,46 @@
       gap: 8px;
     }
 
+    .vision-consent-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      color: #f5f7fa;
+      margin-top: 6px;
+    }
+
+    .vision-consent-hint {
+      font-size: 0.8em;
+      color: #8ba3c0;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    .vision-consent-columns {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .vision-consent-subtitle {
+      font-size: 0.8em;
+      color: #c7d4ea;
+    }
+
+    .vision-consent-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 520px) {
+      .vision-consent-columns {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .vision-btn {
       flex: 1;
       padding: 8px 12px;
@@ -1165,6 +1205,10 @@
       pointer-events: auto;
     }
 
+    .modal-content-consent {
+      max-width: 520px;
+    }
+
     .modal-title {
       font-size: 1.2em;
       font-weight: 600;
@@ -1184,6 +1228,12 @@
     .modal-buttons {
       display: flex;
       gap: 10px;
+    }
+
+    .modal-buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
     }
 
     .modal-btn {
@@ -1214,6 +1264,17 @@
 
     .modal-btn-cancel:hover {
       background: rgba(91, 158, 255, 0.35);
+    }
+
+    .modal-btn-danger {
+      background: rgba(255, 100, 100, 0.18);
+      color: #ffb3b3;
+      border: 1px solid rgba(255, 100, 100, 0.45);
+    }
+
+    .modal-btn-danger:hover {
+      background: rgba(255, 100, 100, 0.28);
+      border-color: rgba(255, 100, 100, 0.7);
     }
 
     /* Tabs System */

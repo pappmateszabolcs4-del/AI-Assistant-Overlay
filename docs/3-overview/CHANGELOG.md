@@ -6,6 +6,21 @@
 
 ---
 
+## [1.0.37] - 2026-05-19 (Vision Consent + Settings)
+
+### ✅ Added
+
+- Vision consent settings with global toggle and per-game allow/deny lists.
+- Consent modal before screenshot/Vision usage when no decision exists.
+
+### 🔧 Changed
+
+- Screenshot capture and Vision analysis are blocked unless consent is granted.
+
+### 🧾 Notes
+
+- Tests: Not run (manual pending).
+
 ## [1.0.36] - 2026-05-17 (Game Detect UX Stabilization)
 
 ### ✅ Added

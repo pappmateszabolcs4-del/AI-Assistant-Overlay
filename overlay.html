@@ -47,11 +47,35 @@
               </div>
               <img id="screenshotPreview" alt="Screenshot preview" />
               <p class="screenshot-info" id="screenshotInfo"></p>
-
               <p id="status"></p>
               <div id="responseContainer" style="display: none;">
                 <p id="answerLabel">🤖 AI Válasz:</p>
                 <p id="aiResponse"></p>
+              </div>
+              <div class="vision-consent-block">
+                <label class="vision-consent-toggle">
+                  <input type="checkbox" id="visionEnableToggle" style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
+                  <span id="visionEnableLabel">Vision elemzes engedelyezese</span>
+                </label>
+                <p class="vision-consent-hint" id="visionConsentHint"></p>
+                <div class="vision-consent-columns">
+                  <div class="vision-consent-col">
+                    <div class="vision-consent-subtitle" id="visionAllowListLabel">Mindig engedelyezett jatekok</div>
+                    <textarea id="visionAllowListInput" rows="4" style="width: 100%; resize: vertical; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;"></textarea>
+                  </div>
+                  <div class="vision-consent-col">
+                    <div class="vision-consent-subtitle" id="visionDenyListLabel">Soha nem engedelyezett jatekok</div>
+                    <textarea id="visionDenyListInput" rows="4" style="width: 100%; resize: vertical; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;"></textarea>
+                  </div>
+                </div>
+                <div class="vision-consent-actions">
+                  <button id="visionConsentSaveBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
+                    ✅ Mentés
+                  </button>
+                  <button id="visionConsentResetBtn" style="flex: 1; padding: 8px; background: rgba(255, 196, 100, 0.15); border: 1px solid rgba(255, 196, 100, 0.35); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
+                    🔄 Alaplista
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -270,6 +294,19 @@
       <div class="modal-buttons">
         <button class="modal-btn modal-btn-cancel" id="modalCancel">Mégse</button>
         <button class="modal-btn modal-btn-confirm" id="modalConfirm">Törlés</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="visionConsentModal">
+    <div class="modal-content modal-content-consent">
+      <div class="modal-title" id="visionConsentTitle">📸 Vision engedely</div>
+      <div class="modal-message" id="visionConsentMessage"></div>
+      <div class="modal-buttons modal-buttons-grid">
+        <button class="modal-btn modal-btn-confirm" id="visionConsentAllowOnce">Egyszer engedelyezem</button>
+        <button class="modal-btn" id="visionConsentAllowAlways">Mindig engedelyezem</button>
+        <button class="modal-btn modal-btn-danger" id="visionConsentDenyAlways">Soha nem engedelyezem</button>
+        <button class="modal-btn modal-btn-cancel" id="visionConsentCancel">Megse</button>
       </div>
     </div>
   </div>

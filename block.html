@@ -20,6 +20,19 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="visionConsentModal">
+    <div class="modal-content modal-content-consent">
+      <div class="modal-title" id="visionConsentTitle">📸 Vision engedely</div>
+      <div class="modal-message" id="visionConsentMessage"></div>
+      <div class="modal-buttons modal-buttons-grid">
+        <button class="modal-btn modal-btn-confirm" id="visionConsentAllowOnce">Egyszer engedelyezem</button>
+        <button class="modal-btn" id="visionConsentAllowAlways">Mindig engedelyezem</button>
+        <button class="modal-btn modal-btn-danger" id="visionConsentDenyAlways">Soha nem engedelyezem</button>
+        <button class="modal-btn modal-btn-cancel" id="visionConsentCancel">Megse</button>
+      </div>
+    </div>
+  </div>
+
   <script src="./src/renderer/overlay/ipc-helpers.js"></script>
   <script src="./src/renderer/overlay/boot.js"></script>
   <script src="./src/renderer/overlay/translations.js"></script>
