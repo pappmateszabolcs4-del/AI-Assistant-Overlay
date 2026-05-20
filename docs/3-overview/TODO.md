@@ -4,6 +4,23 @@ Last updated: 2026-05-20
 
 ## Build plan (ordered, dependency-safe)
 
+## Monetization Guardrails (MUST)
+
+- All phases and roadmap items must comply with these guardrails.
+- No bundled datasets or offline catalogs from third parties.
+- No artwork packs or bulk asset redistribution.
+- No public metadata API or bulk backend aggregation.
+- Only minimal, user-local metadata with TTL and purge.
+- Prefer runtime fetch + cache limits; avoid long-term mirrors.
+
+### Target state (monetization-safe)
+
+- Target state: first-party core registry + user-local memory + opt-in, reviewed community hints + runtime hydration.
+- Not allowed: global IGDB dump, offline catalog, bulk artwork pack, public metadata API.
+- Moat: personalization + workflow + overlay intelligence, not a "every-game DB".
+- Project: monetizable desktop game assistant overlay.
+- Problem: offline global third-party dataset (IGDB) is a runtime dependency -> monetization/legal risk.
+
 ### Phase 0 — Baseline visibility
 
 Why: Until we can see where quality drops, every fix is guesswork.
@@ -14,6 +31,7 @@ Why: Until we can see where quality drops, every fix is guesswork.
   - [x] Log template selection (game template vs generic)
   - [x] Add a debug toggle to enable/disable diagnostics
   - [x] Track "too generic" flag in diagnostics
+  - [ ] Guardrails check: no new data sources or caching outside policy
 
 ### Phase 1 — Stable game context (UX block)
 
@@ -21,11 +39,13 @@ Why: If the game context flaps or is wrong, routing and templates fall apart.
 
 - [x] Minimum-signal rule: title + exe/process path + window class must collectively reach the threshold
 - [x] Browser/process category guard: block title-only matches for known browser processes
-- [ ] Stability threshold: require 2-3 consecutive matches before switching games
+- [x] Stability threshold: require 2-3 consecutive matches before switching games
 - [x] Raise score threshold so title-only match is not enough
-- [ ] Mapping-first priority: prefer exe->game mapping (IGDB/Steam/Epic/GoG + learned), title is secondary
+- [x] Mapping-first priority: prefer exe->game mapping (IGDB/Steam/Epic/GoG + learned), title is secondary
 - [x] Overlay-focused guard: if overlay is active, skip detection and keep last recognized
-- [ ] Augment data sources (policy-safe): local manifests + exe mapping only (no global dataset) (see docs/2-technical/METADATA_POLICY.md)
+- [x] Augment data sources (policy-safe): local manifests + exe mapping only (no global dataset) (see docs/2-technical/METADATA_POLICY.md)
+- [ ] Guardrails check: no bundled catalogs, no public metadata API
+- [ ] Stop the bleeding: remove global dataset dependency; keep local manifests + exe mapping + user-local cache only
 
 ### Phase 2 — Deterministic response scaffolds (AI core)
 
@@ -37,28 +57,56 @@ Why: Enables “no prompt engineering needed” guidance.
   - [x] Route how-to/farming questions to step-by-step, game-specific answers
   - [x] Enforce "no generic tips" mode when game context is known
 
-### Phase 3 — Answer style + auto-seed
+- [ ] Anti-hallucination safeguards (deterministic)
+  - [ ] KnowledgeMode: VERIFIED / PARTIAL / UNKNOWN
+  - [ ] Entity whitelist: allow only VERIFIED FACTS + USER INPUT; forbid new proper nouns
+  - [ ] User list != verified facts (mentionable, but never asserted as truth)
+  - [ ] High-risk question detection (loot, boss spawn, quest, recipe, mechanics) -> STRICT / UNKNOWN
+  - [ ] Post-validation: strip disallowed entities, downgrade to general tips + clarification
+  - [ ] "I don't know" policy: prefer "no reliable data" over invention
+  - [ ] Output template: [Knowledge Status] + [Answer] + [Unverified notice]
+  - [ ] Guardrails check: no external metadata ingestion beyond policy
+
+### Phase 3 — Facts strategy (scale to 5000 games)
+
+Why: Keep coverage lean while grounding entities to reduce hallucinations.
+
+- [ ] On-demand knowledge (seed facts only when needed)
+- [ ] Minimal entity-first seed (characters, locations, items, mechanics, quests)
+- [ ] Hot-game prioritization (usage x hallucination rate x session length)
+- [ ] Community correction loop (user flags -> review -> FACTS)
+- [ ] Source reliability ranking (official > trusted > community > user input)
+- [ ] Fact versioning (fact_version + last_verified)
+- [ ] Guardrails check: facts are verified, minimal, non-redistributed
+- [ ] Safe knowledge: minimal first-party core + user-local memory + reviewed community hints
+
+### Phase 4 — Answer style + auto-seed
 
 Why: Once routing is stable, styling and templates can ride the correct path.
 
 - [ ] Preset answer styles (short/step-by-step/deep) without user prompt writing
 - [ ] Auto-seed per-game template defaults on first encounter (opt-in)
+- [ ] Guardrails check: no auto-seeding from third-party dumps
 
-### Phase 4 — Tuning + durability
+### Phase 5 — Tuning + durability
 
 Why: Optimization on a stable pipeline.
 
 - [ ] Model strategy split (text-only vs vision) + timeout fallback
+- [ ] Hybrid stack (structured DB + vector DB + LLM formatting)
 - [x] Token budget caps per detail level
 - [x] Template cache + reload strategy (dev)
 - [ ] Trim/segment strict policy to reduce prompt bloat
+- [ ] Guardrails check: hybrid stack uses verified facts, not store mirrors
+- [ ] Platformization: first-party ecosystem (automation, OCR packs, workflows) with metadata as descriptor only
 
-### Phase 5 — UX surfacing
+### Phase 6 — UX surfacing
 
 Why: Make the system’s behavior visible and user-correctable.
 
 - [ ] User-facing error UX for AI failures (clear, actionable)
 - [ ] Auto-raise specificity when "too generic" is detected
+- [ ] Guardrails check: UX does not expose or export cached metadata
 
 ## Product roadmap (not in current build chain)
 
@@ -72,6 +120,7 @@ Why: Make the system’s behavior visible and user-correctable.
 - [ ] Terms of service
 - [ ] Crash reporting (opt-in) + minimal telemetry policy
 - [ ] Release build smoke test checklist (clean VM)
+- [ ] Guardrails check: distribution has no bundled datasets or artwork
 
 ### v2.0 (Q2 2026)
 
@@ -80,6 +129,7 @@ Why: Make the system’s behavior visible and user-correctable.
 - [ ] Plugin API for game mods
 - [ ] Cloud sync for settings
 - [ ] Advanced game profiles
+- [ ] Guardrails check: features do not create metadata redistribution
 
 ### AI Vision
 
@@ -89,12 +139,14 @@ Why: Make the system’s behavior visible and user-correctable.
   - [ ] Implement incremental frame-to-Vision analysis (batch or rolling window)
   - [ ] Add UI controls (start/stop recording + status) with 8-language translations
   - [ ] Add privacy and storage notes (explicit consent, local retention limits)
+  - [ ] Guardrails check: no persistent media archives, local-only retention
 
 ### Infra
 
 - [ ] Settings export/import (backup + restore)
 - [ ] Startup/perf profiling (release build)
 - [ ] Hotkey conflict detection and messaging
+- [ ] Guardrails check: no telemetry or remote data export
 
 ### UX
 
@@ -106,6 +158,7 @@ Why: Make the system’s behavior visible and user-correctable.
 - [ ] Multi-account support
 - [ ] Consent UX for microphone + screenshot usage
 - [ ] Safe mode / reset layout shortcut
+- [ ] Guardrails check: user data stays local, no exportable metadata
 
 ### IGDB data strategy (pending decision)
 
@@ -120,6 +173,8 @@ Why: Make the system’s behavior visible and user-correctable.
 - [ ] Own backend (recommended long-term)
   - Idea: Server fetches IGDB and serves clients with strict control.
   - Why: Best control of licensing, rate limits, and monetization risk.
+
+- [ ] Guardrails check: licensing gate before any commercial IGDB use
 
 ## Completed (key milestones)
 

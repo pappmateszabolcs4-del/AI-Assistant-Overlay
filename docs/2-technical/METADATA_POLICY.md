@@ -19,6 +19,29 @@ This is implementation guidance, not legal advice.
 - Artwork: runtime fetch only, optional, cache-limited.
 - No global dataset or offline catalog shipped with the app.
 
+## Monetization guardrails (MUST)
+
+- No bundled datasets or offline catalogs from third parties.
+- No artwork packs or bulk asset redistribution.
+- No public metadata API or bulk backend aggregation.
+- Only minimal, user-local metadata with TTL and purge.
+- Runtime fetch only for artwork; keep caches small and time-limited.
+- Commercial use of third-party sources requires explicit licensing.
+
+### Target state (monetization-safe)
+
+- Target state: first-party core registry + user-local memory + opt-in, reviewed community hints + runtime hydration.
+- Not allowed: global IGDB dump, offline catalog, bulk artwork pack, public metadata API.
+- Moat: personalization + workflow + overlay intelligence, not a "every-game DB".
+- Project: monetizable desktop game assistant overlay.
+- Problem: offline global third-party dataset (IGDB) is a runtime dependency -> monetization/legal risk.
+
+### 3-phase plan
+
+- Stop the bleeding: remove global dataset dependency; keep local manifests + exe mapping + user-local cache only.
+- Safe knowledge: minimal first-party core + user-local memory + reviewed community hints.
+- Platformization: first-party ecosystem (automation, OCR packs, workflows) with metadata as descriptor only.
+
 ## Explicitly avoid
 - Full store catalog mirrors.
 - Bundled artwork packs.

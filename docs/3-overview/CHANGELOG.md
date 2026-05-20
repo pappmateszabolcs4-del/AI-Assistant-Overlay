@@ -6,6 +6,24 @@
 
 ---
 
+## [1.0.39] - 2026-05-20 (Stability + Metadata + Prompts)
+
+### ✅ Added
+
+- Local install manifests + Steam/Epic metadata scan for mapping-first detection.
+- Name guard + anti-hallucination rules for character mentions.
+
+### 🔧 Changed
+
+- Game detect now requires consecutive matches before switching contexts.
+- Mapping safety guard prefers process/metadata over window title.
+- System prompt assembly tightened with link-access guard and game-context override.
+- UI text polish across overlay/info/note panels.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
 ## [1.0.38] - 2026-05-20 (Intent Routing + Facts)
 
 ### ✅ Added

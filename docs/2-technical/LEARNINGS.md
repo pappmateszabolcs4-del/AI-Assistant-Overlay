@@ -1179,6 +1179,49 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 
 ---
 
+### 2026-05-20 (Night)
+
+#### Summary
+- What changed: Added metadata-driven game detection via local manifests + Steam/Epic scans, enforced stability matches before switching, tightened mapping safety, and strengthened OpenAI prompt guards; refreshed overlay/i18n UI copy.
+- Why: Improve game context reliability, reduce false mappings, and clamp down on hallucinated names.
+- Impact: More stable detection, safer mappings, and stricter AI output with clearer UI text.
+
+#### Details
+- Implementation notes: Metadata resolution prefers install-path matches; mapping safety suspends on title/process mismatch; name guards derive verified/forbidden lists from facts; link-access prompts prevent false link claims.
+- Edge cases: Missing manifests fall back to process/title matching; mapping guard can suspend if title diverges for multiple cycles.
+
+#### Files touched
+- [data/local-manifests.json](data/local-manifests.json)
+- [src/main/services/game-metadata.js](src/main/services/game-metadata.js)
+- [src/main/services/game-detect.js](src/main/services/game-detect.js)
+- [src/main/services/game-detect-worker.js](src/main/services/game-detect-worker.js)
+- [src/main/state/registry.js](src/main/state/registry.js)
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [block.html](block.html)
+- [info-panel.html](info-panel.html)
+- [note-panel.html](note-panel.html)
+- [overlay.html](overlay.html)
+- [pinned-history.html](pinned-history.html)
+- [src/renderer/overlay/block-app.js](src/renderer/overlay/block-app.js)
+- [src/renderer/overlay/ipc.js](src/renderer/overlay/ipc.js)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/shared/i18n/renderer-i18n.js](src/shared/i18n/renderer-i18n.js)
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Not created (not requested).
+
+#### Verification
+- Tests: Not run (not requested).
+
+#### Follow-ups
+- TODO: Run `npm run check` if a verification pass is needed.
+
+---
+
 ### 2026-05-15 (Night)
 
 #### Summary
