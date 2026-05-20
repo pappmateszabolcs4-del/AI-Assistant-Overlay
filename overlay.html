@@ -2,19 +2,19 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Overlay</title>
+  <title></title>
   <link rel="stylesheet" href="overlay.css">
 </head>
 <body>
   <div id="overlay-container">
     <!-- Drag handle for moving overlay -->
-    <div class="drag-handle" id="dragHandle" data-label="⇕ Move overlay" title="Move overlay"></div>
+    <div class="drag-handle" id="dragHandle" data-label="" title=""></div>
     
     <div class="resize-handle resize-handle-right"></div>
     
     <!-- Floating close button (keeps layout stable while resizing) -->
     <div class="info-btn-container">
-      <button class="close-btn" id="infoBtn" title="Info">ℹ</button>
+      <button class="close-btn" id="infoBtn" title="">ℹ</button>
     </div>
     <div class="close-btn-container">
       <button class="close-btn" id="closeBtn">✕</button>
@@ -29,91 +29,77 @@
     <!-- Ask Section -->
     <div class="collapsible-section" data-panel="ask">
       <button class="section-header" onclick="toggleSection(event, this)">
-        <span id="askHeaderLabel">💬 Kérdezz</span>
+        <span id="askHeaderLabel"></span>
         <span class="section-toggle">▼</span>
       </button>
       <div class="section-content">
         <div class="section-content-inner">
           <div class="block-shelf" data-panel="ask">
             <div class="block-item" id="block-ask-main" data-block-id="ask-main" data-block-home="ask" data-block-title-key="tabAsk">
-              <button id="micBtn">🎤 Mikrofon</button>
-              <input type="text" id="questionInput" placeholder="Írj ide kérdést..." onclick="event.stopPropagation()" />
-              <button id="askBtn">💬 Kérdés küldése</button>
+              <button id="micBtn"></button>
+              <input type="text" id="questionInput" placeholder="" onclick="event.stopPropagation()" />
+              <button id="askBtn"></button>
 
               <!-- Vision Controls -->
               <div class="vision-controls">
-                <button class="vision-btn" id="screenshotBtn">📸 Screenshot</button>
-                <button class="vision-btn" id="clearImageBtn" style="display: none;">🗑️ Törlés</button>
+                <button class="vision-btn" id="screenshotBtn"></button>
+                <button class="vision-btn" id="clearImageBtn" style="display: none;"></button>
               </div>
               <img id="screenshotPreview" alt="Screenshot preview" />
               <p class="screenshot-info" id="screenshotInfo"></p>
               <p id="status"></p>
               <div id="responseContainer" style="display: none;">
-                <p id="answerLabel">🤖 AI Válasz:</p>
+                <p id="answerLabel"></p>
                 <p id="aiResponse"></p>
               </div>
               <div class="fact-capture-actions" style="display: flex; gap: 8px; margin-top: 8px;">
-                <button id="addFactBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
-                  ➕ Új tény
-                </button>
+                <button id="addFactBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;"></button>
               </div>
               <div class="vision-consent-block">
                 <label class="vision-consent-toggle">
                   <input type="checkbox" id="visionEnableToggle" style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
-                  <span id="visionEnableLabel">Vision elemzes engedelyezese</span>
+                  <span id="visionEnableLabel"></span>
                 </label>
                 <p class="vision-consent-hint" id="visionConsentHint"></p>
                 <div class="vision-consent-columns">
                   <div class="vision-consent-col">
-                    <div class="vision-consent-subtitle" id="visionAllowListLabel">Mindig engedelyezett jatekok</div>
+                    <div class="vision-consent-subtitle" id="visionAllowListLabel"></div>
                     <textarea id="visionAllowListInput" rows="4" style="width: 100%; resize: vertical; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;"></textarea>
                   </div>
                   <div class="vision-consent-col">
-                    <div class="vision-consent-subtitle" id="visionDenyListLabel">Soha nem engedelyezett jatekok</div>
+                    <div class="vision-consent-subtitle" id="visionDenyListLabel"></div>
                     <textarea id="visionDenyListInput" rows="4" style="width: 100%; resize: vertical; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;"></textarea>
                   </div>
                 </div>
                 <div class="vision-consent-actions">
-                  <button id="visionConsentSaveBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
-                    ✅ Mentés
-                  </button>
-                  <button id="visionConsentResetBtn" style="flex: 1; padding: 8px; background: rgba(255, 196, 100, 0.15); border: 1px solid rgba(255, 196, 100, 0.35); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
-                    🔄 Alaplista
-                  </button>
+                  <button id="visionConsentSaveBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;"></button>
+                  <button id="visionConsentResetBtn" style="flex: 1; padding: 8px; background: rgba(255, 196, 100, 0.15); border: 1px solid rgba(255, 196, 100, 0.35); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;"></button>
                 </div>
               </div>
             </div>
             <div class="specialization-container block-item" id="block-game-template" data-block-id="game-template" data-block-home="ask" data-block-title-key="gameTemplateLabel" style="margin-top: 12px;">
               <div class="specialization-label">
-                <span id="gameTemplateLabel">🎮 Játék template</span>
+                <span id="gameTemplateLabel"></span>
               </div>
               <p id="gameTemplateHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;"></p>
               <input type="text" id="gameTemplateNameInput" style="width: 100%; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder="" />
               <div class="specialization-label" style="margin-top: 8px;">
-                <span id="gameTemplateOptionsLabel">✅ Választható irányok</span>
+                <span id="gameTemplateOptionsLabel"></span>
               </div>
               <p id="gameTemplateOptionsHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 4px; line-height: 1.4;"></p>
               <div id="gameTemplateOptionsList" style="display: grid; gap: 6px; margin-top: 6px;"></div>
               <p id="gameTemplateOptionsLimit" style="font-size: 0.75em; color: #6f839c; margin-top: 4px; line-height: 1.4;"></p>
               <div class="specialization-label" style="margin-top: 8px;">
-                <span id="gameTemplateCustomLabel">Egyedi útmutató</span>
+                <span id="gameTemplateCustomLabel"></span>
               </div>
               <textarea id="gameTemplateText" rows="6" style="width: 100%; resize: vertical; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder=""></textarea>
               <div style="display: flex; gap: 8px; margin-top: 8px;">
-                <button id="gameTemplateLoadBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
-                  📥 Betöltés
-                </button>
-                <button id="gameTemplateUseCurrentBtn" style="flex: 1; padding: 8px; background: rgba(120, 140, 170, 0.2); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
-                  🎯 Aktuális játék
-                </button>
+                <button id="gameTemplateLoadBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;"></button>
+                <button id="gameTemplateUseCurrentBtn" style="flex: 1; padding: 8px; background: rgba(120, 140, 170, 0.2); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;"></button>
               </div>
               <div style="display: flex; gap: 8px; margin-top: 8px;">
-                <button id="gameTemplateSaveBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
-                  ✅ Mentés
-                </button>
-                <button id="gameTemplateDeleteBtn" style="flex: 1; padding: 8px; background: rgba(255, 100, 100, 0.15); border: 1px solid rgba(255, 100, 100, 0.35); border-radius: 6px; color: #ffb0b0; cursor: pointer; font-size: 0.9em;">
-                  🗑️ Törlés
-                </button>
+                <button id="gameTemplateSaveBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;"></button>
+                <button id="gameTemplateDeleteBtn" style="flex: 1; padding: 8px; background: rgba(255, 100, 100, 0.15); border: 1px solid rgba(255, 100, 100, 0.35); border-radius: 6px; color: #ffb0b0; cursor: pointer; font-size: 0.9em;"></button>
               </div>
               <p id="gameTemplateStatus" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;"></p>
             </div>
@@ -126,7 +112,7 @@
     <!-- History Section -->
     <div class="collapsible-section" data-panel="history">
       <button class="section-header" id="historyHeaderBtn" onclick="toggleSection(event, this)">
-        <span id="historyHeaderLabel">📜 Előzmények</span>
+        <span id="historyHeaderLabel"></span>
         <span class="section-toggle">▼</span>
       </button>
       <div class="section-content history-section">
@@ -145,7 +131,7 @@
             </div>
             <div class="block-item" id="block-history-actions" data-block-id="history-actions" data-block-home="history" data-block-title-key="clearHistory">
               <div class="history-controls">
-                <button class="history-clear-btn" id="clearHistoryBtn">🗑️ Előzmények törlése</button>
+                <button class="history-clear-btn" id="clearHistoryBtn"></button>
               </div>
             </div>
           </div>
@@ -157,7 +143,7 @@
     <!-- Settings Section -->
     <div class="collapsible-section" data-panel="settings">
       <button class="section-header" onclick="toggleSection(event, this)">
-        <span id="settingsHeaderLabel">⚙️ Beállítások</span>
+        <span id="settingsHeaderLabel"></span>
         <span class="section-toggle">▼</span>
       </button>
       <div class="section-content">
@@ -165,26 +151,24 @@
           <div class="block-shelf" data-panel="settings">
             <div class="specialization-container block-item" id="block-spec" data-block-id="spec" data-block-home="settings" data-block-title-key="specializationLabel">
               <div class="specialization-label">
-                <span id="specLabel">🎯 Játék Specifikusság:</span>
+                <span id="specLabel"></span>
                 <span class="specialization-value"><span id="specValue">3</span>/5</span>
               </div>
               <input type="range" id="specializationLevel" min="1" max="5" value="3" onclick="event.stopPropagation()">
-              <p id="specDetail" style="font-size: 0.8em; color: #8ba3c0; margin-top: 8px; line-height: 1.4;">
-                1 = Rövid válaszok | 3 = Részletes | 5 = Maximális részletesség
-              </p>
+              <p id="specDetail" style="font-size: 0.8em; color: #8ba3c0; margin-top: 8px; line-height: 1.4;"></p>
             </div>
 
             <div class="specialization-container block-item" id="block-tts" data-block-id="tts" data-block-home="settings" data-block-title-key="ttsLabel" style="margin-top: 12px;">
               <div class="specialization-label">
-                <span id="ttsLabel">🔊 Hangos válaszok:</span>
+                <span id="ttsLabel"></span>
               </div>
               <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #f5f7fa;">
                 <input type="checkbox" id="enableTTS" checked style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
-                <span id="askTtsLabel">AI válasz felolvasása</span>
+                <span id="askTtsLabel"></span>
               </label>
               <div class="tts-volume">
                 <div class="tts-volume-label">
-                  <span id="speechRateLabel">🔊 Beszéd hangereje:</span>
+                  <span id="speechRateLabel"></span>
                   <span id="speechRateValue" class="tts-volume-value">100</span>
                 </div>
                 <input type="range" id="speechRate" value="100" min="0" max="100" onclick="event.stopPropagation()">
@@ -193,40 +177,34 @@
 
             <div class="specialization-container block-item" id="block-data" data-block-id="data" data-block-home="settings" data-block-title-key="dataLabel" style="margin-top: 12px;">
               <div class="specialization-label">
-                <span id="dataLabel">💾 Adatok:</span>
+                <span id="dataLabel"></span>
               </div>
-              <button id="exportHistoryBtn" onclick="exportHistory()" style="width: 100%; margin-bottom: 8px; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
-                📥 Előzmények exportálása
-              </button>
-              <button id="clearAllBtn" onclick="clearAllData()" style="width: 100%; padding: 8px; background: rgba(255, 100, 100, 0.2); border: 1px solid rgba(255, 100, 100, 0.4); border-radius: 6px; color: #ff6464; cursor: pointer; font-size: 0.9em;">
-                🗑️ Minden adat törlése
-              </button>
+              <button id="exportHistoryBtn" onclick="exportHistory()" style="width: 100%; margin-bottom: 8px; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;"></button>
+              <button id="clearAllBtn" onclick="clearAllData()" style="width: 100%; padding: 8px; background: rgba(255, 100, 100, 0.2); border: 1px solid rgba(255, 100, 100, 0.4); border-radius: 6px; color: #ff6464; cursor: pointer; font-size: 0.9em;"></button>
             </div>
 
             <div class="specialization-container block-item" id="block-ai-diagnostics" data-block-id="ai-diagnostics" data-block-home="settings" data-block-title-key="aiDiagnosticsLabel" style="margin-top: 12px;">
               <div class="specialization-label">
-                <span id="aiDiagnosticsLabel">🧪 AI diagnosztika</span>
+                <span id="aiDiagnosticsLabel"></span>
               </div>
               <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #f5f7fa;">
                 <input type="checkbox" id="aiDiagnosticsToggle" style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
-                <span id="aiDiagnosticsToggleLabel">Helyi diagnosztika engedélyezése</span>
+                <span id="aiDiagnosticsToggleLabel"></span>
               </label>
               <p id="aiDiagnosticsHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;"></p>
             </div>
 
             <div class="specialization-container block-item" id="block-layout" data-block-id="layout" data-block-home="settings" data-block-title-key="layoutMode" style="margin-top: 12px;">
               <div class="specialization-label">
-                <span id="layoutLabel">🧩 Layout:</span>
+                <span id="layoutLabel"></span>
               </div>
               <button class="reset-layout-btn" id="toggleLayoutBtn"></button>
-              <button class="reset-layout-btn" id="resetLayoutBtn">
-                🔄 Alapértelmezett elrendezés visszaállítása
-              </button>
+              <button class="reset-layout-btn" id="resetLayoutBtn"></button>
             </div>
 
             <div class="specialization-container block-item" id="block-note" data-block-id="note" data-block-home="settings" data-block-title-key="notePanelBtn" style="margin-top: 12px;">
               <div class="specialization-label">
-                <span id="notePanelLabel">📝 Jegyzet panel</span>
+                <span id="notePanelLabel"></span>
               </div>
               <div class="note-preview" id="notePanelPreview"></div>
               <button class="reset-layout-btn" id="notePanelBtn"></button>
@@ -235,7 +213,7 @@
             <div class="specialization-container block-item" id="block-free-layout" data-block-id="free-layout" data-block-home="settings" data-block-title-key="compositionModeLabel" style="margin-top: 12px;">
               <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #f5f7fa;">
                 <input type="checkbox" id="freeLayoutToggle" style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
-                <span id="compositionModeLabel">Composition mode</span>
+                <span id="compositionModeLabel"></span>
               </label>
             </div>
 
@@ -243,13 +221,13 @@
             <div class="specialization-container block-item" id="block-perf" data-block-id="perf" data-block-home="settings" data-block-title-key="perfHudLabel" style="margin-top: 12px;">
               <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #f5f7fa;">
                 <input type="checkbox" id="perfHudToggle" style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
-                <span id="perfHudLabel">⚡ Overlay teljesítmény HUD</span>
+                <span id="perfHudLabel"></span>
               </label>
             </div>
 
             <div class="specialization-container block-item" id="block-debug-map" data-block-id="debug-map" data-block-home="settings" data-block-title-key="debugMapLabel" style="margin-top: 12px;">
               <div class="specialization-label">
-                <span id="debugMapLabel">🧭 Debug map</span>
+                <span id="debugMapLabel"></span>
               </div>
               <button class="reset-layout-btn" id="debugMapToggleBtn"></button>
             </div>
@@ -257,11 +235,11 @@
 
             <div class="specialization-container block-item" id="block-version" data-block-id="version" data-block-home="settings" data-block-title-key="versionLabel" style="margin-top: 12px;">
               <div class="specialization-label">
-                <span id="versionLabel">ℹ️ Verzió:</span>
+                <span id="versionLabel"></span>
               </div>
               <p style="font-size: 0.85em; color: #8ba3c0;">
-                AI Game Assistant v1.0.0<br>
-                © 2026 - Gaming AI Helper
+                <span id="versionLine1"></span><br>
+                <span id="versionLine2"></span>
               </p>
             </div>
           </div>
@@ -279,9 +257,9 @@
   <div id="debugMapOverlay" class="debug-map-overlay" style="display: none;">
     <div class="debug-map-panel">
       <div class="debug-map-header">
-        <div class="debug-map-title" id="debugMapTitle">🧭 Debug map</div>
+        <div class="debug-map-title" id="debugMapTitle"></div>
         <div class="debug-map-actions">
-          <button class="debug-map-btn" id="debugMapRefreshBtn">↻ Refresh</button>
+          <button class="debug-map-btn" id="debugMapRefreshBtn"></button>
           <button class="debug-map-btn" id="debugMapCloseBtn">✕</button>
         </div>
       </div>
@@ -290,7 +268,7 @@
           <canvas id="debugMapCanvas"></canvas>
         </div>
         <div class="debug-map-issues">
-          <div class="debug-map-issues-title" id="debugMapIssuesTitle">Issues</div>
+          <div class="debug-map-issues-title" id="debugMapIssuesTitle"></div>
           <div id="debugMapIssuesList"></div>
         </div>
       </div>
@@ -304,31 +282,31 @@
   <!-- Custom Modal -->
   <div class="modal-overlay" id="confirmModal">
     <div class="modal-content">
-      <div class="modal-title" id="modalTitle">⚠️ Megerősítés</div>
+      <div class="modal-title" id="modalTitle"></div>
       <div class="modal-message" id="modalMessage"></div>
       <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" id="modalCancel">Mégse</button>
-        <button class="modal-btn modal-btn-confirm" id="modalConfirm">Törlés</button>
+        <button class="modal-btn modal-btn-cancel" id="modalCancel"></button>
+        <button class="modal-btn modal-btn-confirm" id="modalConfirm"></button>
       </div>
     </div>
   </div>
 
   <div class="modal-overlay" id="visionConsentModal">
     <div class="modal-content modal-content-consent">
-      <div class="modal-title" id="visionConsentTitle">📸 Vision engedely</div>
+      <div class="modal-title" id="visionConsentTitle"></div>
       <div class="modal-message" id="visionConsentMessage"></div>
       <div class="modal-buttons modal-buttons-grid">
-        <button class="modal-btn modal-btn-confirm" id="visionConsentAllowOnce">Egyszer engedelyezem</button>
-        <button class="modal-btn" id="visionConsentAllowAlways">Mindig engedelyezem</button>
-        <button class="modal-btn modal-btn-danger" id="visionConsentDenyAlways">Soha nem engedelyezem</button>
-        <button class="modal-btn modal-btn-cancel" id="visionConsentCancel">Megse</button>
+        <button class="modal-btn modal-btn-confirm" id="visionConsentAllowOnce"></button>
+        <button class="modal-btn" id="visionConsentAllowAlways"></button>
+        <button class="modal-btn modal-btn-danger" id="visionConsentDenyAlways"></button>
+        <button class="modal-btn modal-btn-cancel" id="visionConsentCancel"></button>
       </div>
     </div>
   </div>
 
   <div class="modal-overlay" id="factModal">
     <div class="modal-content">
-      <div class="modal-title" id="factModalTitle">➕ Új tény</div>
+      <div class="modal-title" id="factModalTitle"></div>
       <div class="modal-message" id="factModalHint"></div>
       <div style="display: grid; gap: 10px;">
         <div>
@@ -350,8 +328,8 @@
       </div>
       <div id="factModalStatus" style="font-size: 0.8em; color: #8ba3c0; margin-top: 8px;"></div>
       <div class="modal-buttons" style="margin-top: 12px;">
-        <button class="modal-btn modal-btn-cancel" id="factModalCancel">Mégse</button>
-        <button class="modal-btn modal-btn-confirm" id="factModalSave">Mentés</button>
+        <button class="modal-btn modal-btn-cancel" id="factModalCancel"></button>
+        <button class="modal-btn modal-btn-confirm" id="factModalSave"></button>
       </div>
     </div>
   </div>

@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Note</title>
+  <title></title>
   <style>
     :root {
       color-scheme: dark;
@@ -562,9 +562,9 @@
   <div id="root">
     <div class="panel">
       <div class="header" id="dragHeader">
-        <div class="title" id="title">📝 Note</div>
+        <div class="title" id="title"></div>
         <div class="header-actions">
-          <button class="close-btn" id="closeBtn" title="Close" aria-label="Close">✕</button>
+          <button class="close-btn" id="closeBtn" title="" aria-label="">✕</button>
         </div>
       </div>
 
@@ -575,34 +575,34 @@
       <div class="body">
         <div class="toolbar">
           <div class="note-select">
-            <label for="noteSelectBtn" id="noteSelectLabel">Note:</label>
+            <label for="noteSelectBtn" id="noteSelectLabel"></label>
             <div class="note-select-wrap">
               <button class="note-select-btn" id="noteSelectBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
                 <span class="note-select-value" id="noteSelectValue"></span>
                 <span class="note-select-caret" aria-hidden="true">▾</span>
               </button>
-              <button class="icon-btn" id="pinToggleBtn" title="Pin" aria-label="Pin">📌</button>
+              <button class="icon-btn" id="pinToggleBtn" title="" aria-label="">📌</button>
               <div class="note-dropdown" id="noteDropdown">
                 <div class="note-search" id="noteSearchRow">
-                  <input type="text" id="noteSearch" placeholder="Search notes..." />
+                  <input type="text" id="noteSearch" placeholder="" />
                 </div>
                 <div class="note-list" id="noteList" role="listbox"></div>
               </div>
             </div>
           </div>
           <div class="toolbar-actions">
-            <button class="icon-btn" id="newNoteBtn" title="New" aria-label="New">➕</button>
-            <button class="icon-btn" id="renameNoteBtn" title="Rename" aria-label="Rename">✏️</button>
-            <button class="icon-btn danger" id="deleteNoteBtn" title="Delete" aria-label="Delete">🗑️</button>
+            <button class="icon-btn" id="newNoteBtn" title="" aria-label="">➕</button>
+            <button class="icon-btn" id="renameNoteBtn" title="" aria-label="">✏️</button>
+            <button class="icon-btn danger" id="deleteNoteBtn" title="" aria-label="">🗑️</button>
           </div>
         </div>
 
-        <input type="text" id="noteTitle" class="note-title" placeholder="Note" />
-        <textarea id="noteText" placeholder="Write a note..."></textarea>
+        <input type="text" id="noteTitle" class="note-title" placeholder="" />
+        <textarea id="noteText" placeholder=""></textarea>
 
         <div class="footer">
-          <span id="saveStatus">Saved</span>
-          <span id="updatedAt">Last updated:</span>
+          <span id="saveStatus"></span>
+          <span id="updatedAt"></span>
         </div>
       </div>
     </div>
@@ -610,11 +610,11 @@
 
   <div class="modal-overlay" id="confirmModal">
     <div class="modal">
-      <div class="modal-title" id="modalTitle">⚠️ Confirmation</div>
+      <div class="modal-title" id="modalTitle"></div>
       <div class="modal-message" id="modalMessage"></div>
       <div class="modal-buttons">
-        <button class="modal-btn" id="modalCancel">Cancel</button>
-        <button class="modal-btn modal-btn-danger" id="modalConfirm">Delete</button>
+        <button class="modal-btn" id="modalCancel"></button>
+        <button class="modal-btn modal-btn-danger" id="modalConfirm"></button>
       </div>
     </div>
   </div>
@@ -674,11 +674,16 @@
 
     function applyI18n() {
       const t = i18n.t();
-      if (t.notePanelTitle) titleEl.textContent = t.notePanelTitle;
+      if (t.notePanelTitle) {
+        titleEl.textContent = t.notePanelTitle;
+        document.title = t.notePanelTitle;
+      }
       if (t.notePanelPlaceholder) noteText.placeholder = t.notePanelPlaceholder;
       if (noteSelectLabel) noteSelectLabel.textContent = t.notePanelSelectLabel || noteSelectLabel.textContent;
       if (noteSearch) noteSearch.placeholder = t.notePanelSearchPlaceholder || noteSearch.placeholder;
       if (noteTitle) noteTitle.placeholder = t.notePanelDefaultTitle || noteTitle.placeholder;
+      if (saveStatus) saveStatus.textContent = t.notePanelStatusSaved || saveStatus.textContent;
+      if (updatedAt) updatedAt.textContent = t.notePanelUpdatedLabel || updatedAt.textContent;
       if (newNoteBtn) {
         const label = t.notePanelNew || '➕ New';
         newNoteBtn.title = label;

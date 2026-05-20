@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pinned</title>
+  <title></title>
   <style>
     :root {
       color-scheme: dark;
@@ -216,16 +216,16 @@
   <div id="root">
     <div class="panel">
       <div class="header" id="dragHeader">
-        <div id="title">📌 Pinned history</div>
-        <div class="meta" id="meta">…</div>
+        <div id="title"></div>
+        <div class="meta" id="meta"></div>
       </div>
       <div class="resize-handle resize-handle-right" id="resizeRight"></div>
       <div class="resize-handle resize-handle-bottom" id="resizeBottom"></div>
       <div class="resize-handle resize-handle-corner" id="resizeCorner"></div>
       <div class="body" id="content">
-        <div class="label" id="qLabel">Question</div>
+        <div class="label" id="qLabel"></div>
         <div class="block" id="qText"></div>
-        <div class="label" id="aLabel">Answer</div>
+        <div class="label" id="aLabel"></div>
         <div class="block" id="aText"></div>
       </div>
     </div>
@@ -258,7 +258,10 @@
 
     function applyI18n() {
       const t = i18n.t();
-      if (t.pinnedHistoryTitle) titleEl.textContent = t.pinnedHistoryTitle;
+      if (t.pinnedHistoryTitle) {
+        titleEl.textContent = t.pinnedHistoryTitle;
+        document.title = t.pinnedHistoryTitle;
+      }
       if (t.historyPopupQuestion) qLabelEl.textContent = t.historyPopupQuestion;
       if (t.historyPopupAnswer) aLabelEl.textContent = t.historyPopupAnswer;
     }

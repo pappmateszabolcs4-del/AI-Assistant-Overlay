@@ -34,11 +34,20 @@ function createRendererI18n(options = {}) {
   let overrides = readOverrides();
   let bundle = getUiText(currentLang, getLangOverrides(overrides, currentLang));
 
+  function warnMissingKeys(lang, missingKeys) {
+    if (!Array.isArray(missingKeys) || !missingKeys.length) return;
+    console.warn(`[i18n] Missing UI text keys for ${lang}: ${missingKeys.join(', ')}`);
+  }
+
   async function ensureTranslations(lang) {
     const normalized = normalizeLang(lang || currentLang);
     const langOverrides = getLangOverrides(overrides, normalized);
     const missingKeys = getMissingKeys(normalized, langOverrides);
-    if (!missingKeys.length || normalized === DEFAULT_LANG) return false;
+    if (!missingKeys.length) return false;
+    if (normalized === DEFAULT_LANG) {
+      warnMissingKeys(normalized, missingKeys);
+      return false;
+    }
 
     const entries = missingKeys.map((key) => ({ key, text: getUiText(DEFAULT_LANG)[key] }));
     let result = null;
@@ -51,7 +60,10 @@ function createRendererI18n(options = {}) {
       return false;
     }
 
-    if (!result || !result.success || !result.translations) return false;
+    if (!result || !result.success || !result.translations) {
+      warnMissingKeys(normalized, missingKeys);
+      return false;
+    }
 
     overrides = readOverrides();
     const updated = { ...(getLangOverrides(overrides, normalized) || {}) };
@@ -74,6 +86,10 @@ function createRendererI18n(options = {}) {
     currentLang = normalizeLang(nextLang || DEFAULT_LANG);
     overrides = readOverrides();
     bundle = getUiText(currentLang, getLangOverrides(overrides, currentLang));
+    if (currentLang === DEFAULT_LANG) {
+      const missingKeys = getMissingKeys(currentLang, getLangOverrides(overrides, currentLang));
+      warnMissingKeys(currentLang, missingKeys);
+    }
     if (typeof options.onUpdate === 'function') {
       options.onUpdate(bundle);
     }

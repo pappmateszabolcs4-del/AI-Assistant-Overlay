@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Info</title>
+  <title></title>
   <style>
     :root {
       color-scheme: dark;
@@ -283,7 +283,7 @@
   <div id="root">
     <div class="panel">
       <div class="drag-area" id="dragHeader">
-        <div class="modal-title" id="title">ℹ️ Info</div>
+        <div class="modal-title" id="title"></div>
       </div>
 
       <div class="resize-handle resize-handle-right" id="resizeRight"></div>
@@ -293,7 +293,7 @@
       <div class="modal-message" id="infoText"></div>
 
       <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" id="closeBtn">Close</button>
+        <button class="modal-btn modal-btn-cancel" id="closeBtn"></button>
       </div>
     </div>
   </div>
@@ -322,7 +322,10 @@
 
     function applyI18n() {
       const t = i18n.t();
-      if (t.infoTitle) titleEl.textContent = t.infoTitle;
+      if (t.infoTitle) {
+        titleEl.textContent = t.infoTitle;
+        document.title = t.infoTitle;
+      }
       if (t.infoBody) renderInfoBody(t.infoBody);
       if (t.btnClose) closeBtn.textContent = t.btnClose;
     }
