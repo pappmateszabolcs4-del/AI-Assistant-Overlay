@@ -8,6 +8,7 @@ const __skipBlocksManager = (typeof __isBlockWindow !== 'undefined' && __isBlock
 
 const BLOCKS = [
   { id: 'ask-main', home: 'ask', elementId: 'block-ask-main', titleKey: 'tabAsk' },
+  { id: 'game-template', home: 'ask', elementId: 'block-game-template', titleKey: 'gameTemplateLabel' },
   { id: 'history-list', home: 'history', elementId: 'block-history-list', titleKey: 'history' },
   { id: 'history-actions', home: 'history', elementId: 'block-history-actions', titleKey: 'clearHistory' },
   { id: 'spec', home: 'settings', elementId: 'block-spec', titleKey: 'specializationLabel' },
@@ -281,6 +282,7 @@ function applyLayouts() {
   writeLayouts(layouts);
   initDragHandles();
   clearExternalDropTargets();
+  try { window.__applyGameTemplateDraftFromStorage && window.__applyGameTemplateDraftFromStorage(); } catch (_) {}
 }
 
 function ensureDragHandle(blockId, el) {
@@ -324,6 +326,11 @@ function ensureDragHandle(blockId, el) {
     if (!dragState.blockId || dragState.pointerId !== event.pointerId) return;
     const layouts = readLayouts();
     const blockIdLocal = dragState.blockId;
+    try {
+      if (blockIdLocal === 'game-template') {
+        window.__saveGameTemplateDraftFromUi && window.__saveGameTemplateDraftFromUi();
+      }
+    } catch (_) {}
     const targetPanel = dragState.targetPanel || findPanelIdFromPoint(event.clientX, event.clientY);
 
     if (targetPanel && canDockToPanel(blockIdLocal, targetPanel)) {

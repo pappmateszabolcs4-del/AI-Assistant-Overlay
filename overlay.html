@@ -78,6 +78,40 @@
                 </div>
               </div>
             </div>
+            <div class="specialization-container block-item" id="block-game-template" data-block-id="game-template" data-block-home="ask" data-block-title-key="gameTemplateLabel" style="margin-top: 12px;">
+              <div class="specialization-label">
+                <span id="gameTemplateLabel">🎮 Játék template</span>
+              </div>
+              <p id="gameTemplateHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;"></p>
+              <input type="text" id="gameTemplateNameInput" style="width: 100%; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder="" />
+              <div class="specialization-label" style="margin-top: 8px;">
+                <span id="gameTemplateOptionsLabel">✅ Választható irányok</span>
+              </div>
+              <p id="gameTemplateOptionsHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 4px; line-height: 1.4;"></p>
+              <div id="gameTemplateOptionsList" style="display: grid; gap: 6px; margin-top: 6px;"></div>
+              <p id="gameTemplateOptionsLimit" style="font-size: 0.75em; color: #6f839c; margin-top: 4px; line-height: 1.4;"></p>
+              <div class="specialization-label" style="margin-top: 8px;">
+                <span id="gameTemplateCustomLabel">Egyedi útmutató</span>
+              </div>
+              <textarea id="gameTemplateText" rows="6" style="width: 100%; resize: vertical; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder=""></textarea>
+              <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button id="gameTemplateLoadBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
+                  📥 Betöltés
+                </button>
+                <button id="gameTemplateUseCurrentBtn" style="flex: 1; padding: 8px; background: rgba(120, 140, 170, 0.2); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
+                  🎯 Aktuális játék
+                </button>
+              </div>
+              <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button id="gameTemplateSaveBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
+                  ✅ Mentés
+                </button>
+                <button id="gameTemplateDeleteBtn" style="flex: 1; padding: 8px; background: rgba(255, 100, 100, 0.15); border: 1px solid rgba(255, 100, 100, 0.35); border-radius: 6px; color: #ffb0b0; cursor: pointer; font-size: 0.9em;">
+                  🗑️ Törlés
+                </button>
+              </div>
+              <p id="gameTemplateStatus" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;"></p>
+            </div>
           </div>
         </div>
         <div class="popup-resize-handle"></div>
@@ -197,7 +231,6 @@
                 </button>
               </div>
             </div>
-
 
             <div class="specialization-container block-item" id="block-layout" data-block-id="layout" data-block-home="settings" data-block-title-key="layoutMode" style="margin-top: 12px;">
               <div class="specialization-label">

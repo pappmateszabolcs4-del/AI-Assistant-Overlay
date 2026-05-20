@@ -3,6 +3,7 @@ const { STORAGE_KEYS } = require('../../shared/storage-keys');
 const { isDev } = require('../../shared/app-env');
 const { appendOverlayDebug } = require('../utils/overlay-debug-log');
 const { appendOverlayPerf } = require('../utils/overlay-perf-log');
+const { listTemplates, upsertTemplate, deleteTemplate } = require('../services/game-template-store');
 
 function registerOverlayIpc(deps) {
   const {
@@ -306,6 +307,23 @@ function registerOverlayIpc(deps) {
       .slice(0, 200);
     game.gameDetectMappings = cleaned;
     return { success: true, count: cleaned.length };
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GET_GAME_TEMPLATES, async () => {
+    return { success: true, templates: listTemplates() };
+  });
+
+  ipcMain.handle(IPC_CHANNELS.UPSERT_GAME_TEMPLATE, async (_event, payload) => {
+    const gameName = payload && payload.game ? String(payload.game) : '';
+    const template = payload && payload.template ? String(payload.template) : '';
+    const aliases = payload && Array.isArray(payload.aliases) ? payload.aliases : [];
+    const options = payload && Array.isArray(payload.options) ? payload.options : [];
+    return upsertTemplate(gameName, template, aliases, options);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.DELETE_GAME_TEMPLATE, async (_event, payload) => {
+    const gameName = payload && payload.game ? String(payload.game) : '';
+    return deleteTemplate(gameName);
   });
 
 

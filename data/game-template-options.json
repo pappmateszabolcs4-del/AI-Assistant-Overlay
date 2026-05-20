@@ -1,0 +1,92 @@
+[
+  {
+    "id": "short-steps",
+    "labelKey": "gameTemplateOptShortSteps",
+    "prompt": {
+      "hu": "Adj 3-5 rövid, lépésenkénti útmutatót rövid indoklással.",
+      "en": "Give 3-5 concise step-by-step actions with brief reasoning.",
+      "de": "Gib 3-5 kurze, schrittweise Aktionen mit kurzer Begründung.",
+      "ru": "Дай 3-5 коротких пошаговых действий с кратким обоснованием.",
+      "fr": "Donne 3-5 étapes courtes, pas à pas, avec une brève raison.",
+      "zh": "给出3-5个简短的步骤，并简要说明原因。",
+      "es": "Da 3-5 pasos concisos y secuenciales con una breve explicación.",
+      "it": "Fornisci 3-5 passi concisi e sequenziali con breve motivazione.",
+      "pl": "Podaj 3-5 krótkich kroków po kolei z krótkim uzasadnieniem."
+    }
+  },
+  {
+    "id": "progression-focus",
+    "labelKey": "gameTemplateOptProgression",
+    "prompt": {
+      "hu": "Fókuszálj a progresszióra és a következő célokra.",
+      "en": "Focus on progression and the next goals.",
+      "de": "Fokussiere dich auf Fortschritt und die nächsten Ziele.",
+      "ru": "Сосредоточься на прогрессе и следующих целях.",
+      "fr": "Concentre-toi sur la progression et les prochains objectifs.",
+      "zh": "聚焦进度和下一步目标。",
+      "es": "Enfócate en la progresión y los siguientes objetivos.",
+      "it": "Concentrati sulla progressione e sui prossimi obiettivi.",
+      "pl": "Skup się na progresji i kolejnych celach."
+    }
+  },
+  {
+    "id": "build-gear",
+    "labelKey": "gameTemplateOptBuilds",
+    "prompt": {
+      "hu": "Adj build/felszerelés javaslatokat és prioritásokat.",
+      "en": "Include build/gear recommendations and priorities.",
+      "de": "Gib Build/Equipment-Empfehlungen und Prioritäten.",
+      "ru": "Добавь рекомендации по билду/экипировке и приоритетам.",
+      "fr": "Inclue des recommandations de build/équipement et des priorités.",
+      "zh": "包含build/装备建议和优先级。",
+      "es": "Incluye recomendaciones de build/equipo y prioridades.",
+      "it": "Includi consigli su build/equipaggiamento e priorità.",
+      "pl": "Uwzględnij rekomendacje buildu/ekwipunku i priorytety."
+    }
+  },
+  {
+    "id": "no-spoilers",
+    "labelKey": "gameTemplateOptNoSpoilers",
+    "prompt": {
+      "hu": "Kerüld a spoilereket a történetről és a késő játéktartalomról.",
+      "en": "Avoid spoilers about story or late-game content.",
+      "de": "Vermeide Spoiler zur Story oder zum Late-Game.",
+      "ru": "Избегай спойлеров о сюжете и позднем контенте.",
+      "fr": "Évite les spoilers sur l'histoire ou le contenu de fin de jeu.",
+      "zh": "避免剧情或后期内容的剧透。",
+      "es": "Evita spoilers de la historia o del late-game.",
+      "it": "Evita spoiler sulla storia o sul late-game.",
+      "pl": "Unikaj spoilerów fabuły i późnej gry."
+    }
+  },
+  {
+    "id": "boss-tips",
+    "labelKey": "gameTemplateOptBossTips",
+    "prompt": {
+      "hu": "Adj boss/encounter tippeket, ha releváns.",
+      "en": "Include boss/encounter tips when relevant.",
+      "de": "Gib Boss/Encounter-Tipps, falls relevant.",
+      "ru": "Добавь советы по боссам/схваткам, если это уместно.",
+      "fr": "Inclue des conseils de boss/rencontres si pertinent.",
+      "zh": "如相关，提供boss/遭遇战提示。",
+      "es": "Incluye consejos de jefes/encuentros si aplica.",
+      "it": "Includi consigli su boss/scontri se pertinenti.",
+      "pl": "Dodaj wskazówki dot. bossów/starć, gdy to ważne."
+    }
+  },
+  {
+    "id": "farming-priority",
+    "labelKey": "gameTemplateOptFarming",
+    "prompt": {
+      "hu": "Add meg az erőforrás-farmolás prioritásait.",
+      "en": "Include resource farming priorities.",
+      "de": "Nenne Prioritäten beim Ressourcen-Farmen.",
+      "ru": "Укажи приоритеты фарма ресурсов.",
+      "fr": "Indique les priorités de farm de ressources.",
+      "zh": "说明资源刷取的优先级。",
+      "es": "Indica prioridades para farmear recursos.",
+      "it": "Indica le priorita di farming delle risorse.",
+      "pl": "Podaj priorytety farmienia zasobów."
+    }
+  }
+]

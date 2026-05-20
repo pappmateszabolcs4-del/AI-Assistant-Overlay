@@ -133,6 +133,42 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
         </div>
       </div>
     `,
+    'game-template': `
+      <div class="specialization-container block-item" id="block-game-template" data-block-id="game-template" data-block-home="ask" data-block-title-key="gameTemplateLabel">
+        <div class="specialization-label">
+          <span id="gameTemplateLabel">🎮 Játék template</span>
+        </div>
+        <p id="gameTemplateHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;"></p>
+        <input type="text" id="gameTemplateNameInput" style="width: 100%; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder="" />
+        <div class="specialization-label" style="margin-top: 8px;">
+          <span id="gameTemplateOptionsLabel">✅ Választható irányok</span>
+        </div>
+        <p id="gameTemplateOptionsHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 4px; line-height: 1.4;"></p>
+        <div id="gameTemplateOptionsList" style="display: grid; gap: 6px; margin-top: 6px;"></div>
+        <p id="gameTemplateOptionsLimit" style="font-size: 0.75em; color: #6f839c; margin-top: 4px; line-height: 1.4;"></p>
+        <div class="specialization-label" style="margin-top: 8px;">
+          <span id="gameTemplateCustomLabel">Egyedi útmutató</span>
+        </div>
+        <textarea id="gameTemplateText" rows="6" style="width: 100%; resize: vertical; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder=""></textarea>
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+          <button id="gameTemplateLoadBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
+            📥 Betöltés
+          </button>
+          <button id="gameTemplateUseCurrentBtn" style="flex: 1; padding: 8px; background: rgba(120, 140, 170, 0.2); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
+            🎯 Aktuális játék
+          </button>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+          <button id="gameTemplateSaveBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
+            ✅ Mentés
+          </button>
+          <button id="gameTemplateDeleteBtn" style="flex: 1; padding: 8px; background: rgba(255, 100, 100, 0.15); border: 1px solid rgba(255, 100, 100, 0.35); border-radius: 6px; color: #ffb0b0; cursor: pointer; font-size: 0.9em;">
+            🗑️ Törlés
+          </button>
+        </div>
+        <p id="gameTemplateStatus" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;"></p>
+      </div>
+    `,
     'layout': `
       <div class="specialization-container block-item" id="block-layout" data-block-id="layout" data-block-home="settings" data-block-title-key="layoutMode">
         <div class="specialization-label">
@@ -204,6 +240,23 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
   const gameIgnoreInput = document.getElementById('gameIgnoreInput');
   const gameIgnoreApplyBtn = document.getElementById('gameIgnoreApplyBtn');
   const gameIgnoreResetBtn = document.getElementById('gameIgnoreResetBtn');
+  const gameTemplateLabel = document.getElementById('gameTemplateLabel');
+  const gameTemplateHint = document.getElementById('gameTemplateHint');
+  const gameTemplateNameInput = document.getElementById('gameTemplateNameInput');
+  const gameTemplateOptionsLabel = document.getElementById('gameTemplateOptionsLabel');
+  const gameTemplateOptionsHint = document.getElementById('gameTemplateOptionsHint');
+  const gameTemplateOptionsList = document.getElementById('gameTemplateOptionsList');
+  const gameTemplateOptionsLimit = document.getElementById('gameTemplateOptionsLimit');
+  const gameTemplateCustomLabel = document.getElementById('gameTemplateCustomLabel');
+  const gameTemplateText = document.getElementById('gameTemplateText');
+  const gameTemplateLoadBtn = document.getElementById('gameTemplateLoadBtn');
+  const gameTemplateUseCurrentBtn = document.getElementById('gameTemplateUseCurrentBtn');
+  const gameTemplateSaveBtn = document.getElementById('gameTemplateSaveBtn');
+  const gameTemplateDeleteBtn = document.getElementById('gameTemplateDeleteBtn');
+  const gameTemplateStatus = document.getElementById('gameTemplateStatus');
+  const GAME_TEMPLATE_OPTIONS_LIMIT = 5;
+  let gameTemplateOptions = [];
+  let gameTemplateDraft = null;
 
   const visionEnableToggle = document.getElementById('visionEnableToggle');
   const visionAllowListInput = document.getElementById('visionAllowListInput');
@@ -413,6 +466,9 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
       await requestGameContext();
     }
 
+    const templateGame = await ensureTemplateDraftSaved();
+    const resolvedGameContext = currentGameContext || templateGame || null;
+
     const gameName = currentGameContext || '';
     const allowList = loadVisionList(STORAGE_KEYS.VISION_ALLOWLIST);
     const denyList = loadVisionList(STORAGE_KEYS.VISION_DENYLIST);
@@ -457,6 +513,24 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     if (status && t().visionConsentCanceled) status.textContent = t().visionConsentCanceled;
     return false;
   }
+  function getTemplateOverrideContext() {
+    return normalizeGameTemplateName(gameTemplateNameInput ? gameTemplateNameInput.value : '');
+  }
+  async function ensureTemplateDraftSaved() {
+    const gameName = getTemplateOverrideContext();
+    if (!gameName) return '';
+    const templateText = String(gameTemplateText ? gameTemplateText.value : '').trim();
+    const selectedOptions = getSelectedTemplateOptionIds();
+    if (!templateText && selectedOptions.length === 0) return gameName;
+    try {
+      await invokeMain(IPC_CHANNELS.UPSERT_GAME_TEMPLATE, {
+        game: gameName,
+        template: templateText,
+        options: selectedOptions
+      });
+    } catch (_) {}
+    return gameName;
+  }
 
   function normalizeGameIgnoreInput(text) {
     return String(text || '')
@@ -499,6 +573,183 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     }
 
     sendGameIgnoreListToMain(normalized);
+  }
+
+  function normalizeGameTemplateName(value) {
+    return String(value || '').trim();
+  }
+
+  function findTemplateEntry(templates, gameName) {
+    const key = normalizeGameTemplateName(gameName).toLowerCase();
+    if (!key) return null;
+    const list = Array.isArray(templates) ? templates : [];
+    for (const entry of list) {
+      if (!entry) continue;
+      const entryKey = normalizeGameTemplateName(entry.game).toLowerCase();
+      if (entryKey && entryKey === key) return entry;
+      const aliases = Array.isArray(entry.aliases) ? entry.aliases : [];
+      for (const alias of aliases) {
+        if (normalizeGameTemplateName(alias).toLowerCase() === key) return entry;
+      }
+    }
+    return null;
+  }
+
+  function setGameTemplateStatus(message) {
+    if (gameTemplateStatus) gameTemplateStatus.textContent = message || '';
+  }
+
+  function loadGameTemplateDraft() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.GAME_TEMPLATE_DRAFT);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return null;
+      return parsed;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function persistGameTemplateDraft(draft) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.GAME_TEMPLATE_DRAFT, JSON.stringify(draft || {}));
+    } catch (_) {}
+  }
+
+  function captureGameTemplateDraft() {
+    return {
+      name: gameTemplateNameInput ? String(gameTemplateNameInput.value || '') : '',
+      text: gameTemplateText ? String(gameTemplateText.value || '') : '',
+      options: getSelectedTemplateOptionIds()
+    };
+  }
+
+  function applyGameTemplateDraft(draft) {
+    if (!draft || typeof draft !== 'object') return;
+    if (gameTemplateNameInput && typeof draft.name === 'string') {
+      gameTemplateNameInput.value = draft.name;
+    }
+    if (gameTemplateText && typeof draft.text === 'string') {
+      gameTemplateText.value = draft.text;
+    }
+    if (gameTemplateOptionsList && Array.isArray(draft.options)) {
+      applyTemplateOptionSelection(draft.options);
+    }
+  }
+
+  function saveGameTemplateDraftFromUi() {
+    persistGameTemplateDraft(captureGameTemplateDraft());
+  }
+
+  function getDefaultTemplateOptions() {
+    return [
+      { id: 'short-steps', labelKey: 'gameTemplateOptShortSteps' },
+      { id: 'progression-focus', labelKey: 'gameTemplateOptProgression' },
+      { id: 'build-gear', labelKey: 'gameTemplateOptBuilds' },
+      { id: 'no-spoilers', labelKey: 'gameTemplateOptNoSpoilers' },
+      { id: 'boss-tips', labelKey: 'gameTemplateOptBossTips' },
+      { id: 'farming-priority', labelKey: 'gameTemplateOptFarming' }
+    ];
+  }
+
+  function getTemplateOptionLabel(option) {
+    if (!option) return '';
+    const key = option.labelKey;
+    if (key && t()[key]) return t()[key];
+    return option.label || key || '';
+  }
+
+  function getSelectedTemplateOptionIds() {
+    if (!gameTemplateOptionsList) return [];
+    return Array.from(gameTemplateOptionsList.querySelectorAll('input[type="checkbox"]'))
+      .filter((input) => input.checked)
+      .map((input) => input.dataset.optionId)
+      .filter(Boolean);
+  }
+
+  function applyTemplateOptionSelection(optionIds) {
+    if (!gameTemplateOptionsList) return;
+    const selected = new Set((optionIds || []).map((id) => String(id)));
+    gameTemplateOptionsList.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+      input.checked = selected.has(input.dataset.optionId || '');
+    });
+  }
+
+  function renderGameTemplateOptions() {
+    if (!gameTemplateOptionsList) return;
+    const selectedBefore = getSelectedTemplateOptionIds();
+    gameTemplateOptionsList.innerHTML = '';
+    const list = Array.isArray(gameTemplateOptions) ? gameTemplateOptions : [];
+    list.forEach((option) => {
+      const label = document.createElement('label');
+      label.style.display = 'flex';
+      label.style.alignItems = 'center';
+      label.style.gap = '8px';
+      label.style.cursor = 'pointer';
+      label.style.color = '#f5f7fa';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.style.width = '16px';
+      input.style.height = '16px';
+      input.style.cursor = 'pointer';
+      input.dataset.optionId = option.id || '';
+      input.addEventListener('change', () => {
+        const selected = getSelectedTemplateOptionIds();
+        if (selected.length > GAME_TEMPLATE_OPTIONS_LIMIT) {
+          input.checked = false;
+          setGameTemplateStatus((t().gameTemplateOptionLimitReached || 'Max {count} options.')
+            .replace('{count}', String(GAME_TEMPLATE_OPTIONS_LIMIT)));
+        }
+        saveGameTemplateDraftFromUi();
+      });
+      const span = document.createElement('span');
+      span.textContent = getTemplateOptionLabel(option);
+      label.appendChild(input);
+      label.appendChild(span);
+      gameTemplateOptionsList.appendChild(label);
+    });
+    applyTemplateOptionSelection(selectedBefore);
+    if (gameTemplateDraft && Array.isArray(gameTemplateDraft.options)) {
+      applyTemplateOptionSelection(gameTemplateDraft.options);
+    }
+  }
+
+  async function loadGameTemplateOptions() {
+    let list = null;
+    try {
+      const res = await fetch('data/game-template-options.json', { cache: 'no-store' });
+      if (res && res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) list = data;
+      }
+    } catch (_) {
+      list = null;
+    }
+    gameTemplateOptions = Array.isArray(list) && list.length ? list : getDefaultTemplateOptions();
+    renderGameTemplateOptions();
+  }
+
+  async function loadGameTemplateForGame(gameName) {
+    let response = null;
+    try {
+      response = await invokeMain(IPC_CHANNELS.GET_GAME_TEMPLATES);
+    } catch (_) {
+      response = null;
+    }
+    const entry = response && response.success ? findTemplateEntry(response.templates, gameName) : null;
+    if (!gameTemplateText) return false;
+    if (entry) {
+      gameTemplateText.value = typeof entry.template === 'string' ? entry.template : '';
+      applyTemplateOptionSelection(entry.options || []);
+      setGameTemplateStatus(t().gameTemplateLoaded || 'Template loaded');
+      saveGameTemplateDraftFromUi();
+      return true;
+    }
+    gameTemplateText.value = '';
+    applyTemplateOptionSelection([]);
+    saveGameTemplateDraftFromUi();
+    return false;
   }
 
   function getUserFacingErrorMessage(rawError) {
@@ -651,6 +902,22 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     if (visionConsentAllowAlways) visionConsentAllowAlways.textContent = t().visionConsentAllowAlways || visionConsentAllowAlways.textContent;
     if (visionConsentDenyAlways) visionConsentDenyAlways.textContent = t().visionConsentDenyAlways || visionConsentDenyAlways.textContent;
     if (visionConsentCancel) visionConsentCancel.textContent = t().visionConsentCancel || visionConsentCancel.textContent;
+    if (gameTemplateLabel) gameTemplateLabel.textContent = t().gameTemplateLabel || gameTemplateLabel.textContent;
+    if (gameTemplateHint) gameTemplateHint.textContent = t().gameTemplateHint || gameTemplateHint.textContent;
+    if (gameTemplateOptionsLabel) gameTemplateOptionsLabel.textContent = t().gameTemplateOptionsLabel || gameTemplateOptionsLabel.textContent;
+    if (gameTemplateOptionsHint) gameTemplateOptionsHint.textContent = t().gameTemplateOptionsHint || gameTemplateOptionsHint.textContent;
+    if (gameTemplateOptionsLimit) {
+      const limitTemplate = t().gameTemplateOptionsLimit || 'Max {count} options.';
+      gameTemplateOptionsLimit.textContent = limitTemplate.replace('{count}', String(GAME_TEMPLATE_OPTIONS_LIMIT));
+    }
+    if (gameTemplateCustomLabel) gameTemplateCustomLabel.textContent = t().gameTemplateCustomLabel || gameTemplateCustomLabel.textContent;
+    if (gameTemplateNameInput) gameTemplateNameInput.placeholder = t().gameTemplateNamePlaceholder || gameTemplateNameInput.placeholder;
+    if (gameTemplateText) gameTemplateText.placeholder = t().gameTemplateTextPlaceholder || gameTemplateText.placeholder;
+    if (gameTemplateLoadBtn) gameTemplateLoadBtn.textContent = t().gameTemplateLoad || gameTemplateLoadBtn.textContent;
+    if (gameTemplateUseCurrentBtn) gameTemplateUseCurrentBtn.textContent = t().gameTemplateUseCurrent || gameTemplateUseCurrentBtn.textContent;
+    if (gameTemplateSaveBtn) gameTemplateSaveBtn.textContent = t().gameTemplateSave || gameTemplateSaveBtn.textContent;
+    if (gameTemplateDeleteBtn) gameTemplateDeleteBtn.textContent = t().gameTemplateDelete || gameTemplateDeleteBtn.textContent;
+    renderGameTemplateOptions();
     const versionLabel = document.getElementById('versionLabel');
     if (versionLabel) versionLabel.textContent = t().versionLabel || versionLabel.textContent;
     const layoutLabel = document.getElementById('layoutLabel');
@@ -755,7 +1022,9 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     askBtn.disabled = true;
     try {
       const specLevel = specializationSlider ? parseInt(specializationSlider.value) : 3;
-      const result = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, text, currentLanguage, specLevel, currentScreenshot, currentGameContext);
+      const templateGame = await ensureTemplateDraftSaved();
+      const resolvedGameContext = currentGameContext || templateGame || null;
+      const result = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, text, currentLanguage, specLevel, currentScreenshot, resolvedGameContext);
       if (result.success) {
         status.textContent = t().responseReady;
         const aiResponse = document.getElementById('aiResponse');
@@ -824,6 +1093,88 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     });
   }
 
+  if (gameTemplateNameInput) {
+    on(gameTemplateNameInput, 'input', saveGameTemplateDraftFromUi);
+  }
+
+  if (gameTemplateText) {
+    on(gameTemplateText, 'input', saveGameTemplateDraftFromUi);
+  }
+
+  if (gameTemplateUseCurrentBtn) {
+    on(gameTemplateUseCurrentBtn, 'click', async () => {
+      if (!gameTemplateNameInput) return;
+      if (!currentGameContext) {
+        await requestGameContext();
+      }
+      if (currentGameContext) {
+        gameTemplateNameInput.value = currentGameContext;
+        saveGameTemplateDraftFromUi();
+      }
+    });
+  }
+
+  if (gameTemplateLoadBtn) {
+    on(gameTemplateLoadBtn, 'click', async () => {
+      const gameName = normalizeGameTemplateName(gameTemplateNameInput ? gameTemplateNameInput.value : '');
+      if (!gameName) {
+        setGameTemplateStatus(t().gameTemplateMissing || 'Enter a game name and select options or write guidance.');
+        return;
+      }
+      await loadGameTemplateForGame(gameName);
+    });
+  }
+
+  if (gameTemplateSaveBtn) {
+    on(gameTemplateSaveBtn, 'click', async () => {
+      const gameName = normalizeGameTemplateName(gameTemplateNameInput ? gameTemplateNameInput.value : '');
+      const templateText = String(gameTemplateText ? gameTemplateText.value : '').trim();
+      const selectedOptions = getSelectedTemplateOptionIds();
+      if (!gameName || (!templateText && selectedOptions.length === 0)) {
+        setGameTemplateStatus(t().gameTemplateMissing || 'Enter a game name and select options or write guidance.');
+        return;
+      }
+      let result = null;
+      try {
+        result = await invokeMain(IPC_CHANNELS.UPSERT_GAME_TEMPLATE, {
+          game: gameName,
+          template: templateText,
+          options: selectedOptions
+        });
+      } catch (_) {
+        result = null;
+      }
+      if (result && result.success) {
+        setGameTemplateStatus(t().gameTemplateSaved || 'Template saved');
+      } else {
+        setGameTemplateStatus(t().gameTemplateMissing || 'Enter a game name and select options or write guidance.');
+      }
+    });
+  }
+
+  if (gameTemplateDeleteBtn) {
+    on(gameTemplateDeleteBtn, 'click', async () => {
+      const gameName = normalizeGameTemplateName(gameTemplateNameInput ? gameTemplateNameInput.value : '');
+      if (!gameName) {
+        setGameTemplateStatus(t().gameTemplateMissing || 'Enter a game name and select options or write guidance.');
+        return;
+      }
+      let result = null;
+      try {
+        result = await invokeMain(IPC_CHANNELS.DELETE_GAME_TEMPLATE, { game: gameName });
+      } catch (_) {
+        result = null;
+      }
+      if (result && result.success) {
+        if (gameTemplateNameInput) gameTemplateNameInput.value = '';
+        if (gameTemplateText) gameTemplateText.value = '';
+        applyTemplateOptionSelection([]);
+        saveGameTemplateDraftFromUi();
+        setGameTemplateStatus(t().gameTemplateDeleted || 'Template deleted');
+      }
+    });
+  }
+
   if (visionEnableToggle) {
     visionEnableToggle.checked = readVisionEnabled();
     on(visionEnableToggle, 'change', () => {
@@ -853,6 +1204,10 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
       if (status && t().visionConsentResetDone) status.textContent = t().visionConsentResetDone;
     });
   }
+
+  gameTemplateDraft = loadGameTemplateDraft();
+  applyGameTemplateDraft(gameTemplateDraft);
+  loadGameTemplateOptions();
 
   if (toggleLayoutBtn) {
     const LAYOUT_STORAGE_KEY = STORAGE_KEYS.OVERLAY_LAYOUT_MODE;
@@ -1025,8 +1380,11 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
                 await requestGameContext();
               }
 
+              const templateGame = await ensureTemplateDraftSaved();
+              const resolvedGameContext = currentGameContext || templateGame || null;
+
               try {
-                const processResult = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, transcript, currentLanguage, specLevel, currentScreenshot, currentGameContext);
+                const processResult = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, transcript, currentLanguage, specLevel, currentScreenshot, resolvedGameContext);
                 if (processResult.success) {
                   const aiResponse = document.getElementById('aiResponse');
                   const responseContainer = document.getElementById('responseContainer');

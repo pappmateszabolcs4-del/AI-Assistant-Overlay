@@ -41,6 +41,23 @@ let recognition = null; // Web Speech API (deprecated, now using Whisper)
 let mediaRecorder = null; // MediaRecorder for Whisper audio capture
 let currentScreenshot = null; // Base64 image data
 var currentGameContext = null;
+const GAME_TEMPLATE_OPTIONS_LIMIT = 5;
+let gameTemplateOptions = [];
+let gameTemplateDraft = null;
+let gameTemplateLabel = null;
+let gameTemplateHint = null;
+let gameTemplateNameInput = null;
+let gameTemplateOptionsLabel = null;
+let gameTemplateOptionsHint = null;
+let gameTemplateOptionsList = null;
+let gameTemplateOptionsLimit = null;
+let gameTemplateCustomLabel = null;
+let gameTemplateText = null;
+let gameTemplateLoadBtn = null;
+let gameTemplateUseCurrentBtn = null;
+let gameTemplateSaveBtn = null;
+let gameTemplateDeleteBtn = null;
+let gameTemplateStatus = null;
 
 const DEFAULT_GAME_IGNORE_TITLES = [
   'Google Chrome',
@@ -219,6 +236,9 @@ async function ensureVisionConsent() {
   if (!currentGameContext) {
     await requestGameContext();
   }
+
+  const templateGame = await ensureTemplateDraftSaved();
+  const resolvedGameContext = currentGameContext || templateGame || null;
 
   const gameName = currentGameContext || '';
   const allowList = loadVisionList(STORAGE_KEYS.VISION_ALLOWLIST);
@@ -1279,6 +1299,34 @@ function updateOverlayText() {
   if (gameMapStatus && gameMapBlock && gameMapBlock.dataset.activeTitle) {
     gameMapStatus.textContent = formatGameMapStatus(gameMapBlock.dataset.activeTitle);
   }
+  const gameTemplateLabelEl = document.getElementById('gameTemplateLabel');
+  if (gameTemplateLabelEl) gameTemplateLabelEl.textContent = t().gameTemplateLabel || gameTemplateLabelEl.textContent;
+  const gameTemplateHintEl = document.getElementById('gameTemplateHint');
+  if (gameTemplateHintEl) gameTemplateHintEl.textContent = t().gameTemplateHint || gameTemplateHintEl.textContent;
+  const gameTemplateOptionsLabelEl = document.getElementById('gameTemplateOptionsLabel');
+  if (gameTemplateOptionsLabelEl) gameTemplateOptionsLabelEl.textContent = t().gameTemplateOptionsLabel || gameTemplateOptionsLabelEl.textContent;
+  const gameTemplateOptionsHintEl = document.getElementById('gameTemplateOptionsHint');
+  if (gameTemplateOptionsHintEl) gameTemplateOptionsHintEl.textContent = t().gameTemplateOptionsHint || gameTemplateOptionsHintEl.textContent;
+  const gameTemplateOptionsLimitEl = document.getElementById('gameTemplateOptionsLimit');
+  if (gameTemplateOptionsLimitEl) {
+    const limitTemplate = t().gameTemplateOptionsLimit || 'Max {count} options.';
+    gameTemplateOptionsLimitEl.textContent = limitTemplate.replace('{count}', String(GAME_TEMPLATE_OPTIONS_LIMIT));
+  }
+  const gameTemplateCustomLabelEl = document.getElementById('gameTemplateCustomLabel');
+  if (gameTemplateCustomLabelEl) gameTemplateCustomLabelEl.textContent = t().gameTemplateCustomLabel || gameTemplateCustomLabelEl.textContent;
+  const gameTemplateNameInputEl = document.getElementById('gameTemplateNameInput');
+  if (gameTemplateNameInputEl) gameTemplateNameInputEl.placeholder = t().gameTemplateNamePlaceholder || gameTemplateNameInputEl.placeholder;
+  const gameTemplateTextEl = document.getElementById('gameTemplateText');
+  if (gameTemplateTextEl) gameTemplateTextEl.placeholder = t().gameTemplateTextPlaceholder || gameTemplateTextEl.placeholder;
+  const gameTemplateLoadBtnEl = document.getElementById('gameTemplateLoadBtn');
+  if (gameTemplateLoadBtnEl) gameTemplateLoadBtnEl.textContent = t().gameTemplateLoad || gameTemplateLoadBtnEl.textContent;
+  const gameTemplateUseCurrentBtnEl = document.getElementById('gameTemplateUseCurrentBtn');
+  if (gameTemplateUseCurrentBtnEl) gameTemplateUseCurrentBtnEl.textContent = t().gameTemplateUseCurrent || gameTemplateUseCurrentBtnEl.textContent;
+  const gameTemplateSaveBtnEl = document.getElementById('gameTemplateSaveBtn');
+  if (gameTemplateSaveBtnEl) gameTemplateSaveBtnEl.textContent = t().gameTemplateSave || gameTemplateSaveBtnEl.textContent;
+  const gameTemplateDeleteBtnEl = document.getElementById('gameTemplateDeleteBtn');
+  if (gameTemplateDeleteBtnEl) gameTemplateDeleteBtnEl.textContent = t().gameTemplateDelete || gameTemplateDeleteBtnEl.textContent;
+  renderGameTemplateOptions();
   const versionLabel = document.getElementById('versionLabel');
   if (versionLabel) versionLabel.textContent = t().versionLabel || versionLabel.textContent;
   const layoutLabel = document.getElementById('layoutLabel');
@@ -1408,9 +1456,12 @@ async function askQuestion() {
     status.textContent = t().thinking;
   }
 
+  const templateGame = await ensureTemplateDraftSaved();
+  const resolvedGameContext = currentGameContext || templateGame || null;
+
   askBtn.disabled = true;
   try {
-    const result = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, text, currentLanguage, parseInt(specializationSlider.value), currentScreenshot, currentGameContext);
+    const result = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, text, currentLanguage, parseInt(specializationSlider.value), currentScreenshot, resolvedGameContext);
     if (result.success) {
       status.textContent = t().responseReady;
       document.getElementById('aiResponse').textContent = result.response;
@@ -1509,8 +1560,11 @@ on(micBtn, 'click', async () => {
             await requestGameContext();
           }
 
+              const templateGame = await ensureTemplateDraftSaved();
+              const resolvedGameContext = currentGameContext || templateGame || null;
+
           try {
-            const processResult = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, transcript, currentLanguage, parseInt(specializationSlider.value), currentScreenshot, currentGameContext);
+                const processResult = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, transcript, currentLanguage, parseInt(specializationSlider.value), currentScreenshot, resolvedGameContext);
 
             if (processResult.success) {
               document.getElementById('aiResponse').textContent = processResult.response;
@@ -1665,6 +1719,20 @@ const gameMapStatus = document.getElementById('gameMapStatus');
 const gameMapInput = document.getElementById('gameMapInput');
 const gameMapSaveBtn = document.getElementById('gameMapSaveBtn');
 const gameMapIgnoreBtn = document.getElementById('gameMapIgnoreBtn');
+gameTemplateLabel = document.getElementById('gameTemplateLabel');
+gameTemplateHint = document.getElementById('gameTemplateHint');
+gameTemplateNameInput = document.getElementById('gameTemplateNameInput');
+gameTemplateOptionsLabel = document.getElementById('gameTemplateOptionsLabel');
+gameTemplateOptionsHint = document.getElementById('gameTemplateOptionsHint');
+gameTemplateOptionsList = document.getElementById('gameTemplateOptionsList');
+gameTemplateOptionsLimit = document.getElementById('gameTemplateOptionsLimit');
+gameTemplateCustomLabel = document.getElementById('gameTemplateCustomLabel');
+gameTemplateText = document.getElementById('gameTemplateText');
+gameTemplateLoadBtn = document.getElementById('gameTemplateLoadBtn');
+gameTemplateUseCurrentBtn = document.getElementById('gameTemplateUseCurrentBtn');
+gameTemplateSaveBtn = document.getElementById('gameTemplateSaveBtn');
+gameTemplateDeleteBtn = document.getElementById('gameTemplateDeleteBtn');
+gameTemplateStatus = document.getElementById('gameTemplateStatus');
 
 function normalizeGameDetectMapping(text) {
   return String(text || '').trim();
@@ -1711,6 +1779,212 @@ function formatGameMapStatus(title) {
   return template.replace('{title}', title || '');
 }
 
+function normalizeGameTemplateName(value) {
+  return String(value || '').trim();
+}
+
+function findTemplateEntry(templates, gameName) {
+  const key = normalizeGameTemplateName(gameName).toLowerCase();
+  if (!key) return null;
+  const list = Array.isArray(templates) ? templates : [];
+  for (const entry of list) {
+    if (!entry) continue;
+    const entryKey = normalizeGameTemplateName(entry.game).toLowerCase();
+    if (entryKey && entryKey === key) return entry;
+    const aliases = Array.isArray(entry.aliases) ? entry.aliases : [];
+    for (const alias of aliases) {
+      if (normalizeGameTemplateName(alias).toLowerCase() === key) return entry;
+    }
+  }
+  return null;
+}
+
+async function loadGameTemplateForGame(gameName) {
+  let response = null;
+  try {
+    response = await invokeMain(IPC_CHANNELS.GET_GAME_TEMPLATES);
+  } catch (_) {
+    response = null;
+  }
+  const entry = response && response.success ? findTemplateEntry(response.templates, gameName) : null;
+  if (!gameTemplateText) return false;
+  if (entry) {
+    gameTemplateText.value = typeof entry.template === 'string' ? entry.template : '';
+    applyTemplateOptionSelection(entry.options || []);
+    if (gameTemplateStatus) gameTemplateStatus.textContent = t().gameTemplateLoaded || 'Template loaded';
+    saveGameTemplateDraftFromUi();
+    return true;
+  }
+  gameTemplateText.value = '';
+  applyTemplateOptionSelection([]);
+  saveGameTemplateDraftFromUi();
+  return false;
+}
+
+function setGameTemplateStatus(message) {
+  if (gameTemplateStatus) gameTemplateStatus.textContent = message || '';
+}
+
+function loadGameTemplateDraft() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.GAME_TEMPLATE_DRAFT);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    return parsed;
+  } catch (_) {
+    return null;
+  }
+}
+
+function persistGameTemplateDraft(draft) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.GAME_TEMPLATE_DRAFT, JSON.stringify(draft || {}));
+  } catch (_) {}
+}
+
+function captureGameTemplateDraft() {
+  return {
+    name: gameTemplateNameInput ? String(gameTemplateNameInput.value || '') : '',
+    text: gameTemplateText ? String(gameTemplateText.value || '') : '',
+    options: getSelectedTemplateOptionIds()
+  };
+}
+
+function applyGameTemplateDraft(draft) {
+  if (!draft || typeof draft !== 'object') return;
+  if (gameTemplateNameInput && typeof draft.name === 'string') {
+    gameTemplateNameInput.value = draft.name;
+  }
+  if (gameTemplateText && typeof draft.text === 'string') {
+    gameTemplateText.value = draft.text;
+  }
+  if (gameTemplateOptionsList && Array.isArray(draft.options)) {
+    applyTemplateOptionSelection(draft.options);
+  }
+}
+
+function saveGameTemplateDraftFromUi() {
+  persistGameTemplateDraft(captureGameTemplateDraft());
+}
+
+function refreshGameTemplateDraftFromStorage() {
+  gameTemplateDraft = loadGameTemplateDraft();
+  applyGameTemplateDraft(gameTemplateDraft);
+}
+
+function getTemplateOverrideContext() {
+  return normalizeGameTemplateName(gameTemplateNameInput ? gameTemplateNameInput.value : '');
+}
+
+async function ensureTemplateDraftSaved() {
+  const gameName = getTemplateOverrideContext();
+  if (!gameName) return '';
+  const templateText = String(gameTemplateText ? gameTemplateText.value : '').trim();
+  const selectedOptions = getSelectedTemplateOptionIds();
+  if (!templateText && selectedOptions.length === 0) return gameName;
+  try {
+    await invokeMain(IPC_CHANNELS.UPSERT_GAME_TEMPLATE, {
+      game: gameName,
+      template: templateText,
+      options: selectedOptions
+    });
+  } catch (_) {}
+  return gameName;
+}
+
+function getDefaultTemplateOptions() {
+  return [
+    { id: 'short-steps', labelKey: 'gameTemplateOptShortSteps' },
+    { id: 'progression-focus', labelKey: 'gameTemplateOptProgression' },
+    { id: 'build-gear', labelKey: 'gameTemplateOptBuilds' },
+    { id: 'no-spoilers', labelKey: 'gameTemplateOptNoSpoilers' },
+    { id: 'boss-tips', labelKey: 'gameTemplateOptBossTips' },
+    { id: 'farming-priority', labelKey: 'gameTemplateOptFarming' }
+  ];
+}
+
+function getTemplateOptionLabel(option) {
+  if (!option) return '';
+  const key = option.labelKey;
+  if (key && t()[key]) return t()[key];
+  return option.label || key || '';
+}
+
+function renderGameTemplateOptions() {
+  if (!gameTemplateOptionsList) return;
+  const selectedBefore = getSelectedTemplateOptionIds();
+  gameTemplateOptionsList.innerHTML = '';
+  const list = Array.isArray(gameTemplateOptions) ? gameTemplateOptions : [];
+  list.forEach((option) => {
+    const label = document.createElement('label');
+    label.style.display = 'flex';
+    label.style.alignItems = 'center';
+    label.style.gap = '8px';
+    label.style.cursor = 'pointer';
+    label.style.color = '#f5f7fa';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.style.width = '16px';
+    input.style.height = '16px';
+    input.style.cursor = 'pointer';
+    input.dataset.optionId = option.id || '';
+    input.addEventListener('change', () => {
+      const selected = getSelectedTemplateOptionIds();
+      if (selected.length > GAME_TEMPLATE_OPTIONS_LIMIT) {
+        input.checked = false;
+        setGameTemplateStatus((t().gameTemplateOptionLimitReached || 'Max {count} options.').replace('{count}', String(GAME_TEMPLATE_OPTIONS_LIMIT)));
+      }
+      saveGameTemplateDraftFromUi();
+    });
+    const span = document.createElement('span');
+    span.textContent = getTemplateOptionLabel(option);
+    label.appendChild(input);
+    label.appendChild(span);
+    gameTemplateOptionsList.appendChild(label);
+  });
+  applyTemplateOptionSelection(selectedBefore);
+  if (gameTemplateDraft && Array.isArray(gameTemplateDraft.options)) {
+    applyTemplateOptionSelection(gameTemplateDraft.options);
+  }
+}
+
+try {
+  window.__saveGameTemplateDraftFromUi = saveGameTemplateDraftFromUi;
+  window.__applyGameTemplateDraftFromStorage = refreshGameTemplateDraftFromStorage;
+} catch (_) {}
+
+function getSelectedTemplateOptionIds() {
+  if (!gameTemplateOptionsList) return [];
+  return Array.from(gameTemplateOptionsList.querySelectorAll('input[type="checkbox"]'))
+    .filter((input) => input.checked)
+    .map((input) => input.dataset.optionId)
+    .filter(Boolean);
+}
+
+function applyTemplateOptionSelection(optionIds) {
+  if (!gameTemplateOptionsList) return;
+  const selected = new Set((optionIds || []).map((id) => String(id)));
+  gameTemplateOptionsList.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+    input.checked = selected.has(input.dataset.optionId || '');
+  });
+}
+
+async function loadGameTemplateOptions() {
+  let list = null;
+  try {
+    const res = await fetch('data/game-template-options.json', { cache: 'no-store' });
+    if (res && res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) list = data;
+    }
+  } catch (_) {
+    list = null;
+  }
+  gameTemplateOptions = Array.isArray(list) && list.length ? list : getDefaultTemplateOptions();
+  renderGameTemplateOptions();
+}
+
 async function refreshGameDetectStatus() {
   if (!gameMapBlock || !gameMapStatus) return;
   let status = null;
@@ -1751,6 +2025,9 @@ if (gameIgnoreInput) {
 }
 
 sendGameDetectMappingsToMain(loadGameDetectMappings());
+gameTemplateDraft = loadGameTemplateDraft();
+applyGameTemplateDraft(gameTemplateDraft);
+loadGameTemplateOptions();
 refreshGameDetectStatus();
 setInterval(() => {
   if (document.hidden) return;
@@ -1830,6 +2107,78 @@ if (gameMapIgnoreBtn) {
         gameMapStatus.textContent = t().gameMapIgnored || 'Added to ignore list.';
       }
       try { await invokeMain(IPC_CHANNELS.FORCE_GAME_DETECT); } catch (_) {}
+    }
+  });
+}
+
+if (gameTemplateUseCurrentBtn) {
+  on(gameTemplateUseCurrentBtn, 'click', async () => {
+    if (!gameTemplateNameInput) return;
+    if (!currentGameContext) {
+      await requestGameContext();
+    }
+    if (currentGameContext) {
+      gameTemplateNameInput.value = currentGameContext;
+    }
+  });
+}
+
+if (gameTemplateLoadBtn) {
+  on(gameTemplateLoadBtn, 'click', async () => {
+    const gameName = normalizeGameTemplateName(gameTemplateNameInput ? gameTemplateNameInput.value : '');
+    if (!gameName) {
+      setGameTemplateStatus(t().gameTemplateMissing || 'Enter a game name and template first.');
+      return;
+    }
+    await loadGameTemplateForGame(gameName);
+  });
+}
+
+if (gameTemplateSaveBtn) {
+  on(gameTemplateSaveBtn, 'click', async () => {
+    const gameName = normalizeGameTemplateName(gameTemplateNameInput ? gameTemplateNameInput.value : '');
+    const templateText = String(gameTemplateText ? gameTemplateText.value : '').trim();
+    const selectedOptions = getSelectedTemplateOptionIds();
+    if (!gameName || (!templateText && selectedOptions.length === 0)) {
+      setGameTemplateStatus(t().gameTemplateMissing || 'Enter a game name and select options or write guidance.');
+      return;
+    }
+    let result = null;
+    try {
+      result = await invokeMain(IPC_CHANNELS.UPSERT_GAME_TEMPLATE, {
+        game: gameName,
+        template: templateText,
+        options: selectedOptions
+      });
+    } catch (_) {
+      result = null;
+    }
+    if (result && result.success) {
+      setGameTemplateStatus(t().gameTemplateSaved || 'Template saved');
+    } else {
+      setGameTemplateStatus(t().gameTemplateMissing || 'Enter a game name and select options or write guidance.');
+    }
+  });
+}
+
+if (gameTemplateDeleteBtn) {
+  on(gameTemplateDeleteBtn, 'click', async () => {
+    const gameName = normalizeGameTemplateName(gameTemplateNameInput ? gameTemplateNameInput.value : '');
+    if (!gameName) {
+      setGameTemplateStatus(t().gameTemplateMissing || 'Enter a game name and template first.');
+      return;
+    }
+    let result = null;
+    try {
+      result = await invokeMain(IPC_CHANNELS.DELETE_GAME_TEMPLATE, { game: gameName });
+    } catch (_) {
+      result = null;
+    }
+    if (result && result.success) {
+      if (gameTemplateNameInput) gameTemplateNameInput.value = '';
+      if (gameTemplateText) gameTemplateText.value = '';
+      applyTemplateOptionSelection([]);
+      setGameTemplateStatus(t().gameTemplateDeleted || 'Template deleted');
     }
   });
 }

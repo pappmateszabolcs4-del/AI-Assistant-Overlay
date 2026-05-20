@@ -1,60 +1,13 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-
-const GAME_TEMPLATES_PATH = path.join(__dirname, '../../../data/game-templates.json');
+const { getTemplateEntryForGame } = require('./game-template-store');
 const DEFAULT_GAME_TEMPLATE =
   'If no specific template is available, ask a short clarification about the player\'s current stage, goals, and constraints, then provide 3-5 actionable next steps with brief reasoning.';
-let cachedGameTemplates = null;
-let warnedMissingTemplates = false;
-
-function normalizeTemplateKey(value) {
-  return String(value || '').trim().toLowerCase();
-}
-
-function loadGameTemplates() {
-  if (cachedGameTemplates) return cachedGameTemplates;
-  try {
-    if (!fs.existsSync(GAME_TEMPLATES_PATH)) {
-      if (!warnedMissingTemplates) {
-        console.warn(`[GAME-TEMPLATE] Templates not found at ${GAME_TEMPLATES_PATH}. Using generic prompt.`);
-        warnedMissingTemplates = true;
-      }
-      cachedGameTemplates = { templates: [] };
-      return cachedGameTemplates;
-    }
-    const raw = fs.readFileSync(GAME_TEMPLATES_PATH, 'utf8');
-    const parsed = JSON.parse(raw);
-    const templates = Array.isArray(parsed && parsed.templates) ? parsed.templates : [];
-    cachedGameTemplates = { templates };
-    return cachedGameTemplates;
-  } catch (err) {
-    if (!warnedMissingTemplates) {
-      console.warn(`[GAME-TEMPLATE] Failed to load templates: ${err.message}`);
-      warnedMissingTemplates = true;
-    }
-    cachedGameTemplates = { templates: [] };
-    return cachedGameTemplates;
-  }
-}
-
-function getTemplateForGame(gameName) {
-  if (!gameName) return '';
-  const key = normalizeTemplateKey(gameName);
-  const { templates } = loadGameTemplates();
-  for (const entry of templates) {
-    if (!entry || !entry.game || !entry.template) continue;
-    const entryKey = normalizeTemplateKey(entry.game);
-    if (entryKey && entryKey === key) return String(entry.template).trim();
-    const aliases = Array.isArray(entry.aliases) ? entry.aliases : [];
-    for (const alias of aliases) {
-      if (normalizeTemplateKey(alias) === key) {
-        return String(entry.template).trim();
-      }
-    }
-  }
-  return '';
-}
+const TEMPLATE_OPTIONS_PATH = path.join(__dirname, '../../../data/game-template-options.json');
+const TEMPLATE_OPTIONS_TTL_MS = Number(process.env.GAME_TEMPLATE_OPTIONS_TTL_MS || 10 * 1000);
+let cachedTemplateOptions = null;
+let cachedTemplateOptionsAt = 0;
 
 function createOpenAIService(deps) {
   const {
@@ -73,6 +26,74 @@ function createOpenAIService(deps) {
   function normalizeLanguage(lang) {
     const supported = ['hu', 'en', 'de', 'ru', 'fr', 'zh', 'es', 'it', 'pl'];
     return supported.includes(lang) ? lang : 'en';
+  }
+
+  function loadTemplateOptions() {
+    const now = Date.now();
+    if (cachedTemplateOptions && (now - cachedTemplateOptionsAt) < TEMPLATE_OPTIONS_TTL_MS) {
+      return cachedTemplateOptions;
+    }
+    try {
+      if (!fs.existsSync(TEMPLATE_OPTIONS_PATH)) {
+        cachedTemplateOptions = [];
+        cachedTemplateOptionsAt = now;
+        return cachedTemplateOptions;
+      }
+      const raw = fs.readFileSync(TEMPLATE_OPTIONS_PATH, 'utf8');
+      const parsed = JSON.parse(raw);
+      cachedTemplateOptions = Array.isArray(parsed) ? parsed : [];
+      cachedTemplateOptionsAt = now;
+      return cachedTemplateOptions;
+    } catch (_) {
+      cachedTemplateOptions = [];
+      cachedTemplateOptionsAt = now;
+      return cachedTemplateOptions;
+    }
+  }
+
+  function getTemplateOptionPrompt(optionId, lang) {
+    const list = loadTemplateOptions();
+    const entry = list.find((opt) => opt && opt.id === optionId);
+    if (!entry || !entry.prompt) return '';
+    const language = normalizeLanguage(lang);
+    const map = entry.prompt || {};
+    return map[language] || map.en || '';
+  }
+
+  function getTemplateSectionLabels(lang) {
+    const language = normalizeLanguage(lang);
+    const labels = {
+      hu: { options: 'VÁLASZTOTT IRÁNYOK', custom: 'EGYEDI ÚTMUTATÓ' },
+      en: { options: 'SELECTED GUIDANCE OPTIONS', custom: 'CUSTOM GUIDANCE' },
+      de: { options: 'AUSGEWÄHLTE OPTIONEN', custom: 'INDIVIDUELLE HINWEISE' },
+      ru: { options: 'ВЫБРАННЫЕ ОПЦИИ', custom: 'ПОЛЬЗОВАТЕЛЬСКИЕ ПОДСКАЗКИ' },
+      fr: { options: 'OPTIONS SÉLECTIONNÉES', custom: 'CONSEILS PERSONNALISÉS' },
+      zh: { options: '已选方向', custom: '自定义指引' },
+      es: { options: 'OPCIONES SELECCIONADAS', custom: 'GUÍA PERSONALIZADA' },
+      it: { options: 'OPZIONI SELEZIONATE', custom: 'GUIDA PERSONALIZZATA' },
+      pl: { options: 'WYBRANE OPCJE', custom: 'WŁASNE WSKAZÓWKI' }
+    };
+    return labels[language] || labels.en;
+  }
+
+  function buildTemplatePrompt(entry, lang) {
+    if (!entry) return '';
+    const optionIds = Array.isArray(entry.options) ? entry.options.map((id) => String(id)) : [];
+    const optionLines = optionIds
+      .map((id) => getTemplateOptionPrompt(id, lang))
+      .filter((text) => text && String(text).trim())
+      .map((text) => `- ${String(text).trim()}`);
+    const custom = entry.template ? String(entry.template).trim() : '';
+    if (!optionLines.length && !custom) return '';
+    const labels = getTemplateSectionLabels(lang);
+    let output = '';
+    if (optionLines.length) {
+      output += `\n\n${labels.options}:\n${optionLines.join('\n')}`;
+    }
+    if (custom) {
+      output += `\n\n${labels.custom}:\n${custom}`;
+    }
+    return output;
   }
 
   function getSystemPrompt(lang, specializationLevel = 3) {
@@ -194,9 +215,10 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
       if (resolvedGameContext) {
         const gameContextPrompt = `\n\n🎮 GAME CONTEXT DETECTED: The user is currently playing "${resolvedGameContext}". Focus ALL your answers specifically on this game. Provide game-specific tips, strategies, item names, boss mechanics, builds, and gameplay advice that are ONLY relevant to "${resolvedGameContext}". Do NOT give generic gaming advice or information about other games. Stay strictly within the context of "${resolvedGameContext}". If the user asks what game they are playing, answer with "${resolvedGameContext}" and do not say the game is unknown.`;
         systemPrompt += gameContextPrompt;
-        const template = getTemplateForGame(resolvedGameContext);
-        if (template) {
-          systemPrompt += `\n\nGAME TEMPLATE:\n${template}`;
+        const templateEntry = getTemplateEntryForGame(resolvedGameContext);
+        const templatePrompt = buildTemplatePrompt(templateEntry, lang || getCurrentLanguage());
+        if (templatePrompt) {
+          systemPrompt += `\n\nGAME TEMPLATE:${templatePrompt}`;
         } else {
           systemPrompt += `\n\nGENERAL GAME TEMPLATE:\n${DEFAULT_GAME_TEMPLATE}`;
         }

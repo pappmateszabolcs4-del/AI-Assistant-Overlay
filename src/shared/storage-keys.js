@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   OVERLAY_POSITION_Y: 'overlayPositionY',
   GAME_DETECT_IGNORE_LIST: 'gameDetectIgnoreList',
   GAME_DETECT_MAPPINGS: 'gameDetectMappings',
+  GAME_TEMPLATE_DRAFT: 'gameTemplateDraft',
   ASK_ENABLE_TTS: 'askEnableTTS',
   ENABLE_TTS: 'enableTTS',
   PINNED_TABS: 'pinnedTabs',
