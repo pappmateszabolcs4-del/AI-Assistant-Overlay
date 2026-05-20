@@ -306,6 +306,7 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
   let currentScreenshot = null;
   let currentGameContext = null;
   let pendingConfirmAction = null;
+  let lastAutoTemplateGame = '';
 
 
   function showConfirmModal(title, message, onConfirm, confirmBtnText = null) {
@@ -798,6 +799,9 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     if (lower.includes('nincs elerheto kepernyo') || lower.includes('no screen')) {
       return t().errorNoScreen || msg;
     }
+    if (msg === 'openai-not-initialized' || msg === 'openai-key-missing') {
+      return t().errorOpenAiKey || msg;
+    }
     if (lower.includes('openai') && (lower.includes('kulcs') || lower.includes('api key') || lower.includes('api kulcs'))) {
       return t().errorOpenAiKey || msg;
     }
@@ -1134,6 +1138,7 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
   if (gameTemplateUseCurrentBtn) {
     on(gameTemplateUseCurrentBtn, 'click', async () => {
       if (!gameTemplateNameInput) return;
+      try { await invokeMain(IPC_CHANNELS.FORCE_GAME_DETECT); } catch (_) {}
       if (!currentGameContext) {
         await requestGameContext();
       }
@@ -1160,8 +1165,27 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
       const gameName = normalizeGameTemplateName(gameTemplateNameInput ? gameTemplateNameInput.value : '');
       const templateText = String(gameTemplateText ? gameTemplateText.value : '').trim();
       const selectedOptions = getSelectedTemplateOptionIds();
-      if (!gameName || (!templateText && selectedOptions.length === 0)) {
+      if (!gameName && !templateText && selectedOptions.length === 0) {
+        saveGameTemplateDraftFromUi();
+        setGameTemplateStatus('');
+        return;
+      }
+      if (!gameName) {
         setGameTemplateStatus(t().gameTemplateMissing || 'Enter a game name and select options or write guidance.');
+        return;
+      }
+      if (!templateText && selectedOptions.length === 0) {
+        let cleared = null;
+        try {
+          cleared = await invokeMain(IPC_CHANNELS.DELETE_GAME_TEMPLATE, { game: gameName });
+        } catch (_) {
+          cleared = null;
+        }
+        if (cleared && cleared.success) {
+          setGameTemplateStatus(t().gameTemplateDeleted || 'Template deleted');
+        } else {
+          setGameTemplateStatus(t().gameTemplateMissing || 'Enter a game name and select options or write guidance.');
+        }
         return;
       }
       let result = null;
@@ -1583,6 +1607,7 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
 
   ipcRenderer.on(IPC_CHANNELS.SET_GAME_CONTEXT, (_event, gameName) => {
     currentGameContext = gameName;
+    applyTemplateGameFromContext(gameName);
   });
 
   if (window.speechSynthesis) {
@@ -1590,5 +1615,17 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
       refreshVoices();
     };
     window.speechSynthesis.getVoices();
+  }
+}
+
+function applyTemplateGameFromContext(gameName) {
+  if (!gameTemplateNameInput) return;
+  const next = String(gameName || '').trim();
+  if (!next) return;
+  const currentValue = String(gameTemplateNameInput.value || '').trim();
+  if (!currentValue || currentValue === lastAutoTemplateGame) {
+    gameTemplateNameInput.value = next;
+    lastAutoTemplateGame = next;
+    saveGameTemplateDraftFromUi();
   }
 }

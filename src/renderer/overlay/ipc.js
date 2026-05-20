@@ -38,5 +38,6 @@ ipcRenderer.on(IPC_CHANNELS.SET_SPEECH_RATE, (event, rate) => {
 ipcRenderer.on(IPC_CHANNELS.SET_GAME_CONTEXT, (event, gameName) => {
   currentGameContext = gameName;
   console.log(`Game context set: ${gameName}`);
+  try { applyTemplateGameFromContext && applyTemplateGameFromContext(gameName); } catch (_) {}
   try { refreshGameDetectStatus && refreshGameDetectStatus(); } catch (_) {}
 });
