@@ -90,7 +90,7 @@ Last updated: 2026-05-17
         - [ ] Stability threshold: require 2-3 consecutive matches before switching games
         - [ ] Overlay-focused guard: if overlay is active, skip detection and keep last recognized
         - [ ] Raise score threshold so title-only match is not enough
-      - [ ] Augment data sources: IGDB + Steam/Epic/GoG metadata for exe/display-name mapping (see docs/2-technical/METADATA_POLICY.md)
+      - [ ] Augment data sources (policy-safe): local manifests + exe mapping only (no global dataset) (see docs/2-technical/METADATA_POLICY.md)
   - Coupled UX: "What game is this?" prompt builds local mapping -> then offer per-game templates (next steps/build/boss)
         - [x] Local mapping storage (exe + titlePattern -> game name)
       - [x] Unknown prompt UI + IPC (collect answer, persist mapping)
@@ -98,6 +98,33 @@ Last updated: 2026-05-17
       - [x] Template source + fallback to generic prompts when missing
       - [x] Stickiness: keep last recognized game for a short window (20-30s) to avoid flapping
     - [x] Optional vision fallback with explicit consent + privacy guardrails
+    - Long-term template strategy (metadata policy aligned):
+      - [ ] Detect via local manifests + running exe -> title, appId, install path
+      - [ ] Per-game template editor stored locally (JSON/SQLite), export/import optional
+      - [ ] Optional LLM seed template on first encounter with user approval
+      - [ ] No global dataset; cache is user-specific with TTL; artwork runtime-only
+    - Implementation roadmap (high-level):
+      - [ ] Principles/limits: policy-safe metadata, no global catalog, user cache with TTL
+      - [ ] Detection quality: multi-signal scoring, guards, raised thresholds, stability gates
+      - [ ] Metadata sources: local manifests + exe mapping, normalized appId/title
+      - [x] Template strategy: editor + optional LLM seed + runtime composition
+        - Game template block defaults to Ask panel (movable/detachable).
+        - Multi-select quick options + custom guidance combined into the AI prompt.
+      - [x] UX/data flow: detect -> context -> template -> prompt, generic fallback
+        - Renderer requests game context on boot and before AI calls; main publishes updates.
+        - If unknown: show prompt, persist mapping (title/exe -> game) and force re-detect.
+        - Template lookup is local (userData JSON) and injected into OpenAI prompts when present.
+        - Missing template falls back to generic prompt; no global dataset.
+      - [ ] Testing: unit scoring/guards, E2E unknown->mapping->template, flapping checks
+        - Unit: game-detect scoring (min-signal), browser/process guard, stability gate
+        - Unit: metadata resolver + template store CRUD (load/save/delete, cache TTL)
+        - E2E (manual): unknown prompt -> mapping save -> re-detect -> template load -> AI prompt
+        - E2E (manual): flapping protection across rapid focus changes; overlay-focused guard
+        - Regression: ignore list + forced detect still bypasses browser titles
+      - [x] Docs: keep METADATA_POLICY, LEARNINGS, CHANGELOG aligned
+        - Update METADATA_POLICY with local-manifest-only stance + no global dataset.
+        - Append LEARNINGS entry for template store + UX/data flow.
+        - Note changes in CHANGELOG under the current version block.
  - [ ] Per-game layout profiles
   - Save/apply per detected game: layout mode, panel order (and optionally open/detached state)
   - Depends on Coupled UX (Unknown -> mapping) for reliable game identity
@@ -132,13 +159,20 @@ Last updated: 2026-05-17
   - [ ] Log resolved game context + detection score
   - [ ] Log template selection (game template vs generic)
   - [ ] Add a debug toggle to enable/disable diagnostics
+  - [ ] Detect "too generic" replies and auto-raise specificity on next call
 - [ ] Deterministic shortcuts for common intents (e.g., "what game am I playing")
+  - [ ] Add common game intents (farm/build/boss/quest/loadout) with fixed response structures
 - [ ] Intent routing layer (simple router before LLM call)
+  - [ ] Route how-to/farming questions to step-by-step, game-specific answers
+  - [ ] Enforce "no generic tips" mode when game context is known
 - [ ] Model strategy split (text-only vs vision) + timeout fallback
 - [ ] Token budget caps per detail level
 - [ ] Template cache + reload strategy (dev)
+- [ ] Preset answer styles (short/step-by-step/deep) without user prompt writing
+- [ ] Auto-seed per-game template defaults on first encounter (opt-in)
 - [ ] User-facing error UX for AI failures (clear, actionable)
 - [ ] Trim/segment strict policy to reduce prompt bloat
+
 - [ ] AI Vision: Video recording recognition
   - [ ] Define the exact flow: capture (source), sampling rate, and retention policy
   - [ ] Add a dedicated service module (services/vision-video.js) for video frame extraction
