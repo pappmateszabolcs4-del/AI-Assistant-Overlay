@@ -43,7 +43,10 @@ const registry = {
     lastActiveProcessPath: null,
     lastActiveProcessName: null,
     lastActiveProcessId: null,
-    lastDetectedInstallPath: null
+    lastDetectedInstallPath: null,
+    lastDetectedAppId: null,
+    lastDetectedGameTitle: null,
+    lastDetectedMetadataSource: null
   },
   detached: {
     detachedWindowsDesiredVisible: true,

@@ -162,6 +162,8 @@ const DATASET_PATH = path.join(__dirname, '../../../data/games.json');
 let cachedDataset = null;
 let cachedIndex = null;
 let warnedMissingDataset = false;
+const USE_GLOBAL_DATASET = String(process.env.GAME_DETECT_USE_DATASET || '').toLowerCase() === '1'
+  || String(process.env.GAME_DETECT_USE_DATASET || '').toLowerCase() === 'true';
 
 const COMMON_TERMS = new Set([
   'game', 'games', 'gaming', 'player', 'players', 'play', 'playing', 'build', 'guide', 'tips',
@@ -277,6 +279,10 @@ function loadDataset() {
 
 function buildGameIndex() {
   if (cachedIndex) return cachedIndex;
+  if (!USE_GLOBAL_DATASET) {
+    cachedIndex = [];
+    return cachedIndex;
+  }
   const dataset = loadDataset();
   const games = Array.isArray(dataset && dataset.games) ? dataset.games : [];
   cachedIndex = games.map((game) => {

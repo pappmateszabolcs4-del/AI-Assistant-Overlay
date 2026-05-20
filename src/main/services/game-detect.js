@@ -70,14 +70,26 @@ function createGameDetectService(deps) {
       game.lastActiveProcessPath = result.activeProcess.path || null;
       game.lastActiveProcessName = result.activeProcess.name || null;
       game.lastActiveProcessId = Number.isFinite(result.activeProcess.pid) ? result.activeProcess.pid : null;
-      game.lastDetectedInstallPath = result.activeProcess.path
-        ? path.dirname(result.activeProcess.path)
-        : null;
+      if (!result.metadata || !result.metadata.installPath) {
+        game.lastDetectedInstallPath = result.activeProcess.path
+          ? path.dirname(result.activeProcess.path)
+          : null;
+      }
     } else if (!canStick) {
       game.lastActiveProcessPath = null;
       game.lastActiveProcessName = null;
       game.lastActiveProcessId = null;
       game.lastDetectedInstallPath = null;
+      game.lastDetectedAppId = null;
+      game.lastDetectedGameTitle = null;
+      game.lastDetectedMetadataSource = null;
+    }
+
+    if (result && result.metadata) {
+      game.lastDetectedInstallPath = result.metadata.installPath || game.lastDetectedInstallPath || null;
+      game.lastDetectedAppId = result.metadata.appId || null;
+      game.lastDetectedGameTitle = result.metadata.title || null;
+      game.lastDetectedMetadataSource = result.metadata.source || null;
     }
     game.lastGameDetectAt = now;
     if (result && result.gameName && next === result.gameName) {
@@ -161,6 +173,11 @@ function createGameDetectService(deps) {
 
   function detectCurrentGame(force = false) {
     if (DISABLE_GAME_DETECT) return;
+    if (core && core.overlayWin && !core.overlayWin.isDestroyed()) {
+      try {
+        if (core.overlayWin.isFocused()) return;
+      } catch (_) {}
+    }
     ensureWorker();
 
     const now = Date.now();
