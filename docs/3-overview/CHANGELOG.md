@@ -6,6 +6,28 @@
 
 ---
 
+## [1.0.38] - 2026-05-20 (Intent Routing + Facts)
+
+### ✅ Added
+
+- Data-driven intent routing and response templates.
+- Local game facts store with in-overlay “+ Fact” capture UI.
+- Game profiles/facts lookup seeded from `data/games` with userData override.
+
+### 🔧 Changed
+
+- Info panel copy refreshed across supported languages.
+- Prompt assembly now injects intent templates, game profile, and facts.
+
+### 🧹 Cleaned
+
+- Removed unknown-game mapping and game ignore settings blocks.
+- Pruned unused `gameIgnore*`/`gameMap*` translation keys.
+
+### 🧾 Notes
+
+- Tests: `npm run check`.
+
 ## [1.0.37] - 2026-05-19 (Vision Consent + Settings)
 
 ### ✅ Added

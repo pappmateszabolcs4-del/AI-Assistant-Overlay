@@ -1140,6 +1140,45 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 
 ---
 
+### 2026-05-20 (Evening)
+
+#### Summary
+- What changed: Added data-driven intent routing + response templates, local game facts capture, and game profile/facts retrieval; removed unknown-game mapping and ignore list settings UI; cleaned unused translations.
+- Why: Make routing scalable, improve response specificity, enable long-term fact capture, and reduce settings clutter.
+- Impact: More consistent AI replies, persistent game facts, and simpler settings with fewer stale UI paths.
+
+#### Details
+- Implementation notes: Routing and templates are JSON-backed; prompts now include intent template + profile + facts. Fact capture writes to userData and is merged with data defaults when present.
+- Edge cases: Removing ignore list relies on browser/process guards to prevent false positives; verify detection behavior in real games.
+
+#### Files touched
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [src/main/services/game-facts-store.js](src/main/services/game-facts-store.js)
+- [data/intent-routing.json](data/intent-routing.json)
+- [data/response-templates.json](data/response-templates.json)
+- [data/games/_default/profile.json](data/games/_default/profile.json)
+- [data/games/_default/facts.json](data/games/_default/facts.json)
+- [data/games/rimworld/profile.json](data/games/rimworld/profile.json)
+- [data/games/rimworld/facts.json](data/games/rimworld/facts.json)
+- [overlay.html](overlay.html)
+- [block.html](block.html)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/renderer/overlay/block-app.js](src/renderer/overlay/block-app.js)
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+
+#### Backups
+- Not created (not requested).
+
+#### Verification
+- Tests: `npm run check`.
+
+#### Follow-ups
+- TODO: Observe game detection behavior after removing ignore list in real game sessions.
+
+---
+
 ### 2026-05-15 (Night)
 
 #### Summary
