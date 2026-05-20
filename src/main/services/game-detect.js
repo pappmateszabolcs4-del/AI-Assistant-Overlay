@@ -2,12 +2,39 @@ const path = require('path');
 const { fork } = require('child_process');
 const { IPC_CHANNELS } = require('../../shared/ipc-channels');
 const { extractGameName, matchGameFromText } = require('./game-detect-core');
+const { isDev } = require('../../shared/app-env');
+const { appendOverlayDebug } = require('../utils/overlay-debug-log');
 
 const DETECT_MIN_INTERVAL_MS = 2000;
 const DETECT_INFLIGHT_TIMEOUT_MS = 5000;
 const WINDOW_BOUNDS_MAX_AGE_MS = 5000;
 const GAME_CONTEXT_STICKY_MS = 30000;
 const GAME_CONTEXT_SWITCH_COOLDOWN_MS = 3000;
+const GAME_CONTEXT_STABILITY_MATCHES = Math.max(2, Math.min(3,
+  Number.parseInt(process.env.GAME_DETECT_STABILITY_MATCHES || '2', 10) || 2
+));
+const MAPPING_TITLE_MISMATCH_LIMIT = Math.max(2, Math.min(3,
+  Number.parseInt(process.env.GAME_MAPPING_TITLE_MISMATCHES || '2', 10) || 2
+));
+
+function normalizeMatch(text) {
+  if (!text) return '';
+  return String(text)
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function logMappingGuard(entry) {
+  if (!isDev()) return;
+  try {
+    console.log(`[GAME-DETECT] mapping-guard ${JSON.stringify(entry)}`);
+  } catch (_) {}
+  try {
+    appendOverlayDebug({ type: 'mapping-guard', ...entry });
+  } catch (_) {}
+}
 
 function createGameDetectService(deps) {
   const { registry, screen } = deps;
@@ -50,9 +77,10 @@ function createGameDetectService(deps) {
   }
 
   function updateGameContext(result) {
+    const safeResult = applyMappingSafety(result);
     const prev = game.currentDetectedGame;
     const now = Date.now();
-    let next = result && result.gameName ? result.gameName : null;
+    let next = safeResult && safeResult.gameName ? safeResult.gameName : null;
     const withinSticky = prev && (now - (game.lastGameRecognizedAt || 0)) < GAME_CONTEXT_STICKY_MS;
     const canStick = !next && withinSticky;
     const canCooldownSwitch = next && prev && next !== prev
@@ -60,23 +88,38 @@ function createGameDetectService(deps) {
     if (canStick || canCooldownSwitch) {
       next = prev;
     }
+    if (next && prev && next !== prev) {
+      const candidate = String(next);
+      if (game.pendingGameCandidate === candidate) {
+        game.pendingGameCandidateCount = (game.pendingGameCandidateCount || 0) + 1;
+      } else {
+        game.pendingGameCandidate = candidate;
+        game.pendingGameCandidateCount = 1;
+      }
+      if (game.pendingGameCandidateCount < GAME_CONTEXT_STABILITY_MATCHES) {
+        next = prev;
+      }
+    } else {
+      game.pendingGameCandidate = null;
+      game.pendingGameCandidateCount = 0;
+    }
     game.currentDetectedGame = next;
-    game.lastDetectedWindowTitle = result && result.activeTitle ? result.activeTitle : null;
-    game.lastActiveWindowTitle = result && result.activeTitle ? result.activeTitle : null;
-    game.lastMatchedWindowTitle = result && result.matchedTitle
-      ? result.matchedTitle
+    game.lastDetectedWindowTitle = safeResult && safeResult.activeTitle ? safeResult.activeTitle : null;
+    game.lastActiveWindowTitle = safeResult && safeResult.activeTitle ? safeResult.activeTitle : null;
+    game.lastMatchedWindowTitle = safeResult && safeResult.matchedTitle
+      ? safeResult.matchedTitle
       : (canStick ? game.lastMatchedWindowTitle : null);
-    game.lastDetectScore = result && typeof result.detectScore === 'number' ? result.detectScore : null;
-    game.lastDetectReasons = result && Array.isArray(result.detectReasons) ? result.detectReasons : null;
-    game.lastDetectSignalCount = result && typeof result.detectSignalCount === 'number' ? result.detectSignalCount : null;
-    game.lastDetectSource = result && result.detectSource ? String(result.detectSource) : null;
-    if (result && result.activeProcess) {
-      game.lastActiveProcessPath = result.activeProcess.path || null;
-      game.lastActiveProcessName = result.activeProcess.name || null;
-      game.lastActiveProcessId = Number.isFinite(result.activeProcess.pid) ? result.activeProcess.pid : null;
-      if (!result.metadata || !result.metadata.installPath) {
-        game.lastDetectedInstallPath = result.activeProcess.path
-          ? path.dirname(result.activeProcess.path)
+    game.lastDetectScore = safeResult && typeof safeResult.detectScore === 'number' ? safeResult.detectScore : null;
+    game.lastDetectReasons = safeResult && Array.isArray(safeResult.detectReasons) ? safeResult.detectReasons : null;
+    game.lastDetectSignalCount = safeResult && typeof safeResult.detectSignalCount === 'number' ? safeResult.detectSignalCount : null;
+    game.lastDetectSource = safeResult && safeResult.detectSource ? String(safeResult.detectSource) : null;
+    if (safeResult && safeResult.activeProcess) {
+      game.lastActiveProcessPath = safeResult.activeProcess.path || null;
+      game.lastActiveProcessName = safeResult.activeProcess.name || null;
+      game.lastActiveProcessId = Number.isFinite(safeResult.activeProcess.pid) ? safeResult.activeProcess.pid : null;
+      if (!safeResult.metadata || !safeResult.metadata.installPath) {
+        game.lastDetectedInstallPath = safeResult.activeProcess.path
+          ? path.dirname(safeResult.activeProcess.path)
           : null;
       }
     } else if (!canStick) {
@@ -89,28 +132,28 @@ function createGameDetectService(deps) {
       game.lastDetectedMetadataSource = null;
     }
 
-    if (result && result.metadata) {
-      game.lastDetectedInstallPath = result.metadata.installPath || game.lastDetectedInstallPath || null;
-      game.lastDetectedAppId = result.metadata.appId || null;
-      game.lastDetectedGameTitle = result.metadata.title || null;
-      game.lastDetectedMetadataSource = result.metadata.source || null;
+    if (safeResult && safeResult.metadata) {
+      game.lastDetectedInstallPath = safeResult.metadata.installPath || game.lastDetectedInstallPath || null;
+      game.lastDetectedAppId = safeResult.metadata.appId || null;
+      game.lastDetectedGameTitle = safeResult.metadata.title || null;
+      game.lastDetectedMetadataSource = safeResult.metadata.source || null;
     }
     game.lastGameDetectAt = now;
-    if (result && result.gameName && next === result.gameName) {
+    if (safeResult && safeResult.gameName && next === safeResult.gameName) {
       game.lastGameRecognizedAt = now;
-      game.lastRecognizedGameName = result.gameName;
+      game.lastRecognizedGameName = safeResult.gameName;
     }
 
-    if (result && result.bounds) {
+    if (safeResult && safeResult.bounds) {
       game.lastDetectedWindowBounds = {
         gameName: next,
-        bounds: result.bounds
+        bounds: safeResult.bounds
       };
       game.lastDetectedWindowAt = now;
 
       try {
-        const cx = Math.round((result.bounds.left + result.bounds.right) / 2);
-        const cy = Math.round((result.bounds.top + result.bounds.bottom) / 2);
+        const cx = Math.round((safeResult.bounds.left + safeResult.bounds.right) / 2);
+        const cy = Math.round((safeResult.bounds.top + safeResult.bounds.bottom) / 2);
         const display = screen.getDisplayNearestPoint({ x: cx, y: cy });
         if (display && typeof display.id !== 'undefined') {
           game.lastKnownGameDisplayId = display.id;
@@ -122,6 +165,104 @@ function createGameDetectService(deps) {
     if (prev !== next && core && core.overlayWin && !core.overlayWin.isDestroyed()) {
       try { core.overlayWin.webContents.send(IPC_CHANNELS.SET_GAME_CONTEXT, next); } catch (_) {}
     }
+  }
+
+  function resetMappingTitleMismatch() {
+    game.mappingTitleMismatchCount = 0;
+    game.mappingTitleMismatchGame = null;
+  }
+
+  function appendMappingReason(result, reason) {
+    const reasons = Array.isArray(result.detectReasons) ? [...result.detectReasons] : [];
+    if (!reasons.includes(reason)) reasons.push(reason);
+    return { ...result, detectReasons: reasons };
+  }
+
+  function applyMappingSafety(result) {
+    if (!result || !result.mappingInfo) {
+      resetMappingTitleMismatch();
+      return result;
+    }
+    const info = result.mappingInfo || {};
+    const mappingGame = info.mappingGame ? String(info.mappingGame) : '';
+    if (!mappingGame) {
+      resetMappingTitleMismatch();
+      return result;
+    }
+
+    const normalizedMapping = normalizeMatch(mappingGame);
+    const titleMatch = info.titleMatch ? String(info.titleMatch) : '';
+    const processMatch = info.processMatch ? String(info.processMatch) : '';
+    const metadataMatch = info.metadataMatch ? String(info.metadataMatch) : '';
+
+    const processMismatch = processMatch && normalizeMatch(processMatch) !== normalizedMapping;
+    const metadataMismatch = metadataMatch && normalizeMatch(metadataMatch) !== normalizedMapping;
+    const titleMismatch = titleMatch && normalizeMatch(titleMatch) !== normalizedMapping;
+
+    const hasStrongSignal = Boolean(titleMatch || processMatch || metadataMatch);
+
+    if (processMismatch || metadataMismatch) {
+      resetMappingTitleMismatch();
+      logMappingGuard({
+        status: 'suspended',
+        reason: processMismatch ? 'process-mismatch' : 'metadata-mismatch',
+        mappingGame,
+        processMatch,
+        metadataMatch,
+        titleMatch
+      });
+      const fallbackName = processMatch || metadataMatch || titleMatch || null;
+      return appendMappingReason({ ...result, gameName: fallbackName }, 'mapping-suspended');
+    }
+
+    if (!hasStrongSignal) {
+      resetMappingTitleMismatch();
+      logMappingGuard({
+        status: 'suspended',
+        reason: 'weak-signal',
+        mappingGame,
+        titleMatch
+      });
+      return appendMappingReason({ ...result, gameName: null }, 'mapping-weak');
+    }
+
+    if (titleMismatch) {
+      if (game.mappingTitleMismatchGame === mappingGame) {
+        game.mappingTitleMismatchCount += 1;
+      } else {
+        game.mappingTitleMismatchGame = mappingGame;
+        game.mappingTitleMismatchCount = 1;
+      }
+
+      if (game.mappingTitleMismatchCount >= MAPPING_TITLE_MISMATCH_LIMIT) {
+        logMappingGuard({
+          status: 'suspended',
+          reason: 'title-mismatch',
+          mappingGame,
+          titleMatch,
+          count: game.mappingTitleMismatchCount,
+          limit: MAPPING_TITLE_MISMATCH_LIMIT
+        });
+        const fallbackName = titleMatch || processMatch || metadataMatch || null;
+        return appendMappingReason({ ...result, gameName: fallbackName }, 'mapping-suspended');
+      }
+
+      logMappingGuard({
+        status: 'warning',
+        reason: 'title-mismatch',
+        mappingGame,
+        titleMatch,
+        count: game.mappingTitleMismatchCount,
+        limit: MAPPING_TITLE_MISMATCH_LIMIT
+      });
+      return result;
+    }
+
+    if (game.mappingTitleMismatchCount || game.mappingTitleMismatchGame) {
+      resetMappingTitleMismatch();
+    }
+
+    return result;
   }
 
   function handleWorkerMessage(msg) {
@@ -179,7 +320,7 @@ function createGameDetectService(deps) {
     if (DISABLE_GAME_DETECT) return;
     if (core && core.overlayWin && !core.overlayWin.isDestroyed()) {
       try {
-        if (core.overlayWin.isFocused()) return;
+        if (!force && core.overlayWin.isFocused()) return;
       } catch (_) {}
     }
     ensureWorker();

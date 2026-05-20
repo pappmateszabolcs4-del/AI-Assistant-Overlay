@@ -2,6 +2,8 @@ const fs = require('fs');
 const path = require('path');
 
 const CACHE_TTL_MS = Number(process.env.GAME_META_CACHE_TTL_MS || 5 * 60 * 1000);
+const LOCAL_MANIFEST_PATH = process.env.GAME_LOCAL_MANIFEST_PATH
+  || path.join(__dirname, '../../../data/local-manifests.json');
 
 let cachedEntries = [];
 let cachedAt = 0;
@@ -128,8 +130,36 @@ function loadEpicEntries() {
   return entries;
 }
 
+function loadLocalManifestEntries() {
+  const entries = [];
+  const raw = safeReadFile(LOCAL_MANIFEST_PATH);
+  if (!raw) return entries;
+  let data = null;
+  try {
+    data = JSON.parse(raw);
+  } catch (_) {
+    return entries;
+  }
+  if (!Array.isArray(data)) return entries;
+  for (const entry of data) {
+    if (!entry) continue;
+    const installPath = entry.installPath ? String(entry.installPath).trim() : '';
+    const title = entry.title ? String(entry.title).trim() : '';
+    const appId = entry.appId ? String(entry.appId).trim() : '';
+    if (!installPath || !title) continue;
+    entries.push({
+      source: 'local',
+      appId,
+      title,
+      installPath
+    });
+  }
+  return entries;
+}
+
 function loadMetadataEntries() {
   const entries = [];
+  entries.push(...loadLocalManifestEntries());
   entries.push(...loadSteamEntries());
   entries.push(...loadEpicEntries());
   return entries;

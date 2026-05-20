@@ -1,6 +1,6 @@
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { extractGameName } = require('./game-detect-core');
+const { extractGameName, matchGameFromText } = require('./game-detect-core');
 const { resolveMetadataForProcess } = require('./game-metadata');
 
 const ACTIVE_WINDOW_SCRIPT = path.join(__dirname, '..', '..', '..', 'get-active-window.ps1');
@@ -101,7 +101,10 @@ function resolveMappedGame(title, mappings) {
     const needle = normalizeMatch(entry.match);
     if (!needle) continue;
     if (normalizedTitle.includes(needle)) {
-      return String(entry.gameName).trim();
+      return {
+        gameName: String(entry.gameName).trim(),
+        match: String(entry.match).trim()
+      };
     }
   }
   return null;
@@ -111,6 +114,7 @@ const SCORE_TITLE_MATCH = 4;
 const SCORE_PROCESS_MATCH = 5;
 const SCORE_MAPPING_MATCH = 6;
 const SCORE_METADATA_MATCH = 7;
+const SCORE_DATASET_SIGNAL = 2;
 const SCORE_CLASS_SIGNAL = 2;
 const SCORE_THRESHOLD = 6;
 
@@ -160,8 +164,12 @@ function extractProcessMatch(processInfo, ignoreList) {
 }
 
 function scoreGameTitle(title, ignoreList, mappings, processInfo, windowClass, allowTitleOnly, metadata) {
-  const mappingMatch = resolveMappedGame(title, mappings);
+  const mappingEntry = resolveMappedGame(title, mappings);
+  const mappingMatch = mappingEntry ? mappingEntry.gameName : null;
+  const mappingMatchText = mappingEntry ? mappingEntry.match : null;
   const titleMatch = extractGameName(title, ignoreList);
+  const datasetMatch = matchGameFromText(title);
+  const datasetSignal = Boolean(datasetMatch && titleMatch && datasetMatch === titleMatch);
   const processMatch = extractProcessMatch(processInfo, ignoreList);
   const metadataMatch = metadata && metadata.title ? metadata.title : null;
   const classSignal = Boolean(windowClass) && !isBrowserWindowClass(windowClass);
@@ -176,7 +184,9 @@ function scoreGameTitle(title, ignoreList, mappings, processInfo, windowClass, a
   }
 
   if (metadataMatch) {
-    name = metadataMatch;
+    if (!mappingMatch) {
+      name = metadataMatch;
+    }
     score += SCORE_METADATA_MATCH;
     reasons.push('metadata');
   }
@@ -184,6 +194,11 @@ function scoreGameTitle(title, ignoreList, mappings, processInfo, windowClass, a
   if (titleMatch) {
     score += SCORE_TITLE_MATCH;
     reasons.push('title');
+  }
+
+  if (datasetSignal) {
+    score += SCORE_DATASET_SIGNAL;
+    reasons.push('dataset');
   }
 
   if (processMatch) {
@@ -201,14 +216,15 @@ function scoreGameTitle(title, ignoreList, mappings, processInfo, windowClass, a
     + (processMatch ? 1 : 0)
     + (classSignal ? 1 : 0)
     + (mappingMatch ? 1 : 0)
-    + (metadataMatch ? 1 : 0);
+    + (metadataMatch ? 1 : 0)
+    + (datasetSignal ? 1 : 0);
   const browserHit = isBrowserProcess(processInfo) || isBrowserWindowClass(windowClass);
 
-  if (browserHit && hasTitle && !processMatch && !mappingMatch) {
+  if (!mappingMatch && browserHit && hasTitle && !processMatch) {
     return { name: null, score, reasons: [...reasons, 'browser-block'] };
   }
 
-  if (!allowTitleOnly) {
+  if (!allowTitleOnly && !mappingMatch) {
     if (!hasTitle || signalCount < 2) {
       return { name: null, score, reasons: [...reasons, 'min-signal'] };
     }
@@ -230,7 +246,12 @@ function scoreGameTitle(title, ignoreList, mappings, processInfo, windowClass, a
     name,
     score,
     reasons,
-    signalCount
+    signalCount,
+    mappingMatch,
+    mappingMatchText,
+    titleMatch,
+    processMatch,
+    metadataMatch
   };
 }
 
@@ -246,6 +267,7 @@ function detectGame(ignoreList, mappings) {
   let detectReasons = null;
   let detectSignalCount = null;
   let detectSource = null;
+  let mappingInfo = null;
 
   if (activeTitle) {
     const scored = scoreGameTitle(activeTitle, ignoreList, mappings, activeProcess, activeWindowClass, false, metadata);
@@ -254,6 +276,13 @@ function detectGame(ignoreList, mappings) {
       detectReasons = scored.reasons;
       detectSignalCount = scored.signalCount;
       detectSource = 'active';
+      mappingInfo = {
+        mappingGame: scored.mappingMatch || null,
+        mappingMatchText: scored.mappingMatchText || null,
+        titleMatch: scored.titleMatch || null,
+        processMatch: scored.processMatch || null,
+        metadataMatch: scored.metadataMatch || null
+      };
     }
     if (scored && scored.name && scored.score >= SCORE_THRESHOLD) {
       detectedGame = scored.name;
@@ -279,7 +308,14 @@ function detectGame(ignoreList, mappings) {
           name: scored.name,
           score: scored.score,
           reasons: scored.reasons,
-          signalCount: scored.signalCount
+          signalCount: scored.signalCount,
+          mappingInfo: {
+            mappingGame: scored.mappingMatch || null,
+            mappingMatchText: scored.mappingMatchText || null,
+            titleMatch: scored.titleMatch || null,
+            processMatch: scored.processMatch || null,
+            metadataMatch: scored.metadataMatch || null
+          }
         };
       }
     }
@@ -290,6 +326,7 @@ function detectGame(ignoreList, mappings) {
       detectReasons = best.reasons;
       detectSignalCount = best.signalCount;
       detectSource = 'fallback';
+      mappingInfo = best.mappingInfo || null;
       if (isDevEnv()) {
         console.log(`[GAME-DETECT] Fallback title score=${best.score} reasons=${best.reasons.join(',')}`);
       }
@@ -309,7 +346,8 @@ function detectGame(ignoreList, mappings) {
     detectScore,
     detectReasons,
     detectSignalCount,
-    detectSource
+    detectSource,
+    mappingInfo
   };
 }
 

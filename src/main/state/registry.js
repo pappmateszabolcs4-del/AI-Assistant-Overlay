@@ -43,13 +43,17 @@ const registry = {
     lastDetectReasons: null,
     lastDetectSignalCount: null,
     lastDetectSource: null,
+    pendingGameCandidate: null,
+    pendingGameCandidateCount: 0,
     lastActiveProcessPath: null,
     lastActiveProcessName: null,
     lastActiveProcessId: null,
     lastDetectedInstallPath: null,
     lastDetectedAppId: null,
     lastDetectedGameTitle: null,
-    lastDetectedMetadataSource: null
+    lastDetectedMetadataSource: null,
+    mappingTitleMismatchCount: 0,
+    mappingTitleMismatchGame: null
   },
   ai: {
     diagnosticsEnabled: false
