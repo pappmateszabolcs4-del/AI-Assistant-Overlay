@@ -7,7 +7,7 @@ const STORAGE_KEYS = {
   OVERLAY_PERF_HUD: 'overlayPerfHud',
   OVERLAY_POSITION_X: 'overlayPositionX',
   OVERLAY_POSITION_Y: 'overlayPositionY',
-  GAME_DETECT_IGNORE_LIST: 'gameDetectIgnoreList',
+  AI_DIAGNOSTICS_ENABLED: 'aiDiagnosticsEnabled',
   GAME_DETECT_MAPPINGS: 'gameDetectMappings',
   GAME_TEMPLATE_DRAFT: 'gameTemplateDraft',
   ASK_ENABLE_TTS: 'askEnableTTS',

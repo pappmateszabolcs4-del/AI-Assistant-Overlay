@@ -23,6 +23,11 @@ const UI_TEXT = {
       '• Panelek: Info/Jegyzet/Előzmények külön ablak; visszadokkolás: Dokkolás vagy húzd a fő overlay tetejére\n' +
       '• Mikrofon: Whisper (OpenAI) – többnyelvű; a hang az API-n keresztül kerül feldolgozásra\n' +
       '• Screenshot: csatolj képet → Vision elemzés\n' +
+      '• Tények: rossz válasz után „➕ Új tény”; helyben mentés\n' +
+      '• Vision elemzés: engedélyezd a Beállításokban, majd csatolj screenshotot\n' +
+      '• Játék template: opciók + egyedi útmutató; játékhoz mentve\n' +
+      '• Szabad keverés mód: Beállítások → Composition mód, utána blokkok szabadon mozgathatók\n' +
+      '• Játék specifikusság: 1–5 csúszka, rövid vs részletes válaszok\n' +
       '• Adatok: előzmények/jegyzetek localStorage-ben; a törlés gombok eltávolítják',
     mic: '🎤 Mikrofon',
     micBtn: '🎤 Mikrofon',
@@ -48,18 +53,9 @@ const UI_TEXT = {
     specializationDetail: '1 = Rövid válaszok | 3 = Részletes | 5 = Maximális részletesség',
     ttsLabel: '🔊 Hangos válaszok:',
     dataLabel: '💾 Adatok:',
-    gameIgnoreLabel: '🧹 Kihagyott ablakcímek:',
-    gameIgnoreHint: 'Egy sor = egy minta. Ha a cím tartalmazza, nem lesz játéknak nézve.',
-    gameIgnorePlaceholder: 'Opera\nGoogle Chrome\nMicrosoft Edge',
-    gameIgnoreApply: '✅ Mentés',
-    gameIgnoreReset: '🔄 Alaplista',
-    gameMapLabel: '🧩 Ismeretlen játék',
-    gameMapStatus: 'Észlelt ablakcím: {title}',
-    gameMapPlaceholder: 'Add meg a játék nevét...',
-    gameMapSave: '✅ Mentés',
-    gameMapIgnore: '🚫 Kihagyás',
-    gameMapSaved: 'Mentve: {game}',
-    gameMapIgnored: 'Hozzáadva a kihagyásokhoz.',
+    aiDiagnosticsLabel: '🧪 AI diagnosztika',
+    aiDiagnosticsToggle: 'Helyi diagnosztika engedélyezése',
+    aiDiagnosticsHint: 'Csak helyben naplóz (intent, kontextus, template).',
     gameTemplateLabel: '🎮 Játék template',
     gameTemplateHint: 'Személyre szabott instrukciók ehhez a játékhoz. Mentés helyben.',
     gameTemplateNamePlaceholder: 'Játék neve (pl. Terraria)',
@@ -77,6 +73,23 @@ const UI_TEXT = {
     gameTemplateOptionsLimit: 'Max {count} opció.',
     gameTemplateOptionLimitReached: '⚠️ Legfeljebb {count} opció választható.',
     gameTemplateCustomLabel: 'Egyedi útmutató',
+    addFactBtn: '➕ Új tény',
+    factModalTitle: '➕ Új tény',
+    factModalHint: 'Rövid, pontos, játékspecifikus tény.',
+    factGameLabel: 'Játék neve',
+    factGamePlaceholder: 'Pl. RimWorld',
+    factTextLabel: 'Tény',
+    factTextPlaceholder: 'Írd ide a tényt...',
+    factKeywordsLabel: 'Kulcsszavak (vesszővel)',
+    factKeywordsPlaceholder: 'pl. deep drill, scanner',
+    factTagsLabel: 'Címkék (vesszővel)',
+    factTagsPlaceholder: 'pl. mechanics, resource',
+    factModalSave: '✅ Mentés',
+    factModalCancel: 'Mégse',
+    factModalMissingGame: '⚠️ Add meg a játék nevét.',
+    factModalMissingText: '⚠️ Add meg a tény szövegét.',
+    factModalSaved: '✅ Tény elmentve.',
+    factModalErrorPrefix: '❌ Hiba: ',
     gameTemplateOptShortSteps: '3-5 rövid lépés',
     gameTemplateOptProgression: 'Progresszió fókusz (következő célok)',
     gameTemplateOptBuilds: 'Build/felszerelés javaslatok',
@@ -251,6 +264,11 @@ const UI_TEXT = {
       '• Panels: Info/Note/History can be separate windows; re-dock via Dock or drag to the top of the main overlay\n' +
       '• Microphone: Whisper (OpenAI) – multi-language; audio is processed via the API\n' +
       '• Screenshot: attach an image → Vision analysis\n' +
+      '• Facts: after a wrong answer, click “➕ New fact”; saved locally\n' +
+      '• Vision analysis: enable in Settings, then attach a screenshot\n' +
+      '• Game template: options + custom guidance; saved per game\n' +
+      '• Composition mode: Settings → Composition mode, then move blocks freely\n' +
+      '• Game specificity: 1–5 slider for brief vs detailed answers\n' +
       '• Data: history/notes are stored in localStorage; clear buttons remove them',
     mic: '🎤 Microphone',
     micBtn: '🎤 Microphone',
@@ -276,18 +294,9 @@ const UI_TEXT = {
     specializationDetail: '1 = Short answers | 3 = Detailed | 5 = Maximum detail',
     ttsLabel: '🔊 Spoken answers:',
     dataLabel: '💾 Data:',
-    gameIgnoreLabel: '🧹 Ignored window titles:',
-    gameIgnoreHint: 'One line = one pattern. If the title contains it, it will be ignored.',
-    gameIgnorePlaceholder: 'Opera\nGoogle Chrome\nMicrosoft Edge',
-    gameIgnoreApply: '✅ Save',
-    gameIgnoreReset: '🔄 Defaults',
-    gameMapLabel: '🧩 Unknown game',
-    gameMapStatus: 'Detected window title: {title}',
-    gameMapPlaceholder: 'Enter the game name...',
-    gameMapSave: '✅ Save',
-    gameMapIgnore: '🚫 Ignore',
-    gameMapSaved: 'Saved: {game}',
-    gameMapIgnored: 'Added to ignore list.',
+    aiDiagnosticsLabel: '🧪 AI diagnostics',
+    aiDiagnosticsToggle: 'Enable local diagnostics',
+    aiDiagnosticsHint: 'Logs intent/context/template decisions locally.',
     gameTemplateLabel: '🎮 Game template',
     gameTemplateHint: 'Custom guidance for this game. Stored locally.',
     gameTemplateNamePlaceholder: 'Game name (e.g., Terraria)',
@@ -305,6 +314,23 @@ const UI_TEXT = {
     gameTemplateOptionsLimit: 'Max {count} options.',
     gameTemplateOptionLimitReached: '⚠️ Max {count} options.',
     gameTemplateCustomLabel: 'Custom guidance',
+    addFactBtn: '➕ New fact',
+    factModalTitle: '➕ New fact',
+    factModalHint: 'Short, precise, game-specific fact.',
+    factGameLabel: 'Game name',
+    factGamePlaceholder: 'e.g. RimWorld',
+    factTextLabel: 'Fact',
+    factTextPlaceholder: 'Write the fact here...',
+    factKeywordsLabel: 'Keywords (comma-separated)',
+    factKeywordsPlaceholder: 'e.g. deep drill, scanner',
+    factTagsLabel: 'Tags (comma-separated)',
+    factTagsPlaceholder: 'e.g. mechanics, resource',
+    factModalSave: '✅ Save',
+    factModalCancel: 'Cancel',
+    factModalMissingGame: '⚠️ Add the game name.',
+    factModalMissingText: '⚠️ Add the fact text.',
+    factModalSaved: '✅ Fact saved.',
+    factModalErrorPrefix: '❌ Error: ',
     gameTemplateOptShortSteps: '3-5 concise steps',
     gameTemplateOptProgression: 'Progression focus (next goals)',
     gameTemplateOptBuilds: 'Build/gear recommendations',
@@ -479,6 +505,11 @@ const UI_TEXT = {
       '• Panels: Info/Notiz/Verlauf als separate Fenster; zurück via Dock oder oben ins Haupt-Overlay ziehen\n' +
       '• Mikrofon: Whisper (OpenAI) – mehrsprachig; Audio wird über die API verarbeitet\n' +
       '• Screenshot: Bild anhängen → Vision-Analyse\n' +
+      '• Fakten: nach falscher Antwort „➕ Neuer Fakt“; lokal gespeichert\n' +
+      '• Vision-Analyse: in den Einstellungen aktivieren, dann Screenshot anhängen\n' +
+      '• Spiel-Template: Optionen + eigene Hinweise; pro Spiel gespeichert\n' +
+      '• Composition mode: Einstellungen → Composition mode, dann Blöcke frei bewegen\n' +
+      '• Spielspezifität: Regler 1–5 für kurz vs detailliert\n' +
       '• Daten: Verlauf/Notizen in localStorage; Lösch-Buttons entfernen sie',
     mic: '🎤 Mikrofon',
     micBtn: '🎙️ Mikrofon',
@@ -504,18 +535,9 @@ const UI_TEXT = {
     specializationDetail: '1 = Kurze Antworten | 3 = Detailliert | 5 = Maximale Details',
     ttsLabel: '🔊 Gesprochene Antworten:',
     dataLabel: '💾 Daten:',
-    gameIgnoreLabel: '🧹 Ignorierte Fenstertitel:',
-    gameIgnoreHint: 'Eine Zeile = ein Muster. Enthält der Titel es, wird er ignoriert.',
-    gameIgnorePlaceholder: 'Opera\nGoogle Chrome\nMicrosoft Edge',
-    gameIgnoreApply: '✅ Speichern',
-    gameIgnoreReset: '🔄 Standard',
-    gameMapLabel: '🧩 Unbekanntes Spiel',
-    gameMapStatus: 'Erkannter Fenstertitel: {title}',
-    gameMapPlaceholder: 'Spielnamen eingeben...',
-    gameMapSave: '✅ Speichern',
-    gameMapIgnore: '🚫 Ignorieren',
-    gameMapSaved: 'Gespeichert: {game}',
-    gameMapIgnored: 'Zur Ignore-Liste hinzugefügt.',
+    aiDiagnosticsLabel: '🧪 KI-Diagnose',
+    aiDiagnosticsToggle: 'Lokale Diagnose aktivieren',
+    aiDiagnosticsHint: 'Protokolliert Intent/Kontext/Template lokal.',
     gameTemplateLabel: '🎮 Spiel-Template',
     gameTemplateHint: 'Benutzerdefinierte Hinweise für dieses Spiel. Lokal gespeichert.',
     gameTemplateNamePlaceholder: 'Spielname (z.B. Terraria)',
@@ -533,6 +555,23 @@ const UI_TEXT = {
     gameTemplateOptionsLimit: 'Max {count} Optionen.',
     gameTemplateOptionLimitReached: '⚠️ Max {count} Optionen.',
     gameTemplateCustomLabel: 'Individuelle Hinweise',
+    addFactBtn: '➕ Neuer Fakt',
+    factModalTitle: '➕ Neuer Fakt',
+    factModalHint: 'Kurzer, genauer, spielbezogener Fakt.',
+    factGameLabel: 'Spielname',
+    factGamePlaceholder: 'z. B. RimWorld',
+    factTextLabel: 'Fakt',
+    factTextPlaceholder: 'Fakt hier eingeben...',
+    factKeywordsLabel: 'Schluesselwoerter (Komma)',
+    factKeywordsPlaceholder: 'z. B. deep drill, scanner',
+    factTagsLabel: 'Tags (Komma)',
+    factTagsPlaceholder: 'z. B. mechanics, resource',
+    factModalSave: '✅ Speichern',
+    factModalCancel: 'Abbrechen',
+    factModalMissingGame: '⚠️ Bitte Spielname angeben.',
+    factModalMissingText: '⚠️ Bitte Fakttext angeben.',
+    factModalSaved: '✅ Fakt gespeichert.',
+    factModalErrorPrefix: '❌ Fehler: ',
     gameTemplateOptShortSteps: '3-5 kurze Schritte',
     gameTemplateOptProgression: 'Fortschrittfokus (nächste Ziele)',
     gameTemplateOptBuilds: 'Build/Equipment-Empfehlungen',
@@ -707,6 +746,11 @@ const UI_TEXT = {
       '• Панели: Инфо/Заметки/История — отдельные окна; вернуть через Dock или перетащить наверх оверлея\n' +
       '• Микрофон: Whisper (OpenAI) — многоязычно; аудио обрабатывается через API\n' +
       '• Скриншот: прикрепите изображение → Vision‑анализ\n' +
+      '• Факты: после ошибки «➕ Новый факт»; сохраняется локально\n' +
+      '• Vision‑анализ: включите в настройках, затем прикрепите скриншот\n' +
+      '• Шаблон игры: опции + свои подсказки; сохраняется по игре\n' +
+      '• Composition mode: Настройки → Composition mode, затем свободно перемещайте блоки\n' +
+      '• Специфичность: ползунок 1–5 для краткости/деталей\n' +
       '• Данные: история/заметки в localStorage; кнопки очистки удаляют их',
     mic: '🎤 Микрофон',
     micBtn: '🎙️ Микрофон',
@@ -732,18 +776,9 @@ const UI_TEXT = {
     specializationDetail: '1 = Короткие ответы | 3 = Подробно | 5 = Максимальная детализация',
     ttsLabel: '🔊 Озвученные ответы:',
     dataLabel: '💾 Данные:',
-    gameIgnoreLabel: '🧹 Игнорируемые заголовки окон:',
-    gameIgnoreHint: 'Одна строка = один шаблон. Если заголовок содержит его, окно игнорируется.',
-    gameIgnorePlaceholder: 'Opera\nGoogle Chrome\nMicrosoft Edge',
-    gameIgnoreApply: '✅ Сохранить',
-    gameIgnoreReset: '🔄 По умолчанию',
-    gameMapLabel: '🧩 Неизвестная игра',
-    gameMapStatus: 'Обнаружен заголовок: {title}',
-    gameMapPlaceholder: 'Введите название игры...',
-    gameMapSave: '✅ Сохранить',
-    gameMapIgnore: '🚫 Игнорировать',
-    gameMapSaved: 'Сохранено: {game}',
-    gameMapIgnored: 'Добавлено в список игнора.',
+    aiDiagnosticsLabel: '🧪 Диагностика ИИ',
+    aiDiagnosticsToggle: 'Включить локальную диагностику',
+    aiDiagnosticsHint: 'Локальные логи: intent/контекст/шаблон.',
     gameTemplateLabel: '🎮 Шаблон игры',
     gameTemplateHint: 'Пользовательские подсказки для этой игры. Хранится локально.',
     gameTemplateNamePlaceholder: 'Название игры (например, Terraria)',
@@ -761,6 +796,23 @@ const UI_TEXT = {
     gameTemplateOptionsLimit: 'Макс {count} опций.',
     gameTemplateOptionLimitReached: '⚠️ Макс {count} опций.',
     gameTemplateCustomLabel: 'Пользовательские подсказки',
+    addFactBtn: '➕ Новый факт',
+    factModalTitle: '➕ Новый факт',
+    factModalHint: 'Короткий точный факт по игре.',
+    factGameLabel: 'Название игры',
+    factGamePlaceholder: 'например RimWorld',
+    factTextLabel: 'Факт',
+    factTextPlaceholder: 'Введите факт...',
+    factKeywordsLabel: 'Ключевые слова (через запятую)',
+    factKeywordsPlaceholder: 'например deep drill, scanner',
+    factTagsLabel: 'Теги (через запятую)',
+    factTagsPlaceholder: 'например mechanics, resource',
+    factModalSave: '✅ Сохранить',
+    factModalCancel: 'Отмена',
+    factModalMissingGame: '⚠️ Укажите название игры.',
+    factModalMissingText: '⚠️ Укажите текст факта.',
+    factModalSaved: '✅ Факт сохранен.',
+    factModalErrorPrefix: '❌ Ошибка: ',
     gameTemplateOptShortSteps: '3-5 коротких шагов',
     gameTemplateOptProgression: 'Фокус на прогрессе (следующие цели)',
     gameTemplateOptBuilds: 'Рекомендации по билду/экипировке',
@@ -935,6 +987,11 @@ const UI_TEXT = {
       '• Panneaux : Info/Note/Historique en fenêtres séparées ; retour via Dock ou glisser en haut de l\'overlay\n' +
       '• Micro : Whisper (OpenAI) — multi-langues ; l\'audio est traité via l\'API\n' +
       '• Screenshot : joindre une image → analyse Vision\n' +
+      '• Faits : après une mauvaise réponse «➕ Nouveau fait» ; stocké localement\n' +
+      '• Analyse Vision : activer dans Paramètres, puis joindre un screenshot\n' +
+      '• Modèle de jeu : options + guide perso ; enregistré par jeu\n' +
+      '• Composition mode : Paramètres → Composition mode, puis déplacer librement les blocs\n' +
+      '• Spécificité : curseur 1–5 pour concis vs détaillé\n' +
       '• Données : historique/notes dans localStorage ; les boutons de suppression effacent',
     mic: '🎤 Micro',
     micBtn: '🎙️ Microphone',
@@ -960,18 +1017,9 @@ const UI_TEXT = {
     specializationDetail: '1 = Réponses courtes | 3 = Détaillé | 5 = Détail maximal',
     ttsLabel: '🔊 Réponses parlées :',
     dataLabel: '💾 Données :',
-    gameIgnoreLabel: '🧹 Titres de fenêtre ignorés :',
-    gameIgnoreHint: 'Une ligne = un motif. Si le titre le contient, il est ignoré.',
-    gameIgnorePlaceholder: 'Opera\nGoogle Chrome\nMicrosoft Edge',
-    gameIgnoreApply: '✅ Enregistrer',
-    gameIgnoreReset: '🔄 Par défaut',
-    gameMapLabel: '🧩 Jeu inconnu',
-    gameMapStatus: 'Titre détecté : {title}',
-    gameMapPlaceholder: 'Entrez le nom du jeu...',
-    gameMapSave: '✅ Enregistrer',
-    gameMapIgnore: '🚫 Ignorer',
-    gameMapSaved: 'Enregistré : {game}',
-    gameMapIgnored: 'Ajouté à la liste ignorée.',
+    aiDiagnosticsLabel: '🧪 Diagnostics IA',
+    aiDiagnosticsToggle: 'Activer les diagnostics locaux',
+    aiDiagnosticsHint: 'Journalise intent/contexte/modèle en local.',
     gameTemplateLabel: '🎮 Modèle de jeu',
     gameTemplateHint: 'Conseils personnalisés pour ce jeu. Stocké localement.',
     gameTemplateNamePlaceholder: 'Nom du jeu (ex. Terraria)',
@@ -989,6 +1037,23 @@ const UI_TEXT = {
     gameTemplateOptionsLimit: 'Max {count} options.',
     gameTemplateOptionLimitReached: '⚠️ Max {count} options.',
     gameTemplateCustomLabel: 'Guide personnalisé',
+    addFactBtn: '➕ Nouveau fait',
+    factModalTitle: '➕ Nouveau fait',
+    factModalHint: 'Fait court et precis, specifique au jeu.',
+    factGameLabel: 'Nom du jeu',
+    factGamePlaceholder: 'ex. RimWorld',
+    factTextLabel: 'Fait',
+    factTextPlaceholder: 'Saisis le fait ici...',
+    factKeywordsLabel: 'Mots-cles (virgules)',
+    factKeywordsPlaceholder: 'ex. deep drill, scanner',
+    factTagsLabel: 'Tags (virgules)',
+    factTagsPlaceholder: 'ex. mechanics, resource',
+    factModalSave: '✅ Enregistrer',
+    factModalCancel: 'Annuler',
+    factModalMissingGame: '⚠️ Indique le nom du jeu.',
+    factModalMissingText: '⚠️ Indique le texte du fait.',
+    factModalSaved: '✅ Fait enregistre.',
+    factModalErrorPrefix: '❌ Erreur: ',
     gameTemplateOptShortSteps: '3-5 étapes courtes',
     gameTemplateOptProgression: 'Focus progression (prochains objectifs)',
     gameTemplateOptBuilds: 'Recommandations build/équipement',
@@ -1155,6 +1220,11 @@ const UI_TEXT = {
       '• 面板：信息/便笺/历史为独立窗口；通过 Dock 或拖回覆盖层顶部停靠\n' +
       '• 麦克风：Whisper（OpenAI）— 多语言；音频通过 API 处理\n' +
       '• 截图：附加图片 → Vision 分析\n' +
+      '• 事实：回答错误后点击“➕ 新事实”；本地保存\n' +
+      '• Vision 分析：在设置中启用，然后附加截图\n' +
+      '• 游戏模板：选项 + 自定义指引；按游戏保存\n' +
+      '• Composition mode：设置 → Composition mode，然后自由移动区块\n' +
+      '• 游戏特异性：1–5 滑块控制简短/详细\n' +
       '• 数据：历史/便笺保存在 localStorage；清除按钮会删除',
     mic: '🎤 麦克风',
     micBtn: '🎙️ 麦克风',
@@ -1180,18 +1250,9 @@ const UI_TEXT = {
     specializationDetail: '1 = 简短回答 | 3 = 详细 | 5 = 最详尽',
     ttsLabel: '🔊 语音回答：',
     dataLabel: '💾 数据：',
-    gameIgnoreLabel: '🧹 忽略的窗口标题：',
-    gameIgnoreHint: '一行=一个匹配。标题包含它就会被忽略。',
-    gameIgnorePlaceholder: 'Opera\nGoogle Chrome\nMicrosoft Edge',
-    gameIgnoreApply: '✅ 保存',
-    gameIgnoreReset: '🔄 默认值',
-    gameMapLabel: '🧩 未知游戏',
-    gameMapStatus: '检测到窗口标题：{title}',
-    gameMapPlaceholder: '输入游戏名称...',
-    gameMapSave: '✅ 保存',
-    gameMapIgnore: '🚫 忽略',
-    gameMapSaved: '已保存：{game}',
-    gameMapIgnored: '已加入忽略列表。',
+    aiDiagnosticsLabel: '🧪 AI 诊断',
+    aiDiagnosticsToggle: '启用本地诊断',
+    aiDiagnosticsHint: '本地记录 intent/上下文/模板。',
     gameTemplateLabel: '🎮 游戏模板',
     gameTemplateHint: '为此游戏定制的提示，本地保存。',
     gameTemplateNamePlaceholder: '游戏名称（例如 Terraria）',
@@ -1209,6 +1270,23 @@ const UI_TEXT = {
     gameTemplateOptionsLimit: '最多 {count} 个选项。',
     gameTemplateOptionLimitReached: '⚠️ 最多 {count} 个选项。',
     gameTemplateCustomLabel: '自定义指引',
+    addFactBtn: '➕ 新事实',
+    factModalTitle: '➕ 新事实',
+    factModalHint: '简短准确的游戏事实。',
+    factGameLabel: '游戏名称',
+    factGamePlaceholder: '例如 RimWorld',
+    factTextLabel: '事实',
+    factTextPlaceholder: '在此填写事实...',
+    factKeywordsLabel: '关键词（逗号分隔）',
+    factKeywordsPlaceholder: '例如 deep drill, scanner',
+    factTagsLabel: '标签（逗号分隔）',
+    factTagsPlaceholder: '例如 mechanics, resource',
+    factModalSave: '✅ 保存',
+    factModalCancel: '取消',
+    factModalMissingGame: '⚠️ 请填写游戏名称。',
+    factModalMissingText: '⚠️ 请填写事实文本。',
+    factModalSaved: '✅ 已保存事实。',
+    factModalErrorPrefix: '❌ 错误: ',
     gameTemplateOptShortSteps: '3-5 个简短步骤',
     gameTemplateOptProgression: '进度/下一目标',
     gameTemplateOptBuilds: 'Build/装备建议',
@@ -1362,6 +1440,19 @@ const UI_TEXT = {
     confirmNo: '✕ 取消'
   },
   es: {
+    infoBody: '• Atajo: Ctrl+Shift+K – abrir/cerrar el overlay\n' +
+      '• Mover: arrastra el tirador superior Move overlay\n' +
+      '• Bloques: arrastra entre paneles o separa en ventanas de bloque\n' +
+      '• Notas: varias notas con renombrar + fijar; seleccionar en la lista\n' +
+      '• Paneles: Info/Nota/Historial en ventanas separadas; re-anclar via Dock o arrastrar arriba\n' +
+      '• Microfono: Whisper (OpenAI) – multi-idioma; el audio se procesa via API\n' +
+      '• Screenshot: adjunta imagen → analisis Vision\n' +
+      '• Hechos: tras una mala respuesta “➕ Nuevo hecho”; guardado local\n' +
+      '• Vision: activar en Ajustes, luego adjuntar screenshot\n' +
+      '• Plantilla de juego: opciones + guia propia; guardada por juego\n' +
+      '• Composition mode: Ajustes → Composition mode, luego mover bloques libremente\n' +
+      '• Especificidad: deslizador 1–5 para corto vs detallado\n' +
+      '• Datos: historial/notas en localStorage; limpiar los elimina',
     gameTemplateLabel: '🎮 Plantilla de juego',
     gameTemplateHint: 'Consejos personalizados para este juego. Guardado localmente.',
     gameTemplateNamePlaceholder: 'Nombre del juego (p. ej., Terraria)',
@@ -1379,6 +1470,23 @@ const UI_TEXT = {
     gameTemplateOptionsLimit: 'Máx {count} opciones.',
     gameTemplateOptionLimitReached: '⚠️ Máx {count} opciones.',
     gameTemplateCustomLabel: 'Guía personalizada',
+    addFactBtn: '➕ Nuevo hecho',
+    factModalTitle: '➕ Nuevo hecho',
+    factModalHint: 'Hecho corto y preciso del juego.',
+    factGameLabel: 'Nombre del juego',
+    factGamePlaceholder: 'p. ej. RimWorld',
+    factTextLabel: 'Hecho',
+    factTextPlaceholder: 'Escribe el hecho aqui...',
+    factKeywordsLabel: 'Palabras clave (coma)',
+    factKeywordsPlaceholder: 'p. ej. deep drill, scanner',
+    factTagsLabel: 'Etiquetas (coma)',
+    factTagsPlaceholder: 'p. ej. mechanics, resource',
+    factModalSave: '✅ Guardar',
+    factModalCancel: 'Cancelar',
+    factModalMissingGame: '⚠️ Indica el nombre del juego.',
+    factModalMissingText: '⚠️ Indica el texto del hecho.',
+    factModalSaved: '✅ Hecho guardado.',
+    factModalErrorPrefix: '❌ Error: ',
     gameTemplateOptShortSteps: '3-5 pasos concisos',
     gameTemplateOptProgression: 'Progresión (siguientes objetivos)',
     gameTemplateOptBuilds: 'Recomendaciones de build/equipo',
@@ -1387,6 +1495,19 @@ const UI_TEXT = {
     gameTemplateOptFarming: 'Prioridades de farmeo'
   },
   it: {
+    infoBody: '• Hotkey: Ctrl+Shift+K – apri/chiudi overlay\n' +
+      '• Sposta: trascina la maniglia superiore Move overlay\n' +
+      '• Blocchi: trascina tra pannelli o separa in finestre blocco\n' +
+      '• Note: piu note con rinomina + pin; selezione dal menu\n' +
+      '• Pannelli: Info/Nota/Storico come finestre separate; ridock via Dock o trascina in alto\n' +
+      '• Microfono: Whisper (OpenAI) – multi-lingua; audio via API\n' +
+      '• Screenshot: allega immagine → analisi Vision\n' +
+      '• Fatti: dopo risposta errata “➕ Nuovo fatto”; salvato in locale\n' +
+      '• Vision: abilita in Impostazioni, poi allega screenshot\n' +
+      '• Template gioco: opzioni + guida personale; salvata per gioco\n' +
+      '• Composition mode: Impostazioni → Composition mode, poi muovi blocchi liberamente\n' +
+      '• Specificita: slider 1–5 per breve vs dettagliato\n' +
+      '• Dati: storico/note in localStorage; i pulsanti li cancellano',
     historySearchPlaceholder: 'Cerca nella cronologia...',
     historyPinnedOnlyLabel: 'Solo fissati',
     historySearchResults: 'Risultati: {count}',
@@ -1399,13 +1520,6 @@ const UI_TEXT = {
     debugMapIssuesTitle: 'Problemi',
     debugMapNoIssues: 'Nessun problema rilevato.',
     debugMapUnavailable: 'Mappa di debug non disponibile.',
-    gameMapLabel: '🧩 Gioco sconosciuto',
-    gameMapStatus: 'Titolo finestra rilevato: {title}',
-    gameMapPlaceholder: 'Inserisci il nome del gioco...',
-    gameMapSave: '✅ Salva',
-    gameMapIgnore: '🚫 Ignora',
-    gameMapSaved: 'Salvato: {game}',
-    gameMapIgnored: 'Aggiunto alla lista ignorati.',
     gameTemplateLabel: '🎮 Template di gioco',
     gameTemplateHint: 'Suggerimenti personalizzati per questo gioco. Salvato localmente.',
     gameTemplateNamePlaceholder: 'Nome del gioco (es. Terraria)',
@@ -1423,6 +1537,23 @@ const UI_TEXT = {
     gameTemplateOptionsLimit: 'Max {count} opzioni.',
     gameTemplateOptionLimitReached: '⚠️ Max {count} opzioni.',
     gameTemplateCustomLabel: 'Guida personalizzata',
+    addFactBtn: '➕ Nuovo fatto',
+    factModalTitle: '➕ Nuovo fatto',
+    factModalHint: 'Fatto breve e preciso sul gioco.',
+    factGameLabel: 'Nome del gioco',
+    factGamePlaceholder: 'es. RimWorld',
+    factTextLabel: 'Fatto',
+    factTextPlaceholder: 'Scrivi il fatto qui...',
+    factKeywordsLabel: 'Parole chiave (virgola)',
+    factKeywordsPlaceholder: 'es. deep drill, scanner',
+    factTagsLabel: 'Tag (virgola)',
+    factTagsPlaceholder: 'es. mechanics, resource',
+    factModalSave: '✅ Salva',
+    factModalCancel: 'Annulla',
+    factModalMissingGame: '⚠️ Indica il nome del gioco.',
+    factModalMissingText: '⚠️ Indica il testo del fatto.',
+    factModalSaved: '✅ Fatto salvato.',
+    factModalErrorPrefix: '❌ Errore: ',
     gameTemplateOptShortSteps: '3-5 passi concisi',
     gameTemplateOptProgression: 'Progressione (prossimi obiettivi)',
     gameTemplateOptBuilds: 'Consigli build/equipaggiamento',
@@ -1452,6 +1583,19 @@ const UI_TEXT = {
     visionConsentUnknownGame: 'Gioco sconosciuto',
   },
   pl: {
+    infoBody: '• Hotkey: Ctrl+Shift+K – otworz/zamknij overlay\n' +
+      '• Ruch: przeciagnij gorny uchwyt Move overlay\n' +
+      '• Bloki: przeciagaj miedzy panelami lub odpinaj do okien\n' +
+      '• Notatki: wiele notatek, zmiana nazwy + przypiecie; wybor z listy\n' +
+      '• Panele: Info/Notatka/Historia w osobnych oknach; dokuj przez Dock lub przeciagnij do gory\n' +
+      '• Mikrofon: Whisper (OpenAI) – wielojezyczny; audio przez API\n' +
+      '• Screenshot: dolacz obraz → analiza Vision\n' +
+      '• Fakty: po blednej odpowiedzi “➕ Nowy fakt”; zapis lokalny\n' +
+      '• Vision: wlacz w Ustawieniach, potem dolacz screenshot\n' +
+      '• Szablon gry: opcje + wlasne wskazowki; zapisane per gra\n' +
+      '• Composition mode: Ustawienia → Composition mode, potem swobodne bloki\n' +
+      '• Specyficznosc: suwak 1–5 dla krotko vs szczegolowo\n' +
+      '• Dane: historia/notatki w localStorage; przyciski je usuwaja',
     historySearchPlaceholder: 'Szukaj w historii...',
     historyPinnedOnlyLabel: 'Tylko przypięte',
     historySearchResults: 'Wyniki: {count}',
@@ -1464,13 +1608,6 @@ const UI_TEXT = {
     debugMapIssuesTitle: 'Problemy',
     debugMapNoIssues: 'Nie wykryto problemów.',
     debugMapUnavailable: 'Mapa debugowania niedostępna.',
-    gameMapLabel: '🧩 Nieznana gra',
-    gameMapStatus: 'Wykryty tytuł okna: {title}',
-    gameMapPlaceholder: 'Wpisz nazwę gry...',
-    gameMapSave: '✅ Zapisz',
-    gameMapIgnore: '🚫 Ignoruj',
-    gameMapSaved: 'Zapisano: {game}',
-    gameMapIgnored: 'Dodano do listy ignorowanych.',
     gameTemplateLabel: '🎮 Szablon gry',
     gameTemplateHint: 'Własne wskazówki dla tej gry. Zapis lokalny.',
     gameTemplateNamePlaceholder: 'Nazwa gry (np. Terraria)',
@@ -1488,6 +1625,23 @@ const UI_TEXT = {
     gameTemplateOptionsLimit: 'Max {count} opcji.',
     gameTemplateOptionLimitReached: '⚠️ Max {count} opcji.',
     gameTemplateCustomLabel: 'Własne wskazówki',
+    addFactBtn: '➕ Nowy fakt',
+    factModalTitle: '➕ Nowy fakt',
+    factModalHint: 'Krotki, precyzyjny fakt o grze.',
+    factGameLabel: 'Nazwa gry',
+    factGamePlaceholder: 'np. RimWorld',
+    factTextLabel: 'Fakt',
+    factTextPlaceholder: 'Wpisz fakt...',
+    factKeywordsLabel: 'Slowa kluczowe (przecinki)',
+    factKeywordsPlaceholder: 'np. deep drill, scanner',
+    factTagsLabel: 'Tagi (przecinki)',
+    factTagsPlaceholder: 'np. mechanics, resource',
+    factModalSave: '✅ Zapisz',
+    factModalCancel: 'Anuluj',
+    factModalMissingGame: '⚠️ Podaj nazwe gry.',
+    factModalMissingText: '⚠️ Podaj tresc faktu.',
+    factModalSaved: '✅ Fakt zapisany.',
+    factModalErrorPrefix: '❌ Blad: ',
     gameTemplateOptShortSteps: '3-5 krótkich kroków',
     gameTemplateOptProgression: 'Progresja (kolejne cele)',
     gameTemplateOptBuilds: 'Rekomendacje build/ekwipunek',

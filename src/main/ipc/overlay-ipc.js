@@ -4,6 +4,7 @@ const { isDev } = require('../../shared/app-env');
 const { appendOverlayDebug } = require('../utils/overlay-debug-log');
 const { appendOverlayPerf } = require('../utils/overlay-perf-log');
 const { listTemplates, upsertTemplate, deleteTemplate } = require('../services/game-template-store');
+const { addFact } = require('../services/game-facts-store');
 
 function registerOverlayIpc(deps) {
   const {
@@ -263,6 +264,19 @@ function registerOverlayIpc(deps) {
     return { success: true };
   });
 
+  ipcMain.handle(IPC_CHANNELS.ADD_GAME_FACT, async (_event, payload) => {
+    try {
+      const game = String(payload && payload.game || '').trim();
+      const text = String(payload && payload.text || '').trim();
+      const keywords = Array.isArray(payload && payload.keywords) ? payload.keywords : [];
+      const tags = Array.isArray(payload && payload.tags) ? payload.tags : [];
+      const priority = Number.isFinite(payload && payload.priority) ? payload.priority : 0;
+      return addFact(game, { text, keywords, tags, priority });
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
   ipcMain.handle(IPC_CHANNELS.OVERLAY_LAYOUT_SET, async (_event, payload) => {
     const rawMode = payload && typeof payload === 'object' && payload.mode != null
       ? payload.mode
@@ -293,6 +307,14 @@ function registerOverlayIpc(deps) {
       core.overlayWin.webContents.send(IPC_CHANNELS.SET_SPEECH_RATE, nextRate);
     }
     return { success: true };
+  });
+
+  ipcMain.handle(IPC_CHANNELS.SET_AI_DIAGNOSTICS, async (_event, payload) => {
+    const enabled = payload && typeof payload === 'object'
+      ? !!payload.enabled
+      : !!payload;
+    if (registry.ai) registry.ai.diagnosticsEnabled = enabled;
+    return { success: true, enabled };
   });
 
   ipcMain.handle(IPC_CHANNELS.SET_GAME_DETECT_MAPPINGS, async (_event, mappings) => {
@@ -582,20 +604,6 @@ function registerOverlayIpc(deps) {
   });
 
   ipcMain.handle(IPC_CHANNELS.GET_AUTO_START, () => app.getLoginItemSettings().openAtLogin);
-
-  ipcMain.handle(IPC_CHANNELS.SET_GAME_DETECT_IGNORE_LIST, (_event, list) => {
-    const normalized = Array.isArray(list)
-      ? list.map((entry) => String(entry).trim()).filter(Boolean)
-      : [];
-    game.gameDetectIgnoreList = normalized;
-    try {
-      detectCurrentGame(true);
-      if (core.overlayWin && !core.overlayWin.isDestroyed()) {
-        core.overlayWin.webContents.send(IPC_CHANNELS.SET_GAME_CONTEXT, game.currentDetectedGame);
-      }
-    } catch (_) {}
-    return { success: true };
-  });
 
   ipcMain.handle(IPC_CHANNELS.CAPTURE_SCREENSHOT, async () => {
     try {

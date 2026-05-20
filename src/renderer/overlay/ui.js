@@ -58,48 +58,21 @@ let gameTemplateUseCurrentBtn = null;
 let gameTemplateSaveBtn = null;
 let gameTemplateDeleteBtn = null;
 let gameTemplateStatus = null;
-
-const DEFAULT_GAME_IGNORE_TITLES = [
-  'Google Chrome',
-  'Chrome',
-  'Microsoft Edge',
-  'Edge',
-  'Opera',
-  'Firefox',
-  'Mozilla Firefox',
-  'Brave',
-  'Vivaldi',
-  'Discord',
-  'Visual Studio Code',
-  'VS Code'
-];
-
-function normalizeGameIgnoreInput(text) {
-  return String(text || '')
-    .split(/[\n,]+/)
-    .map((entry) => entry.trim())
-    .filter((entry) => entry.length > 0);
-}
-
-function loadGameIgnoreList() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.GAME_DETECT_IGNORE_LIST);
-    if (!raw) return [...DEFAULT_GAME_IGNORE_TITLES];
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length) return parsed.filter((entry) => typeof entry === 'string' && entry.trim());
-  } catch (_) {}
-  return [...DEFAULT_GAME_IGNORE_TITLES];
-}
-
-function persistGameIgnoreList(list) {
-  try {
-    localStorage.setItem(STORAGE_KEYS.GAME_DETECT_IGNORE_LIST, JSON.stringify(list));
-  } catch (_) {}
-}
-
-function sendGameIgnoreListToMain(list) {
-  try { invokeMain(IPC_CHANNELS.SET_GAME_DETECT_IGNORE_LIST, list); } catch (_) {}
-}
+let addFactBtn = null;
+let factModal = null;
+let factModalTitle = null;
+let factModalHint = null;
+let factGameLabel = null;
+let factGameInput = null;
+let factTextLabel = null;
+let factTextInput = null;
+let factKeywordsLabel = null;
+let factKeywordsInput = null;
+let factTagsLabel = null;
+let factTagsInput = null;
+let factModalStatus = null;
+let factModalCancel = null;
+let factModalSave = null;
 
 function getUserFacingErrorMessage(rawError) {
   const msg = String(rawError || '').trim();
@@ -175,6 +148,25 @@ function writeVisionEnabled(enabled) {
   } catch (_) {}
 }
 
+function readAiDiagnosticsEnabled() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.AI_DIAGNOSTICS_ENABLED);
+    return raw === 'true';
+  } catch (_) {
+    return false;
+  }
+}
+
+function writeAiDiagnosticsEnabled(enabled) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.AI_DIAGNOSTICS_ENABLED, enabled ? 'true' : 'false');
+  } catch (_) {}
+}
+
+function syncAiDiagnosticsEnabled(enabled) {
+  try { invokeMain(IPC_CHANNELS.SET_AI_DIAGNOSTICS, { enabled: !!enabled }); } catch (_) {}
+}
+
 function updateVisionSettingsUI() {
   if (visionEnableToggle) {
     visionEnableToggle.checked = readVisionEnabled();
@@ -225,6 +217,65 @@ function showVisionConsentModal(gameName) {
 
     visionConsentModal.classList.add('active');
   });
+}
+
+function parseFactListInput(value) {
+  return String(value || '')
+    .split(/[\n,]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function closeFactModal() {
+  if (!factModal || !factModal.classList.contains('active')) return;
+  factModal.classList.remove('active');
+}
+
+async function showFactModal() {
+  if (!factModal) return;
+  const templateGame = await ensureTemplateDraftSaved();
+  const resolvedGame = currentGameContext || templateGame || '';
+  if (factGameInput && !factGameInput.value) {
+    factGameInput.value = resolvedGame || '';
+  }
+  if (factModalStatus) factModalStatus.textContent = '';
+  factModal.classList.add('active');
+}
+
+async function saveFactFromModal() {
+  if (!factModal) return;
+  const game = String(factGameInput ? factGameInput.value : '').trim();
+  const text = String(factTextInput ? factTextInput.value : '').trim();
+  const keywords = parseFactListInput(factKeywordsInput ? factKeywordsInput.value : '');
+  const tags = parseFactListInput(factTagsInput ? factTagsInput.value : '');
+
+  if (!game) {
+    if (factModalStatus) factModalStatus.textContent = t().factModalMissingGame || 'Missing game name.';
+    return;
+  }
+  if (!text) {
+    if (factModalStatus) factModalStatus.textContent = t().factModalMissingText || 'Missing fact text.';
+    return;
+  }
+
+  const response = await invokeMain(IPC_CHANNELS.ADD_GAME_FACT, {
+    game,
+    text,
+    keywords,
+    tags
+  });
+
+  if (!response || !response.success) {
+    const err = response && response.error ? response.error : t().unknownError || 'Unknown error';
+    if (factModalStatus) factModalStatus.textContent = `${t().factModalErrorPrefix || 'Error: '}${err}`;
+    return;
+  }
+
+  if (factModalStatus) factModalStatus.textContent = t().factModalSaved || 'Saved.';
+  if (factTextInput) factTextInput.value = '';
+  if (factKeywordsInput) factKeywordsInput.value = '';
+  if (factTagsInput) factTagsInput.value = '';
+  closeFactModal();
 }
 
 async function ensureVisionConsent() {
@@ -346,6 +397,10 @@ const visionAllowListInput = document.getElementById('visionAllowListInput');
 const visionDenyListInput = document.getElementById('visionDenyListInput');
 const visionConsentSaveBtn = document.getElementById('visionConsentSaveBtn');
 const visionConsentResetBtn = document.getElementById('visionConsentResetBtn');
+const aiDiagnosticsLabel = document.getElementById('aiDiagnosticsLabel');
+const aiDiagnosticsToggle = document.getElementById('aiDiagnosticsToggle');
+const aiDiagnosticsToggleLabel = document.getElementById('aiDiagnosticsToggleLabel');
+const aiDiagnosticsHint = document.getElementById('aiDiagnosticsHint');
 
 const visionConsentModal = document.getElementById('visionConsentModal');
 const visionConsentTitle = document.getElementById('visionConsentTitle');
@@ -354,6 +409,22 @@ const visionConsentAllowOnce = document.getElementById('visionConsentAllowOnce')
 const visionConsentAllowAlways = document.getElementById('visionConsentAllowAlways');
 const visionConsentDenyAlways = document.getElementById('visionConsentDenyAlways');
 const visionConsentCancel = document.getElementById('visionConsentCancel');
+
+addFactBtn = document.getElementById('addFactBtn');
+factModal = document.getElementById('factModal');
+factModalTitle = document.getElementById('factModalTitle');
+factModalHint = document.getElementById('factModalHint');
+factGameLabel = document.getElementById('factGameLabel');
+factGameInput = document.getElementById('factGameInput');
+factTextLabel = document.getElementById('factTextLabel');
+factTextInput = document.getElementById('factTextInput');
+factKeywordsLabel = document.getElementById('factKeywordsLabel');
+factKeywordsInput = document.getElementById('factKeywordsInput');
+factTagsLabel = document.getElementById('factTagsLabel');
+factTagsInput = document.getElementById('factTagsInput');
+factModalStatus = document.getElementById('factModalStatus');
+factModalCancel = document.getElementById('factModalCancel');
+factModalSave = document.getElementById('factModalSave');
 
 // Collapsible sections toggle
 const floatingHost = document.getElementById('floating-panels');
@@ -492,6 +563,9 @@ function isInteractiveTarget(target) {
   if (visionConsentModal && visionConsentModal.classList.contains('active') && visionConsentModal.contains(el)) {
     return true;
   }
+  if (factModal && factModal.classList.contains('active') && factModal.contains(el)) {
+    return true;
+  }
 
   // Only treat specific UI elements as interactive.
   // This prevents the whole overlay window from blocking clicks in "empty" areas.
@@ -502,6 +576,7 @@ function isInteractiveTarget(target) {
   if (floatingHost && floatingHost.contains(hit)) return true;
   if (confirmModal && confirmModal.contains(hit)) return true;
   if (visionConsentModal && visionConsentModal.contains(hit)) return true;
+  if (factModal && factModal.contains(hit)) return true;
   return false;
 }
 
@@ -512,6 +587,7 @@ function isPointOverInteractiveRect(clientX, clientY) {
   if (floatingHost) roots.push(floatingHost);
   if (confirmModal) roots.push(confirmModal);
   if (visionConsentModal) roots.push(visionConsentModal);
+  if (factModal) roots.push(factModal);
 
   for (const root of roots) {
     const nodes = root.querySelectorAll(INTERACTIVE_SELECTOR);
@@ -1259,18 +1335,11 @@ function updateOverlayText() {
   if (exportHistoryBtn) exportHistoryBtn.textContent = t().exportHistory || exportHistoryBtn.textContent;
   const clearAllBtn = document.getElementById('clearAllBtn');
   if (clearAllBtn) clearAllBtn.textContent = t().clearAllData || clearAllBtn.textContent;
-  const gameIgnoreLabel = document.getElementById('gameIgnoreLabel');
-  if (gameIgnoreLabel) gameIgnoreLabel.textContent = t().gameIgnoreLabel || gameIgnoreLabel.textContent;
-  const gameIgnoreHint = document.getElementById('gameIgnoreHint');
-  if (gameIgnoreHint) gameIgnoreHint.textContent = t().gameIgnoreHint || gameIgnoreHint.textContent;
-  const gameIgnoreInput = document.getElementById('gameIgnoreInput');
-  if (gameIgnoreInput) gameIgnoreInput.placeholder = t().gameIgnorePlaceholder || gameIgnoreInput.placeholder;
-  const gameIgnoreApplyBtn = document.getElementById('gameIgnoreApplyBtn');
-  if (gameIgnoreApplyBtn) gameIgnoreApplyBtn.textContent = t().gameIgnoreApply || gameIgnoreApplyBtn.textContent;
-  const gameIgnoreResetBtn = document.getElementById('gameIgnoreResetBtn');
-  if (gameIgnoreResetBtn) gameIgnoreResetBtn.textContent = t().gameIgnoreReset || gameIgnoreResetBtn.textContent;
   const visionEnableLabel = document.getElementById('visionEnableLabel');
   if (visionEnableLabel) visionEnableLabel.textContent = t().visionEnableLabel || visionEnableLabel.textContent;
+  if (aiDiagnosticsLabel) aiDiagnosticsLabel.textContent = t().aiDiagnosticsLabel || aiDiagnosticsLabel.textContent;
+  if (aiDiagnosticsToggleLabel) aiDiagnosticsToggleLabel.textContent = t().aiDiagnosticsToggle || aiDiagnosticsToggleLabel.textContent;
+  if (aiDiagnosticsHint) aiDiagnosticsHint.textContent = t().aiDiagnosticsHint || aiDiagnosticsHint.textContent;
   const visionConsentHint = document.getElementById('visionConsentHint');
   if (visionConsentHint) visionConsentHint.textContent = t().visionConsentHint || visionConsentHint.textContent;
   const visionAllowListLabel = document.getElementById('visionAllowListLabel');
@@ -1286,19 +1355,6 @@ function updateOverlayText() {
   if (visionConsentAllowAlways) visionConsentAllowAlways.textContent = t().visionConsentAllowAlways || visionConsentAllowAlways.textContent;
   if (visionConsentDenyAlways) visionConsentDenyAlways.textContent = t().visionConsentDenyAlways || visionConsentDenyAlways.textContent;
   if (visionConsentCancel) visionConsentCancel.textContent = t().visionConsentCancel || visionConsentCancel.textContent;
-  const gameMapLabel = document.getElementById('gameMapLabel');
-  if (gameMapLabel) gameMapLabel.textContent = t().gameMapLabel || gameMapLabel.textContent;
-  const gameMapInput = document.getElementById('gameMapInput');
-  if (gameMapInput) gameMapInput.placeholder = t().gameMapPlaceholder || gameMapInput.placeholder;
-  const gameMapSaveBtn = document.getElementById('gameMapSaveBtn');
-  if (gameMapSaveBtn) gameMapSaveBtn.textContent = t().gameMapSave || gameMapSaveBtn.textContent;
-  const gameMapIgnoreBtn = document.getElementById('gameMapIgnoreBtn');
-  if (gameMapIgnoreBtn) gameMapIgnoreBtn.textContent = t().gameMapIgnore || gameMapIgnoreBtn.textContent;
-  const gameMapStatus = document.getElementById('gameMapStatus');
-  const gameMapBlock = document.getElementById('block-game-map');
-  if (gameMapStatus && gameMapBlock && gameMapBlock.dataset.activeTitle) {
-    gameMapStatus.textContent = formatGameMapStatus(gameMapBlock.dataset.activeTitle);
-  }
   const gameTemplateLabelEl = document.getElementById('gameTemplateLabel');
   if (gameTemplateLabelEl) gameTemplateLabelEl.textContent = t().gameTemplateLabel || gameTemplateLabelEl.textContent;
   const gameTemplateHintEl = document.getElementById('gameTemplateHint');
@@ -1327,6 +1383,19 @@ function updateOverlayText() {
   const gameTemplateDeleteBtnEl = document.getElementById('gameTemplateDeleteBtn');
   if (gameTemplateDeleteBtnEl) gameTemplateDeleteBtnEl.textContent = t().gameTemplateDelete || gameTemplateDeleteBtnEl.textContent;
   renderGameTemplateOptions();
+  if (addFactBtn) addFactBtn.textContent = t().addFactBtn || addFactBtn.textContent;
+  if (factModalTitle) factModalTitle.textContent = t().factModalTitle || factModalTitle.textContent;
+  if (factModalHint) factModalHint.textContent = t().factModalHint || factModalHint.textContent;
+  if (factGameLabel) factGameLabel.textContent = t().factGameLabel || factGameLabel.textContent;
+  if (factGameInput) factGameInput.placeholder = t().factGamePlaceholder || factGameInput.placeholder;
+  if (factTextLabel) factTextLabel.textContent = t().factTextLabel || factTextLabel.textContent;
+  if (factTextInput) factTextInput.placeholder = t().factTextPlaceholder || factTextInput.placeholder;
+  if (factKeywordsLabel) factKeywordsLabel.textContent = t().factKeywordsLabel || factKeywordsLabel.textContent;
+  if (factKeywordsInput) factKeywordsInput.placeholder = t().factKeywordsPlaceholder || factKeywordsInput.placeholder;
+  if (factTagsLabel) factTagsLabel.textContent = t().factTagsLabel || factTagsLabel.textContent;
+  if (factTagsInput) factTagsInput.placeholder = t().factTagsPlaceholder || factTagsInput.placeholder;
+  if (factModalCancel) factModalCancel.textContent = t().factModalCancel || factModalCancel.textContent;
+  if (factModalSave) factModalSave.textContent = t().factModalSave || factModalSave.textContent;
   const versionLabel = document.getElementById('versionLabel');
   if (versionLabel) versionLabel.textContent = t().versionLabel || versionLabel.textContent;
   const layoutLabel = document.getElementById('layoutLabel');
@@ -1710,15 +1779,6 @@ on(enableTTS, 'change', () => {
   localStorage.setItem(STORAGE_KEYS.ENABLE_TTS, enableTTS.checked);
 });
 
-// Settings: game detection ignore list
-const gameIgnoreInput = document.getElementById('gameIgnoreInput');
-const gameIgnoreApplyBtn = document.getElementById('gameIgnoreApplyBtn');
-const gameIgnoreResetBtn = document.getElementById('gameIgnoreResetBtn');
-const gameMapBlock = document.getElementById('block-game-map');
-const gameMapStatus = document.getElementById('gameMapStatus');
-const gameMapInput = document.getElementById('gameMapInput');
-const gameMapSaveBtn = document.getElementById('gameMapSaveBtn');
-const gameMapIgnoreBtn = document.getElementById('gameMapIgnoreBtn');
 gameTemplateLabel = document.getElementById('gameTemplateLabel');
 gameTemplateHint = document.getElementById('gameTemplateHint');
 gameTemplateNameInput = document.getElementById('gameTemplateNameInput');
@@ -1772,11 +1832,6 @@ function upsertGameDetectMapping(match, gameName) {
   persistGameDetectMappings(list);
   sendGameDetectMappingsToMain(list);
   return true;
-}
-
-function formatGameMapStatus(title) {
-  const template = t().gameMapStatus || 'Detected window title: {title}';
-  return template.replace('{title}', title || '');
 }
 
 function normalizeGameTemplateName(value) {
@@ -1985,67 +2040,14 @@ async function loadGameTemplateOptions() {
   renderGameTemplateOptions();
 }
 
-async function refreshGameDetectStatus() {
-  if (!gameMapBlock || !gameMapStatus) return;
-  let status = null;
-  try {
-    status = await invokeMain(IPC_CHANNELS.GET_GAME_DETECT_STATUS);
-  } catch (_) {
-    status = null;
-  }
-  const activeTitle = status && status.success ? status.activeTitle : null;
-  const gameName = status && status.success ? status.gameName : null;
-  if (!activeTitle || gameName) {
-    gameMapBlock.style.display = 'none';
-    return;
-  }
-  gameMapBlock.style.display = 'block';
-  gameMapBlock.dataset.activeTitle = activeTitle;
-  gameMapStatus.textContent = formatGameMapStatus(activeTitle);
-}
-
-function applyGameIgnoreList(list, options = {}) {
-  const normalized = Array.isArray(list)
-    ? list.map((entry) => String(entry).trim()).filter(Boolean)
-    : [];
-
-  if (gameIgnoreInput) {
-    gameIgnoreInput.value = normalized.join('\n');
-  }
-
-  if (options.persist) {
-    persistGameIgnoreList(normalized);
-  }
-
-  sendGameIgnoreListToMain(normalized);
-}
-
-if (gameIgnoreInput) {
-  applyGameIgnoreList(loadGameIgnoreList(), { persist: true });
-}
-
 sendGameDetectMappingsToMain(loadGameDetectMappings());
 gameTemplateDraft = loadGameTemplateDraft();
 applyGameTemplateDraft(gameTemplateDraft);
 loadGameTemplateOptions();
-refreshGameDetectStatus();
 setInterval(() => {
   if (document.hidden) return;
   refreshGameDetectStatus();
 }, 2000);
-
-if (gameIgnoreApplyBtn) {
-  on(gameIgnoreApplyBtn, 'click', () => {
-    const list = normalizeGameIgnoreInput(gameIgnoreInput ? gameIgnoreInput.value : '');
-    applyGameIgnoreList(list, { persist: true });
-  });
-}
-
-if (gameIgnoreResetBtn) {
-  on(gameIgnoreResetBtn, 'click', () => {
-    applyGameIgnoreList(DEFAULT_GAME_IGNORE_TITLES, { persist: true });
-  });
-}
 
 if (visionEnableToggle) {
   visionEnableToggle.checked = readVisionEnabled();
@@ -2054,6 +2056,15 @@ if (visionEnableToggle) {
     if (!visionEnableToggle.checked) {
       visionAllowOnceKey = null;
     }
+  });
+}
+
+if (aiDiagnosticsToggle) {
+  aiDiagnosticsToggle.checked = readAiDiagnosticsEnabled();
+  syncAiDiagnosticsEnabled(aiDiagnosticsToggle.checked);
+  on(aiDiagnosticsToggle, 'change', () => {
+    writeAiDiagnosticsEnabled(aiDiagnosticsToggle.checked);
+    syncAiDiagnosticsEnabled(aiDiagnosticsToggle.checked);
   });
 }
 
@@ -2074,40 +2085,6 @@ if (visionConsentResetBtn) {
     persistVisionList(STORAGE_KEYS.VISION_DENYLIST, []);
     updateVisionSettingsUI();
     status.textContent = t().visionConsentResetDone;
-  });
-}
-
-if (gameMapSaveBtn) {
-  on(gameMapSaveBtn, 'click', async () => {
-    if (!gameMapBlock || !gameMapInput) return;
-    const activeTitle = gameMapBlock.dataset.activeTitle;
-    const gameName = normalizeGameDetectMapping(gameMapInput.value);
-    if (!activeTitle || !gameName) return;
-    if (upsertGameDetectMapping(activeTitle, gameName)) {
-      if (gameMapStatus) {
-        gameMapStatus.textContent = (t().gameMapSaved || 'Saved: {game}').replace('{game}', gameName);
-      }
-      gameMapInput.value = '';
-      try { await invokeMain(IPC_CHANNELS.FORCE_GAME_DETECT); } catch (_) {}
-    }
-  });
-}
-
-if (gameMapIgnoreBtn) {
-  on(gameMapIgnoreBtn, 'click', async () => {
-    if (!gameMapBlock) return;
-    const activeTitle = gameMapBlock.dataset.activeTitle;
-    if (!activeTitle) return;
-    const list = normalizeGameIgnoreInput((gameIgnoreInput && gameIgnoreInput.value) || '');
-    const normalized = normalizeGameDetectMapping(activeTitle);
-    if (normalized) {
-      list.push(normalized);
-      applyGameIgnoreList(list, { persist: true });
-      if (gameMapStatus) {
-        gameMapStatus.textContent = t().gameMapIgnored || 'Added to ignore list.';
-      }
-      try { await invokeMain(IPC_CHANNELS.FORCE_GAME_DETECT); } catch (_) {}
-    }
   });
 }
 
@@ -2180,6 +2157,33 @@ if (gameTemplateDeleteBtn) {
       applyTemplateOptionSelection([]);
       setGameTemplateStatus(t().gameTemplateDeleted || 'Template deleted');
     }
+  });
+}
+
+if (addFactBtn) {
+  on(addFactBtn, 'click', async (event) => {
+    if (event) event.stopPropagation();
+    await showFactModal();
+  });
+}
+
+if (factModalCancel) {
+  on(factModalCancel, 'click', (event) => {
+    if (event) event.stopPropagation();
+    closeFactModal();
+  });
+}
+
+if (factModalSave) {
+  on(factModalSave, 'click', async (event) => {
+    if (event) event.stopPropagation();
+    await saveFactFromModal();
+  });
+}
+
+if (factModal) {
+  on(factModal, 'click', (event) => {
+    if (event && event.target === factModal) closeFactModal();
   });
 }
 

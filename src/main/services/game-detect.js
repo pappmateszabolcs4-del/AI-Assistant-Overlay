@@ -66,6 +66,10 @@ function createGameDetectService(deps) {
     game.lastMatchedWindowTitle = result && result.matchedTitle
       ? result.matchedTitle
       : (canStick ? game.lastMatchedWindowTitle : null);
+    game.lastDetectScore = result && typeof result.detectScore === 'number' ? result.detectScore : null;
+    game.lastDetectReasons = result && Array.isArray(result.detectReasons) ? result.detectReasons : null;
+    game.lastDetectSignalCount = result && typeof result.detectSignalCount === 'number' ? result.detectSignalCount : null;
+    game.lastDetectSource = result && result.detectSource ? String(result.detectSource) : null;
     if (result && result.activeProcess) {
       game.lastActiveProcessPath = result.activeProcess.path || null;
       game.lastActiveProcessName = result.activeProcess.name || null;
@@ -192,7 +196,7 @@ function createGameDetectService(deps) {
     lastDetectRequestAt = now;
     workerBusy = true;
     const id = ++requestSeq;
-    const ignoreList = Array.isArray(game.gameDetectIgnoreList) ? game.gameDetectIgnoreList : [];
+    const ignoreList = [];
     const mappings = Array.isArray(game.gameDetectMappings) ? game.gameDetectMappings : [];
 
     try {
@@ -208,8 +212,7 @@ function createGameDetectService(deps) {
   }
 
   function extractGameNameWithIgnoreList(windowTitle) {
-    const ignoreList = Array.isArray(game.gameDetectIgnoreList) ? game.gameDetectIgnoreList : [];
-    return extractGameName(windowTitle, ignoreList);
+    return extractGameName(windowTitle, []);
   }
 
   return {

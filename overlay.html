@@ -52,6 +52,11 @@
                 <p id="answerLabel">🤖 AI Válasz:</p>
                 <p id="aiResponse"></p>
               </div>
+              <div class="fact-capture-actions" style="display: flex; gap: 8px; margin-top: 8px;">
+                <button id="addFactBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
+                  ➕ Új tény
+                </button>
+              </div>
               <div class="vision-consent-block">
                 <label class="vision-consent-toggle">
                   <input type="checkbox" id="visionEnableToggle" style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
@@ -198,38 +203,15 @@
               </button>
             </div>
 
-            <div class="specialization-container block-item" id="block-game-ignore" data-block-id="game-ignore" data-block-home="settings" data-block-title-key="gameIgnoreLabel" style="margin-top: 12px;">
+            <div class="specialization-container block-item" id="block-ai-diagnostics" data-block-id="ai-diagnostics" data-block-home="settings" data-block-title-key="aiDiagnosticsLabel" style="margin-top: 12px;">
               <div class="specialization-label">
-                <span id="gameIgnoreLabel">🧹 Kihagyott ablakcímek:</span>
+                <span id="aiDiagnosticsLabel">🧪 AI diagnosztika</span>
               </div>
-              <p id="gameIgnoreHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;">
-                Egy sor = egy minta. Ha a cím tartalmazza, nem lesz játéknak nézve.
-              </p>
-              <textarea id="gameIgnoreInput" rows="5" style="width: 100%; resize: vertical; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder="Opera\nGoogle Chrome\nMicrosoft Edge"></textarea>
-              <div style="display: flex; gap: 8px; margin-top: 8px;">
-                <button id="gameIgnoreApplyBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
-                  ✅ Mentés
-                </button>
-                <button id="gameIgnoreResetBtn" style="flex: 1; padding: 8px; background: rgba(255, 196, 100, 0.15); border: 1px solid rgba(255, 196, 100, 0.35); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
-                  🔄 Alaplista
-                </button>
-              </div>
-            </div>
-
-            <div class="specialization-container block-item" id="block-game-map" data-block-id="game-map" data-block-home="settings" data-block-title-key="gameMapLabel" style="margin-top: 12px; display: none;">
-              <div class="specialization-label">
-                <span id="gameMapLabel">🧩 Ismeretlen játék</span>
-              </div>
-              <p id="gameMapStatus" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;"></p>
-              <input type="text" id="gameMapInput" style="width: 100%; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder="" />
-              <div style="display: flex; gap: 8px; margin-top: 8px;">
-                <button id="gameMapSaveBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
-                  ✅ Mentés
-                </button>
-                <button id="gameMapIgnoreBtn" style="flex: 1; padding: 8px; background: rgba(255, 196, 100, 0.15); border: 1px solid rgba(255, 196, 100, 0.35); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
-                  🚫 Kihagyás
-                </button>
-              </div>
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #f5f7fa;">
+                <input type="checkbox" id="aiDiagnosticsToggle" style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
+                <span id="aiDiagnosticsToggleLabel">Helyi diagnosztika engedélyezése</span>
+              </label>
+              <p id="aiDiagnosticsHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;"></p>
             </div>
 
             <div class="specialization-container block-item" id="block-layout" data-block-id="layout" data-block-home="settings" data-block-title-key="layoutMode" style="margin-top: 12px;">
@@ -340,6 +322,36 @@
         <button class="modal-btn" id="visionConsentAllowAlways">Mindig engedelyezem</button>
         <button class="modal-btn modal-btn-danger" id="visionConsentDenyAlways">Soha nem engedelyezem</button>
         <button class="modal-btn modal-btn-cancel" id="visionConsentCancel">Megse</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="factModal">
+    <div class="modal-content">
+      <div class="modal-title" id="factModalTitle">➕ Új tény</div>
+      <div class="modal-message" id="factModalHint"></div>
+      <div style="display: grid; gap: 10px;">
+        <div>
+          <div id="factGameLabel" style="font-size: 0.85em; color: #8ba3c0; margin-bottom: 4px;"></div>
+          <input type="text" id="factGameInput" style="width: 100%; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder="" />
+        </div>
+        <div>
+          <div id="factTextLabel" style="font-size: 0.85em; color: #8ba3c0; margin-bottom: 4px;"></div>
+          <textarea id="factTextInput" rows="4" style="width: 100%; resize: vertical; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder=""></textarea>
+        </div>
+        <div>
+          <div id="factKeywordsLabel" style="font-size: 0.85em; color: #8ba3c0; margin-bottom: 4px;"></div>
+          <input type="text" id="factKeywordsInput" style="width: 100%; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder="" />
+        </div>
+        <div>
+          <div id="factTagsLabel" style="font-size: 0.85em; color: #8ba3c0; margin-bottom: 4px;"></div>
+          <input type="text" id="factTagsInput" style="width: 100%; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder="" />
+        </div>
+      </div>
+      <div id="factModalStatus" style="font-size: 0.8em; color: #8ba3c0; margin-top: 8px;"></div>
+      <div class="modal-buttons" style="margin-top: 12px;">
+        <button class="modal-btn modal-btn-cancel" id="factModalCancel">Mégse</button>
+        <button class="modal-btn modal-btn-confirm" id="factModalSave">Mentés</button>
       </div>
     </div>
   </div>

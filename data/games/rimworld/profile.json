@@ -1,0 +1,12 @@
+{
+  "systems": {
+    "research": true,
+    "crafting": true,
+    "economy": true,
+    "combat": true,
+    "baseBuilding": true,
+    "quests": true,
+    "worldMap": true
+  },
+  "notes": "Colonists need work priorities. Many resources are mined or crafted. Tech advances unlock buildings."
+}

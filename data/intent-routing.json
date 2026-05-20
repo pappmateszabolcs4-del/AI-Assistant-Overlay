@@ -1,0 +1,214 @@
+{
+  "headers": {
+    "en": "Intent routing rules:",
+    "hu": "Intent routing szabalyok:"
+  },
+  "routes": [
+    {
+      "id": "progression",
+      "priority": 1,
+      "patterns": [
+        "progress",
+        "progression",
+        "midgame",
+        "endgame",
+        "early game",
+        "kovetkezo",
+        "következő",
+        "next goal",
+        "next step"
+      ],
+      "prompts": {
+        "en": "Give 3-5 next goals in order. Mention mid/late game milestones if asked. Keep it step-by-step.",
+        "hu": "Adj 3-5 kovetkezo celpontot sorrendben. Mid/late game merfoldkovekkel, ha relevans."
+      }
+    },
+    {
+      "id": "resource",
+      "priority": 2,
+      "patterns": [
+        "resource",
+        "craft",
+        "crafting",
+        "economy",
+        "anyag",
+        "nyersanyag",
+        "gyart",
+        "gyart",
+        "craftol"
+      ],
+      "prompts": {
+        "en": "List the best sources, then the fastest conversion chain, then 1-2 efficiency tips. Avoid unrelated activities. Start immediately; no intro.",
+        "hu": "Sorold fel a legjobb forrasokat, majd a leggyorsabb atalakitasi lancot, vegul 1-2 hatekonysagi tippet. Kezdd azonnal, bevezeto nelkul."
+      }
+    },
+    {
+      "id": "combat",
+      "priority": 3,
+      "patterns": [
+        "combat",
+        "tactics",
+        "survive",
+        "survivability",
+        "harc",
+        "taktika",
+        "tulel",
+        "túlél"
+      ],
+      "prompts": {
+        "en": "Give survivability + positioning + timing tips. Mention key mechanics and counters. Start immediately; no intro.",
+        "hu": "Adj tulelesi + pozicionalasi + idozitesi tippeket. Emelj ki kulcs mechanikakat. Kezdd azonnal, bevezeto nelkul."
+      }
+    },
+    {
+      "id": "base",
+      "priority": 4,
+      "patterns": [
+        "base",
+        "colony",
+        "optimization",
+        "layout",
+        "bazis",
+        "bázis",
+        "kolonia",
+        "kolónia",
+        "optimaliz"
+      ],
+      "prompts": {
+        "en": "Cover layout flow, production bottlenecks, defense, and one optimization win. Start immediately; no intro.",
+        "hu": "Terd ki az elrendezest, gyartasi szuk keresztmetszetet, vedelmet es 1 optimalizacios nyerest. Kezdd azonnal, bevezeto nelkul."
+      }
+    },
+    {
+      "id": "exploration",
+      "priority": 5,
+      "patterns": [
+        "exploration",
+        "quest",
+        "quests",
+        "event",
+        "events",
+        "felfedez",
+        "kuldet",
+        "küld",
+        "mission"
+      ],
+      "prompts": {
+        "en": "Explain where to go next, what to look for, and risk/requirements. Start immediately; no intro.",
+        "hu": "Mondd el hova erdemes menni, mit keresni, es milyen kockazat/kovetelmeny van. Kezdd azonnal, bevezeto nelkul."
+      }
+    },
+    {
+      "id": "mechanics",
+      "priority": 6,
+      "patterns": [
+        "how does",
+        "how to",
+        "mukodik",
+        "működik",
+        "kibanyaszni",
+        "kibányászni",
+        "hasznalni",
+        "használni",
+        "research",
+        "kutatas",
+        "kutatás",
+        "scanner",
+        "drill",
+        "deep drill"
+      ],
+      "prompts": {
+        "en": "Explain the mechanic step-by-step. Always list prerequisites (research, building, tool) before the steps. Start immediately; no intro.",
+        "hu": "Lepesrol lepesre magyarazd el a mechanikat. Mindig sorold fel az elofelteteleket (kutatas, epulet, eszkoz) a lepesek elott. Kezdd azonnal, bevezeto nelkul."
+      }
+    },
+    {
+      "id": "troubleshoot",
+      "priority": 7,
+      "patterns": [
+        "stuck",
+        "now what",
+        "what should i do",
+        "what should i do now",
+        "what do i do now",
+        "mit csinaljak most",
+        "mit csináljak most",
+        "elakadtam",
+        "nem tudom",
+        "help"
+      ],
+      "prompts": {
+        "en": "Ask one brief clarifying question, then give 3 concrete next actions. Start immediately; no intro.",
+        "hu": "Tegy fel 1 rovid pontosito kerdest, majd adj 3 konkret lepeset. Kezdd azonnal, bevezeto nelkul."
+      }
+    },
+    {
+      "id": "game-identity",
+      "priority": 7,
+      "patterns": [
+        "what game am i playing",
+        "what game is this",
+        "mi ez a játék",
+        "mi ez a jatek",
+        "melyik jatekkal",
+        "melyik játékkal"
+      ],
+      "prompts": {
+        "en": {
+          "withGame": "If the user asks what game they are playing, answer ONLY with the game name. No extra commentary.",
+          "noGame": "If the game is unknown, ask one short clarification question about the game name and provide 1-2 safe, general tips."
+        },
+        "hu": {
+          "withGame": "Ha a felhasznalo azt kerdezi, milyen jatekkal jatszik, valaszolj CSAK a jatek nevével. Ne adj extra kommentart.",
+          "noGame": "Ha a jatek ismeretlen, kerdezz egy rovid pontosito kerdest a jatek neve felol, es adj 1-2 altalanos tippet."
+        }
+      }
+    },
+    {
+      "id": "farm",
+      "priority": 20,
+      "patterns": [
+        "farm",
+        "farming",
+        "farmol",
+        "grind",
+        "loot"
+      ],
+      "prompts": {
+        "en": "Give 3-5 prioritized farming methods, with brief pros/cons. Start immediately; no intro.",
+        "hu": "Adj 3-5 priorizalt farm modszert, rovid pro/kontraval. Kezdd azonnal, bevezeto nelkul."
+      }
+    },
+    {
+      "id": "build",
+      "priority": 21,
+      "patterns": [
+        "build",
+        "loadout",
+        "gear",
+        "felszerel",
+        "felszereles",
+        "equipment"
+      ],
+      "prompts": {
+        "en": "Provide 2-3 build/loadout options and when to use each. Start immediately; no intro.",
+        "hu": "Adj 2-3 build/felszereles opciot es mikor hasznaljuk oket. Kezdd azonnal, bevezeto nelkul."
+      }
+    },
+    {
+      "id": "boss",
+      "priority": 22,
+      "patterns": [
+        "boss",
+        "raid",
+        "encounter",
+        "foboss",
+        "főboss"
+      ],
+      "prompts": {
+        "en": "Give prep checklist + key phases + punish windows. Start immediately; no intro.",
+        "hu": "Adj felkeszulesi listat + fazisok + punish ablakok. Kezdd azonnal, bevezeto nelkul."
+      }
+    }
+  ]
+}

@@ -26,7 +26,6 @@ const registry = {
   game: {
     currentDetectedGame: null,
     currentGameContext: null,
-    gameDetectIgnoreList: [],
     gameDetectMappings: [],
     currentLanguage: 'en',
     currentSpeechRate: 100,
@@ -40,6 +39,10 @@ const registry = {
     lastDetectedWindowTitle: null,
     lastActiveWindowTitle: null,
     lastMatchedWindowTitle: null,
+    lastDetectScore: null,
+    lastDetectReasons: null,
+    lastDetectSignalCount: null,
+    lastDetectSource: null,
     lastActiveProcessPath: null,
     lastActiveProcessName: null,
     lastActiveProcessId: null,
@@ -47,6 +50,9 @@ const registry = {
     lastDetectedAppId: null,
     lastDetectedGameTitle: null,
     lastDetectedMetadataSource: null
+  },
+  ai: {
+    diagnosticsEnabled: false
   },
   detached: {
     detachedWindowsDesiredVisible: true,

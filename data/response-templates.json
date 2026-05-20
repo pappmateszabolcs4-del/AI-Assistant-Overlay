@@ -1,0 +1,110 @@
+{
+  "default": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 4,
+    "prompts": {
+      "en": "Use provided FACTS when available. If none, answer from general game knowledge. Keep it concise and structured.",
+      "hu": "Hasznald a megadott FACTS reszt, ha van. Ha nincs, altalanos jatektudas alapjan valaszolj. Legyen rovid es tagolt."
+    }
+  },
+  "mechanics": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 6,
+    "prompts": {
+      "en": "Explain the mechanic step-by-step. Always list prerequisites (research, building, tool) before the steps. Use FACTS first.",
+      "hu": "Lepesrol lepesre magyarazd el a mechanikat. Mindig sorold fel az elofelteteleket (kutatas, epulet, eszkoz) a lepesek elott. Eloszor hasznald a FACTS reszt."
+    }
+  },
+  "progression": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 4,
+    "prompts": {
+      "en": "Give 3-5 next goals in order. Use FACTS if present. Keep it step-by-step.",
+      "hu": "Adj 3-5 kovetkezo celpontot sorrendben. Hasznald a FACTS reszt, ha van. Legyen lepesenkent."
+    }
+  },
+  "resource": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 5,
+    "prompts": {
+      "en": "List best sources, then fastest conversion chain, then 1-2 efficiency tips. Use FACTS when available.",
+      "hu": "Sorold fel a legjobb forrasokat, majd a leggyorsabb atalakitasi lancot, vegul 1-2 hatekonysagi tippet. Hasznald a FACTS reszt, ha van."
+    }
+  },
+  "combat": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 4,
+    "prompts": {
+      "en": "Give survivability + positioning + timing tips. Mention key mechanics and counters. Use FACTS if present.",
+      "hu": "Adj tulelesi + pozicionalasi + idozitesi tippeket. Emelj ki kulcs mechanikakat. Hasznald a FACTS reszt, ha van."
+    }
+  },
+  "base": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 4,
+    "prompts": {
+      "en": "Cover layout flow, production bottlenecks, defense, and one optimization win. Use FACTS if present.",
+      "hu": "Terd ki az elrendezest, gyartasi szuk keresztmetszetet, vedelmet es 1 optimalizacios nyerest. Hasznald a FACTS reszt, ha van."
+    }
+  },
+  "exploration": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 4,
+    "prompts": {
+      "en": "Explain where to go next, what to look for, and risk/requirements. Use FACTS if present.",
+      "hu": "Mondd el hova erdemes menni, mit keresni, es milyen kockazat/kovetelmeny van. Hasznald a FACTS reszt, ha van."
+    }
+  },
+  "troubleshoot": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 3,
+    "prompts": {
+      "en": "Ask one brief clarifying question, then give 3 concrete next actions. Use FACTS if present.",
+      "hu": "Tegy fel 1 rovid pontosito kerdest, majd adj 3 konkret lepeset. Hasznald a FACTS reszt, ha van."
+    }
+  },
+  "game-identity": {
+    "useFacts": false,
+    "useProfile": false,
+    "maxFacts": 0,
+    "prompts": {
+      "en": "Answer only with the game name if known.",
+      "hu": "Ha ismert, csak a jatek nevet ird le."
+    }
+  },
+  "farm": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 4,
+    "prompts": {
+      "en": "Give 3-5 prioritized farming methods with brief pros/cons. Use FACTS if present.",
+      "hu": "Adj 3-5 priorizalt farm modszert rovid pro/kontraval. Hasznald a FACTS reszt, ha van."
+    }
+  },
+  "build": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 4,
+    "prompts": {
+      "en": "Provide 2-3 build/loadout options and when to use each. Use FACTS if present.",
+      "hu": "Adj 2-3 build/felszereles opciot es mikor hasznaljuk oket. Hasznald a FACTS reszt, ha van."
+    }
+  },
+  "boss": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 5,
+    "prompts": {
+      "en": "Give prep checklist, key phases, and punish windows. Use FACTS if present.",
+      "hu": "Adj felkeszulesi listat, fazisokat es punish ablakokat. Hasznald a FACTS reszt, ha van."
+    }
+  }
+}

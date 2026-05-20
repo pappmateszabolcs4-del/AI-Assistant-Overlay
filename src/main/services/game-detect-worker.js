@@ -229,7 +229,8 @@ function scoreGameTitle(title, ignoreList, mappings, processInfo, windowClass, a
   return {
     name,
     score,
-    reasons
+    reasons,
+    signalCount
   };
 }
 
@@ -241,8 +242,19 @@ function detectGame(ignoreList, mappings) {
   let detectedGame = null;
   let matchedTitle = '';
 
+  let detectScore = null;
+  let detectReasons = null;
+  let detectSignalCount = null;
+  let detectSource = null;
+
   if (activeTitle) {
     const scored = scoreGameTitle(activeTitle, ignoreList, mappings, activeProcess, activeWindowClass, false, metadata);
+    if (scored) {
+      detectScore = scored.score;
+      detectReasons = scored.reasons;
+      detectSignalCount = scored.signalCount;
+      detectSource = 'active';
+    }
     if (scored && scored.name && scored.score >= SCORE_THRESHOLD) {
       detectedGame = scored.name;
       matchedTitle = activeTitle;
@@ -262,12 +274,22 @@ function detectGame(ignoreList, mappings) {
       const scored = scoreGameTitle(title, ignoreList, mappings, null, null, true, null);
       if (!scored || !scored.name || scored.score < SCORE_THRESHOLD) continue;
       if (!best || scored.score > best.score) {
-        best = { title, name: scored.name, score: scored.score, reasons: scored.reasons };
+        best = {
+          title,
+          name: scored.name,
+          score: scored.score,
+          reasons: scored.reasons,
+          signalCount: scored.signalCount
+        };
       }
     }
     if (best) {
       detectedGame = best.name;
       matchedTitle = best.title;
+      detectScore = best.score;
+      detectReasons = best.reasons;
+      detectSignalCount = best.signalCount;
+      detectSource = 'fallback';
       if (isDevEnv()) {
         console.log(`[GAME-DETECT] Fallback title score=${best.score} reasons=${best.reasons.join(',')}`);
       }
@@ -283,7 +305,11 @@ function detectGame(ignoreList, mappings) {
     gameName: detectedGame,
     metadata,
     activeProcess,
-    bounds
+    bounds,
+    detectScore,
+    detectReasons,
+    detectSignalCount,
+    detectSource
   };
 }
 

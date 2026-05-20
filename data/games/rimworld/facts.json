@@ -1,0 +1,39 @@
+{
+  "facts": [
+    {
+      "id": "deep-drilling-prereq",
+      "text": "Deep resources require the Deep Drilling research and a Deep Drill to extract.",
+      "keywords": ["deep drill", "deep drilling", "ground penetrating scanner", "deep resources"],
+      "tags": ["mechanics", "resource"],
+      "priority": 3
+    },
+    {
+      "id": "scanner-finds",
+      "text": "The Ground-Penetrating Scanner reveals underground resource deposits on the map.",
+      "keywords": ["ground penetrating scanner", "scanner", "deep resources"],
+      "tags": ["mechanics"],
+      "priority": 2
+    },
+    {
+      "id": "components-sources",
+      "text": "Components can be obtained from traders, compacted machinery, and crafting after the Fabrication research.",
+      "keywords": ["component", "components", "fabrication", "trader", "compacted machinery"],
+      "tags": ["resource", "progression"],
+      "priority": 2
+    },
+    {
+      "id": "comms-console",
+      "text": "A Comms Console is used to contact passing trade ships for buying and selling.",
+      "keywords": ["comms console", "trade ship", "trader"],
+      "tags": ["economy", "resource"],
+      "priority": 1
+    },
+    {
+      "id": "power-grid",
+      "text": "Mining and drilling equipment require power; keep the grid stable to avoid downtime.",
+      "keywords": ["power", "grid", "mining", "drill"],
+      "tags": ["base", "resource"],
+      "priority": 1
+    }
+  ]
+}

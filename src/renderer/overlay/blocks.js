@@ -14,7 +14,6 @@ const BLOCKS = [
   { id: 'spec', home: 'settings', elementId: 'block-spec', titleKey: 'specializationLabel' },
   { id: 'tts', home: 'settings', elementId: 'block-tts', titleKey: 'ttsLabel' },
   { id: 'data', home: 'settings', elementId: 'block-data', titleKey: 'dataLabel' },
-  { id: 'game-ignore', home: 'settings', elementId: 'block-game-ignore', titleKey: 'gameIgnoreLabel' },
   { id: 'layout', home: 'settings', elementId: 'block-layout', titleKey: 'layoutMode' },
   { id: 'note', home: 'settings', elementId: 'block-note', titleKey: 'notePanelBtn' },
   { id: 'free-layout', home: 'settings', elementId: 'block-free-layout', titleKey: 'compositionModeLabel' },

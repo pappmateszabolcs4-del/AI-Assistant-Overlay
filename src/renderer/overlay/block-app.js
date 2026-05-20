@@ -24,6 +24,11 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
           <p id="answerLabel">🤖 AI Válasz:</p>
           <p id="aiResponse"></p>
         </div>
+        <div class="fact-capture-actions" style="display: flex; gap: 8px; margin-top: 8px;">
+          <button id="addFactBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
+            ➕ Új tény
+          </button>
+        </div>
         <div class="vision-consent-block">
           <label class="vision-consent-toggle">
             <input type="checkbox" id="visionEnableToggle" style="width: 18px; height: 18px; cursor: pointer;">
@@ -114,23 +119,16 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
         </button>
       </div>
     `,
-    'game-ignore': `
-      <div class="specialization-container block-item" id="block-game-ignore" data-block-id="game-ignore" data-block-home="settings" data-block-title-key="gameIgnoreLabel">
+    'ai-diagnostics': `
+      <div class="specialization-container block-item" id="block-ai-diagnostics" data-block-id="ai-diagnostics" data-block-home="settings" data-block-title-key="aiDiagnosticsLabel">
         <div class="specialization-label">
-          <span id="gameIgnoreLabel">🧹 Kihagyott ablakcímek:</span>
+          <span id="aiDiagnosticsLabel">🧪 AI diagnosztika</span>
         </div>
-        <p id="gameIgnoreHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;">
-          Egy sor = egy minta. Ha a cím tartalmazza, nem lesz játéknak nézve.
-        </p>
-        <textarea id="gameIgnoreInput" rows="5" style="width: 100%; resize: vertical; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;" placeholder="Opera\nGoogle Chrome\nMicrosoft Edge"></textarea>
-        <div style="display: flex; gap: 8px; margin-top: 8px;">
-          <button id="gameIgnoreApplyBtn" style="flex: 1; padding: 8px; background: rgba(91, 158, 255, 0.2); border: 1px solid rgba(91, 158, 255, 0.4); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
-            ✅ Mentés
-          </button>
-          <button id="gameIgnoreResetBtn" style="flex: 1; padding: 8px; background: rgba(255, 196, 100, 0.15); border: 1px solid rgba(255, 196, 100, 0.35); border-radius: 6px; color: #f5f7fa; cursor: pointer; font-size: 0.9em;">
-            🔄 Alaplista
-          </button>
-        </div>
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #f5f7fa;">
+          <input type="checkbox" id="aiDiagnosticsToggle" style="width: 18px; height: 18px; cursor: pointer;">
+          <span id="aiDiagnosticsToggleLabel">Helyi diagnosztika engedélyezése</span>
+        </label>
+        <p id="aiDiagnosticsHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;"></p>
       </div>
     `,
     'game-template': `
@@ -229,6 +227,21 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
   const clearImageBtn = document.getElementById('clearImageBtn');
   const screenshotPreview = document.getElementById('screenshotPreview');
   const screenshotInfo = document.getElementById('screenshotInfo');
+  const addFactBtn = document.getElementById('addFactBtn');
+  const factModal = document.getElementById('factModal');
+  const factModalTitle = document.getElementById('factModalTitle');
+  const factModalHint = document.getElementById('factModalHint');
+  const factGameLabel = document.getElementById('factGameLabel');
+  const factGameInput = document.getElementById('factGameInput');
+  const factTextLabel = document.getElementById('factTextLabel');
+  const factTextInput = document.getElementById('factTextInput');
+  const factKeywordsLabel = document.getElementById('factKeywordsLabel');
+  const factKeywordsInput = document.getElementById('factKeywordsInput');
+  const factTagsLabel = document.getElementById('factTagsLabel');
+  const factTagsInput = document.getElementById('factTagsInput');
+  const factModalStatus = document.getElementById('factModalStatus');
+  const factModalCancel = document.getElementById('factModalCancel');
+  const factModalSave = document.getElementById('factModalSave');
 
   const specializationSlider = document.getElementById('specializationLevel');
   const specValue = document.getElementById('specValue');
@@ -237,9 +250,6 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
   const speechRateInput = document.getElementById('speechRate');
   const speechRateValue = document.getElementById('speechRateValue');
 
-  const gameIgnoreInput = document.getElementById('gameIgnoreInput');
-  const gameIgnoreApplyBtn = document.getElementById('gameIgnoreApplyBtn');
-  const gameIgnoreResetBtn = document.getElementById('gameIgnoreResetBtn');
   const gameTemplateLabel = document.getElementById('gameTemplateLabel');
   const gameTemplateHint = document.getElementById('gameTemplateHint');
   const gameTemplateNameInput = document.getElementById('gameTemplateNameInput');
@@ -272,6 +282,10 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
 
   const exportHistoryBtn = document.getElementById('exportHistoryBtn');
   const clearAllBtn = document.getElementById('clearAllBtn');
+  const aiDiagnosticsLabel = document.getElementById('aiDiagnosticsLabel');
+  const aiDiagnosticsToggle = document.getElementById('aiDiagnosticsToggle');
+  const aiDiagnosticsToggleLabel = document.getElementById('aiDiagnosticsToggleLabel');
+  const aiDiagnosticsHint = document.getElementById('aiDiagnosticsHint');
 
   const confirmModal = document.getElementById('confirmModal');
   const modalTitle = document.getElementById('modalTitle');
@@ -293,20 +307,6 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
   let currentGameContext = null;
   let pendingConfirmAction = null;
 
-  const DEFAULT_GAME_IGNORE_TITLES = [
-    'Google Chrome',
-    'Chrome',
-    'Microsoft Edge',
-    'Edge',
-    'Opera',
-    'Firefox',
-    'Mozilla Firefox',
-    'Brave',
-    'Vivaldi',
-    'Discord',
-    'Visual Studio Code',
-    'VS Code'
-  ];
 
   function showConfirmModal(title, message, onConfirm, confirmBtnText = null) {
     if (!confirmModal) return;
@@ -404,6 +404,25 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     } catch (_) {}
   }
 
+  function readAiDiagnosticsEnabled() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.AI_DIAGNOSTICS_ENABLED);
+      return raw === 'true';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function writeAiDiagnosticsEnabled(enabled) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.AI_DIAGNOSTICS_ENABLED, enabled ? 'true' : 'false');
+    } catch (_) {}
+  }
+
+  function syncAiDiagnosticsEnabled(enabled) {
+    try { invokeMain(IPC_CHANNELS.SET_AI_DIAGNOSTICS, { enabled: !!enabled }); } catch (_) {}
+  }
+
   function updateVisionSettingsUI() {
     if (visionEnableToggle) {
       visionEnableToggle.checked = readVisionEnabled();
@@ -454,6 +473,65 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
 
       visionConsentModal.classList.add('active');
     });
+  }
+
+  function parseFactListInput(value) {
+    return String(value || '')
+      .split(/[\n,]+/)
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  }
+
+  function closeFactModal() {
+    if (!factModal || !factModal.classList.contains('active')) return;
+    factModal.classList.remove('active');
+  }
+
+  async function showFactModal() {
+    if (!factModal) return;
+    const templateGame = await ensureTemplateDraftSaved();
+    const resolvedGame = currentGameContext || templateGame || '';
+    if (factGameInput && !factGameInput.value) {
+      factGameInput.value = resolvedGame || '';
+    }
+    if (factModalStatus) factModalStatus.textContent = '';
+    factModal.classList.add('active');
+  }
+
+  async function saveFactFromModal() {
+    if (!factModal) return;
+    const game = String(factGameInput ? factGameInput.value : '').trim();
+    const text = String(factTextInput ? factTextInput.value : '').trim();
+    const keywords = parseFactListInput(factKeywordsInput ? factKeywordsInput.value : '');
+    const tags = parseFactListInput(factTagsInput ? factTagsInput.value : '');
+
+    if (!game) {
+      if (factModalStatus) factModalStatus.textContent = t().factModalMissingGame || 'Missing game name.';
+      return;
+    }
+    if (!text) {
+      if (factModalStatus) factModalStatus.textContent = t().factModalMissingText || 'Missing fact text.';
+      return;
+    }
+
+    const response = await invokeMain(IPC_CHANNELS.ADD_GAME_FACT, {
+      game,
+      text,
+      keywords,
+      tags
+    });
+
+    if (!response || !response.success) {
+      const err = response && response.error ? response.error : t().unknownError || 'Unknown error';
+      if (factModalStatus) factModalStatus.textContent = `${t().factModalErrorPrefix || 'Error: '}${err}`;
+      return;
+    }
+
+    if (factModalStatus) factModalStatus.textContent = t().factModalSaved || 'Saved.';
+    if (factTextInput) factTextInput.value = '';
+    if (factKeywordsInput) factKeywordsInput.value = '';
+    if (factTagsInput) factTagsInput.value = '';
+    closeFactModal();
   }
 
   async function ensureVisionConsent() {
@@ -532,48 +610,6 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     return gameName;
   }
 
-  function normalizeGameIgnoreInput(text) {
-    return String(text || '')
-      .split(/[\n,]+/)
-      .map((entry) => entry.trim())
-      .filter((entry) => entry.length > 0);
-  }
-
-  function loadGameIgnoreList() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEYS.GAME_DETECT_IGNORE_LIST);
-      if (!raw) return [...DEFAULT_GAME_IGNORE_TITLES];
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length) return parsed.filter((entry) => typeof entry === 'string' && entry.trim());
-    } catch (_) {}
-    return [...DEFAULT_GAME_IGNORE_TITLES];
-  }
-
-  function persistGameIgnoreList(list) {
-    try {
-      localStorage.setItem(STORAGE_KEYS.GAME_DETECT_IGNORE_LIST, JSON.stringify(list));
-    } catch (_) {}
-  }
-
-  function sendGameIgnoreListToMain(list) {
-    try { invokeMain(IPC_CHANNELS.SET_GAME_DETECT_IGNORE_LIST, list); } catch (_) {}
-  }
-
-  function applyGameIgnoreList(list, options = {}) {
-    const normalized = Array.isArray(list)
-      ? list.map((entry) => String(entry).trim()).filter(Boolean)
-      : [];
-
-    if (gameIgnoreInput) {
-      gameIgnoreInput.value = normalized.join('\n');
-    }
-
-    if (options.persist) {
-      persistGameIgnoreList(normalized);
-    }
-
-    sendGameIgnoreListToMain(normalized);
-  }
 
   function normalizeGameTemplateName(value) {
     return String(value || '').trim();
@@ -878,13 +914,9 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     if (dataLabel) dataLabel.textContent = t().dataLabel || dataLabel.textContent;
     if (exportHistoryBtn) exportHistoryBtn.textContent = t().exportHistory || exportHistoryBtn.textContent;
     if (clearAllBtn) clearAllBtn.textContent = t().clearAllData || clearAllBtn.textContent;
-    const gameIgnoreLabel = document.getElementById('gameIgnoreLabel');
-    if (gameIgnoreLabel) gameIgnoreLabel.textContent = t().gameIgnoreLabel || gameIgnoreLabel.textContent;
-    const gameIgnoreHint = document.getElementById('gameIgnoreHint');
-    if (gameIgnoreHint) gameIgnoreHint.textContent = t().gameIgnoreHint || gameIgnoreHint.textContent;
-    if (gameIgnoreInput) gameIgnoreInput.placeholder = t().gameIgnorePlaceholder || gameIgnoreInput.placeholder;
-    if (gameIgnoreApplyBtn) gameIgnoreApplyBtn.textContent = t().gameIgnoreApply || gameIgnoreApplyBtn.textContent;
-    if (gameIgnoreResetBtn) gameIgnoreResetBtn.textContent = t().gameIgnoreReset || gameIgnoreResetBtn.textContent;
+    if (aiDiagnosticsLabel) aiDiagnosticsLabel.textContent = t().aiDiagnosticsLabel || aiDiagnosticsLabel.textContent;
+    if (aiDiagnosticsToggleLabel) aiDiagnosticsToggleLabel.textContent = t().aiDiagnosticsToggle || aiDiagnosticsToggleLabel.textContent;
+    if (aiDiagnosticsHint) aiDiagnosticsHint.textContent = t().aiDiagnosticsHint || aiDiagnosticsHint.textContent;
     const visionEnableLabel = document.getElementById('visionEnableLabel');
     if (visionEnableLabel) visionEnableLabel.textContent = t().visionEnableLabel || visionEnableLabel.textContent;
     const visionConsentHint = document.getElementById('visionConsentHint');
@@ -918,6 +950,19 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     if (gameTemplateSaveBtn) gameTemplateSaveBtn.textContent = t().gameTemplateSave || gameTemplateSaveBtn.textContent;
     if (gameTemplateDeleteBtn) gameTemplateDeleteBtn.textContent = t().gameTemplateDelete || gameTemplateDeleteBtn.textContent;
     renderGameTemplateOptions();
+    if (addFactBtn) addFactBtn.textContent = t().addFactBtn || addFactBtn.textContent;
+    if (factModalTitle) factModalTitle.textContent = t().factModalTitle || factModalTitle.textContent;
+    if (factModalHint) factModalHint.textContent = t().factModalHint || factModalHint.textContent;
+    if (factGameLabel) factGameLabel.textContent = t().factGameLabel || factGameLabel.textContent;
+    if (factGameInput) factGameInput.placeholder = t().factGamePlaceholder || factGameInput.placeholder;
+    if (factTextLabel) factTextLabel.textContent = t().factTextLabel || factTextLabel.textContent;
+    if (factTextInput) factTextInput.placeholder = t().factTextPlaceholder || factTextInput.placeholder;
+    if (factKeywordsLabel) factKeywordsLabel.textContent = t().factKeywordsLabel || factKeywordsLabel.textContent;
+    if (factKeywordsInput) factKeywordsInput.placeholder = t().factKeywordsPlaceholder || factKeywordsInput.placeholder;
+    if (factTagsLabel) factTagsLabel.textContent = t().factTagsLabel || factTagsLabel.textContent;
+    if (factTagsInput) factTagsInput.placeholder = t().factTagsPlaceholder || factTagsInput.placeholder;
+    if (factModalCancel) factModalCancel.textContent = t().factModalCancel || factModalCancel.textContent;
+    if (factModalSave) factModalSave.textContent = t().factModalSave || factModalSave.textContent;
     const versionLabel = document.getElementById('versionLabel');
     if (versionLabel) versionLabel.textContent = t().versionLabel || versionLabel.textContent;
     const layoutLabel = document.getElementById('layoutLabel');
@@ -1076,22 +1121,7 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     });
   }
 
-  if (gameIgnoreInput) {
-    applyGameIgnoreList(loadGameIgnoreList(), { persist: true });
-  }
 
-  if (gameIgnoreApplyBtn) {
-    on(gameIgnoreApplyBtn, 'click', () => {
-      const list = normalizeGameIgnoreInput(gameIgnoreInput ? gameIgnoreInput.value : '');
-      applyGameIgnoreList(list, { persist: true });
-    });
-  }
-
-  if (gameIgnoreResetBtn) {
-    on(gameIgnoreResetBtn, 'click', () => {
-      applyGameIgnoreList(DEFAULT_GAME_IGNORE_TITLES, { persist: true });
-    });
-  }
 
   if (gameTemplateNameInput) {
     on(gameTemplateNameInput, 'input', saveGameTemplateDraftFromUi);
@@ -1175,6 +1205,33 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     });
   }
 
+  if (addFactBtn) {
+    on(addFactBtn, 'click', async (event) => {
+      if (event) event.stopPropagation();
+      await showFactModal();
+    });
+  }
+
+  if (factModalCancel) {
+    on(factModalCancel, 'click', (event) => {
+      if (event) event.stopPropagation();
+      closeFactModal();
+    });
+  }
+
+  if (factModalSave) {
+    on(factModalSave, 'click', async (event) => {
+      if (event) event.stopPropagation();
+      await saveFactFromModal();
+    });
+  }
+
+  if (factModal) {
+    on(factModal, 'click', (event) => {
+      if (event && event.target === factModal) closeFactModal();
+    });
+  }
+
   if (visionEnableToggle) {
     visionEnableToggle.checked = readVisionEnabled();
     on(visionEnableToggle, 'change', () => {
@@ -1182,6 +1239,15 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
       if (!visionEnableToggle.checked) {
         visionAllowOnceKey = null;
       }
+    });
+  }
+
+  if (aiDiagnosticsToggle) {
+    aiDiagnosticsToggle.checked = readAiDiagnosticsEnabled();
+    syncAiDiagnosticsEnabled(aiDiagnosticsToggle.checked);
+    on(aiDiagnosticsToggle, 'change', () => {
+      writeAiDiagnosticsEnabled(aiDiagnosticsToggle.checked);
+      syncAiDiagnosticsEnabled(aiDiagnosticsToggle.checked);
     });
   }
 
