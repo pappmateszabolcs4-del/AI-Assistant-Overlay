@@ -430,7 +430,9 @@ function registerOverlayIpc(deps) {
     const template = payload && payload.template ? String(payload.template) : '';
     const aliases = payload && Array.isArray(payload.aliases) ? payload.aliases : [];
     const options = payload && Array.isArray(payload.options) ? payload.options : [];
-    return upsertTemplate(gameName, template, aliases, options);
+    const answerStyle = payload && typeof payload.answerStyle === 'string' ? payload.answerStyle : undefined;
+    const autoSeededAt = payload && Number.isFinite(payload.autoSeededAt) ? payload.autoSeededAt : undefined;
+    return upsertTemplate(gameName, template, aliases, options, answerStyle, autoSeededAt);
   });
 
   ipcMain.handle(IPC_CHANNELS.DELETE_GAME_TEMPLATE, async (_event, payload) => {

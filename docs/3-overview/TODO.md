@@ -98,9 +98,9 @@ Why: Keep coverage lean while grounding entities to reduce hallucinations.
 
 Why: Once routing is stable, styling and templates can ride the correct path.
 
-- [ ] Preset answer styles (short/step-by-step/deep) without user prompt writing
-- [ ] Auto-seed per-game template defaults on first encounter (opt-in)
-- [ ] Guardrails check: no auto-seeding from third-party dumps
+- [ ] Preset answer styles (short/step-by-step/deep) without user prompt writing (dev-only first; requires detailed multi-game testing before checking off)
+- [x] Auto-seed per-game template defaults on first encounter (opt-in)
+- [x] Guardrails check: no auto-seeding from third-party dumps
 
 ### Phase 5 — Tuning + durability
 

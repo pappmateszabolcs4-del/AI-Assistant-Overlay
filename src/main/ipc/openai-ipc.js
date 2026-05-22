@@ -3,8 +3,8 @@ const { IPC_CHANNELS } = require('../../shared/ipc-channels');
 function registerOpenAiIpc(deps) {
   const { ipcMain, openaiService } = deps;
 
-  ipcMain.handle(IPC_CHANNELS.PROCESS_TEXT, async (_event, text, lang, specializationLevel, imageData, gameContext) => {
-    return openaiService.processText({ text, lang, specializationLevel, imageData, gameContext });
+  ipcMain.handle(IPC_CHANNELS.PROCESS_TEXT, async (_event, text, lang, specializationLevel, imageData, gameContext, answerStyle) => {
+    return openaiService.processText({ text, lang, specializationLevel, imageData, gameContext, answerStyle });
   });
 
   ipcMain.handle(IPC_CHANNELS.PROCESS_AUDIO, async (_event, audioBuffer, language = 'hu', specializationLevel = 3) => {

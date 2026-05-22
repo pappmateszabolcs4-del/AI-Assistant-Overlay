@@ -62,6 +62,66 @@ function createOpenAIService(deps) {
     return pickLocalizedText(DEFAULT_GAME_TEMPLATES, lang);
   }
 
+  function normalizeAnswerStyle(value) {
+    const raw = String(value || '').trim().toLowerCase();
+    if (raw === 'short' || raw === 'steps' || raw === 'deep') return raw;
+    return '';
+  }
+
+  function buildAnswerStylePrompt(style, lang) {
+    const normalized = normalizeAnswerStyle(style);
+    if (!normalized) return '';
+    const templates = {
+      en: {
+        short: 'ANSWER STYLE: Short. Use 2-4 bullets max, keep it concise, no long explanations.',
+        steps: 'ANSWER STYLE: Step-by-step. Use numbered steps with brief reasoning per step.',
+        deep: 'ANSWER STYLE: Deep. Provide a structured, detailed answer with sections and extra context.'
+      },
+      hu: {
+        short: 'VALASZ STILUS: Rovid. Maximum 2-4 bullet, tores, roviden, hosszu magyarazat nelkul.',
+        steps: 'VALASZ STILUS: Lepesrol lepesre. Szamozott lepesek rovid indoklassal.',
+        deep: 'VALASZ STILUS: Reszletes. Strukturalt, reszletes valasz szekciokkal es extra kontextussal.'
+      },
+      de: {
+        short: 'ANTWORTSTIL: Kurz. Maximal 2-4 Stichpunkte, knapp, ohne lange Erklarungen.',
+        steps: 'ANTWORTSTIL: Schritt-fur-Schritt. Nummerierte Schritte mit kurzer Begrundung.',
+        deep: 'ANTWORTSTIL: Tiefgehend. Strukturierte, detaillierte Antwort mit Abschnitten und Zusatzkontext.'
+      },
+      ru: {
+        short: 'СТИЛЬ ОТВЕТА: Кратко. Максимум 2-4 пункта, без длинных объяснений.',
+        steps: 'СТИЛЬ ОТВЕТА: Пошагово. Нумерованные шаги с кратким обоснованием.',
+        deep: 'СТИЛЬ ОТВЕТА: Подробно. Структурированный подробный ответ с разделами и доп. контекстом.'
+      },
+      fr: {
+        short: 'STYLE DE REPONSE : Court. 2-4 puces max, concis, sans longues explications.',
+        steps: 'STYLE DE REPONSE : Pas a pas. Etapes numerotees avec breve justification.',
+        deep: 'STYLE DE REPONSE : Detaille. Reponse structuree, detaillee, avec sections et contexte.'
+      },
+      zh: {
+        short: '回答风格：简短。最多2-4条要点，简洁，不展开长解释。',
+        steps: '回答风格：分步。用编号步骤并给出简短理由。',
+        deep: '回答风格：深入。结构化、详细回答，包含分段与额外背景。'
+      },
+      es: {
+        short: 'ESTILO DE RESPUESTA: Corto. Maximo 2-4 viñetas, conciso, sin explicaciones largas.',
+        steps: 'ESTILO DE RESPUESTA: Paso a paso. Pasos numerados con breve razonamiento.',
+        deep: 'ESTILO DE RESPUESTA: Profundo. Respuesta estructurada y detallada con secciones y contexto.'
+      },
+      it: {
+        short: 'STILE RISPOSTA: Breve. Max 2-4 punti, conciso, senza spiegazioni lunghe.',
+        steps: 'STILE RISPOSTA: Step-by-step. Passi numerati con breve motivazione.',
+        deep: 'STILE RISPOSTA: Approfondito. Risposta strutturata e dettagliata con sezioni e contesto.'
+      },
+      pl: {
+        short: 'STYL ODPOWIEDZI: Krotko. Maks 2-4 punkty, zwięzle, bez dlugich wyjasnien.',
+        steps: 'STYL ODPOWIEDZI: Krok po kroku. Numerowane kroki z krotkim uzasadnieniem.',
+        deep: 'STYL ODPOWIEDZI: Szczegolowo. Ustrukturyzowana, szczegolowa odpowiedz z sekcjami i kontekstem.'
+      }
+    };
+    const selected = templates[normalizeLanguage(lang)] || templates.en;
+    return selected[normalized] || '';
+  }
+
   function normalizeGameKey(gameName) {
     const raw = String(gameName || '').toLowerCase();
     if (!raw) return '';
@@ -1319,7 +1379,7 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
   }
 
   async function processText(payload) {
-    const { text, lang, specializationLevel, imageData, gameContext } = payload || {};
+    const { text, lang, specializationLevel, imageData, gameContext, answerStyle } = payload || {};
     try {
       // Prefer explicit renderer-provided context, but fall back to cached detection.
       let resolvedGameContext = gameContext || game.currentDetectedGame;
@@ -1329,6 +1389,7 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
       const intentInfo = classifyIntent(text);
       const resolvedLanguage = lang || getCurrentLanguage();
       const responseTemplate = getResponseTemplate(intentInfo.intent, resolvedLanguage);
+      const resolvedAnswerStyle = normalizeAnswerStyle(answerStyle);
       const deterministicResponse = buildDeterministicResponse(
         intentInfo,
         responseTemplate,
@@ -1357,6 +1418,7 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
           templateOptionsCount: 0,
           templateHasCustom: false,
           specializationLevel: specializationLevel || 3,
+          answerStyle: resolvedAnswerStyle || null,
           hasImage: !!imageData,
           modelSelected: 'deterministic'
         });
@@ -1378,6 +1440,7 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
       let templateType = 'none';
       let templateOptionsCount = 0;
       let templateHasCustom = false;
+      let resolvedTemplateEntry = null;
       console.log('[AI] GPT feldolgozás:', text, 'Specialization level:', specializationLevel, 'Has image:', !!imageData, 'Game:', resolvedGameContext || 'Unknown');
       const useHighModel = shouldUseHighModel(payload || {});
       const selectedModel = useHighModel ? HIGH_QUALITY_MODEL : BASE_TEXT_MODEL;
@@ -1388,19 +1451,24 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
       if (resolvedGameContext) {
         systemPrompt += getGameContextPrompt(resolvedLanguage, resolvedGameContext);
         systemPrompt += '\n\nSTRICT OVERRIDE: A game context is present. You MUST answer as a game assistant and MUST NOT refuse. If the user includes a link, ask them to paste the relevant content, then proceed with general guidance without inventing names.';
-        const templateEntry = getTemplateEntryForGame(resolvedGameContext);
-        const templatePrompt = buildTemplatePrompt(templateEntry, resolvedLanguage);
+        resolvedTemplateEntry = getTemplateEntryForGame(resolvedGameContext);
+        const templatePrompt = buildTemplatePrompt(resolvedTemplateEntry, resolvedLanguage);
         const templateLabels = getTemplatePromptLabels(resolvedLanguage);
         if (templatePrompt) {
           templateType = 'game-template';
-          templateOptionsCount = Array.isArray(templateEntry && templateEntry.options) ? templateEntry.options.length : 0;
-          templateHasCustom = !!(templateEntry && templateEntry.template && String(templateEntry.template).trim());
+          templateOptionsCount = Array.isArray(resolvedTemplateEntry && resolvedTemplateEntry.options) ? resolvedTemplateEntry.options.length : 0;
+          templateHasCustom = !!(resolvedTemplateEntry && resolvedTemplateEntry.template && String(resolvedTemplateEntry.template).trim());
           systemPrompt += `\n\n${templateLabels.gameTemplate}${templatePrompt}`;
         } else {
           templateType = 'generic-template';
           systemPrompt += `\n\n${templateLabels.generalTemplate}\n${getDefaultGameTemplate(resolvedLanguage)}`;
         }
         console.log(`[AI] Game context injected: ${resolvedGameContext}`);
+      }
+      const templateStyle = normalizeAnswerStyle(resolvedTemplateEntry && resolvedTemplateEntry.answerStyle);
+      const answerStylePrompt = buildAnswerStylePrompt(templateStyle || resolvedAnswerStyle, resolvedLanguage);
+      if (answerStylePrompt) {
+        systemPrompt += `\n\n${answerStylePrompt}`;
       }
       const intentRoutingPrompt = getIntentRoutingPrompt(intentInfo, resolvedLanguage, resolvedGameContext);
       const intentRoutingApplied = !!intentRoutingPrompt;
@@ -1529,6 +1597,7 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
         templateOptionsCount,
         templateHasCustom,
         specializationLevel: specializationLevel || 3,
+        answerStyle: templateStyle || resolvedAnswerStyle || null,
         hasImage: !!imageData,
         modelSelected: selectedModel
       });

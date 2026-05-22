@@ -6,6 +6,22 @@
 
 ---
 
+## [1.0.46] - 2026-05-22 (Phase 4: Answer Style + Auto-Seed)
+
+### ✅ Added
+
+- Dev-only global + per-game answer style presets (short/step-by-step/deep).
+- Opt-in auto-seed prompt on first question for new games (dev-only) with safe defaults.
+
+### 🔧 Changed
+
+- Game template store now persists per-game answer style + auto-seed metadata.
+- AI prompt pipeline now applies the resolved answer style.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
 ## [1.0.45] - 2026-05-22 (Dev Tools + Guidance Refresh)
 
 ### ✅ Added

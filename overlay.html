@@ -89,6 +89,13 @@
               <p id="gameTemplateOptionsHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 4px; line-height: 1.4;"></p>
               <div id="gameTemplateOptionsList" style="display: grid; gap: 6px; margin-top: 6px;"></div>
               <p id="gameTemplateOptionsLimit" style="font-size: 0.75em; color: #6f839c; margin-top: 4px; line-height: 1.4;"></p>
+              <!-- dev-only:start -->
+              <div class="specialization-label" style="margin-top: 8px;">
+                <span id="gameTemplateStyleLabel"></span>
+              </div>
+              <p id="gameTemplateStyleHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 4px; line-height: 1.4;"></p>
+              <select id="gameTemplateStyleSelect" style="width: 100%; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;"></select>
+              <!-- dev-only:end -->
               <div class="specialization-label" style="margin-top: 8px;">
                 <span id="gameTemplateCustomLabel"></span>
               </div>
@@ -205,6 +212,16 @@
                 <span id="compositionModeLabel"></span>
               </label>
             </div>
+
+            <!-- dev-only:start -->
+            <div class="specialization-container block-item" id="block-answer-style" data-block-id="answer-style" data-block-home="settings" data-block-title-key="answerStyleLabel" style="margin-top: 12px;">
+              <div class="specialization-label">
+                <span id="answerStyleLabel"></span>
+              </div>
+              <p id="answerStyleHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;"></p>
+              <select id="answerStyleSelect" style="width: 100%; margin-top: 6px; padding: 8px; background: rgba(20, 24, 31, 0.85); border: 1px solid rgba(120, 140, 170, 0.35); border-radius: 6px; color: #f5f7fa; font-size: 0.85em;"></select>
+            </div>
+            <!-- dev-only:end -->
 
             <!-- dev-only:start -->
             <div class="specialization-container block-item" id="block-dev-tools" data-block-id="dev-tools" data-block-home="settings" data-block-title-key="devToolsLabel" style="margin-top: 12px;">

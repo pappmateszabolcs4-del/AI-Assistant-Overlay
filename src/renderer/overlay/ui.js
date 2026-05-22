@@ -43,6 +43,12 @@ let currentScreenshot = null; // Base64 image data
 var currentGameContext = null;
 let devToolsEnabled = true;
 const GAME_TEMPLATE_OPTIONS_LIMIT = 5;
+const ANSWER_STYLE_OPTIONS = [
+  { id: 'short', labelKey: 'answerStyleShort' },
+  { id: 'steps', labelKey: 'answerStyleSteps' },
+  { id: 'deep', labelKey: 'answerStyleDeep' }
+];
+const DEFAULT_ANSWER_STYLE = 'steps';
 let gameTemplateOptions = [];
 let gameTemplateDraft = null;
 let gameTemplateLabel = null;
@@ -52,6 +58,9 @@ let gameTemplateOptionsLabel = null;
 let gameTemplateOptionsHint = null;
 let gameTemplateOptionsList = null;
 let gameTemplateOptionsLimit = null;
+let gameTemplateStyleLabel = null;
+let gameTemplateStyleHint = null;
+let gameTemplateStyleSelect = null;
 let gameTemplateCustomLabel = null;
 let gameTemplateText = null;
 let gameTemplateLoadBtn = null;
@@ -75,6 +84,9 @@ let factTagsInput = null;
 let factModalStatus = null;
 let factModalCancel = null;
 let factModalSave = null;
+let answerStyleLabel = null;
+let answerStyleHint = null;
+let answerStyleSelect = null;
 
 function getUserFacingErrorMessage(rawError) {
   const msg = String(rawError || '').trim();
@@ -170,6 +182,46 @@ function writeAiDiagnosticsEnabled(enabled) {
 
 function syncAiDiagnosticsEnabled(enabled) {
   try { invokeMain(IPC_CHANNELS.SET_AI_DIAGNOSTICS, { enabled: !!enabled }); } catch (_) {}
+}
+
+function normalizeAnswerStyle(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (raw === 'short' || raw === 'steps' || raw === 'deep') return raw;
+  return '';
+}
+
+function readGlobalAnswerStyle() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.OVERLAY_ANSWER_STYLE);
+    const normalized = normalizeAnswerStyle(raw);
+    return normalized || DEFAULT_ANSWER_STYLE;
+  } catch (_) {
+    return DEFAULT_ANSWER_STYLE;
+  }
+}
+
+function writeGlobalAnswerStyle(style) {
+  const normalized = normalizeAnswerStyle(style) || DEFAULT_ANSWER_STYLE;
+  try {
+    localStorage.setItem(STORAGE_KEYS.OVERLAY_ANSWER_STYLE, normalized);
+  } catch (_) {}
+}
+
+function loadAutoSeedDecisions() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.GAME_TEMPLATE_AUTOSEED_DECISIONS);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function saveAutoSeedDecisions(decisions) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.GAME_TEMPLATE_AUTOSEED_DECISIONS, JSON.stringify(decisions || {}));
+  } catch (_) {}
 }
 
 function updateVisionSettingsUI() {
@@ -1396,6 +1448,10 @@ function updateOverlayText() {
     const limitTemplate = t().gameTemplateOptionsLimit || 'Max {count} options.';
     gameTemplateOptionsLimitEl.textContent = limitTemplate.replace('{count}', String(GAME_TEMPLATE_OPTIONS_LIMIT));
   }
+  const gameTemplateStyleLabelEl = document.getElementById('gameTemplateStyleLabel');
+  if (gameTemplateStyleLabelEl) gameTemplateStyleLabelEl.textContent = t().gameTemplateStyleLabel || gameTemplateStyleLabelEl.textContent;
+  const gameTemplateStyleHintEl = document.getElementById('gameTemplateStyleHint');
+  if (gameTemplateStyleHintEl) gameTemplateStyleHintEl.textContent = t().gameTemplateStyleHint || gameTemplateStyleHintEl.textContent;
   const gameTemplateCustomLabelEl = document.getElementById('gameTemplateCustomLabel');
   if (gameTemplateCustomLabelEl) gameTemplateCustomLabelEl.textContent = t().gameTemplateCustomLabel || gameTemplateCustomLabelEl.textContent;
   const gameTemplateNameInputEl = document.getElementById('gameTemplateNameInput');
@@ -1410,6 +1466,17 @@ function updateOverlayText() {
   if (gameTemplateSaveBtnEl) gameTemplateSaveBtnEl.textContent = t().gameTemplateSave || gameTemplateSaveBtnEl.textContent;
   const gameTemplateDeleteBtnEl = document.getElementById('gameTemplateDeleteBtn');
   if (gameTemplateDeleteBtnEl) gameTemplateDeleteBtnEl.textContent = t().gameTemplateDelete || gameTemplateDeleteBtnEl.textContent;
+  const answerStyleLabelEl = document.getElementById('answerStyleLabel');
+  if (answerStyleLabelEl) answerStyleLabelEl.textContent = t().answerStyleLabel || answerStyleLabelEl.textContent;
+  const answerStyleHintEl = document.getElementById('answerStyleHint');
+  if (answerStyleHintEl) answerStyleHintEl.textContent = t().answerStyleHint || answerStyleHintEl.textContent;
+  if (answerStyleSelect) {
+    renderAnswerStyleSelect(answerStyleSelect, readGlobalAnswerStyle(), false);
+  }
+  if (gameTemplateStyleSelect) {
+    const currentStyle = gameTemplateStyleSelect.value || '';
+    renderAnswerStyleSelect(gameTemplateStyleSelect, currentStyle, true);
+  }
   renderGameTemplateOptions();
   if (addFactBtn) addFactBtn.textContent = t().addFactBtn || addFactBtn.textContent;
   if (factModalTitle) factModalTitle.textContent = t().factModalTitle || factModalTitle.textContent;
@@ -1563,10 +1630,12 @@ async function askQuestion() {
 
   const templateGame = await ensureTemplateDraftSaved();
   const resolvedGameContext = currentGameContext || templateGame || null;
+  await maybeAutoSeedTemplate(resolvedGameContext);
+  const answerStyle = await resolveAnswerStyleForGame(resolvedGameContext);
 
   askBtn.disabled = true;
   try {
-    const result = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, text, currentLanguage, parseInt(specializationSlider.value), currentScreenshot, resolvedGameContext);
+    const result = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, text, currentLanguage, parseInt(specializationSlider.value), currentScreenshot, resolvedGameContext, answerStyle);
     if (result.success) {
       status.textContent = t().responseReady;
       document.getElementById('aiResponse').textContent = result.response;
@@ -1669,7 +1738,8 @@ on(micBtn, 'click', async () => {
               const resolvedGameContext = currentGameContext || templateGame || null;
 
           try {
-                const processResult = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, transcript, currentLanguage, parseInt(specializationSlider.value), currentScreenshot, resolvedGameContext);
+                const answerStyle = await resolveAnswerStyleForGame(resolvedGameContext);
+                const processResult = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, transcript, currentLanguage, parseInt(specializationSlider.value), currentScreenshot, resolvedGameContext, answerStyle);
 
             if (processResult.success) {
               document.getElementById('aiResponse').textContent = processResult.response;
@@ -1835,6 +1905,9 @@ gameTemplateOptionsLabel = document.getElementById('gameTemplateOptionsLabel');
 gameTemplateOptionsHint = document.getElementById('gameTemplateOptionsHint');
 gameTemplateOptionsList = document.getElementById('gameTemplateOptionsList');
 gameTemplateOptionsLimit = document.getElementById('gameTemplateOptionsLimit');
+gameTemplateStyleLabel = document.getElementById('gameTemplateStyleLabel');
+gameTemplateStyleHint = document.getElementById('gameTemplateStyleHint');
+gameTemplateStyleSelect = document.getElementById('gameTemplateStyleSelect');
 gameTemplateCustomLabel = document.getElementById('gameTemplateCustomLabel');
 gameTemplateText = document.getElementById('gameTemplateText');
 gameTemplateLoadBtn = document.getElementById('gameTemplateLoadBtn');
@@ -1842,6 +1915,9 @@ gameTemplateUseCurrentBtn = document.getElementById('gameTemplateUseCurrentBtn')
 gameTemplateSaveBtn = document.getElementById('gameTemplateSaveBtn');
 gameTemplateDeleteBtn = document.getElementById('gameTemplateDeleteBtn');
 gameTemplateStatus = document.getElementById('gameTemplateStatus');
+answerStyleLabel = document.getElementById('answerStyleLabel');
+answerStyleHint = document.getElementById('answerStyleHint');
+answerStyleSelect = document.getElementById('answerStyleSelect');
 
 function normalizeGameDetectMapping(text) {
   return String(text || '').trim();
@@ -1915,14 +1991,79 @@ async function loadGameTemplateForGame(gameName) {
   if (entry) {
     gameTemplateText.value = typeof entry.template === 'string' ? entry.template : '';
     applyTemplateOptionSelection(entry.options || []);
+    if (gameTemplateStyleSelect) {
+      renderAnswerStyleSelect(gameTemplateStyleSelect, entry.answerStyle || '', true);
+    }
     if (gameTemplateStatus) gameTemplateStatus.textContent = t().gameTemplateLoaded || 'Template loaded';
     saveGameTemplateDraftFromUi();
     return true;
   }
   gameTemplateText.value = '';
   applyTemplateOptionSelection([]);
+  if (gameTemplateStyleSelect) {
+    renderAnswerStyleSelect(gameTemplateStyleSelect, '', true);
+  }
   saveGameTemplateDraftFromUi();
   return false;
+}
+
+function showConfirmModalAsync(title, message, confirmText) {
+  return new Promise((resolve) => {
+    showConfirmModal(
+      title,
+      message,
+      () => resolve(true),
+      confirmText,
+      () => resolve(false)
+    );
+  });
+}
+
+async function fetchTemplateEntry(gameName) {
+  try {
+    const response = await invokeMain(IPC_CHANNELS.GET_GAME_TEMPLATES);
+    if (!response || !response.success) return null;
+    return findTemplateEntry(response.templates, gameName);
+  } catch (_) {
+    return null;
+  }
+}
+
+async function maybeAutoSeedTemplate(gameName) {
+  if (!gameName) return;
+  if (!devToolsEnabled) return;
+  const key = normalizeGameTemplateName(gameName).toLowerCase();
+  if (!key) return;
+  const decisions = loadAutoSeedDecisions();
+  if (decisions[key]) return;
+  const existing = await fetchTemplateEntry(gameName);
+  if (existing) return;
+  const title = t().autoSeedTitle || 'Template defaults';
+  const messageTemplate = t().autoSeedMessage || 'Create a per-game template default for "{game}"?';
+  const confirmText = t().autoSeedConfirm || 'Enable defaults';
+  const message = messageTemplate.replace('{game}', gameName);
+  const accepted = await showConfirmModalAsync(title, message, confirmText);
+  decisions[key] = { accepted: !!accepted, promptedAt: Date.now() };
+  saveAutoSeedDecisions(decisions);
+  if (!accepted) return;
+  try {
+    await invokeMain(IPC_CHANNELS.UPSERT_GAME_TEMPLATE, {
+      game: gameName,
+      template: '',
+      options: getAutoSeedDefaultOptions(),
+      answerStyle: readGlobalAnswerStyle(),
+      autoSeededAt: Date.now()
+    });
+  } catch (_) {}
+}
+
+async function resolveAnswerStyleForGame(gameName) {
+  if (!devToolsEnabled) return '';
+  const fallback = readGlobalAnswerStyle();
+  if (!gameName) return fallback;
+  const entry = await fetchTemplateEntry(gameName);
+  const style = normalizeAnswerStyle(entry && entry.answerStyle);
+  return style || fallback;
 }
 
 function setGameTemplateStatus(message) {
@@ -1951,7 +2092,8 @@ function captureGameTemplateDraft() {
   return {
     name: gameTemplateNameInput ? String(gameTemplateNameInput.value || '') : '',
     text: gameTemplateText ? String(gameTemplateText.value || '') : '',
-    options: getSelectedTemplateOptionIds()
+    options: getSelectedTemplateOptionIds(),
+    answerStyle: gameTemplateStyleSelect ? normalizeAnswerStyle(gameTemplateStyleSelect.value) : ''
   };
 }
 
@@ -1965,6 +2107,9 @@ function applyGameTemplateDraft(draft) {
   }
   if (gameTemplateOptionsList && Array.isArray(draft.options)) {
     applyTemplateOptionSelection(draft.options);
+  }
+  if (gameTemplateStyleSelect && typeof draft.answerStyle === 'string') {
+    renderAnswerStyleSelect(gameTemplateStyleSelect, draft.answerStyle, true);
   }
 }
 
@@ -1986,12 +2131,14 @@ async function ensureTemplateDraftSaved() {
   if (!gameName) return '';
   const templateText = String(gameTemplateText ? gameTemplateText.value : '').trim();
   const selectedOptions = getSelectedTemplateOptionIds();
-  if (!templateText && selectedOptions.length === 0) return gameName;
+  const answerStyle = gameTemplateStyleSelect ? normalizeAnswerStyle(gameTemplateStyleSelect.value) : '';
+  if (!templateText && selectedOptions.length === 0 && !answerStyle) return gameName;
   try {
     await invokeMain(IPC_CHANNELS.UPSERT_GAME_TEMPLATE, {
       game: gameName,
       template: templateText,
-      options: selectedOptions
+      options: selectedOptions,
+      answerStyle
     });
   } catch (_) {}
   return gameName;
@@ -2013,6 +2160,40 @@ function getTemplateOptionLabel(option) {
   const key = option.labelKey;
   if (key && t()[key]) return t()[key];
   return option.label || key || '';
+}
+
+function getAnswerStyleLabel(option) {
+  if (!option) return '';
+  const key = option.labelKey;
+  if (key && t()[key]) return t()[key];
+  return option.label || key || '';
+}
+
+function renderAnswerStyleSelect(selectEl, selectedValue, includeInherit) {
+  if (!selectEl) return;
+  const current = normalizeAnswerStyle(selectedValue);
+  selectEl.innerHTML = '';
+  if (includeInherit) {
+    const inheritOption = document.createElement('option');
+    inheritOption.value = '';
+    inheritOption.textContent = t().answerStyleInherit || 'Use global default';
+    selectEl.appendChild(inheritOption);
+  }
+  ANSWER_STYLE_OPTIONS.forEach((option) => {
+    const entry = document.createElement('option');
+    entry.value = option.id;
+    entry.textContent = getAnswerStyleLabel(option);
+    selectEl.appendChild(entry);
+  });
+  if (includeInherit) {
+    selectEl.value = current || '';
+  } else {
+    selectEl.value = current || DEFAULT_ANSWER_STYLE;
+  }
+}
+
+function getAutoSeedDefaultOptions() {
+  return ['short-steps', 'no-spoilers'];
 }
 
 function renderGameTemplateOptions() {
@@ -2094,6 +2275,20 @@ gameTemplateDraft = loadGameTemplateDraft();
 applyGameTemplateDraft(gameTemplateDraft);
 loadGameTemplateOptions();
 
+if (answerStyleSelect) {
+  renderAnswerStyleSelect(answerStyleSelect, readGlobalAnswerStyle(), false);
+  on(answerStyleSelect, 'change', () => {
+    writeGlobalAnswerStyle(answerStyleSelect.value);
+  });
+}
+
+if (gameTemplateStyleSelect) {
+  renderAnswerStyleSelect(gameTemplateStyleSelect, '', true);
+  on(gameTemplateStyleSelect, 'change', () => {
+    saveGameTemplateDraftFromUi();
+  });
+}
+
 try {
   const { isDev } = require('./src/shared/app-env');
   devToolsEnabled = !!(isDev && isDev());
@@ -2104,6 +2299,15 @@ try {
 const devToolsBlock = document.getElementById('block-dev-tools');
 if (!devToolsEnabled && devToolsBlock) {
   devToolsBlock.style.display = 'none';
+}
+const answerStyleBlock = document.getElementById('block-answer-style');
+if (!devToolsEnabled && answerStyleBlock) {
+  answerStyleBlock.style.display = 'none';
+}
+if (!devToolsEnabled) {
+  if (gameTemplateStyleLabel) gameTemplateStyleLabel.style.display = 'none';
+  if (gameTemplateStyleHint) gameTemplateStyleHint.style.display = 'none';
+  if (gameTemplateStyleSelect) gameTemplateStyleSelect.style.display = 'none';
 }
 
 if (visionEnableToggle) {
@@ -2353,7 +2557,8 @@ if (gameTemplateSaveBtn) {
     const gameName = normalizeGameTemplateName(gameTemplateNameInput ? gameTemplateNameInput.value : '');
     const templateText = String(gameTemplateText ? gameTemplateText.value : '').trim();
     const selectedOptions = getSelectedTemplateOptionIds();
-    if (!gameName && !templateText && selectedOptions.length === 0) {
+    const answerStyle = gameTemplateStyleSelect ? normalizeAnswerStyle(gameTemplateStyleSelect.value) : '';
+    if (!gameName && !templateText && selectedOptions.length === 0 && !answerStyle) {
       saveGameTemplateDraftFromUi();
       setGameTemplateStatus('');
       return;
@@ -2362,7 +2567,7 @@ if (gameTemplateSaveBtn) {
       setGameTemplateStatus(t().gameTemplateMissing || 'Enter a game name and select options or write guidance.');
       return;
     }
-    if (!templateText && selectedOptions.length === 0) {
+    if (!templateText && selectedOptions.length === 0 && !answerStyle) {
       let cleared = null;
       try {
         cleared = await invokeMain(IPC_CHANNELS.DELETE_GAME_TEMPLATE, { game: gameName });
@@ -2381,7 +2586,8 @@ if (gameTemplateSaveBtn) {
       result = await invokeMain(IPC_CHANNELS.UPSERT_GAME_TEMPLATE, {
         game: gameName,
         template: templateText,
-        options: selectedOptions
+        options: selectedOptions,
+        answerStyle
       });
     } catch (_) {
       result = null;
@@ -2411,6 +2617,7 @@ if (gameTemplateDeleteBtn) {
       if (gameTemplateNameInput) gameTemplateNameInput.value = '';
       if (gameTemplateText) gameTemplateText.value = '';
       applyTemplateOptionSelection([]);
+      if (gameTemplateStyleSelect) renderAnswerStyleSelect(gameTemplateStyleSelect, '', true);
       setGameTemplateStatus(t().gameTemplateDeleted || 'Template deleted');
     }
   });
@@ -2446,6 +2653,8 @@ if (factModal) {
 // Clear all data
 // Custom modal functions
 let pendingConfirmAction = null;
+let pendingConfirmCancel = null;
+let pendingConfirmAccepted = false;
 const modalContent = confirmModal ? confirmModal.querySelector('.modal-content') : null;
 let modalDragState = null;
 
@@ -2496,13 +2705,26 @@ function endModalDrag(ev) {
 const closeConfirmModal = () => {
   if (!confirmModal.classList.contains('active')) {
     pendingConfirmAction = null;
+    pendingConfirmCancel = null;
+    pendingConfirmAccepted = false;
     return;
   }
   confirmModal.classList.remove('active');
+  if (!pendingConfirmAccepted && typeof pendingConfirmCancel === 'function') {
+    const cancelAction = pendingConfirmCancel;
+    pendingConfirmAction = null;
+    pendingConfirmCancel = null;
+    pendingConfirmAccepted = false;
+    cancelAction();
+    return;
+  }
   pendingConfirmAction = null;
+  pendingConfirmCancel = null;
+  pendingConfirmAccepted = false;
 };
 
 on(modalConfirm, 'click', () => {
+  pendingConfirmAccepted = true;
   const action = pendingConfirmAction;
   closeConfirmModal();
   if (action) {
@@ -2518,12 +2740,14 @@ on(confirmModal, 'click', (e) => {
   }
 });
 
-function showConfirmModal(title, message, onConfirm, confirmBtnText = null) {
+function showConfirmModal(title, message, onConfirm, confirmBtnText = null, onCancel = null) {
   modalTitle.textContent = title;
   modalMessage.textContent = message;
   modalCancel.textContent = t().btnCancel;
   modalConfirm.textContent = confirmBtnText || t().btnDelete;
   pendingConfirmAction = onConfirm;
+  pendingConfirmCancel = typeof onCancel === 'function' ? onCancel : null;
+  pendingConfirmAccepted = false;
   confirmModal.classList.add('active');
   centerConfirmModal();
 }

@@ -25,7 +25,9 @@ const STORAGE_KEYS = {
   BLOCK_FREE_LAYOUT: 'overlayBlockFreeLayout',
   VISION_ENABLED: 'visionEnabled',
   VISION_ALLOWLIST: 'visionAllowlist',
-  VISION_DENYLIST: 'visionDenylist'
+  VISION_DENYLIST: 'visionDenylist',
+  OVERLAY_ANSWER_STYLE: 'overlayAnswerStyle',
+  GAME_TEMPLATE_AUTOSEED_DECISIONS: 'gameTemplateAutoSeedDecisions'
 };
 
 module.exports = {

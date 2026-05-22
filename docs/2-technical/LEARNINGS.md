@@ -1230,6 +1230,41 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 
 ---
 
+### 2026-05-22 (Night)
+
+#### Summary
+- What changed: Added dev-only global + per-game answer style presets, wired style prompts into the AI pipeline, and introduced an opt-in auto-seed prompt for per-game defaults on first question (with safe default options).
+- Why: Provide controllable answer formatting without user prompt writing and seed per-game defaults safely.
+- Impact: Style presets are testable in dev builds; auto-seed is gated behind explicit opt-in.
+
+#### Details
+- Implementation notes: Answer styles are persisted in game templates; AI prompts apply the resolved style; auto-seed uses custom modal with dev-only gating and stores per-game decisions locally.
+- Edge cases: Auto-seed skips games that already have templates; per-game styles override global defaults.
+
+#### Files touched
+- [overlay.html](overlay.html)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/main/ipc/openai-ipc.js](src/main/ipc/openai-ipc.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [src/main/services/game-template-store.js](src/main/services/game-template-store.js)
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+- [src/shared/storage-keys.js](src/shared/storage-keys.js)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Tests: Not run (not requested).
+
+#### Follow-ups
+- TODO: None.
+
+---
+
 ### 2026-05-17 (Evening)
 
 #### Summary

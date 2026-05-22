@@ -87,21 +87,39 @@ function getTemplateForGame(gameName) {
   return String(entry.template).trim();
 }
 
-function upsertTemplate(gameName, template, aliases, options) {
+function normalizeAnswerStyle(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (raw === 'short' || raw === 'steps' || raw === 'deep') return raw;
+  return '';
+}
+
+function upsertTemplate(gameName, template, aliases, options, answerStyle, autoSeededAt) {
   const game = String(gameName || '').trim();
   const body = String(template || '').trim();
   const optionList = Array.isArray(options) ? options.filter(Boolean) : [];
+  const styleInputProvided = typeof answerStyle !== 'undefined';
+  const normalizedStyle = styleInputProvided ? normalizeAnswerStyle(answerStyle) : '';
+  const hasStyle = !!normalizedStyle;
   if (!game) return { success: false, error: 'missing-game' };
-  if (!body && optionList.length === 0) return { success: false, error: 'missing-template' };
+  if (!body && optionList.length === 0 && !hasStyle) {
+    return { success: false, error: 'missing-template' };
+  }
 
   const templates = listTemplates();
   const key = normalizeTemplateKey(game);
   const idx = templates.findIndex((entry) => normalizeTemplateKey(entry && entry.game) === key);
+  const existing = idx >= 0 ? templates[idx] : null;
+  const resolvedStyle = styleInputProvided ? normalizedStyle : normalizeAnswerStyle(existing && existing.answerStyle);
+  const resolvedAutoSeededAt = Number.isFinite(autoSeededAt)
+    ? autoSeededAt
+    : (Number.isFinite(existing && existing.autoSeededAt) ? existing.autoSeededAt : null);
   const entry = {
     game,
     template: body,
     aliases: Array.isArray(aliases) ? aliases.filter(Boolean) : [],
     options: optionList,
+    answerStyle: resolvedStyle,
+    autoSeededAt: resolvedAutoSeededAt,
     updatedAt: Date.now()
   };
 
