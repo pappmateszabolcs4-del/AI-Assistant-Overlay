@@ -10,11 +10,18 @@
       "patterns": [
         "progress",
         "progression",
+        "milestone",
+        "roadmap",
+        "what next",
+        "what to do now",
+        "next steps",
         "midgame",
         "endgame",
         "early game",
         "kovetkezo",
         "következő",
+        "kovetkezo lepes",
+        "következő lépés",
         "next goal",
         "next step"
       ],
@@ -28,11 +35,14 @@
       "priority": 2,
       "patterns": [
         "resource",
-        "craft",
-        "crafting",
-        "economy",
+        "resource chain",
+        "supply chain",
+        "pipeline",
+        "materials",
         "anyag",
         "nyersanyag",
+        "beszerzes",
+        "ellatas",
         "gyart",
         "gyart",
         "craftol"
@@ -43,13 +53,42 @@
       }
     },
     {
-      "id": "combat",
+      "id": "economy",
       "priority": 3,
+      "patterns": [
+        "economy",
+        "market",
+        "trade",
+        "trading",
+        "sell",
+        "buy",
+        "price",
+        "profit",
+        "ar",
+        "ár",
+        "piac",
+        "keresked",
+        "elad",
+        "vesz",
+        "haszon"
+      ],
+      "prompts": {
+        "en": "Summarize profitable loops: what to buy/sell, where to trade, and 2 risk notes. Start immediately; no intro.",
+        "hu": "Adj rovid profit-lancot: mit erdemes venni/eladni, hol erdemes kereskedni, plusz 2 kockazat. Kezdd azonnal, bevezeto nelkul."
+      }
+    },
+    {
+      "id": "combat",
+      "priority": 4,
       "patterns": [
         "combat",
         "tactics",
         "survive",
         "survivability",
+        "defense",
+        "mitigation",
+        "tank",
+        "tanky",
         "harc",
         "taktika",
         "tulel",
@@ -62,12 +101,14 @@
     },
     {
       "id": "base",
-      "priority": 4,
+      "priority": 5,
       "patterns": [
         "base",
         "colony",
         "optimization",
         "layout",
+        "logistics",
+        "bottleneck",
         "bazis",
         "bázis",
         "kolonia",
@@ -81,13 +122,16 @@
     },
     {
       "id": "exploration",
-      "priority": 5,
+      "priority": 6,
       "patterns": [
         "exploration",
         "quest",
         "quests",
         "event",
         "events",
+        "where to go",
+        "where should i go",
+        "what to explore",
         "felfedez",
         "kuldet",
         "küld",
@@ -100,12 +144,14 @@
     },
     {
       "id": "mechanics",
-      "priority": 6,
+      "priority": 7,
       "patterns": [
         "how does",
         "how to",
         "mukodik",
         "működik",
+        "how do i",
+        "how can i",
         "kibanyaszni",
         "kibányászni",
         "hasznalni",
@@ -123,8 +169,28 @@
       }
     },
     {
+      "id": "crafting",
+      "priority": 8,
+      "patterns": [
+        "craft",
+        "crafting",
+        "recipe",
+        "recipes",
+        "blueprint",
+        "schematic",
+        "recept",
+        "receptek",
+        "tervrajz",
+        "rajz"
+      ],
+      "prompts": {
+        "en": "Give the recipe prerequisites, then steps, then 1-2 tips for materials or alternatives. Start immediately; no intro.",
+        "hu": "Add meg a recept elofelteteleket, majd a lepeseket, vegul 1-2 tippet az anyagokhoz vagy alternativakhoz. Kezdd azonnal, bevezeto nelkul."
+      }
+    },
+    {
       "id": "troubleshoot",
-      "priority": 7,
+      "priority": 9,
       "patterns": [
         "stuck",
         "now what",
@@ -143,8 +209,72 @@
       }
     },
     {
+      "id": "settings",
+      "priority": 10,
+      "patterns": [
+        "settings",
+        "controls",
+        "sensitivity",
+        "fps",
+        "performance",
+        "graphics",
+        "latency",
+        "beallitas",
+        "beállítás",
+        "iranyitas",
+        "irányítás",
+        "erzekenyseg",
+        "érzékenység",
+        "optimaliz"
+      ],
+      "prompts": {
+        "en": "Give 3-5 prioritized settings tweaks with a short rationale and expected tradeoff. Start immediately; no intro.",
+        "hu": "Adj 3-5 priorizalt beallitasi javaslatot rovid indoklassal es vart kompromisszummal. Kezdd azonnal, bevezeto nelkul."
+      }
+    },
+    {
+      "id": "multiplayer",
+      "priority": 11,
+      "patterns": [
+        "multiplayer",
+        "co-op",
+        "coop",
+        "party",
+        "team",
+        "roles",
+        "role",
+        "squad",
+        "csapat",
+        "csapatszerep",
+        "szerep"
+      ],
+      "prompts": {
+        "en": "Suggest 2-3 role archetypes, their responsibilities, and one synergy tip. Start immediately; no intro.",
+        "hu": "Adj 2-3 szerep archetipo t, feladatokkal es 1 szinergia tippel. Kezdd azonnal, bevezeto nelkul."
+      }
+    },
+    {
+      "id": "roadmap",
+      "priority": 12,
+      "patterns": [
+        "roadmap",
+        "plan",
+        "strategy",
+        "what should i do next",
+        "what do i do next",
+        "mit csinaljak ezutan",
+        "mit csinaljak ez után",
+        "mit csinaljak kovetkezonek",
+        "mit csináljak következőnek"
+      ],
+      "prompts": {
+        "en": "Provide a short 3-step roadmap: immediate, mid-term, long-term goals. Start immediately; no intro.",
+        "hu": "Adj rovid 3 lepeses utitervet: azonnali, kozepes es hosszu tavu celok. Kezdd azonnal, bevezeto nelkul."
+      }
+    },
+    {
       "id": "game-identity",
-      "priority": 7,
+      "priority": 13,
       "patterns": [
         "what game am i playing",
         "what game is this",

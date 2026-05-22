@@ -1101,6 +1101,35 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 
 ---
 
+### 2026-05-22 (Night)
+
+#### Summary
+- What changed: Added data-driven deterministic templates with an enable flag; enabled deterministic only for game-identity; fixed JSON escape; updated TODO and changelog.
+- Why: Make deterministic shortcuts data-driven while keeping safety and game specificity.
+- Impact: Deterministic scaffolds are available but only game-identity short-circuits; other intents stay LLM-driven.
+
+#### Details
+- Implementation notes: Deterministic now honors an enabled flag; JSON templates hold fixed scaffolds for common intents.
+- Edge cases: JSON escape sequences must remain valid (no \\' usage).
+
+#### Files touched
+- [data/response-templates.json](data/response-templates.json)
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Not created (docs/json edits only).
+
+#### Verification
+- Tests: Not run (not requested).
+
+#### Follow-ups
+- TODO: None.
+
+---
+
 ### 2026-05-17 (Evening)
 
 #### Summary

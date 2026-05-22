@@ -1,6 +1,6 @@
 # ✅ TODO / Backlog
 
-Last updated: 2026-05-20
+Last updated: 2026-05-22
 
 ## Build plan (ordered, dependency-safe)
 
@@ -64,8 +64,9 @@ Why: If the game context flaps or is wrong, routing and templates fall apart.
 
 Why: Enables “no prompt engineering needed” guidance.
 
-- [ ] Deterministic shortcuts for common intents (e.g., "what game am I playing")
-  - [ ] Add common game intents (farm/build/boss/quest/loadout) with fixed response structures
+- [x] Deterministic shortcuts for common intents (e.g., "what game am I playing")
+  - [x] Add common game intents (farm/build/boss/quest/loadout/progression/mechanics/resource/economy/combat/base/exploration/troubleshoot/crafting/settings/multiplayer/roadmap) with fixed response structures
+  - [x] Enable deterministic only for game-identity (safety + game-specific priority)
 - [x] Intent routing layer (simple router before LLM call)
   - [x] Route how-to/farming questions to step-by-step, game-specific answers
   - [x] Enforce "no generic tips" mode when game context is known

@@ -3,6 +3,17 @@
     "useFacts": true,
     "useProfile": true,
     "maxFacts": 4,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nFocus: give the next 3-5 concrete steps based on the player's stage and goals.\nAsk one short clarification if needed.",
+        "noGame": "Focus: give the next 3-5 concrete steps based on the player's stage and goals.\nAsk one short clarification if needed."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nFokusz: adj 3-5 konkret kovetkezo lepest a jatekos szakasza es celjai alapjan.\nHa kell, tegyel fel 1 rovid pontosito kerdest.",
+        "noGame": "Fokusz: adj 3-5 konkret kovetkezo lepest a jatekos szakasza es celjai alapjan.\nHa kell, tegyel fel 1 rovid pontosito kerdest."
+      }
+    },
     "prompts": {
       "en": "Use provided FACTS when available. If none, answer from general game knowledge. Keep it concise and structured.",
       "hu": "Hasznald a megadott FACTS reszt, ha van. Ha nincs, altalanos jatektudas alapjan valaszolj. Legyen rovid es tagolt."
@@ -12,6 +23,17 @@
     "useFacts": true,
     "useProfile": true,
     "maxFacts": 6,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nPrereqs: check quest/story stage, required tools/buildings, and location.\nSteps:\n1) Open the relevant menu or station.\n2) Perform the action once and note the resource/cooldown cost.\n3) Repeat and watch the key success indicator.\nTell me the exact mechanic name for a precise walkthrough.",
+        "noGame": "Prereqs: check quest/story stage, required tools/buildings, and location.\nSteps:\n1) Open the relevant menu or station.\n2) Perform the action once and note the resource/cooldown cost.\n3) Repeat and watch the key success indicator.\nTell me the exact mechanic name for a precise walkthrough."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nElofeltetelek: ellenorizd a quest/sztori szakaszt, szukseges eszkoz/epuletet es a helyszint.\nLepesek:\n1) Nyisd meg a megfelelo menut vagy allomast.\n2) Hajtsd vegre egyszer es jegyezd fel a koltseget es cooldown-t.\n3) Ismeteld, es figyeld a kulcs jelzest.\nIrd meg a pontos mechanika nevet a reszletes lepesekhez.",
+        "noGame": "Elofeltetelek: ellenorizd a quest/sztori szakaszt, szukseges eszkoz/epuletet es a helyszint.\nLepesek:\n1) Nyisd meg a megfelelo menut vagy allomast.\n2) Hajtsd vegre egyszer es jegyezd fel a koltseget es cooldown-t.\n3) Ismeteld, es figyeld a kulcs jelzest.\nIrd meg a pontos mechanika nevet a reszletes lepesekhez."
+      }
+    },
     "prompts": {
       "en": "Explain the mechanic step-by-step. Always list prerequisites (research, building, tool) before the steps. Use FACTS first.",
       "hu": "Lepesrol lepesre magyarazd el a mechanikat. Mindig sorold fel az elofelteteleket (kutatas, epulet, eszkoz) a lepesek elott. Eloszor hasznald a FACTS reszt."
@@ -21,6 +43,17 @@
     "useFacts": true,
     "useProfile": true,
     "maxFacts": 4,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nNext goals (generic):\n1) Secure core resources for the next tier.\n2) Unlock the next key tool/building.\n3) Improve survivability and mobility.\n4) Push the main quest/region objective.\n5) Tidy your base/inventory for efficiency.\nTell me your current stage and gear for a precise path.",
+        "noGame": "Next goals (generic):\n1) Secure core resources for the next tier.\n2) Unlock the next key tool/building.\n3) Improve survivability and mobility.\n4) Push the main quest/region objective.\n5) Tidy your base/inventory for efficiency.\nTell me your current stage and gear for a precise path."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nKovetkezo celok (altalanos):\n1) Biztosits alap eroforrasokat a kovetkezo szinthez.\n2) Oldd fel a kovetkezo kulcs eszkozt/epuletet.\n3) Javits tulelest es mobilitast.\n4) Haladj a fo kuldetes/terulet cel fel.\n5) Rendezd a bazist/inventar hatasekonyra.\nIrd meg a jelenlegi szakaszt es felszerelest a pontos utemhez.",
+        "noGame": "Kovetkezo celok (altalanos):\n1) Biztosits alap eroforrasokat a kovetkezo szinthez.\n2) Oldd fel a kovetkezo kulcs eszkozt/epuletet.\n3) Javits tulelest es mobilitast.\n4) Haladj a fo kuldetes/terulet cel fel.\n5) Rendezd a bazist/inventar hatasekonyra.\nIrd meg a jelenlegi szakaszt es felszerelest a pontos utemhez."
+      }
+    },
     "prompts": {
       "en": "Give 3-5 next goals in order. Use FACTS if present. Keep it step-by-step.",
       "hu": "Adj 3-5 kovetkezo celpontot sorrendben. Hasznald a FACTS reszt, ha van. Legyen lepesenkent."
@@ -30,15 +63,57 @@
     "useFacts": true,
     "useProfile": true,
     "maxFacts": 5,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nBest sources: farm the easiest repeatable node, then upgrade to higher-yield areas.\nFast conversion chain: raw -> processed -> crafted -> sell/use.\nTips: batch craft, use storage near stations, keep a small buffer.\nTell me the exact resource for a precise route.",
+        "noGame": "Best sources: farm the easiest repeatable node, then upgrade to higher-yield areas.\nFast conversion chain: raw -> processed -> crafted -> sell/use.\nTips: batch craft, use storage near stations, keep a small buffer.\nTell me the exact resource for a precise route."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nLegjobb forrasok: farma a legkonnyebb ismetelheto pontot, majd lepj magasabb hozamra.\nLeggyorsabb lanc: nyers -> feldolgozott -> craft -> eladas/felhasznalas.\nTippek: tomeges craft, tarolo kozel a stationhoz, kis puffer.\nIrd meg a pontos eroforrast a pontos utvonalhoz.",
+        "noGame": "Legjobb forrasok: farma a legkonnyebb ismetelheto pontot, majd lepj magasabb hozamra.\nLeggyorsabb lanc: nyers -> feldolgozott -> craft -> eladas/felhasznalas.\nTippek: tomeges craft, tarolo kozel a stationhoz, kis puffer.\nIrd meg a pontos eroforrast a pontos utvonalhoz."
+      }
+    },
     "prompts": {
       "en": "List best sources, then fastest conversion chain, then 1-2 efficiency tips. Use FACTS when available.",
       "hu": "Sorold fel a legjobb forrasokat, majd a leggyorsabb atalakitasi lancot, vegul 1-2 hatekonysagi tippet. Hasznald a FACTS reszt, ha van."
+    }
+  },
+  "economy": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 4,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nProfit loop: farm a high-demand item -> convert if needed -> sell at best hub.\nRisks: price swings, travel/time cost.\nTip: track one reliable loop and scale it before diversifying.\nTell me the market/item for a precise plan.",
+        "noGame": "Profit loop: farm a high-demand item -> convert if needed -> sell at best hub.\nRisks: price swings, travel/time cost.\nTip: track one reliable loop and scale it before diversifying.\nTell me the market/item for a precise plan."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nProfit lanc: farma egy keresett itemet -> alakitsd at ha kell -> add el a legjobb hubban.\nKockazat: ar ingadozas, utazas/ido koltseg.\nTipp: egy biztos lancot skazz fel, mielott szetszorsod.\nIrd meg a piacot/itemet a pontos tervhez.",
+        "noGame": "Profit lanc: farma egy keresett itemet -> alakitsd at ha kell -> add el a legjobb hubban.\nKockazat: ar ingadozas, utazas/ido koltseg.\nTipp: egy biztos lancot skazz fel, mielott szetszorsod.\nIrd meg a piacot/itemet a pontos tervhez."
+      }
+    },
+    "prompts": {
+      "en": "Summarize profitable loops: what to buy/sell, where to trade, and 2 risk notes. Use FACTS if present.",
+      "hu": "Adj rovid profit-lancot: mit erdemes venni/eladni, hol erdemes kereskedni, plusz 2 kockazat. Hasznald a FACTS reszt, ha van."
     }
   },
   "combat": {
     "useFacts": true,
     "useProfile": true,
     "maxFacts": 4,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nSurvive: stack defense and healing, keep stamina/mana up.\nPosition: fight near cover/high ground and keep escape routes.\nTiming: learn dodge/parry windows and punish cooldowns.\nTell me the enemy/boss name for specific counters.",
+        "noGame": "Survive: stack defense and healing, keep stamina/mana up.\nPosition: fight near cover/high ground and keep escape routes.\nTiming: learn dodge/parry windows and punish cooldowns.\nTell me the enemy/boss name for specific counters."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nTuleles: stackelj vedelmet es gyogyitast, tartsd fenn stamina/mana szintet.\nPozicio: harcolj fedezeknel/magaslaton, legyen menekulo ut.\nTiming: tanuld a dodge/parry ablakokat es buntes cooldown utan.\nIrd meg az ellenfel/boss nevet a pontos counterekhez.",
+        "noGame": "Tuleles: stackelj vedelmet es gyogyitast, tartsd fenn stamina/mana szintet.\nPozicio: harcolj fedezeknel/magaslaton, legyen menekulo ut.\nTiming: tanuld a dodge/parry ablakokat es buntes cooldown utan.\nIrd meg az ellenfel/boss nevet a pontos counterekhez."
+      }
+    },
     "prompts": {
       "en": "Give survivability + positioning + timing tips. Mention key mechanics and counters. Use FACTS if present.",
       "hu": "Adj tulelesi + pozicionalasi + idozitesi tippeket. Emelj ki kulcs mechanikakat. Hasznald a FACTS reszt, ha van."
@@ -48,6 +123,17 @@
     "useFacts": true,
     "useProfile": true,
     "maxFacts": 4,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nLayout: place production close to storage and shorten loops.\nBottleneck: identify one slow step and upgrade it first.\nDefense: funnel enemies through chokepoints.\nOptimization: automate the most repeated task.\nTell me your current base setup for targeted tips.",
+        "noGame": "Layout: place production close to storage and shorten loops.\nBottleneck: identify one slow step and upgrade it first.\nDefense: funnel enemies through chokepoints.\nOptimization: automate the most repeated task.\nTell me your current base setup for targeted tips."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nElrendezes: tedd a gyartast tarolo kozelebe, roviditsd a koroket.\nSzuk keresztmetszet: talald meg a leglassabb lepest es azt fejleszd eloszor.\nVedekezes: tereld az ellenfeleket szuk utakra.\nOptimalizalas: automatizald a leggyakrabban ismetelt feladatot.\nIrd meg a jelenlegi bazis felallasod a celzott tippekhez.",
+        "noGame": "Elrendezes: tedd a gyartast tarolo kozelebe, roviditsd a koroket.\nSzuk keresztmetszet: talald meg a leglassabb lepest es azt fejleszd eloszor.\nVedekezes: tereld az ellenfeleket szuk utakra.\nOptimalizalas: automatizald a leggyakrabban ismetelt feladatot.\nIrd meg a jelenlegi bazis felallasod a celzott tippekhez."
+      }
+    },
     "prompts": {
       "en": "Cover layout flow, production bottlenecks, defense, and one optimization win. Use FACTS if present.",
       "hu": "Terd ki az elrendezest, gyartasi szuk keresztmetszetet, vedelmet es 1 optimalizacios nyerest. Hasznald a FACTS reszt, ha van."
@@ -57,24 +143,137 @@
     "useFacts": true,
     "useProfile": true,
     "maxFacts": 4,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nNext area: follow the main objective or the next biome tier.\nLook for: landmarks, resource nodes, and unlock items.\nRequirements: carry mobility/vision tools and a safe return path.\nShare your map region or biome for precise directions.",
+        "noGame": "Next area: follow the main objective or the next biome tier.\nLook for: landmarks, resource nodes, and unlock items.\nRequirements: carry mobility/vision tools and a safe return path.\nShare your map region or biome for precise directions."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nKovetkezo terulet: kovesd a fo celpontot vagy a kovetkezo biome szintet.\nKeresd: landmarkok, resource node-ok es feloldhato itemek.\nKovetelmeny: legyen mobilitas/latasi eszkoz es biztonsagos visszaut.\nIrd meg a terkep regiot vagy biome-ot a pontos iranyhoz.",
+        "noGame": "Kovetkezo terulet: kovesd a fo celpontot vagy a kovetkezo biome szintet.\nKeresd: landmarkok, resource node-ok es feloldhato itemek.\nKovetelmeny: legyen mobilitas/latasi eszkoz es biztonsagos visszaut.\nIrd meg a terkep regiot vagy biome-ot a pontos iranyhoz."
+      }
+    },
     "prompts": {
       "en": "Explain where to go next, what to look for, and risk/requirements. Use FACTS if present.",
       "hu": "Mondd el hova erdemes menni, mit keresni, es milyen kockazat/kovetelmeny van. Hasznald a FACTS reszt, ha van."
+    }
+  },
+  "crafting": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 5,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nPrereqs: recipe unlock, station, and materials.\nSteps: gather -> refine -> craft -> test once.\nTips: check alternatives, and craft in batches.\nTell me the exact item/recipe for a precise list.",
+        "noGame": "Prereqs: recipe unlock, station, and materials.\nSteps: gather -> refine -> craft -> test once.\nTips: check alternatives, and craft in batches.\nTell me the exact item/recipe for a precise list."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nElofeltetelek: recept feloldas, station es anyagok.\nLepesek: gyujts -> feldolgoz -> craft -> teszteld egyszer.\nTippek: nezd az alternativakat, es craftolj tomegben.\nIrd meg a pontos itemet/receptet a listahoz.",
+        "noGame": "Elofeltetelek: recept feloldas, station es anyagok.\nLepesek: gyujts -> feldolgoz -> craft -> teszteld egyszer.\nTippek: nezd az alternativakat, es craftolj tomegben.\nIrd meg a pontos itemet/receptet a listahoz."
+      }
+    },
+    "prompts": {
+      "en": "Give prerequisites, then steps, then 1-2 tips for materials or alternatives. Use FACTS if present.",
+      "hu": "Add meg az elofelteteleket, majd a lepeseket, vegul 1-2 tippet az anyagokhoz vagy alternativakhoz. Hasznald a FACTS reszt, ha van."
     }
   },
   "troubleshoot": {
     "useFacts": true,
     "useProfile": true,
     "maxFacts": 3,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nQuick question: when does it fail (launch, load, gameplay)?\nTry: 1) restart and verify files, 2) disable mods, 3) update GPU drivers.\nIf it persists, share the exact error text.",
+        "noGame": "Quick question: when does it fail (launch, load, gameplay)?\nTry: 1) restart and verify files, 2) disable mods, 3) update GPU drivers.\nIf it persists, share the exact error text."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nRovid kerdes: mikor romlik el (inditas, betoltes, jatek kozben)?\nProba: 1) ujrainditas es fajl ellenorzes, 2) modok kikapcsolasa, 3) GPU driver frissites.\nHa marad, ird ide a pontos hiba uzenetet.",
+        "noGame": "Rovid kerdes: mikor romlik el (inditas, betoltes, jatek kozben)?\nProba: 1) ujrainditas es fajl ellenorzes, 2) modok kikapcsolasa, 3) GPU driver frissites.\nHa marad, ird ide a pontos hiba uzenetet."
+      }
+    },
     "prompts": {
       "en": "Ask one brief clarifying question, then give 3 concrete next actions. Use FACTS if present.",
       "hu": "Tegy fel 1 rovid pontosito kerdest, majd adj 3 konkret lepeset. Hasznald a FACTS reszt, ha van."
+    }
+  },
+  "settings": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 3,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nPriority tweaks: cap FPS, set VSync as needed, adjust FOV, tune sensitivity, lower heavy effects.\nTradeoff: higher FPS vs visual clarity.\nTell me your hardware and target FPS for exact settings.",
+        "noGame": "Priority tweaks: cap FPS, set VSync as needed, adjust FOV, tune sensitivity, lower heavy effects.\nTradeoff: higher FPS vs visual clarity.\nTell me your hardware and target FPS for exact settings."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nPrioritas: FPS limit, VSync ha kell, FOV allitas, erzekenyseg, heavy effektek csokkentese.\nKompromisszum: magas FPS vs latvany.\nIrd meg a hardvert es a cel FPS-t a pontos beallitashoz.",
+        "noGame": "Prioritas: FPS limit, VSync ha kell, FOV allitas, erzekenyseg, heavy effektek csokkentese.\nKompromisszum: magas FPS vs latvany.\nIrd meg a hardvert es a cel FPS-t a pontos beallitashoz."
+      }
+    },
+    "prompts": {
+      "en": "Give 3-5 prioritized settings tweaks with brief rationale and tradeoffs. Use FACTS if present.",
+      "hu": "Adj 3-5 priorizalt beallitasi javaslatot rovid indoklassal es kompromisszummal. Hasznald a FACTS reszt, ha van."
+    }
+  },
+  "multiplayer": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 3,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nRoles: frontline (tank), damage, support.\nResponsibilities: tank pulls/soaks, damage focuses priority targets, support buffs/cleanses.\nSynergy tip: sync cooldowns for burst windows.\nTell me your party comp for specific roles.",
+        "noGame": "Roles: frontline (tank), damage, support.\nResponsibilities: tank pulls/soaks, damage focuses priority targets, support buffs/cleanses.\nSynergy tip: sync cooldowns for burst windows.\nTell me your party comp for specific roles."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nSzerepek: frontline (tank), damage, support.\nFeladatok: tank huz/es elnyel, damage prioritas celokra fokuszal, support buffol/tisztit.\nSzinergia: idozitsetek a cooldownokat burst ablakra.\nIrd meg a party felallast a pontos szerepekhez.",
+        "noGame": "Szerepek: frontline (tank), damage, support.\nFeladatok: tank huz/es elnyel, damage prioritas celokra fokuszal, support buffol/tisztit.\nSzinergia: idozitsetek a cooldownokat burst ablakra.\nIrd meg a party felallast a pontos szerepekhez."
+      }
+    },
+    "prompts": {
+      "en": "Suggest 2-3 role archetypes, responsibilities, and one synergy tip. Use FACTS if present.",
+      "hu": "Adj 2-3 szerep archetipo t, feladatokkal es 1 szinergia tippel. Hasznald a FACTS reszt, ha van."
+    }
+  },
+  "roadmap": {
+    "useFacts": true,
+    "useProfile": true,
+    "maxFacts": 4,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nImmediate: stabilize resources + basic gear.\nMid-term: unlock the next system/region and improve build.\nLong-term: complete major objectives and optimize economy.\nTell me your current chapter to tailor this.",
+        "noGame": "Immediate: stabilize resources + basic gear.\nMid-term: unlock the next system/region and improve build.\nLong-term: complete major objectives and optimize economy.\nTell me your current chapter to tailor this."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nAzonnali: stabil eroforrasok + alap gear.\nKozepes: kovetkezo rendszer/terulet feloldasa es build javitas.\nHosszu: nagy celok teljesitese es gazdasag optimalizalas.\nIrd meg a jelenlegi fejezetet a finomitashoz.",
+        "noGame": "Azonnali: stabil eroforrasok + alap gear.\nKozepes: kovetkezo rendszer/terulet feloldasa es build javitas.\nHosszu: nagy celok teljesitese es gazdasag optimalizalas.\nIrd meg a jelenlegi fejezetet a finomitashoz."
+      }
+    },
+    "prompts": {
+      "en": "Provide a short 3-step roadmap: immediate, mid-term, long-term goals. Use FACTS if present.",
+      "hu": "Adj rovid 3 lepeses utitervet: azonnali, kozepes es hosszu tavu celok. Hasznald a FACTS reszt, ha van."
     }
   },
   "game-identity": {
     "useFacts": false,
     "useProfile": false,
     "maxFacts": 0,
+    "deterministic": {
+      "enabled": true,
+      "en": {
+        "withGame": "{game}",
+        "noGame": "Which game is this? If you are not sure, tell me the exact game name and I will help."
+      },
+      "hu": {
+        "withGame": "{game}",
+        "noGame": "Melyik jatek ez? Ha nem vagy biztos, ird le a pontos jatek nevet, es segitek."
+      }
+    },
     "prompts": {
       "en": "Answer only with the game name if known.",
       "hu": "Ha ismert, csak a jatek nevet ird le."
@@ -84,6 +283,17 @@
     "useFacts": true,
     "useProfile": true,
     "maxFacts": 4,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nFarming methods: 1) fastest repeatable loop, 2) high-yield but risky spot, 3) passive method if available.\nPick based on risk and time per run.\nTell me the resource and your gear for specifics.",
+        "noGame": "Farming methods: 1) fastest repeatable loop, 2) high-yield but risky spot, 3) passive method if available.\nPick based on risk and time per run.\nTell me the resource and your gear for specifics."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nFarm modszerek: 1) leggyorsabb ismetelheto kor, 2) magas hozam, de kockazatos hely, 3) passziv mod ha van.\nValassz kockazat es ido/run alapjan.\nIrd meg az eroforrast es a geared a pontos tippekhez.",
+        "noGame": "Farm modszerek: 1) leggyorsabb ismetelheto kor, 2) magas hozam, de kockazatos hely, 3) passziv mod ha van.\nValassz kockazat es ido/run alapjan.\nIrd meg az eroforrast es a geared a pontos tippekhez."
+      }
+    },
     "prompts": {
       "en": "Give 3-5 prioritized farming methods with brief pros/cons. Use FACTS if present.",
       "hu": "Adj 3-5 priorizalt farm modszert rovid pro/kontraval. Hasznald a FACTS reszt, ha van."
@@ -93,6 +303,17 @@
     "useFacts": true,
     "useProfile": true,
     "maxFacts": 4,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nBuild options: 1) balanced, 2) burst damage, 3) sustain/survival.\nUse balanced for progression, burst for speed, sustain for hard content.\nTell me your class/weapon to refine the build.",
+        "noGame": "Build options: 1) balanced, 2) burst damage, 3) sustain/survival.\nUse balanced for progression, burst for speed, sustain for hard content.\nTell me your class/weapon to refine the build."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nBuild opciok: 1) balansz, 2) burst sebzes, 3) sustain/tuleles.\nBalansz progira, burst gyorsitasra, sustain nehez tartalomra.\nIrd meg a kasztot/fegyvert a finomitashoz.",
+        "noGame": "Build opciok: 1) balansz, 2) burst sebzes, 3) sustain/tuleles.\nBalansz progira, burst gyorsitasra, sustain nehez tartalomra.\nIrd meg a kasztot/fegyvert a finomitashoz."
+      }
+    },
     "prompts": {
       "en": "Provide 2-3 build/loadout options and when to use each. Use FACTS if present.",
       "hu": "Adj 2-3 build/felszereles opciot es mikor hasznaljuk oket. Hasznald a FACTS reszt, ha van."
@@ -102,6 +323,17 @@
     "useFacts": true,
     "useProfile": true,
     "maxFacts": 5,
+    "deterministic": {
+      "enabled": false,
+      "en": {
+        "withGame": "Game: {game}\nPrep: bring resist/potions, repair gear, clear adds.\nPhases: learn one pattern at a time and save burst for openings.\nPunish windows: after big telegraphs or cooldown-heavy moves.\nTell me the boss name for exact mechanics.",
+        "noGame": "Prep: bring resist/potions, repair gear, clear adds.\nPhases: learn one pattern at a time and save burst for openings.\nPunish windows: after big telegraphs or cooldown-heavy moves.\nTell me the boss name for exact mechanics."
+      },
+      "hu": {
+        "withGame": "Jatek: {game}\nFelkeszules: resists/potionok, gear javitas, addok tisztitasa.\nFazisok: egy mintat tanulj egyszerre, burstot tarts az ablakokra.\nPunish ablak: nagy telegraph vagy cooldown utan.\nIrd meg a boss nevet a pontos mechanikakhoz.",
+        "noGame": "Felkeszules: resists/potionok, gear javitas, addok tisztitasa.\nFazisok: egy mintat tanulj egyszerre, burstot tarts az ablakokra.\nPunish ablak: nagy telegraph vagy cooldown utan.\nIrd meg a boss nevet a pontos mechanikakhoz."
+      }
+    },
     "prompts": {
       "en": "Give prep checklist, key phases, and punish windows. Use FACTS if present.",
       "hu": "Adj felkeszulesi listat, fazisokat es punish ablakokat. Hasznald a FACTS reszt, ha van."

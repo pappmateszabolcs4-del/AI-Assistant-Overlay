@@ -110,9 +110,11 @@ function createOpenAIService(deps) {
     const chosen = specific || base || {};
     const prompts = chosen && chosen.prompts && typeof chosen.prompts === 'object' ? chosen.prompts : {};
     const prompt = prompts[language] || prompts.en || '';
+    const deterministic = chosen && chosen.deterministic ? chosen.deterministic : null;
     return {
       id: intentId || 'default',
       prompt: String(prompt || '').trim(),
+      deterministic,
       useFacts: chosen && typeof chosen.useFacts === 'boolean' ? chosen.useFacts : false,
       useProfile: chosen && typeof chosen.useProfile === 'boolean' ? chosen.useProfile : false,
       maxFacts: Number.isFinite(chosen && chosen.maxFacts) ? Math.max(0, chosen.maxFacts) : 0
@@ -507,15 +509,25 @@ function createOpenAIService(deps) {
       });
   }
 
+  function normalizeIntentText(text) {
+    return String(text || '')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\p{L}\p{N}]+/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   function classifyIntent(text) {
-    const normalized = String(text || '').toLowerCase();
+    const normalized = normalizeIntentText(text);
     const rules = getIntentRoutingRules();
     for (const rule of rules) {
       const intentId = String(rule && rule.id || '').trim();
       if (!intentId) continue;
       const patterns = Array.isArray(rule.patterns) ? rule.patterns : [];
       for (const rawPattern of patterns) {
-        const pattern = String(rawPattern || '').toLowerCase();
+        const pattern = normalizeIntentText(rawPattern);
         if (!pattern) continue;
         if (normalized.includes(pattern)) {
           return { intent: intentId, matched: true, matchedBy: pattern };
@@ -556,6 +568,28 @@ function createOpenAIService(deps) {
     const selected = gameContext ? withGame : noGame;
     if (!selected) return '';
     return `${header}\n- ${selected}`;
+  }
+
+  function pickDeterministicText(deterministic, lang, gameContext) {
+    if (!deterministic) return '';
+    if (deterministic && typeof deterministic === 'object' && deterministic.enabled === false) return '';
+    const language = normalizeLanguage(lang);
+    const localized = (deterministic && typeof deterministic === 'object')
+      ? (deterministic[language] || deterministic.en || null)
+      : deterministic;
+    if (!localized) return '';
+    if (typeof localized === 'string') return localized.replace(/\{game\}/g, String(gameContext || '').trim());
+    const withGame = String(localized.withGame || '').trim();
+    const noGame = String(localized.noGame || '').trim();
+    const selected = gameContext ? withGame : noGame;
+    if (!selected) return '';
+    if (gameContext) return selected.replace(/\{game\}/g, String(gameContext || '').trim());
+    return selected;
+  }
+
+  function buildDeterministicResponse(intentInfo, responseTemplate, lang, gameContext) {
+    if (!intentInfo || !intentInfo.intent || !responseTemplate) return '';
+    return pickDeterministicText(responseTemplate.deterministic, lang, gameContext);
   }
 
   function shouldLogDiagnostics() {
@@ -1013,15 +1047,56 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
   async function processText(payload) {
     const { text, lang, specializationLevel, imageData, gameContext } = payload || {};
     try {
-      if (!openai) {
-        throw new Error('openai-not-initialized');
-      }
       // Prefer explicit renderer-provided context, but fall back to cached detection.
       let resolvedGameContext = gameContext || game.currentDetectedGame;
       if (!resolvedGameContext && typeof matchGameFromText === 'function') {
         resolvedGameContext = matchGameFromText(text);
       }
       const intentInfo = classifyIntent(text);
+      const resolvedLanguage = lang || getCurrentLanguage();
+      const responseTemplate = getResponseTemplate(intentInfo.intent, resolvedLanguage);
+      const deterministicResponse = buildDeterministicResponse(
+        intentInfo,
+        responseTemplate,
+        resolvedLanguage,
+        resolvedGameContext
+      );
+      if (deterministicResponse) {
+        logAiDiagnostics({
+          event: 'request',
+          intent: intentInfo.intent,
+          intentMatched: intentInfo.matched,
+          intentMatchedBy: intentInfo.matchedBy,
+          intentRoutingApplied: false,
+          responseTemplateId: responseTemplate.id,
+          responseTemplateApplied: true,
+          responseTemplateUseFacts: false,
+          responseTemplateUseProfile: false,
+          factsCount: 0,
+          profileUsed: false,
+          gameContext: resolvedGameContext || null,
+          detectScore: typeof game.lastDetectScore === 'number' ? game.lastDetectScore : null,
+          detectReasons: Array.isArray(game.lastDetectReasons) ? game.lastDetectReasons : null,
+          detectSignalCount: typeof game.lastDetectSignalCount === 'number' ? game.lastDetectSignalCount : null,
+          detectSource: game.lastDetectSource || null,
+          templateType: 'none',
+          templateOptionsCount: 0,
+          templateHasCustom: false,
+          specializationLevel: specializationLevel || 3,
+          hasImage: !!imageData,
+          modelSelected: 'deterministic'
+        });
+        logAiDiagnostics({
+          event: 'response',
+          model: 'deterministic',
+          responseLength: String(deterministicResponse || '').length,
+          tooGeneric: isTooGeneric(deterministicResponse, resolvedGameContext, specializationLevel || 3)
+        });
+        return { response: deterministicResponse, success: true };
+      }
+      if (!openai) {
+        throw new Error('openai-not-initialized');
+      }
       const detectScore = typeof game.lastDetectScore === 'number' ? game.lastDetectScore : null;
       const detectReasons = Array.isArray(game.lastDetectReasons) ? game.lastDetectReasons : null;
       const detectSignalCount = typeof game.lastDetectSignalCount === 'number' ? game.lastDetectSignalCount : null;
@@ -1030,7 +1105,6 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
       let templateOptionsCount = 0;
       let templateHasCustom = false;
       console.log('[AI] GPT feldolgozás:', text, 'Specialization level:', specializationLevel, 'Has image:', !!imageData, 'Game:', resolvedGameContext || 'Unknown');
-      const resolvedLanguage = lang || getCurrentLanguage();
       const useHighModel = shouldUseHighModel(payload || {});
       const selectedModel = useHighModel ? HIGH_QUALITY_MODEL : BASE_TEXT_MODEL;
       let systemPrompt = getSystemPrompt(resolvedLanguage, specializationLevel || 3);
@@ -1059,7 +1133,6 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
       if (intentRoutingApplied) {
         systemPrompt += `\n\n${intentRoutingPrompt}`;
       }
-      const responseTemplate = getResponseTemplate(intentInfo.intent, resolvedLanguage);
       const responseTemplatePrompt = responseTemplate.prompt;
       const responseTemplateApplied = !!responseTemplatePrompt;
       if (responseTemplateApplied) {
