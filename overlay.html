@@ -183,17 +183,6 @@
               <button id="clearAllBtn" onclick="clearAllData()" style="width: 100%; padding: 8px; background: rgba(255, 100, 100, 0.2); border: 1px solid rgba(255, 100, 100, 0.4); border-radius: 6px; color: #ff6464; cursor: pointer; font-size: 0.9em;"></button>
             </div>
 
-            <div class="specialization-container block-item" id="block-ai-diagnostics" data-block-id="ai-diagnostics" data-block-home="settings" data-block-title-key="aiDiagnosticsLabel" style="margin-top: 12px;">
-              <div class="specialization-label">
-                <span id="aiDiagnosticsLabel"></span>
-              </div>
-              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #f5f7fa;">
-                <input type="checkbox" id="aiDiagnosticsToggle" style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
-                <span id="aiDiagnosticsToggleLabel"></span>
-              </label>
-              <p id="aiDiagnosticsHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;"></p>
-            </div>
-
             <div class="specialization-container block-item" id="block-layout" data-block-id="layout" data-block-home="settings" data-block-title-key="layoutMode" style="margin-top: 12px;">
               <div class="specialization-label">
                 <span id="layoutLabel"></span>
@@ -218,18 +207,53 @@
             </div>
 
             <!-- dev-only:start -->
-            <div class="specialization-container block-item" id="block-perf" data-block-id="perf" data-block-home="settings" data-block-title-key="perfHudLabel" style="margin-top: 12px;">
-              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #f5f7fa;">
-                <input type="checkbox" id="perfHudToggle" style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
-                <span id="perfHudLabel"></span>
-              </label>
-            </div>
-
-            <div class="specialization-container block-item" id="block-debug-map" data-block-id="debug-map" data-block-home="settings" data-block-title-key="debugMapLabel" style="margin-top: 12px;">
+            <div class="specialization-container block-item" id="block-dev-tools" data-block-id="dev-tools" data-block-home="settings" data-block-title-key="devToolsLabel" style="margin-top: 12px;">
               <div class="specialization-label">
-                <span id="debugMapLabel"></span>
+                <span id="devToolsLabel"></span>
               </div>
-              <button class="reset-layout-btn" id="debugMapToggleBtn"></button>
+              <p id="devToolsHint" style="font-size: 0.8em; color: #8ba3c0; margin-top: 6px; line-height: 1.4;"></p>
+
+              <div class="dev-tools-card">
+                <div class="dev-tools-card-title" id="aiDiagnosticsLabel"></div>
+                <label class="dev-tools-toggle">
+                  <input type="checkbox" id="aiDiagnosticsToggle" style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
+                  <span id="aiDiagnosticsToggleLabel"></span>
+                </label>
+                <p id="aiDiagnosticsHint" class="dev-tools-hint"></p>
+              </div>
+
+              <div class="dev-tools-card">
+                <div class="dev-tools-card-title" id="perfHudLabel"></div>
+                <label class="dev-tools-toggle">
+                  <input type="checkbox" id="perfHudToggle" style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
+                  <span id="perfHudToggleLabel"></span>
+                </label>
+              </div>
+
+              <div class="dev-tools-card">
+                <div class="dev-tools-card-title" id="debugMapLabel"></div>
+                <button class="reset-layout-btn" id="debugMapToggleBtn"></button>
+              </div>
+
+              <div class="dev-tools-card">
+                <div class="dev-tools-row">
+                  <div class="dev-tools-card-title" id="factRequestsLabel"></div>
+                  <button class="dev-tools-btn" id="factRequestsRefreshBtn"></button>
+                </div>
+                <div class="dev-tools-row" style="margin-top: 6px;">
+                  <label class="dev-tools-inline-label" for="factRequestsGameInput" id="factRequestsGameLabel"></label>
+                  <input type="text" id="factRequestsGameInput" class="dev-tools-input" placeholder="" />
+                </div>
+                <div id="factRequestsList" class="dev-tools-list"></div>
+              </div>
+
+              <div class="dev-tools-card">
+                <div class="dev-tools-row">
+                  <div class="dev-tools-card-title" id="hotGamesLabel"></div>
+                  <button class="dev-tools-btn" id="hotGamesRefreshBtn"></button>
+                </div>
+                <div id="hotGamesList" class="dev-tools-list"></div>
+              </div>
             </div>
             <!-- dev-only:end -->
 

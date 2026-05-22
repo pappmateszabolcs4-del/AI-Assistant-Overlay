@@ -5,7 +5,7 @@
 
   const { isDev } = require('./src/shared/app-env');
   if (!isDev()) {
-    const blockEl = document.getElementById('block-perf');
+    const blockEl = document.getElementById('block-dev-tools');
     if (blockEl) blockEl.style.display = 'none';
     return;
   }

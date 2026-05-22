@@ -41,6 +41,7 @@ let recognition = null; // Web Speech API (deprecated, now using Whisper)
 let mediaRecorder = null; // MediaRecorder for Whisper audio capture
 let currentScreenshot = null; // Base64 image data
 var currentGameContext = null;
+let devToolsEnabled = true;
 const GAME_TEMPLATE_OPTIONS_LIMIT = 5;
 let gameTemplateOptions = [];
 let gameTemplateDraft = null;
@@ -405,6 +406,17 @@ const aiDiagnosticsLabel = document.getElementById('aiDiagnosticsLabel');
 const aiDiagnosticsToggle = document.getElementById('aiDiagnosticsToggle');
 const aiDiagnosticsToggleLabel = document.getElementById('aiDiagnosticsToggleLabel');
 const aiDiagnosticsHint = document.getElementById('aiDiagnosticsHint');
+const devToolsLabel = document.getElementById('devToolsLabel');
+const devToolsHint = document.getElementById('devToolsHint');
+const perfHudToggleLabel = document.getElementById('perfHudToggleLabel');
+const factRequestsLabel = document.getElementById('factRequestsLabel');
+const factRequestsGameLabel = document.getElementById('factRequestsGameLabel');
+const factRequestsGameInput = document.getElementById('factRequestsGameInput');
+const factRequestsRefreshBtn = document.getElementById('factRequestsRefreshBtn');
+const factRequestsList = document.getElementById('factRequestsList');
+const hotGamesLabel = document.getElementById('hotGamesLabel');
+const hotGamesRefreshBtn = document.getElementById('hotGamesRefreshBtn');
+const hotGamesList = document.getElementById('hotGamesList');
 
 const visionConsentModal = document.getElementById('visionConsentModal');
 const visionConsentTitle = document.getElementById('visionConsentTitle');
@@ -1344,9 +1356,18 @@ function updateOverlayText() {
   if (clearAllBtn) clearAllBtn.textContent = t().clearAllData || clearAllBtn.textContent;
   const visionEnableLabel = document.getElementById('visionEnableLabel');
   if (visionEnableLabel) visionEnableLabel.textContent = t().visionEnableLabel || visionEnableLabel.textContent;
+  if (devToolsLabel) devToolsLabel.textContent = t().devToolsLabel || devToolsLabel.textContent;
+  if (devToolsHint) devToolsHint.textContent = t().devToolsHint || devToolsHint.textContent;
   if (aiDiagnosticsLabel) aiDiagnosticsLabel.textContent = t().aiDiagnosticsLabel || aiDiagnosticsLabel.textContent;
   if (aiDiagnosticsToggleLabel) aiDiagnosticsToggleLabel.textContent = t().aiDiagnosticsToggle || aiDiagnosticsToggleLabel.textContent;
   if (aiDiagnosticsHint) aiDiagnosticsHint.textContent = t().aiDiagnosticsHint || aiDiagnosticsHint.textContent;
+  if (perfHudToggleLabel) perfHudToggleLabel.textContent = t().perfHudToggle || perfHudToggleLabel.textContent;
+  if (factRequestsLabel) factRequestsLabel.textContent = t().factRequestsLabel || factRequestsLabel.textContent;
+  if (factRequestsGameLabel) factRequestsGameLabel.textContent = t().factRequestsGameLabel || factRequestsGameLabel.textContent;
+  if (factRequestsRefreshBtn) factRequestsRefreshBtn.textContent = t().factRequestsRefresh || factRequestsRefreshBtn.textContent;
+  if (factRequestsGameInput) factRequestsGameInput.placeholder = t().factRequestsGamePlaceholder || factRequestsGameInput.placeholder;
+  if (hotGamesLabel) hotGamesLabel.textContent = t().hotGamesLabel || hotGamesLabel.textContent;
+  if (hotGamesRefreshBtn) hotGamesRefreshBtn.textContent = t().hotGamesRefresh || hotGamesRefreshBtn.textContent;
   const visionConsentHint = document.getElementById('visionConsentHint');
   if (visionConsentHint) visionConsentHint.textContent = t().visionConsentHint || visionConsentHint.textContent;
   const visionAllowListLabel = document.getElementById('visionAllowListLabel');
@@ -1433,6 +1454,10 @@ function updateOverlayText() {
   renderHistory(); // Re-render history with new language
   updatePinnedUI();
   syncPinnedHistoryWindows();
+  if (devToolsEnabled) {
+    loadFactRequests();
+    loadHotGames();
+  }
 }
 
 function updateNotePanelPreview() {
@@ -2069,6 +2094,18 @@ gameTemplateDraft = loadGameTemplateDraft();
 applyGameTemplateDraft(gameTemplateDraft);
 loadGameTemplateOptions();
 
+try {
+  const { isDev } = require('./src/shared/app-env');
+  devToolsEnabled = !!(isDev && isDev());
+} catch (_) {
+  devToolsEnabled = true;
+}
+
+const devToolsBlock = document.getElementById('block-dev-tools');
+if (!devToolsEnabled && devToolsBlock) {
+  devToolsBlock.style.display = 'none';
+}
+
 if (visionEnableToggle) {
   visionEnableToggle.checked = readVisionEnabled();
   on(visionEnableToggle, 'change', () => {
@@ -2086,6 +2123,184 @@ if (aiDiagnosticsToggle) {
     writeAiDiagnosticsEnabled(aiDiagnosticsToggle.checked);
     syncAiDiagnosticsEnabled(aiDiagnosticsToggle.checked);
   });
+}
+
+function getFactRequestStatusLabel(status) {
+  const normalized = String(status || '').trim().toLowerCase();
+  if (normalized === 'accepted') return t().factRequestStatusAccepted || 'Accepted';
+  if (normalized === 'rejected') return t().factRequestStatusRejected || 'Rejected';
+  return t().factRequestStatusOpen || 'Open';
+}
+
+function resolveFactRequestsGame() {
+  const manual = String(factRequestsGameInput ? factRequestsGameInput.value : '').trim();
+  if (manual) return manual;
+  return String(currentGameContext || '').trim();
+}
+
+function renderFactRequestsEmpty(message) {
+  if (!factRequestsList) return;
+  factRequestsList.innerHTML = '';
+  const empty = document.createElement('div');
+  empty.className = 'dev-tools-item';
+  empty.textContent = message || t().factRequestsEmpty || 'No open requests.';
+  factRequestsList.appendChild(empty);
+}
+
+function renderFactRequests(requests) {
+  if (!factRequestsList) return;
+  const list = Array.isArray(requests) ? requests : [];
+  if (!list.length) {
+    renderFactRequestsEmpty();
+    return;
+  }
+  factRequestsList.innerHTML = '';
+  list.forEach((request) => {
+    const item = document.createElement('div');
+    item.className = 'dev-tools-item';
+
+    const title = document.createElement('div');
+    title.className = 'dev-tools-item-title';
+    title.textContent = String(request && request.text || '').trim() || 'Untitled';
+
+    const meta = document.createElement('div');
+    meta.className = 'dev-tools-item-meta';
+    const statusLabel = getFactRequestStatusLabel(request && request.status);
+    const intent = String(request && request.intent || '').trim();
+    const reason = String(request && request.reason || '').trim();
+    const parts = [statusLabel];
+    if (intent) parts.push(intent);
+    if (reason) parts.push(reason);
+    meta.textContent = parts.join(' · ');
+
+    const noteInput = document.createElement('input');
+    noteInput.className = 'dev-tools-input';
+    noteInput.placeholder = t().factRequestsNotePlaceholder || 'Note (optional)';
+    noteInput.value = String(request && request.note || '').trim();
+
+    const actions = document.createElement('div');
+    actions.className = 'dev-tools-actions';
+
+    const acceptBtn = document.createElement('button');
+    acceptBtn.className = 'dev-tools-action-btn accept';
+    acceptBtn.textContent = t().factRequestsApprove || 'Approve';
+    on(acceptBtn, 'click', async () => {
+      const game = resolveFactRequestsGame();
+      if (!game) return;
+      await invokeMain(IPC_CHANNELS.UPDATE_GAME_FACT_REQUEST, {
+        game,
+        id: request.id,
+        status: 'accepted',
+        note: noteInput.value
+      });
+      loadFactRequests();
+    });
+
+    const rejectBtn = document.createElement('button');
+    rejectBtn.className = 'dev-tools-action-btn reject';
+    rejectBtn.textContent = t().factRequestsReject || 'Reject';
+    on(rejectBtn, 'click', async () => {
+      const game = resolveFactRequestsGame();
+      if (!game) return;
+      await invokeMain(IPC_CHANNELS.UPDATE_GAME_FACT_REQUEST, {
+        game,
+        id: request.id,
+        status: 'rejected',
+        note: noteInput.value
+      });
+      loadFactRequests();
+    });
+
+    actions.appendChild(acceptBtn);
+    actions.appendChild(rejectBtn);
+
+    item.appendChild(title);
+    item.appendChild(meta);
+    item.appendChild(noteInput);
+    item.appendChild(actions);
+    factRequestsList.appendChild(item);
+  });
+}
+
+async function loadFactRequests() {
+  if (!devToolsEnabled || !factRequestsList) return;
+  const game = resolveFactRequestsGame();
+  if (!game) {
+    renderFactRequestsEmpty(t().factRequestsMissingGame || 'Set a game name first.');
+    return;
+  }
+  try {
+    const response = await invokeMain(IPC_CHANNELS.GET_GAME_FACT_REQUESTS, { game, status: 'open' });
+    if (!response || !response.success) {
+      renderFactRequestsEmpty(t().factRequestsEmpty || 'No open requests.');
+      return;
+    }
+    renderFactRequests(response.requests || []);
+  } catch (_) {
+    renderFactRequestsEmpty(t().factRequestsEmpty || 'No open requests.');
+  }
+}
+
+function renderHotGamesEmpty(message) {
+  if (!hotGamesList) return;
+  hotGamesList.innerHTML = '';
+  const empty = document.createElement('div');
+  empty.className = 'dev-tools-item';
+  empty.textContent = message || t().hotGamesEmpty || 'No usage data.';
+  hotGamesList.appendChild(empty);
+}
+
+function renderHotGames(games) {
+  if (!hotGamesList) return;
+  const list = Array.isArray(games) ? games : [];
+  if (!list.length) {
+    renderHotGamesEmpty();
+    return;
+  }
+  hotGamesList.innerHTML = '';
+  list.forEach((entry) => {
+    const item = document.createElement('div');
+    item.className = 'dev-tools-item';
+    const title = document.createElement('div');
+    title.className = 'dev-tools-item-title';
+    title.textContent = String(entry && entry.game || '').trim() || 'Unknown';
+    const meta = document.createElement('div');
+    meta.className = 'dev-tools-item-meta';
+    const scoreLabel = t().hotGamesScoreLabel || 'Score';
+    meta.textContent = `${scoreLabel}: ${Number(entry && entry.score || 0)}`;
+    item.appendChild(title);
+    item.appendChild(meta);
+    hotGamesList.appendChild(item);
+  });
+}
+
+async function loadHotGames() {
+  if (!devToolsEnabled || !hotGamesList) return;
+  try {
+    const response = await invokeMain(IPC_CHANNELS.GET_HOT_GAMES, { limit: 8 });
+    if (!response || !response.success) {
+      renderHotGamesEmpty(t().hotGamesEmpty || 'No usage data.');
+      return;
+    }
+    renderHotGames(response.games || []);
+  } catch (_) {
+    renderHotGamesEmpty(t().hotGamesEmpty || 'No usage data.');
+  }
+}
+
+if (factRequestsRefreshBtn) {
+  on(factRequestsRefreshBtn, 'click', loadFactRequests);
+}
+if (hotGamesRefreshBtn) {
+  on(hotGamesRefreshBtn, 'click', loadHotGames);
+}
+if (factRequestsGameInput) {
+  on(factRequestsGameInput, 'change', loadFactRequests);
+}
+
+if (devToolsEnabled) {
+  loadFactRequests();
+  loadHotGames();
 }
 
 if (visionConsentSaveBtn) {

@@ -6,6 +6,48 @@
 
 ---
 
+## [1.0.45] - 2026-05-22 (Dev Tools + Guidance Refresh)
+
+### ✅ Added
+
+- Dev-only admin UI for fact request review (accept/reject) and hot-game list.
+- AI diagnostics section grouped with existing dev tools.
+
+### 🔧 Changed
+
+- Dev tools gating/IDs aligned to avoid orphan handler warnings.
+- Copilot instructions updated with long-term philosophy and collaboration rules.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+## [1.0.44] - 2026-05-22 (Phase 3 Completion)
+
+### ✅ Added
+
+- Fact request dedupe + status updates for correction workflow.
+- Hot-game prioritization score based on usage + recency.
+- Minimal entity seed requests from user-provided lists.
+- IPC endpoints for fact requests and usage queries.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+## [1.0.43] - 2026-05-22 (Facts Strategy Foundations)
+
+### ✅ Added
+
+- On-demand fact request logging for high-risk unknown questions.
+- Usage tracking per game (total/high-risk/unknown counts).
+- Fact metadata fields: source, reliability, version, last_verified, entity_type.
+- Entity whitelist post-check with fallback to safe knowledge response.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
 ## [1.0.42] - 2026-05-22 (Anti-Hallucination Safeguards)
 
 ### ✅ Added

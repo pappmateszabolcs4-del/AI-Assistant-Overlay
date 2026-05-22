@@ -1131,6 +1131,105 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 
 ---
 
+### 2026-05-22 (Night)
+
+#### Summary
+- What changed: Added facts strategy foundations (fact requests, usage tracking, fact metadata) and entity whitelist post-check fallback.
+- Why: Enable on-demand facts seeding, source reliability ranking, and safer entity control without expanding datasets.
+- Impact: High-risk unknowns now create a fact request; facts carry version/source metadata; responses downgrade when disallowed names appear.
+
+#### Details
+- Implementation notes: Added fact-requests and usage stores under userData; addFact now stamps source/reliability/version/last_verified/entity_type; OpenAI flow logs usage and enforces whitelist post-check.
+- Edge cases: Whitelist post-check only triggers when allowed names exist; unknown/high-risk requests record a fact request for review.
+
+#### Files touched
+- [src/main/services/game-facts-store.js](src/main/services/game-facts-store.js)
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Tests: Not run (not requested).
+
+#### Follow-ups
+- TODO: None.
+
+---
+
+### 2026-05-22 (Night)
+
+#### Summary
+- What changed: Completed Phase 3 facts strategy with entity seeding, hot-game scoring, and correction request updates.
+- Why: Provide a closed-loop path for unknowns and prioritize games that need verified facts most.
+- Impact: Requests dedupe, correction workflow has status updates, and hot-game metrics are available for future UI.
+
+#### Details
+- Implementation notes: Fact requests now include entity type/source/reliability and status updates; usage scoring considers recency; user lists seed entity requests when no facts exist.
+- Edge cases: Entity seeding is capped and deduped; hot-game list skips games without usage data.
+
+#### Files touched
+- [src/main/services/game-facts-store.js](src/main/services/game-facts-store.js)
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/shared/ipc-channels.js](src/shared/ipc-channels.js)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Tests: Not run (not requested).
+
+#### Follow-ups
+- TODO: None.
+
+---
+
+### 2026-05-22 (Night)
+
+#### Summary
+- What changed: Added dev-only admin UI for fact request review + hot-game list, grouped AI diagnostics with dev tools, aligned dev tool IDs to avoid orphan handlers, and refreshed copilot-instructions with long-term collaboration philosophy.
+- Why: Ensure dev-only review workflows are available, diagnostics are organized, and guidance matches the project’s long-term direction.
+- Impact: Dev tools are clearer and safer to operate; bug-checker warnings avoided; Copilot guidance aligns with collaboration expectations.
+
+#### Details
+- Implementation notes: Admin panels are gated for dev use only; IPC-backed lists for fact requests and hot-games; translations updated across 8 languages; copilot guidance updated for long-term focus and proactive questioning.
+- Edge cases: Dev-only gating must remain hidden in production builds; handler IDs must stay aligned with UI elements.
+
+#### Files touched
+- [overlay.html](overlay.html)
+- [overlay.css](overlay.css)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+- [src/shared/ipc-channels.js](src/shared/ipc-channels.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/main/services/game-facts-store.js](src/main/services/game-facts-store.js)
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [.github/copilot-instructions.md](.github/copilot-instructions.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Tests: Not run (not requested).
+
+#### Follow-ups
+- TODO: None.
+
+---
+
 ### 2026-05-17 (Evening)
 
 #### Summary

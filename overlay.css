@@ -260,6 +260,128 @@
       overflow: auto;
     }
 
+    .dev-tools-card {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      background: rgba(15, 20, 32, 0.55);
+      border: 1px solid rgba(120, 140, 170, 0.25);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .dev-tools-card-title {
+      font-size: 0.9em;
+      font-weight: 600;
+      color: #f5f7fa;
+    }
+
+    .dev-tools-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      color: #f5f7fa;
+    }
+
+    .dev-tools-hint {
+      font-size: 0.8em;
+      color: #8ba3c0;
+      line-height: 1.4;
+    }
+
+    .dev-tools-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: space-between;
+    }
+
+    .dev-tools-inline-label {
+      font-size: 0.8em;
+      color: #8ba3c0;
+      flex: 0 0 auto;
+    }
+
+    .dev-tools-input {
+      flex: 1;
+      padding: 6px 8px;
+      background: rgba(20, 24, 31, 0.85);
+      border: 1px solid rgba(120, 140, 170, 0.35);
+      border-radius: 6px;
+      color: #f5f7fa;
+      font-size: 0.85em;
+    }
+
+    .dev-tools-btn {
+      padding: 6px 10px;
+      background: rgba(91, 158, 255, 0.2);
+      border: 1px solid rgba(91, 158, 255, 0.4);
+      border-radius: 6px;
+      color: #f5f7fa;
+      cursor: pointer;
+      font-size: 0.8em;
+    }
+
+    .dev-tools-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 6px;
+      max-height: 180px;
+      overflow: auto;
+    }
+
+    .dev-tools-item {
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(10, 14, 22, 0.75);
+      border: 1px solid rgba(120, 140, 170, 0.2);
+      color: #f5f7fa;
+      font-size: 0.8em;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .dev-tools-item-title {
+      font-weight: 600;
+      color: #f5f7fa;
+    }
+
+    .dev-tools-item-meta {
+      color: #8ba3c0;
+      font-size: 0.8em;
+    }
+
+    .dev-tools-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dev-tools-action-btn {
+      flex: 1;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(120, 140, 170, 0.35);
+      background: rgba(120, 140, 170, 0.15);
+      color: #f5f7fa;
+      cursor: pointer;
+      font-size: 0.8em;
+    }
+
+    .dev-tools-action-btn.accept {
+      background: rgba(91, 158, 255, 0.2);
+      border-color: rgba(91, 158, 255, 0.4);
+    }
+
+    .dev-tools-action-btn.reject {
+      background: rgba(255, 100, 100, 0.2);
+      border-color: rgba(255, 100, 100, 0.4);
+      color: #ffb0b0;
+    }
+
     .debug-map-issues-title {
       font-weight: 700;
       margin-bottom: 6px;

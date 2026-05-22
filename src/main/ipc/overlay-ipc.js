@@ -4,7 +4,14 @@ const { isDev } = require('../../shared/app-env');
 const { appendOverlayDebug } = require('../utils/overlay-debug-log');
 const { appendOverlayPerf } = require('../utils/overlay-perf-log');
 const { listTemplates, upsertTemplate, deleteTemplate } = require('../services/game-template-store');
-const { addFact } = require('../services/game-facts-store');
+const {
+  addFact,
+  addFactRequest,
+  listFactRequests,
+  updateFactRequest,
+  getUsage,
+  getHotGames
+} = require('../services/game-facts-store');
 
 function registerOverlayIpc(deps) {
   const {
@@ -271,7 +278,90 @@ function registerOverlayIpc(deps) {
       const keywords = Array.isArray(payload && payload.keywords) ? payload.keywords : [];
       const tags = Array.isArray(payload && payload.tags) ? payload.tags : [];
       const priority = Number.isFinite(payload && payload.priority) ? payload.priority : 0;
-      return addFact(game, { text, keywords, tags, priority });
+      const entityType = String(payload && payload.entityType || '').trim();
+      const source = String(payload && payload.source || '').trim();
+      const reliability = String(payload && payload.reliability || '').trim();
+      const reliabilityRank = Number.isFinite(payload && payload.reliabilityRank) ? payload.reliabilityRank : undefined;
+      const version = Number.isFinite(payload && payload.version) ? payload.version : undefined;
+      const lastVerified = Number.isFinite(payload && payload.lastVerified) ? payload.lastVerified : undefined;
+      return addFact(game, {
+        text,
+        keywords,
+        tags,
+        priority,
+        entityType,
+        source,
+        reliability,
+        reliabilityRank,
+        version,
+        lastVerified
+      });
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ADD_GAME_FACT_REQUEST, async (_event, payload) => {
+    try {
+      const game = String(payload && payload.game || '').trim();
+      const text = String(payload && payload.text || '').trim();
+      const intent = String(payload && payload.intent || '').trim();
+      const reason = String(payload && payload.reason || '').trim();
+      const tags = Array.isArray(payload && payload.tags) ? payload.tags : [];
+      const entityType = String(payload && payload.entityType || '').trim();
+      const source = String(payload && payload.source || '').trim();
+      const reliability = String(payload && payload.reliability || '').trim();
+      const reliabilityRank = Number.isFinite(payload && payload.reliabilityRank) ? payload.reliabilityRank : undefined;
+      return addFactRequest(game, {
+        text,
+        intent,
+        reason,
+        tags,
+        entityType,
+        source,
+        reliability,
+        reliabilityRank
+      });
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GET_GAME_FACT_REQUESTS, async (_event, payload) => {
+    try {
+      const game = String(payload && payload.game || '').trim();
+      const status = String(payload && payload.status || '').trim();
+      return listFactRequests(game, status || undefined);
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.UPDATE_GAME_FACT_REQUEST, async (_event, payload) => {
+    try {
+      const game = String(payload && payload.game || '').trim();
+      const id = String(payload && payload.id || '').trim();
+      const status = String(payload && payload.status || '').trim();
+      const note = String(payload && payload.note || '').trim();
+      return updateFactRequest(game, { id, status, note });
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GET_GAME_USAGE, async (_event, payload) => {
+    try {
+      const game = String(payload && payload.game || '').trim();
+      return getUsage(game);
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GET_HOT_GAMES, async (_event, payload) => {
+    try {
+      const limit = Number.isFinite(payload && payload.limit) ? payload.limit : undefined;
+      return getHotGames(limit);
     } catch (err) {
       return { success: false, error: err.message };
     }

@@ -85,14 +85,14 @@ Why: Enables “no prompt engineering needed” guidance.
 
 Why: Keep coverage lean while grounding entities to reduce hallucinations.
 
-- [ ] On-demand knowledge (seed facts only when needed)
-- [ ] Minimal entity-first seed (characters, locations, items, mechanics, quests)
-- [ ] Hot-game prioritization (usage x hallucination rate x session length)
-- [ ] Community correction loop (user flags -> review -> FACTS)
-- [ ] Source reliability ranking (official > trusted > community > user input)
-- [ ] Fact versioning (fact_version + last_verified)
-- [ ] Guardrails check: facts are verified, minimal, non-redistributed
-- [ ] Safe knowledge: minimal first-party core + user-local memory + reviewed community hints
+- [x] On-demand knowledge (seed facts only when needed)
+- [x] Minimal entity-first seed (characters, locations, items, mechanics, quests)
+- [x] Hot-game prioritization (usage x hallucination rate x session length)
+- [x] Community correction loop (user flags -> review -> FACTS)
+- [x] Source reliability ranking (official > trusted > community > user input)
+- [x] Fact versioning (fact_version + last_verified)
+- [x] Guardrails check: facts are verified, minimal, non-redistributed
+- [x] Safe knowledge: minimal first-party core + user-local memory + reviewed community hints
 
 ### Phase 4 — Answer style + auto-seed
 
