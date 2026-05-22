@@ -71,15 +71,15 @@ Why: Enables “no prompt engineering needed” guidance.
   - [x] Route how-to/farming questions to step-by-step, game-specific answers
   - [x] Enforce "no generic tips" mode when game context is known
 
-- [ ] Anti-hallucination safeguards (deterministic)
-  - [ ] KnowledgeMode: VERIFIED / PARTIAL / UNKNOWN
-  - [ ] Entity whitelist: allow only VERIFIED FACTS + USER INPUT; forbid new proper nouns
-  - [ ] User list != verified facts (mentionable, but never asserted as truth)
-  - [ ] High-risk question detection (loot, boss spawn, quest, recipe, mechanics) -> STRICT / UNKNOWN
-  - [ ] Post-validation: strip disallowed entities, downgrade to general tips + clarification
-  - [ ] "I don't know" policy: prefer "no reliable data" over invention
-  - [ ] Output template: [Knowledge Status] + [Answer] + [Unverified notice]
-  - [ ] Guardrails check: no external metadata ingestion beyond policy
+- [x] Anti-hallucination safeguards (deterministic)
+  - [x] KnowledgeMode: VERIFIED / PARTIAL / UNKNOWN
+  - [x] Entity whitelist: allow only VERIFIED FACTS + USER INPUT; forbid new proper nouns
+  - [x] User list != verified facts (mentionable, but never asserted as truth)
+  - [x] High-risk question detection (loot, boss spawn, quest, recipe, mechanics) -> STRICT / UNKNOWN
+  - [x] Post-validation: strip disallowed entities, downgrade to general tips + clarification
+  - [x] "I don't know" policy: prefer "no reliable data" over invention
+  - [x] Output template: [Knowledge Status] + [Answer] + [Unverified notice]
+  - [x] Guardrails check: no external metadata ingestion beyond policy
 
 ### Phase 3 — Facts strategy (scale to 5000 games)
 

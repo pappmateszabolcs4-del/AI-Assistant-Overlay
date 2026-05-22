@@ -6,6 +6,22 @@
 
 ---
 
+## [1.0.42] - 2026-05-22 (Anti-Hallucination Safeguards)
+
+### ✅ Added
+
+- Knowledge mode output (VERIFIED/PARTIAL/UNKNOWN) with unverified notice.
+- Entity whitelist prompt (FACTS + user-provided names only).
+- High-risk strict fallback for unknown data.
+
+### 🔧 Changed
+
+- Responses now use a guarded output template with knowledge status.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
 ## [1.0.41] - 2026-05-22 (Deterministic Templates)
 
 ### ✅ Added

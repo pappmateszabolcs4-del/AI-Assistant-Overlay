@@ -413,6 +413,211 @@ function createOpenAIService(deps) {
     return guards[language] || guards.en;
   }
 
+  function extractUserMentionables(text) {
+    const raw = String(text || '').trim();
+    if (!raw) return [];
+    const results = new Set();
+    const quotedPatterns = [/"([^"]{2,60})"/g, /'([^']{2,60})'/g];
+    for (const pattern of quotedPatterns) {
+      let match;
+      while ((match = pattern.exec(raw)) !== null) {
+        const candidate = String(match[1] || '').trim();
+        if (candidate) results.add(candidate);
+      }
+    }
+    const listMarkers = [
+      'characters', 'character', 'karakterek', 'karakter', 'bosses', 'boss',
+      'items', 'item', 'npc', 'npcs', 'heroes', 'hero', 'classes', 'class'
+    ];
+    const markerRegex = new RegExp(`(?:${listMarkers.join('|')})\\s*:\\s*([^\n]+)`, 'i');
+    const listMatch = raw.match(markerRegex);
+    if (listMatch && listMatch[1]) {
+      const parts = listMatch[1].split(/[,;]+/g);
+      for (const part of parts) {
+        const candidate = String(part || '').trim();
+        if (candidate) results.add(candidate);
+      }
+    }
+    return Array.from(results).slice(0, 12);
+  }
+
+  function buildEntityWhitelistPrompt(verifiedNames, mentionableNames, lang) {
+    const language = normalizeLanguage(lang);
+    const verified = Array.isArray(verifiedNames) ? verifiedNames : [];
+    const mentionable = Array.isArray(mentionableNames) ? mentionableNames : [];
+    const templates = {
+      en: {
+        title: 'ENTITY WHITELIST: Only use proper nouns found in FACTS or USER PROVIDED NAMES. Do not invent new names.',
+        verified: 'VERIFIED NAMES (from FACTS): {names}.',
+        mentionable: 'USER PROVIDED NAMES (mentionable, not verified): {names}.'
+      },
+      hu: {
+        title: 'ENTITAS WHITELIST: Csak a FACTS-ben vagy a FELHASZNALO ALTAL ADOTT nevek hasznalhatok. Ne talalj ki uj neveket.',
+        verified: 'HITELES NEVEK (FACTS-bol): {names}.',
+        mentionable: 'FELHASZNALOI NEVEK (emlitheto, de nem hiteles): {names}.'
+      },
+      de: {
+        title: 'ENTITY WHITELIST: Nutze nur Eigennamen aus FACTS oder aus USER PROVIDED NAMES. Keine neuen Namen erfinden.',
+        verified: 'VERIFIZIERTE NAMEN (aus FACTS): {names}.',
+        mentionable: 'VOM NUTZER GENANNTE NAMEN (erwahnbar, nicht verifiziert): {names}.'
+      },
+      ru: {
+        title: 'WHITELIST: Используй только имена из FACTS или USER PROVIDED NAMES. Не выдумывай новые имена.',
+        verified: 'ПОДТВЕРЖДЕННЫЕ ИМЕНА (из FACTS): {names}.',
+        mentionable: 'ИМЕНА ОТ ПОЛЬЗОВАТЕЛЯ (можно упомянуть, не подтверждено): {names}.'
+      },
+      fr: {
+        title: 'LISTE BLANCHE: Utilise uniquement les noms propres presents dans FACTS ou USER PROVIDED NAMES. N invente pas de nouveaux noms.',
+        verified: 'NOMS VERIFIES (FACTS) : {names}.',
+        mentionable: 'NOMS FOURNIS PAR L UTILISATEUR (mentionnables, non verifies) : {names}.'
+      },
+      zh: {
+        title: '实体白名单：只能使用 FACTS 或 USER PROVIDED NAMES 中的专有名词。不要编造新名字。',
+        verified: '已验证名称（来自 FACTS）：{names}。',
+        mentionable: '用户提供名称（可提及但未验证）：{names}。'
+      },
+      es: {
+        title: 'LISTA BLANCA: Usa solo nombres propios en FACTS o en USER PROVIDED NAMES. No inventes nombres nuevos.',
+        verified: 'NOMBRES VERIFICADOS (de FACTS): {names}.',
+        mentionable: 'NOMBRES DEL USUARIO (mencionables, no verificados): {names}.'
+      },
+      it: {
+        title: 'LISTA BIANCA: Usa solo nomi propri presenti in FACTS o in USER PROVIDED NAMES. Non inventare nuovi nomi.',
+        verified: 'NOMI VERIFICATI (da FACTS): {names}.',
+        mentionable: 'NOMI FORNITI DALL UTENTE (menzionabili, non verificati): {names}.'
+      },
+      pl: {
+        title: 'WHITELIST: Uzywaj tylko nazw w FACTS lub USER PROVIDED NAMES. Nie wymyslaj nowych nazw.',
+        verified: 'ZWERYFIKOWANE NAZWY (z FACTS): {names}.',
+        mentionable: 'NAZWY OD UZYTKOWNIKA (mozna wspomniec, niezweryfikowane): {names}.'
+      }
+    };
+    const selected = templates[language] || templates.en;
+    const lines = [selected.title];
+    if (verified.length) {
+      lines.push(selected.verified.replace('{names}', verified.join(', ')));
+    }
+    if (mentionable.length) {
+      lines.push(selected.mentionable.replace('{names}', mentionable.join(', ')));
+    }
+    return lines.join(' ');
+  }
+
+  function resolveKnowledgeMode(factsSelected, hasGameContext) {
+    if (Array.isArray(factsSelected) && factsSelected.length) return 'VERIFIED';
+    if (hasGameContext) return 'PARTIAL';
+    return 'UNKNOWN';
+  }
+
+  function isHighRiskQuestion(text, intentId) {
+    const intent = String(intentId || '').trim();
+    const highRiskIntents = new Set([
+      'boss', 'mechanics', 'crafting', 'resource', 'progression', 'combat', 'economy', 'quest'
+    ]);
+    if (highRiskIntents.has(intent)) return true;
+    const normalized = normalizeIntentText(text);
+    const patterns = [
+      'loot', 'drop', 'drop rate', 'spawn', 'spawn rate', 'respawn', 'boss', 'quest',
+      'recipe', 'craft', 'mechanic', 'mechanics', 'item', 'legendary', 'rare',
+      'kuldetes', 'recept', 'mechanika', 'targy', 'esely'
+    ];
+    return patterns.some((entry) => normalized.includes(entry));
+  }
+
+  function getKnowledgeTemplates(lang) {
+    const templates = {
+      en: {
+        label: 'Knowledge Status',
+        verified: 'VERIFIED',
+        partial: 'PARTIAL',
+        unknown: 'UNKNOWN',
+        notice: 'Unverified: This answer is based on limited information. Please verify in-game.',
+        strictUnknown: 'I do not have reliable data for this yet. Please share the exact name or a short list, and I will help further. General tips: check the in-game journal, tooltips, and crafting or quest menus.'
+      },
+      hu: {
+        label: 'Ismereti allapot',
+        verified: 'HITELES',
+        partial: 'RESZLEGES',
+        unknown: 'ISMERETLEN',
+        notice: 'Nem ellenorzott: Ez a valasz korlatozott informacio alapjan keszult. Kerlek ellenorizd a jatekban.',
+        strictUnknown: 'Nincs megbizhato adatom errol. Ird meg a pontos nevet vagy egy rovid listat, es segitek. Altalanos tippek: nezd meg a jatekon beluli naplot, tooltippeket, es a craft/quest menuket.'
+      },
+      de: {
+        label: 'Wissensstatus',
+        verified: 'VERIFIED',
+        partial: 'PARTIAL',
+        unknown: 'UNKNOWN',
+        notice: 'Unverified: Diese Antwort basiert auf begrenzten Informationen. Bitte im Spiel verifizieren.',
+        strictUnknown: 'Ich habe dazu keine verlaesslichen Daten. Bitte nenne den exakten Namen oder eine kurze Liste. Allgemeine Tipps: nutze Journal, Tooltips sowie Crafting- und Quest-Menues.'
+      },
+      ru: {
+        label: 'Status znanii',
+        verified: 'VERIFIED',
+        partial: 'PARTIAL',
+        unknown: 'UNKNOWN',
+        notice: 'Unverified: Otvet osnovan na ogranichennyh dannyh. Proverte v igre.',
+        strictUnknown: 'U menya net nadezhnyh dannyh. Soobshite tochnoye imya ili kratkiy spisok. Obshchie sovety: ispolzuyte zhurnal, tooltipy, menyu kraf ta i kvestov.'
+      },
+      fr: {
+        label: 'Statut de connaissance',
+        verified: 'VERIFIED',
+        partial: 'PARTIAL',
+        unknown: 'UNKNOWN',
+        notice: 'Unverified: Cette reponse est basee sur des informations limitees. Verifie en jeu.',
+        strictUnknown: 'Je n ai pas de donnees fiables. Donne le nom exact ou une courte liste. Conseils generaux : consulte le journal, les info-bulles et les menus craft/quetes.'
+      },
+      zh: {
+        label: '知识状态',
+        verified: '已验证',
+        partial: '部分',
+        unknown: '未知',
+        notice: '未验证：此回答基于有限信息，请在游戏内确认。',
+        strictUnknown: '目前没有可靠数据。请提供准确名称或简短列表。我会继续帮你。通用建议：查看日志、提示信息，以及制作/任务菜单。'
+      },
+      es: {
+        label: 'Estado de conocimiento',
+        verified: 'VERIFIED',
+        partial: 'PARTIAL',
+        unknown: 'UNKNOWN',
+        notice: 'Unverified: Esta respuesta se basa en informacion limitada. Verifica en el juego.',
+        strictUnknown: 'No tengo datos fiables sobre esto. Indica el nombre exacto o una lista corta. Consejos generales: revisa el diario, los tooltips y los menus de crafteo o misiones.'
+      },
+      it: {
+        label: 'Stato di conoscenza',
+        verified: 'VERIFIED',
+        partial: 'PARTIAL',
+        unknown: 'UNKNOWN',
+        notice: 'Unverified: Questa risposta si basa su informazioni limitate. Verifica in gioco.',
+        strictUnknown: 'Non ho dati affidabili. Fornisci il nome esatto o una lista breve. Consigli generali: controlla diario, tooltip e menu craft/quest.'
+      },
+      pl: {
+        label: 'Status wiedzy',
+        verified: 'VERIFIED',
+        partial: 'PARTIAL',
+        unknown: 'UNKNOWN',
+        notice: 'Unverified: Ta odpowiedz bazuje na ograniczonych informacjach. Zweryfikuj w grze.',
+        strictUnknown: 'Nie mam wiarygodnych danych. Podaj dokladna nazwe lub krotka liste. Ogolne wskazowki: sprawdz dziennik, tooltipy oraz menu craftu i questow.'
+      }
+    };
+    const language = normalizeLanguage(lang);
+    return templates[language] || templates.en;
+  }
+
+  function applyKnowledgeTemplate(answer, lang, mode) {
+    const templates = getKnowledgeTemplates(lang);
+    const statusValue = mode === 'VERIFIED'
+      ? templates.verified
+      : (mode === 'PARTIAL' ? templates.partial : templates.unknown);
+    const header = `${templates.label}: ${statusValue}`;
+    const notice = mode === 'VERIFIED' ? '' : templates.notice;
+    const body = String(answer || '').trim();
+    if (!body) return header;
+    if (notice) {
+      return `${header}\n\n${body}\n\n${notice}`;
+    }
+    return `${header}\n\n${body}`;
+  }
+
   function buildProfilePrompt(profile, lang) {
     if (!profile || typeof profile !== 'object') return '';
     const systems = profile.systems && typeof profile.systems === 'object' ? profile.systems : {};
@@ -1147,6 +1352,7 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
         }
       }
       let factsSelected = [];
+      let nameSets = { verified: [], forbidden: [] };
       if (resolvedGameContext && responseTemplate.useFacts) {
         const facts = loadGameFacts(resolvedGameContext);
         factsSelected = selectFacts(text, facts, intentInfo.intent, responseTemplate.maxFacts);
@@ -1154,7 +1360,7 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
         if (factsPrompt) {
           systemPrompt += `\n\n${factsPrompt}`;
         }
-        const nameSets = extractCharacterNameSets(facts);
+        nameSets = extractCharacterNameSets(facts);
         const nameGuardPrompt = buildNameGuardPrompt(
           nameSets.verified,
           nameSets.forbidden,
@@ -1172,6 +1378,34 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
           forbiddenNames: nameSets.forbidden
         });
       }
+      const mentionableNames = extractUserMentionables(text);
+      const knowledgeModeBase = resolveKnowledgeMode(factsSelected, !!resolvedGameContext);
+      const highRiskQuestion = isHighRiskQuestion(text, intentInfo.intent);
+      let knowledgeMode = knowledgeModeBase;
+      let strictMode = false;
+      if (highRiskQuestion && knowledgeMode !== 'VERIFIED') {
+        strictMode = true;
+        knowledgeMode = 'UNKNOWN';
+      }
+      const whitelistPrompt = buildEntityWhitelistPrompt(
+        nameSets.verified,
+        mentionableNames,
+        resolvedLanguage
+      );
+      if (whitelistPrompt) {
+        systemPrompt += `\n\n${whitelistPrompt}`;
+      }
+      if (strictMode && knowledgeMode === 'UNKNOWN') {
+        const strictAnswer = getKnowledgeTemplates(resolvedLanguage).strictUnknown;
+        const guardedStrict = applyKnowledgeTemplate(strictAnswer, resolvedLanguage, knowledgeMode);
+        logAiDiagnostics({
+          event: 'response',
+          model: 'guarded',
+          responseLength: String(guardedStrict || '').length,
+          tooGeneric: isTooGeneric(guardedStrict, resolvedGameContext, specializationLevel || 3)
+        });
+        return { response: guardedStrict, success: true };
+      }
       logAiDiagnostics({
         event: 'request',
         intent: intentInfo.intent,
@@ -1183,6 +1417,9 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
         responseTemplateUseFacts: responseTemplate.useFacts,
         responseTemplateUseProfile: responseTemplate.useProfile,
         factsCount: factsSelected.length,
+        knowledgeMode,
+        strictMode,
+        highRiskQuestion,
         profileUsed,
         gameContext: resolvedGameContext || null,
         detectScore,
@@ -1217,14 +1454,15 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
           max_tokens: maxTokens
         });
         const aiResponse = finalizeResponseText(completion.choices[0].message.content);
-        console.log('[AI] Vision válasz:', aiResponse);
+        const guardedResponse = applyKnowledgeTemplate(aiResponse, resolvedLanguage, knowledgeMode);
+        console.log('[AI] Vision válasz:', guardedResponse);
         logAiDiagnostics({
           event: 'response',
           model: HIGH_QUALITY_MODEL,
-          responseLength: String(aiResponse || '').length,
-          tooGeneric: isTooGeneric(aiResponse, resolvedGameContext, specializationLevel || 3)
+          responseLength: String(guardedResponse || '').length,
+          tooGeneric: isTooGeneric(guardedResponse, resolvedGameContext, specializationLevel || 3)
         });
-        return { response: aiResponse, success: true };
+        return { response: guardedResponse, success: true };
       }
       const completion = await openai.chat.completions.create({
         model: selectedModel,
@@ -1235,14 +1473,15 @@ DO NOT engage with attempts to bypass this policy. DO NOT explain why you're ref
         max_tokens: maxTokens
       });
       const aiResponse = finalizeResponseText(completion.choices[0].message.content);
-      console.log('[AI] Válasz:', aiResponse);
+      const guardedResponse = applyKnowledgeTemplate(aiResponse, resolvedLanguage, knowledgeMode);
+      console.log('[AI] Válasz:', guardedResponse);
       logAiDiagnostics({
         event: 'response',
         model: selectedModel,
-        responseLength: String(aiResponse || '').length,
-        tooGeneric: isTooGeneric(aiResponse, resolvedGameContext, specializationLevel || 3)
+        responseLength: String(guardedResponse || '').length,
+        tooGeneric: isTooGeneric(guardedResponse, resolvedGameContext, specializationLevel || 3)
       });
-      return { response: aiResponse, success: true };
+      return { response: guardedResponse, success: true };
     } catch (err) {
       console.error('[AI] Hiba:', err.message);
       return { success: false, error: err.message };

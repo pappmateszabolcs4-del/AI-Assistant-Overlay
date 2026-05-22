@@ -1104,13 +1104,13 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 ### 2026-05-22 (Night)
 
 #### Summary
-- What changed: Added data-driven deterministic templates with an enable flag; enabled deterministic only for game-identity; fixed JSON escape; updated TODO and changelog.
-- Why: Make deterministic shortcuts data-driven while keeping safety and game specificity.
-- Impact: Deterministic scaffolds are available but only game-identity short-circuits; other intents stay LLM-driven.
+- What changed: Added data-driven deterministic templates with an enable flag; enabled deterministic only for game-identity; added deterministic anti-hallucination safeguards (knowledge modes, whitelist prompt, strict fallback, output template); fixed JSON escape; updated TODO and changelog.
+- Why: Make deterministic shortcuts data-driven while keeping safety and game specificity while tightening hallucination control.
+- Impact: Deterministic scaffolds are available but only game-identity short-circuits; high-risk unknowns now downgrade to safe guidance with explicit knowledge status.
 
 #### Details
-- Implementation notes: Deterministic now honors an enabled flag; JSON templates hold fixed scaffolds for common intents.
-- Edge cases: JSON escape sequences must remain valid (no \\' usage).
+- Implementation notes: Deterministic now honors an enabled flag; JSON templates hold fixed scaffolds for common intents; knowledge mode derives from facts + game context; strict unknown path blocks risky answers; output template adds knowledge status + unverified notice.
+- Edge cases: JSON escape sequences must remain valid (no \\' usage); strict fallback triggers when no verified facts are available for high-risk queries.
 
 #### Files touched
 - [data/response-templates.json](data/response-templates.json)
@@ -1120,7 +1120,8 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 - [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
 
 #### Backups
-- Not created (docs/json edits only).
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
 
 #### Verification
 - Tests: Not run (not requested).
