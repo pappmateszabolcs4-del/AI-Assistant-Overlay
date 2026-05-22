@@ -24,6 +24,21 @@
 
 - Tests: Not run (not requested).
 
+## [1.0.40] - 2026-05-22 (Stop the Bleeding)
+
+### 🔧 Changed
+
+- Removed runtime global dataset matching; detection now relies on local manifests + exe/process + title/class signals.
+- Updated metadata policy with canonical decision points and confirmed guardrail compliance in TODO.
+
+### 🧹 Cleaned
+
+- Deleted `data/games.json` from the runtime footprint.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
 ## [1.0.38] - 2026-05-20 (Intent Routing + Facts)
 
 ### ✅ Added

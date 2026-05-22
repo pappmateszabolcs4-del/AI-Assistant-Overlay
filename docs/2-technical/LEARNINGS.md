@@ -1222,6 +1222,36 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 
 ---
 
+### 2026-05-22 (Night)
+
+#### Summary
+- What changed: Removed runtime global dataset usage, deleted data/games.json, and confirmed guardrails/todo milestones; documented canonical decision points in metadata policy.
+- Why: Eliminate monetization/legal risk from bundled datasets and align detection with local manifests + exe mapping only.
+- Impact: Game detection now relies on local manifests, process/title signals, and user mappings only.
+
+#### Details
+- Implementation notes: Dataset loading, indexing, and dataset scoring were removed; match logic now falls back to known regex patterns without global data.
+- Edge cases: Games without manifests or mappings may stay unknown until user mapping exists.
+
+#### Files touched
+- [src/main/services/game-detect-core.js](src/main/services/game-detect-core.js)
+- [src/main/services/game-detect-worker.js](src/main/services/game-detect-worker.js)
+- [data/games.json](data/games.json)
+- [docs/2-technical/METADATA_POLICY.md](docs/2-technical/METADATA_POLICY.md)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+
+#### Backups
+- Not created (not requested).
+
+#### Verification
+- Tests: Not run (not requested).
+
+#### Follow-ups
+- TODO: Validate detection flow for non-manifest games and capture missing mappings in real sessions.
+
+---
+
 ### 2026-05-15 (Night)
 
 #### Summary

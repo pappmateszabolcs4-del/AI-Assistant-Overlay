@@ -21,6 +21,19 @@ Last updated: 2026-05-20
 - Project: monetizable desktop game assistant overlay.
 - Problem: offline global third-party dataset (IGDB) is a runtime dependency -> monetization/legal risk.
 
+### Decision points (recommended)
+
+- Global dataset: no runtime global dataset (minimize legal/monetization risk).
+- Data sources: local manifests + exe mapping + user-local cache + optional runtime lookup (compliance-safe, scalable).
+- Community knowledge: opt-in, reviewed patch layer (not a full DB).
+- Moat focus: personalization + workflow + overlay intelligence (defensible IP).
+
+Confirmed:
+- Global dataset: no runtime global dataset (minimize legal/monetization risk).
+- Data sources: local manifests + exe mapping + user-local cache + optional runtime lookup (compliance-safe, scalable).
+- Community knowledge: opt-in, reviewed patch layer (not a full DB).
+- Moat focus: personalization + workflow + overlay intelligence (defensible IP).
+
 ### Phase 0 — Baseline visibility
 
 Why: Until we can see where quality drops, every fix is guesswork.
@@ -31,7 +44,7 @@ Why: Until we can see where quality drops, every fix is guesswork.
   - [x] Log template selection (game template vs generic)
   - [x] Add a debug toggle to enable/disable diagnostics
   - [x] Track "too generic" flag in diagnostics
-  - [ ] Guardrails check: no new data sources or caching outside policy
+  - [x] Guardrails check: no new data sources or caching outside policy
 
 ### Phase 1 — Stable game context (UX block)
 
@@ -44,8 +57,8 @@ Why: If the game context flaps or is wrong, routing and templates fall apart.
 - [x] Mapping-first priority: prefer exe->game mapping (IGDB/Steam/Epic/GoG + learned), title is secondary
 - [x] Overlay-focused guard: if overlay is active, skip detection and keep last recognized
 - [x] Augment data sources (policy-safe): local manifests + exe mapping only (no global dataset) (see docs/2-technical/METADATA_POLICY.md)
-- [ ] Guardrails check: no bundled catalogs, no public metadata API
-- [ ] Stop the bleeding: remove global dataset dependency; keep local manifests + exe mapping + user-local cache only
+- [x] Guardrails check: no bundled catalogs, no public metadata API
+- [x] Stop the bleeding: remove global dataset dependency; keep local manifests + exe mapping + user-local cache only
 
 ### Phase 2 — Deterministic response scaffolds (AI core)
 

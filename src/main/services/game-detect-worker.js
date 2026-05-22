@@ -1,6 +1,6 @@
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { extractGameName, matchGameFromText } = require('./game-detect-core');
+const { extractGameName } = require('./game-detect-core');
 const { resolveMetadataForProcess } = require('./game-metadata');
 
 const ACTIVE_WINDOW_SCRIPT = path.join(__dirname, '..', '..', '..', 'get-active-window.ps1');
@@ -114,7 +114,6 @@ const SCORE_TITLE_MATCH = 4;
 const SCORE_PROCESS_MATCH = 5;
 const SCORE_MAPPING_MATCH = 6;
 const SCORE_METADATA_MATCH = 7;
-const SCORE_DATASET_SIGNAL = 2;
 const SCORE_CLASS_SIGNAL = 2;
 const SCORE_THRESHOLD = 6;
 
@@ -168,8 +167,6 @@ function scoreGameTitle(title, ignoreList, mappings, processInfo, windowClass, a
   const mappingMatch = mappingEntry ? mappingEntry.gameName : null;
   const mappingMatchText = mappingEntry ? mappingEntry.match : null;
   const titleMatch = extractGameName(title, ignoreList);
-  const datasetMatch = matchGameFromText(title);
-  const datasetSignal = Boolean(datasetMatch && titleMatch && datasetMatch === titleMatch);
   const processMatch = extractProcessMatch(processInfo, ignoreList);
   const metadataMatch = metadata && metadata.title ? metadata.title : null;
   const classSignal = Boolean(windowClass) && !isBrowserWindowClass(windowClass);
@@ -196,11 +193,6 @@ function scoreGameTitle(title, ignoreList, mappings, processInfo, windowClass, a
     reasons.push('title');
   }
 
-  if (datasetSignal) {
-    score += SCORE_DATASET_SIGNAL;
-    reasons.push('dataset');
-  }
-
   if (processMatch) {
     score += SCORE_PROCESS_MATCH;
     reasons.push('process');
@@ -216,8 +208,7 @@ function scoreGameTitle(title, ignoreList, mappings, processInfo, windowClass, a
     + (processMatch ? 1 : 0)
     + (classSignal ? 1 : 0)
     + (mappingMatch ? 1 : 0)
-    + (metadataMatch ? 1 : 0)
-    + (datasetSignal ? 1 : 0);
+    + (metadataMatch ? 1 : 0);
   const browserHit = isBrowserProcess(processInfo) || isBrowserWindowClass(windowClass);
 
   if (!mappingMatch && browserHit && hasTitle && !processMatch) {

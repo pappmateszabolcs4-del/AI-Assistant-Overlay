@@ -36,6 +36,13 @@ This is implementation guidance, not legal advice.
 - Project: monetizable desktop game assistant overlay.
 - Problem: offline global third-party dataset (IGDB) is a runtime dependency -> monetization/legal risk.
 
+### Decision points (canonical)
+
+- Global dataset: no runtime global dataset (minimize legal/monetization risk).
+- Data sources: local manifests + exe mapping + user-local cache + optional runtime lookup (compliance-safe, scalable).
+- Community knowledge: opt-in, reviewed patch layer (not a full DB).
+- Moat focus: personalization + workflow + overlay intelligence (defensible IP).
+
 ### 3-phase plan
 
 - Stop the bleeding: remove global dataset dependency; keep local manifests + exe mapping + user-local cache only.
