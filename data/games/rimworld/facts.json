@@ -3,37 +3,1255 @@
     {
       "id": "deep-drilling-prereq",
       "text": "Deep resources require the Deep Drilling research and a Deep Drill to extract.",
-      "keywords": ["deep drill", "deep drilling", "ground penetrating scanner", "deep resources"],
-      "tags": ["mechanics", "resource"],
+      "keywords": [
+        "deep drill",
+        "deep drilling",
+        "ground penetrating scanner",
+        "deep resources"
+      ],
+      "tags": [
+        "mechanics",
+        "resource"
+      ],
       "priority": 3
     },
     {
       "id": "scanner-finds",
       "text": "The Ground-Penetrating Scanner reveals underground resource deposits on the map.",
-      "keywords": ["ground penetrating scanner", "scanner", "deep resources"],
-      "tags": ["mechanics"],
+      "keywords": [
+        "ground penetrating scanner",
+        "scanner",
+        "deep resources"
+      ],
+      "tags": [
+        "mechanics"
+      ],
       "priority": 2
     },
     {
       "id": "components-sources",
       "text": "Components can be obtained from traders, compacted machinery, and crafting after the Fabrication research.",
-      "keywords": ["component", "components", "fabrication", "trader", "compacted machinery"],
-      "tags": ["resource", "progression"],
+      "keywords": [
+        "component",
+        "components",
+        "fabrication",
+        "trader",
+        "compacted machinery"
+      ],
+      "tags": [
+        "resource",
+        "progression"
+      ],
       "priority": 2
     },
     {
       "id": "comms-console",
       "text": "A Comms Console is used to contact passing trade ships for buying and selling.",
-      "keywords": ["comms console", "trade ship", "trader"],
-      "tags": ["economy", "resource"],
+      "keywords": [
+        "comms console",
+        "trade ship",
+        "trader"
+      ],
+      "tags": [
+        "economy",
+        "resource"
+      ],
       "priority": 1
     },
     {
       "id": "power-grid",
       "text": "Mining and drilling equipment require power; keep the grid stable to avoid downtime.",
-      "keywords": ["power", "grid", "mining", "drill"],
-      "tags": ["base", "resource"],
+      "keywords": [
+        "power",
+        "grid",
+        "mining",
+        "drill"
+      ],
+      "tags": [
+        "base",
+        "resource"
+      ],
       "priority": 1
+    },
+    {
+      "text": "Trade with passing ships or caravans to acquire rare items and resources.",
+      "keywords": [
+        "trade",
+        "ships",
+        "caravans",
+        "items",
+        "resources"
+      ],
+      "tags": [
+        "trading",
+        "economy",
+        "strategy"
+      ],
+      "priority": 1,
+      "system": "PC",
+      "gameStage": "mid-game",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "nearDuplicateGroup": "nd-abcf4be4",
+      "nearDuplicateScore": 1,
+      "id": "fact-db7064a7"
+    },
+    {
+      "text": "Keep an eye on food supplies; grow crops and hunt to ensure your colony doesn't starve.",
+      "keywords": [
+        "food",
+        "supplies",
+        "crops",
+        "hunt",
+        "starvation"
+      ],
+      "tags": [
+        "management",
+        "survival",
+        "strategy"
+      ],
+      "priority": 2,
+      "system": "PC",
+      "gameStage": "early-game",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "nearDuplicateGroup": "nd-cf2ad5be",
+      "nearDuplicateScore": 0.92,
+      "id": "fact-346f4def"
+    },
+    {
+      "text": "Create growing zones to cultivate crops. Select the area, choose the crop type, and ensure it has enough sunlight and water.",
+      "keywords": [
+        "growing",
+        "zones",
+        "crops",
+        "select",
+        "area",
+        "sunlight",
+        "water"
+      ],
+      "tags": [
+        "farming",
+        "strategy",
+        "management"
+      ],
+      "priority": 1,
+      "system": "PC",
+      "gameStage": "mid-game",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-dafb1547"
+    },
+    {
+      "text": "Designate areas for specific activities like animal grazing or storage to optimize space and resource management.",
+      "keywords": [
+        "designate",
+        "areas",
+        "activities",
+        "animal",
+        "grazing",
+        "storage",
+        "optimize"
+      ],
+      "tags": [
+        "strategy",
+        "management",
+        "planning"
+      ],
+      "priority": 1,
+      "system": "PC",
+      "gameStage": "early-game",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-5ecd3286"
+    },
+    {
+      "text": "Use the 'Home Area' zone to define where colonists will fight fires and clean dirt. Adjust as needed for efficiency.",
+      "keywords": [
+        "Home Area",
+        "zone",
+        "colonists",
+        "fight",
+        "fires",
+        "clean",
+        "dirt"
+      ],
+      "tags": [
+        "management",
+        "strategy",
+        "survival"
+      ],
+      "priority": 3,
+      "system": "PC",
+      "gameStage": "mid-game",
+      "sourceType": "official",
+      "confidence": 0.88,
+      "id": "fact-237cfbe9"
+    },
+    {
+      "text": "Establish a 'Stockpile Zone' to store resources efficiently. Customize storage settings for specific items.",
+      "keywords": [
+        "Stockpile Zone",
+        "store",
+        "resources",
+        "efficiently",
+        "customize",
+        "settings",
+        "items"
+      ],
+      "tags": [
+        "management",
+        "strategy",
+        "planning"
+      ],
+      "priority": 2,
+      "system": "PC",
+      "gameStage": "early-game",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-2392f96b"
+    },
+    {
+      "text": "Create a 'Medical Zone' to ensure injured colonists receive treatment quickly by designating specific areas for medical care.",
+      "keywords": [
+        "Medical Zone",
+        "injured",
+        "colonists",
+        "treatment",
+        "designate",
+        "areas",
+        "care"
+      ],
+      "tags": [
+        "management",
+        "strategy",
+        "health"
+      ],
+      "priority": 3,
+      "system": "PC",
+      "gameStage": "mid-game",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-a6780b6f"
+    },
+    {
+      "text": "Adjust zone settings to restrict colonists from entering dangerous areas, enhancing their safety during raids or threats.",
+      "keywords": [
+        "adjust",
+        "zone",
+        "settings",
+        "restrict",
+        "colonists",
+        "dangerous",
+        "areas"
+      ],
+      "tags": [
+        "safety",
+        "strategy",
+        "management"
+      ],
+      "priority": 3,
+      "system": "PC",
+      "gameStage": "late-game",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-9177c31e"
+    },
+    {
+      "text": "Create zones to control where your colonists can go and what they can do. Use the zone tool to designate areas for specific activities.",
+      "keywords": [
+        "zones",
+        "colonists",
+        "control",
+        "activities"
+      ],
+      "tags": [
+        "strategy",
+        "management",
+        "colonists"
+      ],
+      "priority": 2,
+      "system": "PC",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-52740873"
+    },
+    {
+      "text": "Designate growing zones to plant crops. Ensure the soil is fertile and the area is free from obstacles for optimal growth.",
+      "keywords": [
+        "growing zones",
+        "plant crops",
+        "fertile soil",
+        "obstacles"
+      ],
+      "tags": [
+        "farming",
+        "strategy",
+        "management"
+      ],
+      "priority": 2,
+      "system": "PC",
+      "gameStage": "early",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-9c1a305c"
+    },
+    {
+      "text": "Designate a 'Prisoner Area' to manage where prisoners can be kept. Ensure it is secure and monitored to prevent escapes.",
+      "keywords": [
+        "Prisoner Area",
+        "manage prisoners",
+        "secure",
+        "monitored"
+      ],
+      "tags": [
+        "prisoners",
+        "strategy",
+        "management"
+      ],
+      "priority": 3,
+      "system": "PC",
+      "gameStage": "late",
+      "sourceType": "official",
+      "confidence": 0.75,
+      "id": "fact-e60a1157"
+    },
+    {
+      "text": "Utilize the Architect menu to build structures and manage your colony's layout effectively.",
+      "keywords": [
+        "Architect",
+        "build",
+        "structures",
+        "colony",
+        "layout"
+      ],
+      "tags": [
+        "management",
+        "building",
+        "strategy"
+      ],
+      "priority": 2,
+      "system": "PC",
+      "gameStage": "early",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-f900df59"
+    },
+    {
+      "text": "Assign work priorities to colonists to optimize resource gathering and task completion.",
+      "keywords": [
+        "assign",
+        "work",
+        "priorities",
+        "colonists",
+        "resources"
+      ],
+      "tags": [
+        "management",
+        "strategy",
+        "optimization"
+      ],
+      "priority": 3,
+      "system": "PC",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-b3ff8d02"
+    },
+    {
+      "text": "Research new technologies to unlock advanced building options and improve colony efficiency.",
+      "keywords": [
+        "research",
+        "technologies",
+        "building",
+        "options",
+        "efficiency"
+      ],
+      "tags": [
+        "strategy",
+        "progression",
+        "development"
+      ],
+      "priority": 2,
+      "system": "PC",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.8,
+      "id": "fact-f56828f3"
+    },
+    {
+      "text": "Manage your colonists' schedules to ensure they have time for work, recreation, and rest.",
+      "keywords": [
+        "manage",
+        "schedules",
+        "colonists",
+        "work",
+        "recreation"
+      ],
+      "tags": [
+        "management",
+        "strategy",
+        "time"
+      ],
+      "priority": 2,
+      "system": "PC",
+      "gameStage": "early",
+      "sourceType": "official",
+      "confidence": 0.75,
+      "id": "fact-1bbe1fa"
+    },
+    {
+      "text": "Hunt wildlife for food and resources, but be cautious of dangerous animals.",
+      "keywords": [
+        "hunt",
+        "wildlife",
+        "food",
+        "resources",
+        "dangerous"
+      ],
+      "tags": [
+        "survival",
+        "strategy",
+        "resource"
+      ],
+      "priority": 2,
+      "system": "PC",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.8,
+      "id": "fact-ebef6f6"
+    },
+    {
+      "text": "Assign orders to colonists to prioritize tasks and improve efficiency in your colony.",
+      "keywords": [
+        "assign",
+        "orders",
+        "colonists",
+        "tasks",
+        "efficiency"
+      ],
+      "tags": [
+        "task management",
+        "colonists",
+        "efficiency"
+      ],
+      "priority": 2,
+      "system": "game",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-82191c94"
+    },
+    {
+      "text": "Ensure your colony has a reliable power source to keep essential systems running.",
+      "keywords": [
+        "reliable",
+        "power source",
+        "colony",
+        "systems",
+        "running"
+      ],
+      "tags": [
+        "power",
+        "survival",
+        "management"
+      ],
+      "priority": 3,
+      "system": "game",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-26a59b1c"
+    },
+    {
+      "text": "Build security structures to protect your colony from raids and hostile threats.",
+      "keywords": [
+        "build",
+        "security",
+        "structures",
+        "protect",
+        "raids"
+      ],
+      "tags": [
+        "security",
+        "defense",
+        "building"
+      ],
+      "priority": 3,
+      "system": "game",
+      "gameStage": "late",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-f822497b"
+    },
+    {
+      "text": "Utilize the Production Menu to craft items and improve your colony's self-sufficiency.",
+      "keywords": [
+        "Production Menu",
+        "craft",
+        "items",
+        "self-sufficiency"
+      ],
+      "tags": [
+        "crafting",
+        "production",
+        "self-sufficiency"
+      ],
+      "priority": 2,
+      "system": "game",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.8,
+      "id": "fact-75fb1bb5"
+    },
+    {
+      "text": "Place furniture to improve colonist comfort and happiness, impacting productivity.",
+      "keywords": [
+        "place",
+        "furniture",
+        "comfort",
+        "happiness",
+        "productivity"
+      ],
+      "tags": [
+        "furniture",
+        "comfort",
+        "happiness"
+      ],
+      "priority": 2,
+      "system": "game",
+      "gameStage": "early",
+      "sourceType": "official",
+      "confidence": 0.75,
+      "id": "fact-2b31d30c"
+    },
+    {
+      "text": "Manage recreation facilities to keep colonists entertained and reduce mental breaks.",
+      "keywords": [
+        "manage",
+        "recreation",
+        "facilities",
+        "entertained",
+        "mental breaks"
+      ],
+      "tags": [
+        "recreation",
+        "mental health",
+        "management"
+      ],
+      "priority": 3,
+      "system": "game",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.8,
+      "id": "fact-8bc3e14d"
+    },
+    {
+      "text": "Create stockpile zones to manage resources effectively. Assign specific items to each zone for better organization.",
+      "keywords": [
+        "stockpile",
+        "zones",
+        "resources",
+        "management"
+      ],
+      "tags": [
+        "strategy",
+        "organization",
+        "resources"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-42b17bfa"
+    },
+    {
+      "text": "Use dumping stockpile zones to dispose of unwanted items. This helps keep your colony clean and organized.",
+      "keywords": [
+        "dumping",
+        "stockpile",
+        "zones",
+        "cleanliness"
+      ],
+      "tags": [
+        "strategy",
+        "organization",
+        "cleaning"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-58bfcbb8"
+    },
+    {
+      "text": "Monitor temperature levels in your colony. Ensure adequate heating or cooling to maintain colonist comfort and health.",
+      "keywords": [
+        "temperature",
+        "monitor",
+        "comfort",
+        "health"
+      ],
+      "tags": [
+        "survival",
+        "management",
+        "health"
+      ],
+      "priority": 3,
+      "system": "Rimworld",
+      "gameStage": "early",
+      "sourceType": "official",
+      "confidence": 0.95,
+      "id": "fact-a03f8454"
+    },
+    {
+      "text": "Incorporate recreation activities to improve colonist mood. Build recreation buildings to provide leisure options.",
+      "keywords": [
+        "recreation",
+        "mood",
+        "colonists",
+        "buildings"
+      ],
+      "tags": [
+        "strategy",
+        "mood",
+        "buildings"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-4a46edb4"
+    },
+    {
+      "text": "Utilize special buildings for unique benefits. Research and construct them to enhance your colony's capabilities.",
+      "keywords": [
+        "special",
+        "buildings",
+        "benefits",
+        "research"
+      ],
+      "tags": [
+        "strategy",
+        "buildings",
+        "enhancement"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "late",
+      "sourceType": "official",
+      "confidence": 0.8,
+      "id": "fact-a1f881d6"
+    },
+    {
+      "text": "Consider biotech buildings for advanced technologies. They can provide significant advantages in resource management.",
+      "keywords": [
+        "biotech",
+        "buildings",
+        "technology",
+        "resources"
+      ],
+      "tags": [
+        "strategy",
+        "technology",
+        "management"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "late",
+      "sourceType": "official",
+      "confidence": 0.8,
+      "id": "fact-110242f7"
+    },
+    {
+      "text": "Investigate anomalies for potential rewards. They can lead to unique discoveries that benefit your colony.",
+      "keywords": [
+        "anomalies",
+        "investigate",
+        "rewards",
+        "discoveries"
+      ],
+      "tags": [
+        "exploration",
+        "strategy",
+        "rewards"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "late",
+      "sourceType": "official",
+      "confidence": 0.75,
+      "id": "fact-aa4102c2"
+    },
+    {
+      "text": "Plan your colony layout carefully. Efficient designs can improve colonist movement and resource access.",
+      "keywords": [
+        "colony",
+        "layout",
+        "design",
+        "efficiency"
+      ],
+      "tags": [
+        "strategy",
+        "planning",
+        "design"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "early",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-60d849f0"
+    },
+    {
+      "text": "Use shrink zones to reduce the size of existing zones, optimizing space usage on your map.",
+      "keywords": [
+        "shrink zone",
+        "space optimization",
+        "map management"
+      ],
+      "tags": [
+        "strategy",
+        "zones"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-906f67d2"
+    },
+    {
+      "text": "Create snow and sand removal areas to keep pathways clear and improve movement efficiency.",
+      "keywords": [
+        "snow removal",
+        "sand removal",
+        "pathways",
+        "movement efficiency"
+      ],
+      "tags": [
+        "strategy",
+        "zones"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.8,
+      "id": "fact-ac412caf"
+    },
+    {
+      "text": "Set the priority of a stockpile or dumping stockpile in the zone settings.",
+      "keywords": [
+        "priority",
+        "stockpile",
+        "dumping",
+        "settings"
+      ],
+      "tags": [
+        "priority",
+        "stockpile",
+        "management"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.8,
+      "id": "fact-b8414f3a"
+    },
+    {
+      "text": "Copy storage settings from one stockpile to another to save time and maintain organization across your colony's storage.",
+      "keywords": [
+        "copy",
+        "settings",
+        "stockpile",
+        "organization",
+        "time-saving"
+      ],
+      "tags": [
+        "stockpile",
+        "settings",
+        "copy",
+        "organization"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-6dc72054"
+    },
+    {
+      "text": "Stockpiles can be set to allow or disallow specific items based on your colony's needs, optimizing resource management.",
+      "keywords": [
+        "stockpile",
+        "allow",
+        "disallow",
+        "items",
+        "resource",
+        "management"
+      ],
+      "tags": [
+        "resource",
+        "management",
+        "stockpile",
+        "optimization"
+      ],
+      "priority": 3,
+      "system": "Rimworld",
+      "gameStage": "late",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-a7914471"
+    },
+    {
+      "text": "Hydroponics are more efficient than growing zones for food production. Switch to hydroponics when available, especially in extreme environments.",
+      "keywords": [
+        "hydroponics",
+        "food production",
+        "efficiency",
+        "extreme environments"
+      ],
+      "tags": [
+        "farming",
+        "hydroponics",
+        "food",
+        "production"
+      ],
+      "priority": 3,
+      "system": "Rimworld",
+      "gameStage": "late-game",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-7767ca4f"
+    },
+    {
+      "text": "Use the pollution removal area to manage toxic waste effectively. This area helps keep your colony safe from pollution effects.",
+      "keywords": [
+        "pollution",
+        "removal",
+        "area",
+        "toxic",
+        "waste",
+        "colony",
+        "management"
+      ],
+      "tags": [
+        "pollution",
+        "management",
+        "safety",
+        "colony"
+      ],
+      "priority": 2,
+      "system": "PC",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-3611aa6b"
+    },
+    {
+      "text": "Colonists take the shortest path within their allowed area when moving.",
+      "keywords": [
+        "shortest path",
+        "allowed area",
+        "colonists",
+        "moving"
+      ],
+      "tags": [
+        "pathfinding",
+        "colonists",
+        "movement"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "any",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-7e8ed605"
+    },
+    {
+      "text": "Hunters will not pursue animals outside their allowed area.",
+      "keywords": [
+        "hunters",
+        "pursue",
+        "animals",
+        "allowed area"
+      ],
+      "tags": [
+        "hunting",
+        "colonists",
+        "allowed area"
+      ],
+      "priority": 3,
+      "system": "Rimworld",
+      "gameStage": "any",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-e34f657c"
+    },
+    {
+      "text": "Set home areas for colonists to ensure they fight fires and repair objects only within designated zones. Auto-generate around player-built structures.",
+      "keywords": [
+        "home area",
+        "colonists",
+        "fight fires",
+        "repair",
+        "zones"
+      ],
+      "tags": [
+        "home area",
+        "colonists",
+        "fire",
+        "repair"
+      ],
+      "priority": 3,
+      "system": "Rimworld",
+      "gameStage": "early-game",
+      "sourceType": "official",
+      "confidence": 0.95,
+      "id": "fact-23145686"
+    },
+    {
+      "text": "To build roofs, designate a 'build roof area' within 6 tiles of a wall or column; otherwise, the roof will collapse.",
+      "keywords": [
+        "build roof area",
+        "roof",
+        "wall",
+        "column",
+        "collapse"
+      ],
+      "tags": [
+        "roofing",
+        "building",
+        "zones",
+        "construction"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "mid-game",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-aabccdf1"
+    },
+    {
+      "text": "Set 'ignore roof area' to stop automatic roof construction without altering existing roofs in that zone.",
+      "keywords": [
+        "ignore roof",
+        "automatic construction",
+        "roof zones"
+      ],
+      "tags": [
+        "construction",
+        "management",
+        "strategy"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "mid-game",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-ac5ad187"
+    },
+    {
+      "text": "Manually prioritize roof removal jobs if pawns are not completing them due to higher-priority tasks.",
+      "keywords": [
+        "prioritize",
+        "roof removal",
+        "construction jobs"
+      ],
+      "tags": [
+        "management",
+        "strategy",
+        "construction"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "early-game",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-ac8b3ae4"
+    },
+    {
+      "text": "When removing wall-supporting roofs, always remove the roof before dismantling the wall to avoid collapse.",
+      "keywords": [
+        "roof removal",
+        "wall dismantling",
+        "collapse"
+      ],
+      "tags": [
+        "construction",
+        "safety",
+        "strategy"
+      ],
+      "priority": 2,
+      "system": "Rimworld",
+      "gameStage": "mid-game",
+      "sourceType": "official",
+      "confidence": 0.95,
+      "id": "fact-4c774b04"
+    },
+    {
+      "text": "When cleaning polluted areas, ensure pawns are not exposed to toxic buildup by keeping them out of the polluted zone.",
+      "keywords": [
+        "cleaning",
+        "polluted area",
+        "toxic buildup",
+        "pawns",
+        "zone"
+      ],
+      "tags": [
+        "cleaning",
+        "pollution",
+        "health",
+        "strategy"
+      ],
+      "priority": 3,
+      "system": "Rimworld",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-4c025f4"
+    },
+    {
+      "text": "Prioritize research to unlock advanced technologies that can significantly improve your colony's capabilities.",
+      "keywords": [
+        "prioritize",
+        "research",
+        "unlock",
+        "technologies",
+        "improve",
+        "capabilities"
+      ],
+      "tags": [
+        "strategy",
+        "management",
+        "research"
+      ],
+      "priority": 3,
+      "system": "PC",
+      "gameStage": "early",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-3355f891"
+    },
+    {
+      "text": "Manage food supplies carefully; ensure you have enough for your colonists to avoid starvation.",
+      "keywords": [
+        "manage",
+        "food",
+        "supplies",
+        "colonists",
+        "starvation"
+      ],
+      "tags": [
+        "survival",
+        "management",
+        "strategy"
+      ],
+      "priority": 2,
+      "system": "PC",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.87,
+      "id": "fact-ced42d41"
+    },
+    {
+      "text": "Build defenses like walls and turrets to protect your colony from raiders and wild animals.",
+      "keywords": [
+        "build",
+        "defenses",
+        "walls",
+        "turrets",
+        "protect",
+        "colony",
+        "raiders",
+        "animals"
+      ],
+      "tags": [
+        "strategy",
+        "defense",
+        "building"
+      ],
+      "priority": 3,
+      "system": "PC",
+      "gameStage": "late",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-f7b267ca"
+    },
+    {
+      "text": "Assign colonists to specific roles based on their skills to maximize efficiency and productivity.",
+      "keywords": [
+        "assign",
+        "colonists",
+        "roles",
+        "skills",
+        "maximize",
+        "efficiency",
+        "productivity"
+      ],
+      "tags": [
+        "management",
+        "strategy",
+        "roles"
+      ],
+      "priority": 2,
+      "system": "PC",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-aff360cd"
+    },
+    {
+      "text": "Monitor the temperature in your colony; use heaters or coolers to maintain a comfortable environment.",
+      "keywords": [
+        "monitor",
+        "temperature",
+        "colony",
+        "heaters",
+        "coolers",
+        "environment"
+      ],
+      "tags": [
+        "management",
+        "survival",
+        "strategy"
+      ],
+      "priority": 2,
+      "system": "PC",
+      "gameStage": "mid",
+      "sourceType": "official",
+      "confidence": 0.88,
+      "id": "fact-d461bfc3"
+    },
+    {
+      "text": "Build a diverse range of crops to ensure food security throughout the year. Different crops have varying growth times and yields.",
+      "keywords": [
+        "crops",
+        "food security",
+        "growth",
+        "yields"
+      ],
+      "tags": [
+        "farming",
+        "strategy",
+        "survival"
+      ],
+      "priority": 2,
+      "system": "PC",
+      "gameStage": "early-game",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-a708eb66"
+    },
+    {
+      "text": "Establish a secure perimeter around your base to protect against raids and wildlife. Use walls and traps effectively.",
+      "keywords": [
+        "perimeter",
+        "base",
+        "raids",
+        "wildlife",
+        "walls",
+        "traps"
+      ],
+      "tags": [
+        "defense",
+        "strategy",
+        "survival"
+      ],
+      "priority": 3,
+      "system": "PC",
+      "gameStage": "mid-game",
+      "sourceType": "official",
+      "confidence": 0.88,
+      "id": "fact-f48e420b"
+    },
+    {
+      "text": "Trade with passing ships or caravans to acquire resources you lack. Build a comms console for ship communication.",
+      "keywords": [
+        "trade",
+        "resources",
+        "comms console",
+        "ships"
+      ],
+      "tags": [
+        "economy",
+        "strategy",
+        "management"
+      ],
+      "priority": 2,
+      "system": "PC",
+      "gameStage": "mid-game",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-d67cbf86"
+    },
+    {
+      "text": "Gather resources like wood, steel, and food early to ensure your colony's survival.",
+      "keywords": [
+        "resources",
+        "wood",
+        "steel",
+        "food",
+        "survival"
+      ],
+      "tags": [
+        "gathering",
+        "strategy",
+        "survival"
+      ],
+      "priority": 1,
+      "system": "PC",
+      "gameStage": "early",
+      "sourceType": "official",
+      "confidence": 0.9,
+      "id": "fact-ebcc9dfa"
+    },
+    {
+      "text": "Use the environment to your advantage; set ambushes in choke points or use natural cover during combat.",
+      "keywords": [
+        "environment",
+        "advantage",
+        "ambush",
+        "combat",
+        "cover"
+      ],
+      "tags": [
+        "strategy",
+        "combat",
+        "survival"
+      ],
+      "priority": 3,
+      "system": "PC",
+      "gameStage": "mid-game",
+      "sourceType": "official",
+      "confidence": 0.75,
+      "id": "fact-5a54b1ae"
+    },
+    {
+      "text": "Monitor colonist health; treat injuries and illnesses promptly to maintain colony efficiency.",
+      "keywords": [
+        "health",
+        "injuries",
+        "illnesses",
+        "treatment"
+      ],
+      "tags": [
+        "management",
+        "survival",
+        "strategy"
+      ],
+      "priority": 2,
+      "system": "PC",
+      "gameStage": "mid-game",
+      "sourceType": "official",
+      "confidence": 0.85,
+      "id": "fact-cac57b06"
     }
   ]
 }
