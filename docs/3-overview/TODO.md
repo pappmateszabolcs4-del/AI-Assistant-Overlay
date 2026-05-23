@@ -1,6 +1,6 @@
 # ✅ TODO / Backlog
 
-Last updated: 2026-05-22
+Last updated: 2026-05-23
 
 ## Build plan (ordered, dependency-safe)
 
@@ -106,13 +106,53 @@ Why: Once routing is stable, styling and templates can ride the correct path.
 
 Why: Optimization on a stable pipeline.
 
-- [ ] Model strategy split (text-only vs vision) + timeout fallback
+Design/spec plan (order recommended):
+1) Trim/segment strict policy (prompt bloat control)
+  - Define prompt budget by layer (system, facts, templates, user text).
+  - Define trim order (e.g., optional hints → verbose template text → low-priority facts).
+  - Segment policy: hard cap per section + final assembly check.
+  - Add diagnostics fields to log what was trimmed (dev-only).
+2) Model strategy split + timeout fallback
+  - Decision matrix: text-only vs vision vs high-quality model.
+  - Timeout thresholds per mode and a safe fallback response template.
+  - Retry rules: once max, no cascading retries.
+  - Telemetry: local counters only (no external telemetry).
+3) Hybrid stack (structured DB + vector DB + LLM formatting) — design only
+  - Define data boundaries: verified facts vs user inputs vs ephemeral context.
+  - Decide vector usage: local-only, opt-in, TTL, no redistribution.
+  - Storage schema + migration plan (non-destructive).
+  - Guardrails check: no metadata mirrors, no bulk imports.
+4) Platformization — roadmap only
+  - Identify 2-3 first-party automation workflows.
+  - Define plugin/extension safety model + permissions.
+  - Guardrails check: no metadata export or bulk sharing.
+
+- [ ] Model strategy split (text-only vs vision) + timeout fallback (requires extensive testing and joint review before production enablement)
 - [ ] Hybrid stack (structured DB + vector DB + LLM formatting)
 - [x] Token budget caps per detail level
 - [x] Template cache + reload strategy (dev)
-- [ ] Trim/segment strict policy to reduce prompt bloat
+- [x] Prompt trim diagnostics (dev-only preview logging)
+- [x] Model strategy diagnostics (dev-only preview logging)
+- [x] Dev-only diagnostics UI (prompt budget, trim snapshots, intent breakdown, fact-load stats, latency) with 1000-entry local retention
+- [ ] Trim/segment strict policy to reduce prompt bloat (requires extensive testing and joint review of trims before production enablement)
 - [ ] Guardrails check: hybrid stack uses verified facts, not store mirrors
+  - [ ] Facts boundary: only VERIFIED facts can be indexed or vectorized; user input stays separate (tagged, non-authoritative).
+  - [ ] No mirrors: forbid bulk ingestion of third-party catalogs; allow only user-local, game-scoped facts.
+  - [ ] TTL and purge: ephemeral context has TTL; purge paths validated and logged.
+  - [ ] Data lineage: every stored fact keeps source and verification status; reject unknown sources.
+  - [ ] Access rules: prompt assembly can only read VERIFIED facts + user session data; never merge with external dumps.
+  - [ ] Export rules: no bulk export of facts/embeddings; only per-game user export with explicit consent.
+  - [ ] Security: encrypt sensitive store fields; minimize retention; document keys and rotation plan.
+  - [ ] Review checklist: add a formal checklist in docs/2-technical/METADATA_POLICY.md after implementation.
 - [ ] Platformization: first-party ecosystem (automation, OCR packs, workflows) with metadata as descriptor only
+  - [ ] Scope: first-party only; no third-party marketplace at this phase.
+  - [ ] Workflows: define 2-3 automation flows (e.g., capture -> classify -> summarize) with clear permissions.
+  - [ ] OCR packs: treat OCR outputs as transient session context; no persistent archive.
+  - [ ] Metadata: descriptor-only (game name, high-level tags); forbid item/quest catalogs.
+  - [ ] Permissions: explicit opt-in per workflow; visible activity indicator; no background capture by default.
+  - [ ] Storage: local-only, per-game; TTL for workflow artifacts; manual purge control.
+  - [ ] Dev gating: all platformization UI/tools dev-only until guardrails review passes.
+  - [ ] Abuse guardrails: block scraping, bulk export, or automated ingestion workflows.
 
 ### Phase 6 — UX surfacing
 

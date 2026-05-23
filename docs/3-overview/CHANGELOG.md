@@ -6,6 +6,21 @@
 
 ---
 
+## [1.0.50] - 2026-05-23 (Phase 5: AI i18n + Constants)
+
+### ✅ Added
+
+- Central AI constants module (models, diagnostics events, error codes, prompt segments).
+- AI i18n helpers for strict override prompt, OpenAI log labels, token caps, and language normalization.
+
+### 🔧 Changed
+
+- OpenAI service now uses shared AI constants and i18n helpers for prompts, logs, and tokens.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
 ## [1.0.46] - 2026-05-22 (Phase 4: Answer Style + Auto-Seed)
 
 ### ✅ Added
@@ -17,6 +32,42 @@
 
 - Game template store now persists per-game answer style + auto-seed metadata.
 - AI prompt pipeline now applies the resolved answer style.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+## [1.0.47] - 2026-05-23 (Phase 5: Prompt Trim Diagnostics)
+
+### ✅ Added
+
+- Dev-only prompt trim/segment diagnostics with per-section sizing and trim suggestions.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+## [1.0.49] - 2026-05-23 (Phase 5: Diagnostics Insights UI)
+
+### ✅ Added
+
+- Dev-only diagnostics insights panel with local storage retention (1000 entries).
+- Prompt budget summary, trim diff snapshot export, per-intent breakdown.
+- Fact-load vs too-generic stats and local latency summary.
+
+### 🔧 Changed
+
+- Main process forwards diagnostics events to the overlay in dev mode.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+## [1.0.48] - 2026-05-23 (Phase 5: Model Strategy Diagnostics)
+
+### ✅ Added
+
+- Dev-only model strategy diagnostics (decision reasons + timeout fallback preview).
 
 ### 🧾 Notes
 

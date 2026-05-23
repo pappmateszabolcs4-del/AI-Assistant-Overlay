@@ -1059,11 +1059,46 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 - [scripts/make-backup.ps1](scripts/make-backup.ps1)
 
 #### Backups
-- Created via scripts/make-backup.ps1 before changes.
+- Created via scripts/make-backup.ps1 for this change set.
 - Backups directory cleared with explicit user approval; new backup created with updated script.
 
 #### Verification
 - Tests: `npm run check`.
+
+#### Follow-ups
+- TODO: None.
+
+---
+
+### 2026-05-23 (Night)
+
+#### Summary
+- What changed: Added a dev-only diagnostics insights panel with local retention and stats (prompt budget, trim snapshot export, intent breakdown, fact-load vs too-generic, latency summary).
+- Why: Surface prompt-trim/model diagnostics locally to support safe tuning without telemetry.
+- Impact: Diagnostics are now visible in the overlay Dev Tools with local-only storage and manual refresh/clear.
+
+#### Details
+- Implementation notes: Forwarded diagnostics events from main to overlay, stored last 1000 entries in localStorage, and added local latency sampling in the renderer.
+- Edge cases: Diagnostics only populate when the dev toggle is enabled; pairing request/response samples is best-effort.
+
+#### Files touched
+- [src/shared/ipc-channels.js](src/shared/ipc-channels.js)
+- [src/shared/storage-keys.js](src/shared/storage-keys.js)
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [overlay.html](overlay.html)
+- [overlay.css](overlay.css)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Tests: Not run (not requested).
 
 #### Follow-ups
 - TODO: None.
@@ -1252,6 +1287,93 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 - [src/shared/storage-keys.js](src/shared/storage-keys.js)
 - [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
 - [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Tests: Not run (not requested).
+
+#### Follow-ups
+- TODO: None.
+
+---
+
+### 2026-05-23 (Morning)
+
+#### Summary
+- What changed: Added dev-only prompt trim/segment diagnostics with per-section sizing and suggested trim order.
+- Why: Measure prompt bloat safely before enabling any trimming logic.
+- Impact: No runtime behavior change; diagnostics reveal where trims would occur.
+
+#### Details
+- Implementation notes: Segment sizes and cap overages are logged only in dev when diagnostics are enabled; no trimming is applied yet.
+- Edge cases: Required safety segments are excluded from trim suggestions.
+
+#### Files touched
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Tests: Not run (not requested).
+
+#### Follow-ups
+- TODO: None.
+
+---
+
+### 2026-05-23 (Morning)
+
+#### Summary
+- What changed: Added dev-only model strategy diagnostics (reasons, recommended model, timeout fallback preview).
+- Why: Validate model routing decisions before enabling any production changes.
+- Impact: No runtime behavior change; diagnostics show the model choice logic.
+
+#### Details
+- Implementation notes: Logs decision reasons derived from input length, lists, troubleshoot flags, mod context, and image presence.
+- Edge cases: Vision paths include a separate timeout fallback preview.
+
+#### Files touched
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Tests: Not run (not requested).
+
+#### Follow-ups
+- TODO: None.
+
+---
+
+### 2026-05-23 (Evening)
+
+#### Summary
+- What changed: Centralized AI constants and migrated remaining AI hardcoded prompts/logs to shared i18n helpers.
+- Why: Reduce drift, keep language handling consistent, and simplify future audits.
+- Impact: No behavior change; cleaner OpenAI service and shared AI constants.
+
+#### Details
+- Implementation notes: Added shared AI constants module (models, diagnostics events, error codes, prompt segments) and updated OpenAI service to use them.
+- Edge cases: None; purely refactor and i18n consolidation.
+
+#### Files touched
+- [src/shared/ai-constants.js](src/shared/ai-constants.js)
+- [src/shared/i18n/ai-text.js](src/shared/i18n/ai-text.js)
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
 
 #### Backups
 - Created via scripts/make-backup.ps1 before changes.
