@@ -681,7 +681,57 @@ async function ensureVisionConsent() {
 
 // Editable Note Panel (separate window)
 const NOTE_PANEL_BOUNDS_KEY = STORAGE_KEYS.NOTE_PANEL_BOUNDS;
+const PANEL_HEIGHTS_KEY = STORAGE_KEYS.OVERLAY_PANEL_HEIGHTS;
 let notePanelBounds = null; // { x, y, width, height } in screen coords
+let cachedPanelHeights = null;
+
+function loadPanelHeights() {
+  if (cachedPanelHeights) return cachedPanelHeights;
+  try {
+    const raw = localStorage.getItem(PANEL_HEIGHTS_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    cachedPanelHeights = parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (_) {
+    cachedPanelHeights = {};
+  }
+  return cachedPanelHeights;
+}
+
+function savePanelHeight(panelId, height) {
+  if (!panelId || !Number.isFinite(height)) return;
+  const next = { ...loadPanelHeights(), [panelId]: Math.round(height) };
+  cachedPanelHeights = next;
+  try {
+    localStorage.setItem(PANEL_HEIGHTS_KEY, JSON.stringify(next));
+  } catch (_) {}
+}
+
+function getSavedPanelHeight(panelId) {
+  if (!panelId) return null;
+  const heights = loadPanelHeights();
+  const value = heights && Object.prototype.hasOwnProperty.call(heights, panelId)
+    ? Number(heights[panelId])
+    : null;
+  return Number.isFinite(value) ? value : null;
+}
+
+function getPanelIdFromContent(content) {
+  if (!content) return null;
+  const section = content.__homeSection || content.closest('.collapsible-section');
+  if (!section) return null;
+  const panelId = section.dataset ? section.dataset.panel : null;
+  return panelId || null;
+}
+
+function applySavedPanelHeight(content) {
+  const panelId = getPanelIdFromContent(content);
+  const saved = getSavedPanelHeight(panelId);
+  if (!Number.isFinite(saved)) return;
+  content.__userResizedHeight = true;
+  const rect = content.getBoundingClientRect();
+  requestPopupWindowHeight(saved, rect.top);
+  content.style.height = `${Math.round(saved)}px`;
+}
 
 function loadNotePanelBounds() {
   const saved = localStorage.getItem(NOTE_PANEL_BOUNDS_KEY);
@@ -1209,6 +1259,9 @@ function toggleSection(event, headerBtn) {
   }
 
   toggle.classList.add('open');
+  if (!content.__userResizedHeight) {
+    applySavedPanelHeight(content);
+  }
   positionPopup(content, headerBtn);
 }
 
@@ -1230,6 +1283,33 @@ on(window, 'resize', scheduleRepositionPopups);
 
 // Popup resize handling (vertical only)
 let popupResizeState = null;
+let pendingPopupResize = null;
+let popupResizeFrame = null;
+
+function getMaxOverlayHeight() {
+  const screenH = window.screen && (window.screen.availHeight || window.screen.height)
+    ? Math.max(window.screen.availHeight || 0, window.screen.height || 0)
+    : 0;
+  return screenH > 0 ? screenH : Number.MAX_SAFE_INTEGER;
+}
+
+function requestPopupWindowHeight(desiredContentHeight, contentTop) {
+  if (!Number.isFinite(desiredContentHeight) || !Number.isFinite(contentTop)) return;
+  const gutter = 12;
+  const desiredWindowHeight = Math.round(desiredContentHeight + gutter + contentTop);
+  const maxWindowHeight = getMaxOverlayHeight();
+  const nextHeight = Math.min(desiredWindowHeight, maxWindowHeight);
+  if (!Number.isFinite(nextHeight) || nextHeight <= window.innerHeight) return;
+  pendingPopupResize = nextHeight;
+  if (popupResizeFrame) return;
+  popupResizeFrame = requestAnimationFrame(() => {
+    popupResizeFrame = null;
+    const height = pendingPopupResize;
+    pendingPopupResize = null;
+    if (!Number.isFinite(height)) return;
+    fireAndForget(IPC_CHANNELS.RESIZE_OVERLAY, { height, __debug: { reason: 'popup-resize-grow' } });
+  });
+}
 
 function startPopupResize(e) {
   // Detached panel windows should resize the BrowserWindow itself, not the popup content.
@@ -1256,11 +1336,18 @@ function startPopupResize(e) {
 function doPopupResize(e) {
   if (!popupResizeState) return;
   const deltaY = e.clientY - popupResizeState.startY;
-  let newHeight = popupResizeState.startHeight + deltaY;
+  const desiredHeight = popupResizeState.startHeight + deltaY;
   const minH = 200;
   const gutter = 12;
-  const maxH = window.innerHeight - gutter - popupResizeState.target.getBoundingClientRect().top;
-  newHeight = Math.max(minH, Math.min(maxH, newHeight));
+  const rect = popupResizeState.target.getBoundingClientRect();
+  const maxWindowHeight = getMaxOverlayHeight();
+  const maxContentHeight = Math.max(minH, maxWindowHeight - gutter - rect.top);
+  const maxH = window.innerHeight - gutter - rect.top;
+  const clampedMax = Math.min(maxContentHeight, Math.max(minH, maxH));
+  let newHeight = Math.max(minH, Math.min(clampedMax, desiredHeight));
+  if (desiredHeight > maxH) {
+    requestPopupWindowHeight(desiredHeight, rect.top);
+  }
   popupResizeState.target.style.height = `${Math.round(newHeight)}px`;
 }
 
@@ -1270,6 +1357,8 @@ function stopPopupResize() {
     const gutter = 12;
     const available = window.innerHeight - gutter - Math.max(rect.top, gutter);
     popupResizeState.target.style.maxHeight = `${Math.max(200, Math.round(available))}px`;
+    const panelId = getPanelIdFromContent(popupResizeState.target);
+    savePanelHeight(panelId, rect.height);
   }
   popupResizeState = null;
   document.removeEventListener('mousemove', doPopupResize);

@@ -251,7 +251,6 @@ function stopResize(e) {
 
 if (!__skipOverlayResize) {
   on(rightHandle, 'pointerdown', (e) => startResize(e, 'right'));
-  // Bottom resize handle is intentionally not used on the main overlay.
   on(document, 'pointermove', doResize);
   on(document, 'pointerup', stopResize);
   on(document, 'pointercancel', stopResize);

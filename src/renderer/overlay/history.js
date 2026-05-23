@@ -3,6 +3,8 @@
 var conversationHistory = []; // History array
 var expandedHistoryKey = null; // Currently expanded history entry timestamp
 var pinnedTabs = new Set(); // Set of pinned tab IDs
+var savedHistoryIds = new Set();
+var savedHistoryEntries = [];
 
 const LEGACY_HISTORY_POPUP_PINNED = 'historyPopupPinned';
 const LEGACY_HISTORY_POPUP_LAST_INDEX = 'historyPopupLastIndex';
@@ -19,10 +21,17 @@ let clearHistoryBtn = document.getElementById('clearHistoryBtn');
 let historySearchInput = document.getElementById('historySearchInput');
 let historyPinnedOnlyToggle = document.getElementById('historyPinnedOnlyToggle');
 let historySearchMeta = document.getElementById('historySearchMeta');
+let historySavedSection = document.getElementById('historySavedSection');
+let historySavedHeaderBtn = document.getElementById('historySavedHeaderBtn');
+let historySavedHeaderLabel = document.getElementById('historySavedHeaderLabel');
+let historySavedCount = document.getElementById('historySavedCount');
+let historySavedBody = document.getElementById('historySavedBody');
+let historySavedList = document.getElementById('historySavedList');
 let historyElementsReady = false;
 let historySearchQuery = '';
 let historyPinnedOnly = false;
 let historySearchTimer = null;
+let savedHistoryExpanded = false;
 
 function normalizeSearchText(text) {
   return String(text || '')
@@ -47,6 +56,98 @@ function updateHistorySearchLabels() {
     const label = document.getElementById('historyPinnedOnlyLabel');
     if (label) label.textContent = t().historyPinnedOnlyLabel || label.textContent || '';
   }
+  if (historySavedHeaderLabel) {
+    historySavedHeaderLabel.textContent = t().historySavedHeader || 'Saved history';
+  }
+}
+
+function setSavedHistoryExpanded(nextValue) {
+  savedHistoryExpanded = !!nextValue;
+  if (!historySavedSection) return;
+  historySavedSection.classList.toggle('collapsed', !savedHistoryExpanded);
+  if (historySavedHeaderBtn) {
+    historySavedHeaderBtn.setAttribute('aria-expanded', savedHistoryExpanded ? 'true' : 'false');
+  }
+  if (historySavedBody) {
+    historySavedBody.setAttribute('aria-hidden', savedHistoryExpanded ? 'false' : 'true');
+  }
+}
+
+function updateSavedHistoryCount(countText) {
+  if (!historySavedCount) return;
+  historySavedCount.textContent = countText || '';
+  historySavedCount.style.display = countText ? 'inline-flex' : 'none';
+}
+
+async function loadSavedHistory() {
+  try {
+    const res = await invokeMain(IPC_CHANNELS.HISTORY_SAVED_GET);
+    if (res && res.success && Array.isArray(res.items)) {
+      savedHistoryIds = new Set(res.items.map((item) => item && item.id).filter((id) => typeof id === 'number'));
+      savedHistoryEntries = res.items
+        .filter((item) => item && typeof item.id === 'number')
+        .map((item) => ({
+          timestamp: item.id,
+          question: item.question || '',
+          answer: item.answer || '',
+          hasImage: !!item.hasImage
+        }));
+      renderHistory();
+    }
+  } catch (_) {}
+}
+
+function isHistorySaved(ts) {
+  return savedHistoryIds.has(ts);
+}
+
+async function saveHistoryEntry(entry) {
+  if (!entry) return false;
+  try {
+    const payload = {
+      timestamp: entry.timestamp,
+      question: entry.question,
+      answer: entry.answer,
+      hasImage: !!entry.hasImage,
+      language: currentLanguage,
+      gameContext: typeof currentGameContext === 'string' ? currentGameContext : ''
+    };
+    const res = await invokeMain(IPC_CHANNELS.HISTORY_SAVED_ADD, payload);
+    if (res && res.success) {
+      savedHistoryIds.add(entry.timestamp);
+      if (!savedHistoryEntries.some((item) => item && item.timestamp === entry.timestamp)) {
+        savedHistoryEntries.unshift({
+          timestamp: entry.timestamp,
+          question: entry.question || '',
+          answer: entry.answer || '',
+          hasImage: !!entry.hasImage
+        });
+      }
+      if (typeof status !== 'undefined' && status) {
+        status.textContent = t().historySaved || 'Saved.';
+      }
+      renderHistory();
+      return true;
+    }
+  } catch (_) {}
+  return false;
+}
+
+async function removeSavedHistoryEntry(entry) {
+  if (!entry) return false;
+  try {
+    const res = await invokeMain(IPC_CHANNELS.HISTORY_SAVED_REMOVE, { id: entry.timestamp });
+    if (res && res.success) {
+      savedHistoryIds.delete(entry.timestamp);
+      savedHistoryEntries = savedHistoryEntries.filter((item) => item && item.timestamp !== entry.timestamp);
+      if (typeof status !== 'undefined' && status) {
+        status.textContent = t().historyUnsaved || 'Removed.';
+      }
+      renderHistory();
+      return true;
+    }
+  } catch (_) {}
+  return false;
 }
 
 function updateHistorySearchMeta(count) {
@@ -61,6 +162,12 @@ function initHistoryElements() {
   historySearchInput = document.getElementById('historySearchInput');
   historyPinnedOnlyToggle = document.getElementById('historyPinnedOnlyToggle');
   historySearchMeta = document.getElementById('historySearchMeta');
+  historySavedSection = document.getElementById('historySavedSection');
+  historySavedHeaderBtn = document.getElementById('historySavedHeaderBtn');
+  historySavedHeaderLabel = document.getElementById('historySavedHeaderLabel');
+  historySavedCount = document.getElementById('historySavedCount');
+  historySavedBody = document.getElementById('historySavedBody');
+  historySavedList = document.getElementById('historySavedList');
   if (clearHistoryBtn && !clearHistoryBtn.__historyBound) {
     clearHistoryBtn.__historyBound = true;
     on(clearHistoryBtn, 'click', () => {
@@ -97,7 +204,14 @@ function initHistoryElements() {
       renderHistory();
     });
   }
+  if (historySavedHeaderBtn && !historySavedHeaderBtn.__historySavedBound) {
+    historySavedHeaderBtn.__historySavedBound = true;
+    on(historySavedHeaderBtn, 'click', () => {
+      setSavedHistoryExpanded(!savedHistoryExpanded);
+    });
+  }
   updateHistorySearchLabels();
+  setSavedHistoryExpanded(savedHistoryExpanded);
   historyElementsReady = true;
 }
 
@@ -481,119 +595,94 @@ function addToHistory(question, answer, hasImage = false) {
   renderHistory();
 }
 
-// Render history list
-function renderHistory() {
-  if (!historyElementsReady) initHistoryElements();
-  if (!historyList) return;
-  updateHistorySearchLabels();
-  historyList.textContent = '';
+function createHistoryItem(entry, index, pinnedSet, options = {}) {
+  const allowPin = options.allowPin !== false;
+  const date = new Date(entry.timestamp);
+  const timeStr = date.toLocaleString(currentLanguage === 'hu' ? 'hu-HU' : 'en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  const imageIndicator = entry.hasImage ? '📸 ' : '';
+  const pinIndicator = pinnedSet.has(entry.timestamp) ? '📌 ' : '';
+  const normalizedAnswer = (entry.answer || '').replace(/\s+/g, ' ').trim();
+  const previewAnswer = normalizedAnswer.length > 140 ? `${normalizedAnswer.slice(0, 140)}…` : normalizedAnswer;
+  const isExpanded = expandedHistoryKey === entry.timestamp;
 
-  const pinnedSet = new Set(pinnedHistoryBoxes.map((b) => b.ts));
-  const normalizedQuery = normalizeSearchText(historySearchQuery);
-  let entries = conversationHistory.slice();
+  const item = document.createElement('div');
+  item.className = `history-item${isExpanded ? ' active' : ''}`;
+  item.dataset.index = String(index);
 
-  if (historyPinnedOnly) {
-    entries = entries.filter((entry) => pinnedSet.has(entry.timestamp));
-  } else {
-    entries = entries.filter((entry) => !pinnedSet.has(entry.timestamp));
-  }
+  const questionEl = document.createElement('div');
+  questionEl.className = 'history-question';
+  const questionStrong = document.createElement('strong');
+  questionStrong.textContent = `❓ ${pinIndicator}${imageIndicator}${entry.question}`;
+  questionEl.appendChild(questionStrong);
 
-  if (normalizedQuery) {
-    entries = entries.filter((entry) => historyEntryMatches(entry, normalizedQuery));
-  }
+  const previewEl = document.createElement('div');
+  previewEl.className = 'history-preview';
+  previewEl.textContent = `💬 ${previewAnswer}`;
 
-  updateHistorySearchMeta(entries.length);
-
-  if (conversationHistory.length === 0) {
-    const empty = document.createElement('p');
-    empty.style.color = '#8ba3c0';
-    empty.style.textAlign = 'center';
-    empty.style.padding = '20px';
-    empty.textContent = t().noHistory;
-    historyList.appendChild(empty);
-    return;
-  }
-
-  if (entries.length === 0) {
-    const empty = document.createElement('p');
-    empty.style.color = '#8ba3c0';
-    empty.style.textAlign = 'center';
-    empty.style.padding = '20px';
-    empty.textContent = t().historySearchNoResults || t().noHistory;
-    historyList.appendChild(empty);
-    if (!__isDetachedPanelWindow && !isBlockWindow) {
-      syncPinnedHistoryWindows(historySearchQuery);
+  const metaEl = document.createElement('div');
+  metaEl.className = 'history-meta';
+  const timeEl = document.createElement('span');
+  timeEl.className = 'history-time';
+  timeEl.textContent = `🕒 ${timeStr}`;
+  const toggleEl = document.createElement('span');
+  toggleEl.className = 'history-toggle';
+  toggleEl.textContent = isExpanded ? t().historyHideDetails : t().historyShowDetails;
+  const actionsEl = document.createElement('div');
+  actionsEl.className = 'history-actions';
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'button';
+  saveBtn.className = 'history-action-btn';
+  const isSaved = isHistorySaved(entry.timestamp);
+  saveBtn.textContent = isSaved ? (t().historyUnsave || 'Remove') : (t().historySave || 'Save');
+  on(saveBtn, 'click', (ev) => {
+    ev.stopPropagation();
+    if (isHistorySaved(entry.timestamp)) {
+      removeSavedHistoryEntry(entry);
+    } else {
+      saveHistoryEntry(entry);
     }
-    return;
-  }
+  });
+  on(saveBtn, 'pointerdown', (ev) => {
+    ev.stopPropagation();
+  });
+  actionsEl.appendChild(saveBtn);
+  metaEl.appendChild(timeEl);
+  metaEl.appendChild(actionsEl);
+  metaEl.appendChild(toggleEl);
 
-  entries.forEach((entry, index) => {
-    const date = new Date(entry.timestamp);
-    const timeStr = date.toLocaleString(currentLanguage === 'hu' ? 'hu-HU' : 'en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    const imageIndicator = entry.hasImage ? '📸 ' : '';
-    const pinIndicator = pinnedSet.has(entry.timestamp) ? '📌 ' : '';
-    const normalizedAnswer = (entry.answer || '').replace(/\s+/g, ' ').trim();
-    const previewAnswer = normalizedAnswer.length > 140 ? `${normalizedAnswer.slice(0, 140)}…` : normalizedAnswer;
-    const isExpanded = expandedHistoryKey === entry.timestamp;
+  const fullEl = document.createElement('div');
+  fullEl.className = 'history-full';
+  const fullQLabel = document.createElement('div');
+  fullQLabel.className = 'history-full-label';
+  fullQLabel.textContent = t().historyPopupQuestion;
+  const fullQBlock = document.createElement('div');
+  fullQBlock.className = 'history-full-block';
+  fullQBlock.textContent = entry.question;
+  const fullALabel = document.createElement('div');
+  fullALabel.className = 'history-full-label';
+  fullALabel.textContent = t().historyPopupAnswer;
+  const fullABlock = document.createElement('div');
+  fullABlock.className = 'history-full-block';
+  fullABlock.textContent = entry.answer || '';
+  fullEl.appendChild(fullQLabel);
+  fullEl.appendChild(fullQBlock);
+  fullEl.appendChild(fullALabel);
+  fullEl.appendChild(fullABlock);
 
-    const item = document.createElement('div');
-    item.className = `history-item${isExpanded ? ' active' : ''}`;
-    item.dataset.index = String(index);
+  item.appendChild(questionEl);
+  item.appendChild(previewEl);
+  item.appendChild(metaEl);
+  item.appendChild(fullEl);
 
-    const questionEl = document.createElement('div');
-    questionEl.className = 'history-question';
-    const questionStrong = document.createElement('strong');
-    questionStrong.textContent = `❓ ${pinIndicator}${imageIndicator}${entry.question}`;
-    questionEl.appendChild(questionStrong);
+  let pullState = null;
+  let suppressClickUntil = 0;
 
-    const previewEl = document.createElement('div');
-    previewEl.className = 'history-preview';
-    previewEl.textContent = `💬 ${previewAnswer}`;
-
-    const metaEl = document.createElement('div');
-    metaEl.className = 'history-meta';
-    const timeEl = document.createElement('span');
-    timeEl.className = 'history-time';
-    timeEl.textContent = `🕒 ${timeStr}`;
-    const toggleEl = document.createElement('span');
-    toggleEl.className = 'history-toggle';
-    toggleEl.textContent = isExpanded ? t().historyHideDetails : t().historyShowDetails;
-    metaEl.appendChild(timeEl);
-    metaEl.appendChild(toggleEl);
-
-    const fullEl = document.createElement('div');
-    fullEl.className = 'history-full';
-    const fullQLabel = document.createElement('div');
-    fullQLabel.className = 'history-full-label';
-    fullQLabel.textContent = t().historyPopupQuestion;
-    const fullQBlock = document.createElement('div');
-    fullQBlock.className = 'history-full-block';
-    fullQBlock.textContent = entry.question;
-    const fullALabel = document.createElement('div');
-    fullALabel.className = 'history-full-label';
-    fullALabel.textContent = t().historyPopupAnswer;
-    const fullABlock = document.createElement('div');
-    fullABlock.className = 'history-full-block';
-    fullABlock.textContent = entry.answer || '';
-    fullEl.appendChild(fullQLabel);
-    fullEl.appendChild(fullQBlock);
-    fullEl.appendChild(fullALabel);
-    fullEl.appendChild(fullABlock);
-
-    item.appendChild(questionEl);
-    item.appendChild(previewEl);
-    item.appendChild(metaEl);
-    item.appendChild(fullEl);
-
-    // Click to expand, drag to "pull out" as pinned box
-    let pullState = null;
-    let suppressClickUntil = 0;
-
+  if (allowPin) {
     // When pulling a history entry out into a pinned window, keep the cursor
     // inside the pinned window header (not outside the top-left corner).
     const PULL_OUT_GRAB_OFFSET_X = 210;
@@ -719,11 +808,97 @@ function renderHistory() {
       pullState = null;
       popForceInteractive();
     });
+  }
 
-    on(item, 'click', () => {
-      if (Date.now() < suppressClickUntil) return;
-      toggleHistoryItem(entry.timestamp);
-    });
+  on(item, 'click', () => {
+    if (Date.now() < suppressClickUntil) return;
+    toggleHistoryItem(entry.timestamp);
+  });
+
+  return item;
+}
+
+// Render history list
+function renderHistory() {
+  if (!historyElementsReady) initHistoryElements();
+  if (!historyList) return;
+  updateHistorySearchLabels();
+  historyList.textContent = '';
+  if (historySavedList) historySavedList.textContent = '';
+
+  const pinnedSet = new Set(pinnedHistoryBoxes.map((b) => b.ts));
+  const normalizedQuery = normalizeSearchText(historySearchQuery);
+  let entries = conversationHistory.slice();
+  const savedEntriesAll = savedHistoryEntries.slice();
+  const savedEntries = normalizedQuery
+    ? savedEntriesAll.filter((entry) => historyEntryMatches(entry, normalizedQuery))
+    : savedEntriesAll;
+
+  if (historyPinnedOnly) {
+    entries = entries.filter((entry) => pinnedSet.has(entry.timestamp));
+  } else {
+    entries = entries.filter((entry) => !pinnedSet.has(entry.timestamp));
+  }
+
+  if (normalizedQuery) {
+    entries = entries.filter((entry) => historyEntryMatches(entry, normalizedQuery));
+  }
+
+  updateHistorySearchMeta(entries.length);
+
+  if (historySavedList) {
+    if (savedEntries.length === 0) {
+      const emptySaved = document.createElement('p');
+      emptySaved.style.color = '#8ba3c0';
+      emptySaved.style.textAlign = 'center';
+      emptySaved.style.padding = '12px 8px 6px';
+      emptySaved.textContent = t().historySavedEmpty || t().noHistory;
+      historySavedList.appendChild(emptySaved);
+    } else {
+      savedEntries.forEach((entry, index) => {
+        const item = createHistoryItem(entry, index, pinnedSet, { allowPin: false });
+        historySavedList.appendChild(item);
+      });
+    }
+  }
+
+  if (savedEntriesAll.length > 0) {
+    const visibleCount = savedEntries.length;
+    const totalCount = savedEntriesAll.length;
+    const countValue = normalizedQuery && visibleCount !== totalCount
+      ? `${visibleCount}/${totalCount}`
+      : String(totalCount);
+    const countTemplate = t().historySavedCount || '{count}';
+    updateSavedHistoryCount(countTemplate.replace('{count}', countValue));
+  } else {
+    updateSavedHistoryCount('');
+  }
+
+  if (conversationHistory.length === 0) {
+    const empty = document.createElement('p');
+    empty.style.color = '#8ba3c0';
+    empty.style.textAlign = 'center';
+    empty.style.padding = '20px';
+    empty.textContent = t().noHistory;
+    historyList.appendChild(empty);
+    return;
+  }
+
+  if (entries.length === 0) {
+    const empty = document.createElement('p');
+    empty.style.color = '#8ba3c0';
+    empty.style.textAlign = 'center';
+    empty.style.padding = '20px';
+    empty.textContent = t().historySearchNoResults || t().noHistory;
+    historyList.appendChild(empty);
+    if (!__isDetachedPanelWindow && !isBlockWindow) {
+      syncPinnedHistoryWindows(historySearchQuery);
+    }
+    return;
+  }
+
+  entries.forEach((entry, index) => {
+    const item = createHistoryItem(entry, index, pinnedSet, { allowPin: true });
     historyList.appendChild(item);
   });
 
@@ -733,9 +908,7 @@ function renderHistory() {
 }
 
 function toggleHistoryItem(timestamp) {
-  const entry = getHistoryEntryByTimestamp(timestamp);
-  if (!entry) return;
-  expandedHistoryKey = expandedHistoryKey === entry.timestamp ? null : entry.timestamp;
+  expandedHistoryKey = expandedHistoryKey === timestamp ? null : timestamp;
   renderHistory();
 }
 
@@ -744,6 +917,8 @@ localStorage.removeItem(LEGACY_HISTORY_POPUP_PINNED);
 localStorage.removeItem(LEGACY_HISTORY_POPUP_LAST_INDEX);
 
 if (!historyElementsReady) initHistoryElements();
+
+loadSavedHistory();
 
 // Export history
 window.exportHistory = function() {

@@ -4,6 +4,7 @@ const STORAGE_KEYS = {
   OVERLAY_SPECIALIZATION_LEVEL: 'overlaySpecializationLevel',
   OVERLAY_LAYOUT_MODE: 'overlayLayoutMode',
   OVERLAY_PANEL_ORDER: 'overlayPanelOrder',
+  OVERLAY_PANEL_HEIGHTS: 'overlayPanelHeights',
   OVERLAY_PERF_HUD: 'overlayPerfHud',
   OVERLAY_POSITION_X: 'overlayPositionX',
   OVERLAY_POSITION_Y: 'overlayPositionY',

@@ -99,7 +99,10 @@ const IPC_CHANNELS = {
   RESPONSE_BLOCK_DROP_RECTS: 'response-block-drop-rects',
   CLEANUP_OVERLAY: 'cleanup-overlay',
   HISTORY_GET: 'history-get',
-  HISTORY_SET: 'history-set'
+  HISTORY_SET: 'history-set',
+  HISTORY_SAVED_GET: 'history-saved-get',
+  HISTORY_SAVED_ADD: 'history-saved-add',
+  HISTORY_SAVED_REMOVE: 'history-saved-remove'
 };
 
 module.exports = {

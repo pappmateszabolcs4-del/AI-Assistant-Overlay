@@ -1,6 +1,11 @@
 const { IPC_CHANNELS } = require('../../shared/ipc-channels');
 const { STORAGE_KEYS } = require('../../shared/storage-keys');
 const { isDev } = require('../../shared/app-env');
+const {
+  loadSavedHistory,
+  addSavedHistoryEntry,
+  removeSavedHistoryEntry
+} = require('../services/saved-history-store');
 const { appendOverlayDebug } = require('../utils/overlay-debug-log');
 const { appendOverlayPerf } = require('../utils/overlay-perf-log');
 const { listTemplates, upsertTemplate, deleteTemplate } = require('../services/game-template-store');
@@ -585,6 +590,7 @@ function registerOverlayIpc(deps) {
         STORAGE_KEYS.OVERLAY_LAYOUT_MODE,
         STORAGE_KEYS.PINNED_TABS,
         STORAGE_KEYS.PINNED_HISTORY,
+        STORAGE_KEYS.OVERLAY_PANEL_HEIGHTS,
         STORAGE_KEYS.NOTE_PANEL_BOUNDS,
         STORAGE_KEYS.WINDOW_LAYOUTS,
         STORAGE_KEYS.BLOCK_LAYOUTS,
@@ -672,6 +678,32 @@ function registerOverlayIpc(deps) {
         true
       );
       return { success: true };
+    } catch (_) {
+      return { success: false };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.HISTORY_SAVED_GET, async () => {
+    try {
+      const existing = loadSavedHistory();
+      return { success: true, items: existing.items || [] };
+    } catch (_) {
+      return { success: false, items: [] };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.HISTORY_SAVED_ADD, async (_event, payload) => {
+    try {
+      return addSavedHistoryEntry(payload || {});
+    } catch (_) {
+      return { success: false };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.HISTORY_SAVED_REMOVE, async (_event, payload) => {
+    try {
+      const id = payload && payload.id;
+      return removeSavedHistoryEntry(id);
     } catch (_) {
       return { success: false };
     }
