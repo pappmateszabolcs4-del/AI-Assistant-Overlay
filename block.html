@@ -63,6 +63,21 @@
     </div>
   </div>
 
+  <div id="toastHost" class="toast-host"></div>
+
+  <div class="modal-overlay" id="errorModal">
+    <div class="modal-content error-modal">
+      <div class="modal-title" id="errorModalTitle"></div>
+      <div class="modal-message" id="errorModalMessage"></div>
+      <button class="modal-btn modal-btn-secondary" id="errorModalDetailsToggle" type="button"></button>
+      <div class="error-modal-details" id="errorModalDetails"></div>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-cancel" id="errorModalClose"></button>
+        <button class="modal-btn modal-btn-confirm" id="errorModalAction"></button>
+      </div>
+    </div>
+  </div>
+
   <script src="./src/renderer/overlay/ipc-helpers.js"></script>
   <script src="./src/renderer/overlay/boot.js"></script>
   <script src="./src/renderer/overlay/translations.js"></script>

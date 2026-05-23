@@ -108,6 +108,255 @@ function getUserFacingErrorMessage(rawError) {
   return '';
 }
 
+const toastHost = document.getElementById('toastHost');
+const errorModal = document.getElementById('errorModal');
+const errorModalTitle = document.getElementById('errorModalTitle');
+const errorModalMessage = document.getElementById('errorModalMessage');
+const errorModalDetails = document.getElementById('errorModalDetails');
+const errorModalDetailsToggle = document.getElementById('errorModalDetailsToggle');
+const errorModalClose = document.getElementById('errorModalClose');
+const errorModalAction = document.getElementById('errorModalAction');
+let lastToastKey = '';
+let lastToastAt = 0;
+let activeToastCount = 0;
+
+function retainToastInteractivity() {
+  if (!toastHost) return;
+  if (activeToastCount === 0) {
+    try { pushForceInteractive(); } catch (_) {}
+  }
+  activeToastCount += 1;
+}
+
+function releaseToastInteractivity() {
+  activeToastCount = Math.max(0, activeToastCount - 1);
+  if (activeToastCount === 0) {
+    try { popForceInteractive(); } catch (_) {}
+  }
+}
+
+function resolveErrorInfo(rawError) {
+  const msg = String(rawError || '').trim();
+  if (!msg) {
+    return { message: t().unknownError || 'Unknown error', code: 'unknown', critical: false };
+  }
+  const lower = msg.toLowerCase();
+  const isKeyMissing = msg === 'openai-not-initialized'
+    || msg === 'openai-key-missing'
+    || lower.includes('invalid_api_key')
+    || lower.includes('api key')
+    || lower.includes('api kulcs')
+    || (lower.includes('openai') && lower.includes('kulcs'))
+    || lower.includes('401');
+
+  if (isKeyMissing) {
+    return { message: t().errorOpenAiKey || msg, code: 'openai-key', critical: true };
+  }
+  if (lower.includes('rate limit') || lower.includes('429')) {
+    return { message: t().errorRateLimit || msg, code: 'rate-limit', critical: false };
+  }
+  if (lower.includes('insufficient_quota') || lower.includes('quota')) {
+    return { message: t().errorQuota || msg, code: 'quota', critical: false };
+  }
+  if (lower.includes('timeout') || lower.includes('timed out') || lower.includes('etimedout') || lower.includes('aborterror')) {
+    return { message: t().errorTimeout || msg, code: 'timeout', critical: false };
+  }
+  if (lower.includes('network') || lower.includes('econnreset') || lower.includes('enotfound') || lower.includes('fetch') || lower.includes('eai_again')) {
+    return { message: t().errorNetwork || msg, code: 'network', critical: false };
+  }
+
+  const friendly = getUserFacingErrorMessage(msg);
+  if (friendly) return { message: friendly, code: 'friendly', critical: false };
+
+  return { message: msg, code: 'raw', critical: false };
+}
+
+function openSettingsPanel() {
+  const headerBtn = document.querySelector('.collapsible-section[data-panel="settings"] .section-header');
+  if (!headerBtn || typeof toggleSection !== 'function') return false;
+  const section = headerBtn.parentElement;
+  const content = section ? (section.querySelector('.section-content') || section.__floatingContent) : null;
+  if (content && content.classList.contains('open')) return true;
+  try { toggleSection(new Event('click'), headerBtn); } catch (_) {}
+  return true;
+}
+
+function showToast(options) {
+  if (!toastHost) return;
+  const opts = options && typeof options === 'object' ? options : {};
+  const title = String(opts.title || '').trim();
+  const message = String(opts.message || '').trim();
+  if (!message) return;
+
+  const toastKey = `${title}::${message}`;
+  const now = Date.now();
+  if (toastKey === lastToastKey && now - lastToastAt < 1200) return;
+  lastToastKey = toastKey;
+  lastToastAt = now;
+
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${opts.kind || 'warn'}`;
+  retainToastInteractivity();
+  if (title) {
+    const titleEl = document.createElement('div');
+    titleEl.className = 'toast-title';
+    titleEl.textContent = title;
+    toast.appendChild(titleEl);
+  }
+  const messageEl = document.createElement('div');
+  messageEl.className = 'toast-message';
+  messageEl.textContent = message;
+  toast.appendChild(messageEl);
+
+  if (opts.actionLabel && typeof opts.onAction === 'function') {
+    const actions = document.createElement('div');
+    actions.className = 'toast-actions';
+    const btn = document.createElement('button');
+    btn.className = 'toast-btn';
+    btn.type = 'button';
+    btn.textContent = opts.actionLabel;
+    btn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      try { opts.onAction(); } catch (_) {}
+      toast.remove();
+    });
+    actions.appendChild(btn);
+    toast.appendChild(actions);
+  }
+
+  let timeoutId = null;
+  const cleanup = () => {
+    if (toast.__cleaned) return;
+    toast.__cleaned = true;
+    if (timeoutId) clearTimeout(timeoutId);
+    releaseToastInteractivity();
+    toast.remove();
+  };
+  toast.__dismiss = cleanup;
+
+  const scheduleTimeout = () => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => cleanup(), 6000);
+  };
+
+  scheduleTimeout();
+  toast.addEventListener('click', cleanup);
+  toast.addEventListener('mouseenter', () => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = null;
+  });
+  toast.addEventListener('mouseleave', scheduleTimeout);
+
+  toastHost.appendChild(toast);
+  const toasts = Array.from(toastHost.querySelectorAll('.toast'));
+  if (toasts.length > 3) {
+    toasts.slice(0, toasts.length - 3).forEach((el) => {
+      if (el && typeof el.__dismiss === 'function') el.__dismiss();
+      else el.remove();
+    });
+  }
+}
+
+function showErrorModal(payload, action) {
+  if (!errorModal) return;
+  const title = payload && payload.title ? payload.title : (t().errorTitle || 'Error');
+  const message = payload && payload.message ? payload.message : '';
+  const details = payload && payload.details ? String(payload.details) : '';
+  const allowDetails = !!devToolsEnabled;
+
+  if (errorModalTitle) errorModalTitle.textContent = title;
+  if (errorModalMessage) errorModalMessage.textContent = message;
+
+  if (errorModalDetailsToggle) {
+    errorModalDetailsToggle.style.display = allowDetails && details ? 'block' : 'none';
+    errorModalDetailsToggle.textContent = t().errorDetailsShow || 'Details';
+  }
+  if (errorModalDetails) {
+    errorModalDetails.textContent = allowDetails ? details : '';
+    errorModalDetails.classList.remove('active');
+  }
+
+  const closeModal = () => {
+    if (!errorModal.classList.contains('active')) return;
+    errorModal.classList.remove('active');
+    if (errorModal.__forceInteractive) {
+      errorModal.__forceInteractive = false;
+      try { popForceInteractive(); } catch (_) {}
+    }
+  };
+
+  if (errorModalClose) {
+    errorModalClose.textContent = t().errorActionClose || t().btnClose || 'Close';
+    errorModalClose.onclick = closeModal;
+  }
+  if (errorModalAction) {
+    if (action && action.label) {
+      errorModalAction.style.display = '';
+      errorModalAction.textContent = action.label;
+      errorModalAction.onclick = () => {
+        try { action.onAction && action.onAction(); } catch (_) {}
+        closeModal();
+      };
+    } else {
+      errorModalAction.style.display = 'none';
+      errorModalAction.onclick = null;
+    }
+  }
+
+  if (errorModalDetailsToggle && errorModalDetails) {
+    errorModalDetailsToggle.onclick = () => {
+      const expanded = errorModalDetails.classList.toggle('active');
+      errorModalDetailsToggle.textContent = expanded
+        ? (t().errorDetailsHide || 'Hide details')
+        : (t().errorDetailsShow || 'Details');
+    };
+  }
+
+  if (!errorModal.__forceInteractive) {
+    errorModal.__forceInteractive = true;
+    try { pushForceInteractive(); } catch (_) {}
+  }
+  errorModal.classList.add('active');
+  errorModal.onclick = (event) => {
+    if (event && event.target === errorModal) closeModal();
+  };
+}
+
+function showUserError(rawError, options = {}) {
+  const info = resolveErrorInfo(rawError);
+  const prefix = options.prefixKey && t()[options.prefixKey]
+    ? t()[options.prefixKey]
+    : (options.prefix || '');
+  if (status) status.textContent = `${prefix}${info.message}`;
+
+  const actionLabel = info.code === 'openai-key'
+    ? (t().errorActionOpenSettings || 'Open settings')
+    : null;
+  const action = info.code === 'openai-key' ? openSettingsPanel : null;
+
+  showToast({
+    title: t().errorTitle || 'Error',
+    message: info.message,
+    kind: info.critical ? 'error' : 'warn',
+    actionLabel,
+    onAction: action
+  });
+
+  if (info.critical) {
+    showErrorModal(
+      { title: t().errorTitle || 'Error', message: info.message, details: String(rawError || '') },
+      actionLabel ? { label: actionLabel, onAction: action } : null
+    );
+  }
+}
+
+function showUserWarning(message) {
+  const msg = String(message || '').trim();
+  if (!msg) return;
+  if (status) status.textContent = msg;
+  showToast({ title: t().errorTitle || 'Notice', message: msg, kind: 'warn' });
+}
+
 let visionAllowOnceKey = null;
 
 function normalizeVisionGameKey(value) {
@@ -623,7 +872,7 @@ async function saveFactFromModal() {
 
 async function ensureVisionConsent() {
   if (!readVisionEnabled()) {
-    status.textContent = t().visionConsentDisabled;
+    showUserWarning(t().visionConsentDisabled);
     return false;
   }
 
@@ -639,7 +888,7 @@ async function ensureVisionConsent() {
   const denyList = loadVisionList(STORAGE_KEYS.VISION_DENYLIST);
 
   if (isGameInVisionList(gameName, denyList)) {
-    status.textContent = (t().visionConsentDenied || '').replace('{game}', gameName || '');
+    showUserWarning((t().visionConsentDenied || '').replace('{game}', gameName || ''));
     return false;
   }
 
@@ -671,30 +920,60 @@ async function ensureVisionConsent() {
       persistVisionList(STORAGE_KEYS.VISION_DENYLIST, denyList);
       updateVisionSettingsUI();
     }
-    status.textContent = (t().visionConsentDenied || '').replace('{game}', gameName || '');
+    showUserWarning((t().visionConsentDenied || '').replace('{game}', gameName || ''));
     return false;
   }
 
-  if (t().visionConsentCanceled) status.textContent = t().visionConsentCanceled;
+  if (t().visionConsentCanceled) showUserWarning(t().visionConsentCanceled);
   return false;
 }
 
 // Editable Note Panel (separate window)
 const NOTE_PANEL_BOUNDS_KEY = STORAGE_KEYS.NOTE_PANEL_BOUNDS;
 const PANEL_HEIGHTS_KEY = STORAGE_KEYS.OVERLAY_PANEL_HEIGHTS;
+const PANEL_HEIGHTS_USER_KEY = STORAGE_KEYS.OVERLAY_PANEL_HEIGHTS_USER;
 let notePanelBounds = null; // { x, y, width, height } in screen coords
 let cachedPanelHeights = null;
+let cachedPanelHeightUsers = null;
+
+function parsePanelHeightsRaw(raw) {
+  try {
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (_) {
+    return {};
+  }
+}
 
 function loadPanelHeights() {
   if (cachedPanelHeights) return cachedPanelHeights;
-  try {
-    const raw = localStorage.getItem(PANEL_HEIGHTS_KEY);
-    const parsed = raw ? JSON.parse(raw) : {};
-    cachedPanelHeights = parsed && typeof parsed === 'object' ? parsed : {};
-  } catch (_) {
-    cachedPanelHeights = {};
-  }
+  cachedPanelHeights = parsePanelHeightsRaw(localStorage.getItem(PANEL_HEIGHTS_KEY));
   return cachedPanelHeights;
+}
+
+function loadPanelHeightUsers() {
+  if (cachedPanelHeightUsers) return cachedPanelHeightUsers;
+  cachedPanelHeightUsers = parsePanelHeightsRaw(localStorage.getItem(PANEL_HEIGHTS_USER_KEY));
+  return cachedPanelHeightUsers;
+}
+
+window.addEventListener('storage', (ev) => {
+  if (!ev || !ev.key) return;
+  if (ev.key === PANEL_HEIGHTS_KEY) {
+    cachedPanelHeights = parsePanelHeightsRaw(ev.newValue);
+  }
+  if (ev.key === PANEL_HEIGHTS_USER_KEY) {
+    cachedPanelHeightUsers = parsePanelHeightsRaw(ev.newValue);
+  }
+});
+
+function savePanelHeightUser(panelId, isUser) {
+  if (!panelId) return;
+  const next = { ...loadPanelHeightUsers(), [panelId]: !!isUser };
+  cachedPanelHeightUsers = next;
+  try {
+    localStorage.setItem(PANEL_HEIGHTS_USER_KEY, JSON.stringify(next));
+  } catch (_) {}
 }
 
 function savePanelHeight(panelId, height) {
@@ -704,6 +983,7 @@ function savePanelHeight(panelId, height) {
   try {
     localStorage.setItem(PANEL_HEIGHTS_KEY, JSON.stringify(next));
   } catch (_) {}
+  savePanelHeightUser(panelId, true);
 }
 
 function getSavedPanelHeight(panelId) {
@@ -727,10 +1007,19 @@ function applySavedPanelHeight(content) {
   const panelId = getPanelIdFromContent(content);
   const saved = getSavedPanelHeight(panelId);
   if (!Number.isFinite(saved)) return;
-  content.__userResizedHeight = true;
+  const userFlags = loadPanelHeightUsers();
+  const isUser = !!(panelId && userFlags && userFlags[panelId]);
+  const autoHeightCap = Math.round(window.innerHeight * 0.35);
+  const gutter = 12;
   const rect = content.getBoundingClientRect();
-  requestPopupWindowHeight(saved, rect.top);
-  content.style.height = `${Math.round(saved)}px`;
+  const maxAllowed = Math.max(200, getMaxOverlayHeight() - gutter - rect.top);
+  const clamped = isUser
+    ? Math.min(saved, maxAllowed)
+    : Math.min(saved, autoHeightCap, maxAllowed);
+  content.__userResizedHeight = isUser;
+  content.__desiredHeight = Math.round(clamped);
+  requestPopupWindowHeight(clamped, rect.top);
+  content.style.height = `${Math.round(clamped)}px`;
 }
 
 function loadNotePanelBounds() {
@@ -980,6 +1269,12 @@ function isInteractiveTarget(target) {
   if (confirmModal && confirmModal.classList.contains('active') && confirmModal.contains(el)) {
     return true;
   }
+  if (errorModal && errorModal.classList.contains('active') && errorModal.contains(el)) {
+    return true;
+  }
+  if (toastHost && toastHost.contains(el)) {
+    return true;
+  }
   if (visionConsentModal && visionConsentModal.classList.contains('active') && visionConsentModal.contains(el)) {
     return true;
   }
@@ -995,6 +1290,8 @@ function isInteractiveTarget(target) {
   if (overlayContainer && overlayContainer.contains(hit)) return true;
   if (floatingHost && floatingHost.contains(hit)) return true;
   if (confirmModal && confirmModal.contains(hit)) return true;
+  if (errorModal && errorModal.contains(hit)) return true;
+  if (toastHost && toastHost.contains(hit)) return true;
   if (visionConsentModal && visionConsentModal.contains(hit)) return true;
   if (factModal && factModal.contains(hit)) return true;
   return false;
@@ -1006,6 +1303,8 @@ function isPointOverInteractiveRect(clientX, clientY) {
   if (overlayContainer) roots.push(overlayContainer);
   if (floatingHost) roots.push(floatingHost);
   if (confirmModal) roots.push(confirmModal);
+  if (errorModal) roots.push(errorModal);
+  if (toastHost) roots.push(toastHost);
   if (visionConsentModal) roots.push(visionConsentModal);
   if (factModal) roots.push(factModal);
 
@@ -1158,6 +1457,9 @@ function positionPopup(content, headerBtn, isReposition = false) {
       content.style.height = 'auto';
     }
     const popupRect = content.getBoundingClientRect();
+    const desiredHeight = Number.isFinite(content.__desiredHeight)
+      ? content.__desiredHeight
+      : popupRect.height;
     const measuredWidth = popupRect.width;
     const gutter = 12;
     const gap = 8;
@@ -1169,10 +1471,14 @@ function positionPopup(content, headerBtn, isReposition = false) {
 
     const desiredTop = rect.bottom + gap;
     const maxHeightCap = getPopupMaxHeightPx();
+    const autoHeightCap = Math.round(window.innerHeight * 0.35);
+    const effectiveMaxHeight = content.__userResizedHeight
+      ? maxHeightCap
+      : Math.min(maxHeightCap, autoHeightCap);
     const spaceBelow = window.innerHeight - gutter - desiredTop;
     const spaceAbove = rect.top - gutter - gap;
-    const availableBelow = Math.max(0, Math.min(spaceBelow, maxHeightCap));
-    const availableAbove = Math.max(0, Math.min(spaceAbove, maxHeightCap));
+    const availableBelow = Math.max(0, Math.min(spaceBelow, effectiveMaxHeight));
+    const availableAbove = Math.max(0, Math.min(spaceAbove, effectiveMaxHeight));
 
     let placeBelow = true;
     if (!availableBelow && availableAbove) {
@@ -1183,14 +1489,14 @@ function positionPopup(content, headerBtn, isReposition = false) {
 
     let top = desiredTop;
     if (placeBelow) {
-      const maxHeight = availableBelow || Math.min(maxHeightCap, popupRect.height);
+      const maxHeight = availableBelow || Math.min(effectiveMaxHeight, desiredHeight);
       content.style.maxHeight = `${Math.round(maxHeight)}px`;
-      const actualHeight = Math.min(popupRect.height, maxHeight);
+      const actualHeight = Math.min(desiredHeight, maxHeight);
       content.style.height = `${Math.round(actualHeight)}px`;
       top = Math.max(gutter, desiredTop);
     } else {
-      const maxHeight = availableAbove || Math.min(maxHeightCap, popupRect.height);
-      const actualHeight = Math.min(popupRect.height, maxHeight);
+      const maxHeight = availableAbove || Math.min(effectiveMaxHeight, desiredHeight);
+      const actualHeight = Math.min(desiredHeight, maxHeight);
       content.style.maxHeight = `${Math.round(maxHeight)}px`;
       content.style.height = `${Math.round(actualHeight)}px`;
       top = Math.max(gutter, rect.top - gap - actualHeight);
@@ -1212,6 +1518,7 @@ function closePopup(content, section, toggleEl) {
   content.style.height = '';
   content.style.maxHeight = `${getPopupMaxHeightPx()}px`;
   content.__userResizedHeight = false;
+  content.__desiredHeight = null;
   content.style.display = 'none';
   content.__anchorBtn = null;
   if (toggleEl) toggleEl.classList.remove('open');
@@ -1348,6 +1655,7 @@ function doPopupResize(e) {
   if (desiredHeight > maxH) {
     requestPopupWindowHeight(desiredHeight, rect.top);
   }
+  popupResizeState.target.__desiredHeight = Math.round(newHeight);
   popupResizeState.target.style.height = `${Math.round(newHeight)}px`;
 }
 
@@ -1357,6 +1665,7 @@ function stopPopupResize() {
     const gutter = 12;
     const available = window.innerHeight - gutter - Math.max(rect.top, gutter);
     popupResizeState.target.style.maxHeight = `${Math.max(200, Math.round(available))}px`;
+    popupResizeState.target.__desiredHeight = Math.round(rect.height);
     const panelId = getPanelIdFromContent(popupResizeState.target);
     savePanelHeight(panelId, rect.height);
   }
@@ -1374,6 +1683,30 @@ document.querySelectorAll('.popup-resize-handle').forEach((handle) => {
 // Detached panel window: resize the BrowserWindow by dragging the handle.
 if (__isDetachedPanelWindow) {
   let detachedResizeState = null;
+  let detachedResizeRaf = null;
+
+  function persistDetachedPanelHeight() {
+    requestAnimationFrame(() => {
+      const section = document.querySelector('.collapsible-section.panel-active');
+      const content = section ? section.querySelector('.section-content') : null;
+      if (!content) return;
+      const rect = content.getBoundingClientRect();
+      if (!Number.isFinite(rect.height)) return;
+      content.__desiredHeight = Math.round(rect.height);
+      const panelId = getPanelIdFromContent(content) || (__panelId ? String(__panelId).toLowerCase() : null);
+      savePanelHeight(panelId, rect.height);
+    });
+  }
+
+  function scheduleDetachedHeightPersist() {
+    if (detachedResizeRaf) return;
+    detachedResizeRaf = requestAnimationFrame(() => {
+      detachedResizeRaf = null;
+      persistDetachedPanelHeight();
+    });
+  }
+
+  on(window, 'resize', scheduleDetachedHeightPersist);
 
   function evToScreenY(ev) {
     if (typeof ev.screenY === 'number') return Math.round(ev.screenY);
@@ -1419,6 +1752,7 @@ if (__isDetachedPanelWindow) {
     detachedResizeState = null;
     holdInteractive(800);
     popForceInteractive();
+    persistDetachedPanelHeight();
   }
 
   function cancelDetachedWindowResize(ev) {
@@ -1534,6 +1868,7 @@ if (__isDetachedPanelWindow) {
         edgeResizeState = null;
         holdInteractive(800);
         popForceInteractive();
+        persistDetachedPanelHeight();
       }
 
       function cancelEdgeResize(ev) {
@@ -2049,12 +2384,10 @@ async function askQuestion() {
       // Add to history
       addToHistory(text, result.response, !!currentScreenshot);
     } else {
-      const friendly = getUserFacingErrorMessage(result.error);
-      status.textContent = t().genericErrorPrefix + (friendly || result.error);
+      showUserError(result.error, { prefixKey: 'genericErrorPrefix' });
     }
   } catch (err) {
-    const friendly = getUserFacingErrorMessage(err && err.message);
-    status.textContent = t().apiErrorPrefix + (friendly || (err && err.message) || t().unknownError);
+    showUserError(err && err.message, { prefixKey: 'apiErrorPrefix' });
   } finally {
     askBtn.disabled = false;
     recordLatencySample(Date.now() - latencyStart, latencyHasImage);
@@ -2156,22 +2489,18 @@ on(micBtn, 'click', async () => {
               // Add to history
               addToHistory(transcript, processResult.response, !!currentScreenshot);
             } else {
-              const friendly = getUserFacingErrorMessage(processResult.error);
-              status.textContent = t().genericErrorPrefix + (friendly || processResult.error);
+              showUserError(processResult.error, { prefixKey: 'genericErrorPrefix' });
             }
           } catch (err) {
-            const friendly = getUserFacingErrorMessage(err && err.message);
-            status.textContent = t().apiErrorPrefix + (friendly || (err && err.message) || t().unknownError);
+            showUserError(err && err.message, { prefixKey: 'apiErrorPrefix' });
           } finally {
             recordLatencySample(Date.now() - latencyStart, latencyHasImage);
           }
         } else {
-          const friendly = getUserFacingErrorMessage(result.error);
-          status.textContent = t().transcriptionErrorPrefix + (friendly || result.error);
+          showUserError(result.error, { prefixKey: 'transcriptionErrorPrefix' });
         }
       } catch (err) {
-        const friendly = getUserFacingErrorMessage(err && err.message);
-        status.textContent = t().audioProcessingErrorPrefix + (friendly || (err && err.message) || t().unknownError);
+        showUserError(err && err.message, { prefixKey: 'audioProcessingErrorPrefix' });
         console.error('[MIC] Error:', err);
       } finally {
         micBtn.textContent = t().mic;
@@ -2182,8 +2511,7 @@ on(micBtn, 'click', async () => {
     mediaRecorder.start();
 
   } catch (err) {
-    const friendly = getUserFacingErrorMessage(err && err.message);
-    status.textContent = t().microphoneErrorPrefix + (friendly || (err && err.message) || t().unknownError);
+    showUserError(err && err.message, { prefixKey: 'microphoneErrorPrefix' });
     micBtn.textContent = t().mic;
     recording = false;
     console.error('[MIC] Permission error:', err);
@@ -2212,12 +2540,10 @@ on(screenshotBtn, 'click', async () => {
       screenshotInfo.textContent = t().screenshotReady;
       status.textContent = t().statusIdle;
     } else {
-      const friendly = getUserFacingErrorMessage(result.error);
-      status.textContent = t().screenshotError + (friendly || result.error);
+      showUserError(result.error, { prefix: t().screenshotError || '' });
     }
   } catch (err) {
-    const friendly = getUserFacingErrorMessage(err && err.message);
-    status.textContent = t().screenshotError + (friendly || (err && err.message) || t().unknownError);
+    showUserError(err && err.message, { prefix: t().screenshotError || '' });
   }
 });
 

@@ -160,7 +160,7 @@ Why: Make the system’s behavior visible and user-correctable.
 
 - [x] Resizable popup panels with per-panel height persistence
 - [x] History saved list header + toggle + per-item scroll for long answers
-- [ ] User-facing error UX for AI failures (clear, actionable)
+- [x] User-facing error UX for AI failures (clear, actionable)
 - [ ] Auto-raise specificity when "too generic" is detected
 - [ ] Guardrails check: UX does not expose or export cached metadata
 
@@ -189,13 +189,42 @@ Why: Make the system’s behavior visible and user-correctable.
 
 ### AI Vision
 
-- [ ] Video recording recognition
-  - [ ] Define the exact flow: capture (source), sampling rate, and retention policy
-  - [ ] Add a dedicated service module (services/vision-video.js) for video frame extraction
-  - [ ] Implement incremental frame-to-Vision analysis (batch or rolling window)
-  - [ ] Add UI controls (start/stop recording + status) with 8-language translations
-  - [ ] Add privacy and storage notes (explicit consent, local retention limits)
-  - [ ] Guardrails check: no persistent media archives, local-only retention
+- [ ] Vision video pipeline (end-to-end) — Max Quality (premium-only)
+  - [ ] Scope + constraints
+    - [ ] Define capture sources (game window only; exclude desktop by default)
+    - [ ] Sampling strategy (fps, keyframes, resize policy)
+    - [ ] Retention window (seconds, max frames, explicit purge behavior)
+  - [ ] Data handling + privacy
+    - [ ] Explicit consent per session + persistent toggle with UI indicator
+    - [ ] Local-only processing; no persistent media archives
+    - [ ] TTL + purge for all temporary frames and metadata
+    - [ ] Guardrails check: no background capture, no hidden recording
+  - [ ] Core services
+    - [ ] Create services/vision-video.js
+    - [ ] Frame extraction (rolling buffer) with bounded memory
+    - [ ] Incremental frame-to-Vision pipeline (batch or rolling window)
+    - [ ] Rate limiting + backpressure when Vision is slow
+  - [ ] Max Quality policy (premium tier)
+    - [ ] Premium-only; no standard/low-cost tier
+    - [ ] FPS: 6–8 (10s video => ~60–80 frames)
+    - [ ] Max frame cap: 120–150 per 10s window
+    - [ ] Resolution: 1280×720 default; 1600×900 when UI/tooltip clarity needed
+    - [ ] Vision timeout: 15–20s per pass
+    - [ ] Two-pass Vision: scene summary -> question-focused pass
+    - [ ] Aggregate evidence from frames into structured summary JSON
+    - [ ] Model: flagship Vision model (current target: GPT-4o)
+    - [ ] Strict guard + FACTS whitelist + high-risk fallback
+  - [ ] UI/UX
+    - [ ] Start/stop recording controls + status banner
+    - [ ] Error states (permissions, capture failure, timeouts)
+    - [ ] 8-language translations for all labels + messages
+  - [ ] Storage + diagnostics
+    - [ ] Local-only logs (dev-only) for frame counts and latency
+    - [ ] No media export; only per-session summaries
+  - [ ] Testing + verification
+    - [ ] Manual: start/stop, fps throttle, game switching
+    - [ ] Load test: long session with bounded memory
+    - [ ] Guardrails check: no persistent media archives, no remote storage
 
 ### Infra
 

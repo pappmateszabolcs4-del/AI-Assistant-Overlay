@@ -537,7 +537,7 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
 
   async function ensureVisionConsent() {
     if (!readVisionEnabled()) {
-      if (status) status.textContent = t().visionConsentDisabled;
+      showUserWarning(t().visionConsentDisabled);
       return false;
     }
 
@@ -553,7 +553,7 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     const denyList = loadVisionList(STORAGE_KEYS.VISION_DENYLIST);
 
     if (isGameInList(gameName, denyList)) {
-      if (status) status.textContent = (t().visionConsentDenied || '').replace('{game}', gameName || '');
+      showUserWarning((t().visionConsentDenied || '').replace('{game}', gameName || ''));
       return false;
     }
 
@@ -585,11 +585,11 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
         persistVisionList(STORAGE_KEYS.VISION_DENYLIST, denyList);
         updateVisionSettingsUI();
       }
-      if (status) status.textContent = (t().visionConsentDenied || '').replace('{game}', gameName || '');
+      showUserWarning((t().visionConsentDenied || '').replace('{game}', gameName || ''));
       return false;
     }
 
-    if (status && t().visionConsentCanceled) status.textContent = t().visionConsentCanceled;
+    if (t().visionConsentCanceled) showUserWarning(t().visionConsentCanceled);
     return false;
   }
   function getTemplateOverrideContext() {
@@ -807,6 +807,232 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     }
 
     return '';
+  }
+
+  const toastHost = document.getElementById('toastHost');
+  const errorModal = document.getElementById('errorModal');
+  const errorModalTitle = document.getElementById('errorModalTitle');
+  const errorModalMessage = document.getElementById('errorModalMessage');
+  const errorModalDetails = document.getElementById('errorModalDetails');
+  const errorModalDetailsToggle = document.getElementById('errorModalDetailsToggle');
+  const errorModalClose = document.getElementById('errorModalClose');
+  const errorModalAction = document.getElementById('errorModalAction');
+  let lastToastKey = '';
+  let lastToastAt = 0;
+
+  function resolveErrorInfo(rawError) {
+    const msg = String(rawError || '').trim();
+    if (!msg) {
+      return { message: t().unknownError || 'Unknown error', code: 'unknown', critical: false };
+    }
+    const lower = msg.toLowerCase();
+    const isKeyMissing = msg === 'openai-not-initialized'
+      || msg === 'openai-key-missing'
+      || lower.includes('invalid_api_key')
+      || lower.includes('api key')
+      || lower.includes('api kulcs')
+      || (lower.includes('openai') && lower.includes('kulcs'))
+      || lower.includes('401');
+
+    if (isKeyMissing) {
+      return { message: t().errorOpenAiKey || msg, code: 'openai-key', critical: true };
+    }
+    if (lower.includes('rate limit') || lower.includes('429')) {
+      return { message: t().errorRateLimit || msg, code: 'rate-limit', critical: false };
+    }
+    if (lower.includes('insufficient_quota') || lower.includes('quota')) {
+      return { message: t().errorQuota || msg, code: 'quota', critical: false };
+    }
+    if (lower.includes('timeout') || lower.includes('timed out') || lower.includes('etimedout') || lower.includes('aborterror')) {
+      return { message: t().errorTimeout || msg, code: 'timeout', critical: false };
+    }
+    if (lower.includes('network') || lower.includes('econnreset') || lower.includes('enotfound') || lower.includes('fetch') || lower.includes('eai_again')) {
+      return { message: t().errorNetwork || msg, code: 'network', critical: false };
+    }
+
+    const friendly = getUserFacingErrorMessage(msg);
+    if (friendly) return { message: friendly, code: 'friendly', critical: false };
+
+    return { message: msg, code: 'raw', critical: false };
+  }
+
+  function canOpenSettingsPanel() {
+    return !!document.querySelector('.collapsible-section[data-panel="settings"] .section-header');
+  }
+
+  function showToast(options) {
+    if (!toastHost) return;
+    const opts = options && typeof options === 'object' ? options : {};
+    const title = String(opts.title || '').trim();
+    const message = String(opts.message || '').trim();
+    if (!message) return;
+
+    const toastKey = `${title}::${message}`;
+    const now = Date.now();
+    if (toastKey === lastToastKey && now - lastToastAt < 1200) return;
+    lastToastKey = toastKey;
+    lastToastAt = now;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${opts.kind || 'warn'}`;
+    if (title) {
+      const titleEl = document.createElement('div');
+      titleEl.className = 'toast-title';
+      titleEl.textContent = title;
+      toast.appendChild(titleEl);
+    }
+    const messageEl = document.createElement('div');
+    messageEl.className = 'toast-message';
+    messageEl.textContent = message;
+    toast.appendChild(messageEl);
+
+    if (opts.actionLabel && typeof opts.onAction === 'function') {
+      const actions = document.createElement('div');
+      actions.className = 'toast-actions';
+      const btn = document.createElement('button');
+      btn.className = 'toast-btn';
+      btn.type = 'button';
+      btn.textContent = opts.actionLabel;
+      btn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        try { opts.onAction(); } catch (_) {}
+        toast.remove();
+      });
+      actions.appendChild(btn);
+      toast.appendChild(actions);
+    }
+
+    let timeoutId = null;
+    const cleanup = () => {
+      if (toast.__cleaned) return;
+      toast.__cleaned = true;
+      if (timeoutId) clearTimeout(timeoutId);
+      toast.remove();
+    };
+    toast.__dismiss = cleanup;
+
+    const scheduleTimeout = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => cleanup(), 6000);
+    };
+
+    scheduleTimeout();
+    toast.addEventListener('click', cleanup);
+    toast.addEventListener('mouseenter', () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = null;
+    });
+    toast.addEventListener('mouseleave', scheduleTimeout);
+
+    toastHost.appendChild(toast);
+    const toasts = Array.from(toastHost.querySelectorAll('.toast'));
+    if (toasts.length > 3) {
+      toasts.slice(0, toasts.length - 3).forEach((el) => {
+        if (el && typeof el.__dismiss === 'function') el.__dismiss();
+        else el.remove();
+      });
+    }
+  }
+
+  function showErrorModal(payload, action) {
+    if (!errorModal) return;
+    let allowDetails = true;
+    try {
+      const { isDev } = require('./src/shared/app-env');
+      allowDetails = !!(isDev && isDev());
+    } catch (_) {
+      allowDetails = true;
+    }
+
+    const title = payload && payload.title ? payload.title : (t().errorTitle || 'Error');
+    const message = payload && payload.message ? payload.message : '';
+    const details = payload && payload.details ? String(payload.details) : '';
+
+    if (errorModalTitle) errorModalTitle.textContent = title;
+    if (errorModalMessage) errorModalMessage.textContent = message;
+
+    if (errorModalDetailsToggle) {
+      errorModalDetailsToggle.style.display = allowDetails && details ? 'block' : 'none';
+      errorModalDetailsToggle.textContent = t().errorDetailsShow || 'Details';
+    }
+    if (errorModalDetails) {
+      errorModalDetails.textContent = allowDetails ? details : '';
+      errorModalDetails.classList.remove('active');
+    }
+
+    if (errorModalClose) {
+      errorModalClose.textContent = t().errorActionClose || t().btnClose || 'Close';
+      errorModalClose.onclick = () => errorModal.classList.remove('active');
+    }
+    if (errorModalAction) {
+      if (action && action.label) {
+        errorModalAction.style.display = '';
+        errorModalAction.textContent = action.label;
+        errorModalAction.onclick = () => {
+          try { action.onAction && action.onAction(); } catch (_) {}
+          errorModal.classList.remove('active');
+        };
+      } else {
+        errorModalAction.style.display = 'none';
+        errorModalAction.onclick = null;
+      }
+    }
+
+    if (errorModalDetailsToggle && errorModalDetails) {
+      errorModalDetailsToggle.onclick = () => {
+        const expanded = errorModalDetails.classList.toggle('active');
+        errorModalDetailsToggle.textContent = expanded
+          ? (t().errorDetailsHide || 'Hide details')
+          : (t().errorDetailsShow || 'Details');
+      };
+    }
+
+    errorModal.classList.add('active');
+  }
+
+  function showUserError(rawError, options = {}) {
+    const info = resolveErrorInfo(rawError);
+    const prefix = options.prefixKey && t()[options.prefixKey]
+      ? t()[options.prefixKey]
+      : (options.prefix || '');
+    if (status) status.textContent = `${prefix}${info.message}`;
+
+    const canSettings = canOpenSettingsPanel();
+    const actionLabel = info.code === 'openai-key' && canSettings
+      ? (t().errorActionOpenSettings || 'Open settings')
+      : null;
+    const action = info.code === 'openai-key' && canSettings
+      ? () => {
+        try {
+          const headerBtn = document.querySelector('.collapsible-section[data-panel="settings"] .section-header');
+          if (headerBtn && typeof toggleSection === 'function') {
+            toggleSection(new Event('click'), headerBtn);
+          }
+        } catch (_) {}
+      }
+      : null;
+
+    showToast({
+      title: t().errorTitle || 'Error',
+      message: info.message,
+      kind: info.critical ? 'error' : 'warn',
+      actionLabel,
+      onAction: action
+    });
+
+    if (info.critical) {
+      showErrorModal(
+        { title: t().errorTitle || 'Error', message: info.message, details: String(rawError || '') },
+        actionLabel ? { label: actionLabel, onAction: action } : null
+      );
+    }
+  }
+
+  function showUserWarning(message) {
+    const msg = String(message || '').trim();
+    if (!msg) return;
+    if (status) status.textContent = msg;
+    showToast({ title: t().errorTitle || 'Notice', message: msg, kind: 'warn' });
   }
 
   function containsForbiddenContent(text) {
@@ -1083,12 +1309,10 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
         speakResponse(result.response);
         if (typeof addToHistory === 'function') addToHistory(text, result.response, !!currentScreenshot);
       } else {
-        const friendly = getUserFacingErrorMessage(result.error);
-        status.textContent = t().genericErrorPrefix + (friendly || result.error);
+        showUserError(result.error, { prefixKey: 'genericErrorPrefix' });
       }
     } catch (err) {
-      const friendly = getUserFacingErrorMessage(err && err.message);
-      status.textContent = t().apiErrorPrefix + (friendly || (err && err.message) || t().unknownError);
+      showUserError(err && err.message, { prefixKey: 'apiErrorPrefix' });
     } finally {
       askBtn.disabled = false;
     }
@@ -1482,25 +1706,17 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
                   if (responseContainer) responseContainer.style.display = 'block';
                   speakResponse(processResult.response);
                   if (typeof addToHistory === 'function') addToHistory(transcript, processResult.response, !!currentScreenshot);
-                } else if (status) {
-                  const friendly = getUserFacingErrorMessage(processResult.error);
-                  status.textContent = t().genericErrorPrefix + (friendly || processResult.error);
+                  } else {
+                    showUserError(processResult.error, { prefixKey: 'genericErrorPrefix' });
+                  }
+                } catch (err) {
+                  showUserError(err && err.message, { prefixKey: 'apiErrorPrefix' });
                 }
-              } catch (err) {
-                if (status) {
-                  const friendly = getUserFacingErrorMessage(err && err.message);
-                  status.textContent = t().apiErrorPrefix + (friendly || (err && err.message) || t().unknownError);
-                }
+              } else {
+                showUserError(result.error, { prefixKey: 'transcriptionErrorPrefix' });
               }
-            } else if (status) {
-              const friendly = getUserFacingErrorMessage(result.error);
-              status.textContent = t().transcriptionErrorPrefix + (friendly || result.error);
-            }
-          } catch (err) {
-            if (status) {
-              const friendly = getUserFacingErrorMessage(err && err.message);
-              status.textContent = t().audioProcessingErrorPrefix + (friendly || (err && err.message) || t().unknownError);
-            }
+            } catch (err) {
+              showUserError(err && err.message, { prefixKey: 'audioProcessingErrorPrefix' });
           } finally {
             micBtn.textContent = t().mic;
             recording = false;
@@ -1509,10 +1725,7 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
 
         mediaRecorder.start();
       } catch (err) {
-        if (status) {
-          const friendly = getUserFacingErrorMessage(err && err.message);
-          status.textContent = t().microphoneErrorPrefix + (friendly || (err && err.message) || t().unknownError);
-        }
+        showUserError(err && err.message, { prefixKey: 'microphoneErrorPrefix' });
         micBtn.textContent = t().mic;
         recording = false;
       }
@@ -1545,15 +1758,11 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
           if (clearImageBtn) clearImageBtn.style.display = 'block';
           if (screenshotInfo) screenshotInfo.textContent = t().screenshotReady;
           if (status) status.textContent = t().statusIdle;
-        } else if (status) {
-          const friendly = getUserFacingErrorMessage(result.error);
-          status.textContent = t().screenshotError + (friendly || result.error);
+        } else {
+          showUserError(result.error, { prefix: t().screenshotError || '' });
         }
       } catch (err) {
-        if (status) {
-          const friendly = getUserFacingErrorMessage(err && err.message);
-          status.textContent = t().screenshotError + (friendly || (err && err.message) || t().unknownError);
-        }
+        showUserError(err && err.message, { prefix: t().screenshotError || '' });
       }
     });
   }

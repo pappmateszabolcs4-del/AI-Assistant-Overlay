@@ -6,6 +6,37 @@
 
 ---
 
+## [1.0.58] - 2026-05-23 (Phase 6: Floating Panel Height Persistence)
+
+### ✅ Added
+
+- Detached panel resize now persists back to docked popup height.
+- Panel height cache now refreshes across windows when detached updates storage.
+
+### 🔧 Changed
+
+- Auto-open popup height cap set to 35% while respecting manual resize persistence.
+- Docked popup sizing now honors updated desired height after window resizes.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+## [1.0.57] - 2026-05-23 (Phase 6: User-facing Error UX)
+
+### ✅ Added
+
+- User-facing error toasts for AI/network/timeout issues with actionable messaging.
+- Critical error modal with dev-only details toggle.
+
+### 🔧 Changed
+
+- Vision consent and AI failures now route through the unified error UX.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
 ## [1.0.56] - 2026-05-23 (Phase 6: History + Panel Resize UX)
 
 ### ✅ Added

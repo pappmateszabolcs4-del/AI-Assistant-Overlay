@@ -1597,6 +1597,113 @@
       background: rgba(91, 158, 255, 0.35);
     }
 
+    .modal-btn-secondary {
+      width: 100%;
+      margin-bottom: 10px;
+      background: rgba(120, 140, 170, 0.18);
+      color: #cdd8e8;
+      border: 1px solid rgba(120, 140, 170, 0.35);
+    }
+
+    .modal-btn-secondary:hover {
+      background: rgba(120, 140, 170, 0.3);
+    }
+
+    .error-modal .modal-message {
+      margin-bottom: 12px;
+    }
+
+    .error-modal-details {
+      display: none;
+      margin: 8px 0 12px;
+      padding: 10px 12px;
+      background: rgba(12, 16, 24, 0.75);
+      border: 1px solid rgba(120, 140, 170, 0.25);
+      border-radius: 10px;
+      color: #c7d4e8;
+      font-size: 0.8em;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      max-height: 180px;
+      overflow: auto;
+    }
+
+    .error-modal-details.active {
+      display: block;
+    }
+
+    .toast-host {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 9500;
+      pointer-events: none;
+    }
+
+    .toast {
+      min-width: 240px;
+      max-width: 360px;
+      padding: 12px 14px;
+      background: rgba(18, 24, 36, 0.92);
+      border-radius: 12px;
+      border: 1px solid rgba(120, 140, 170, 0.35);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      color: #f5f7fa;
+      display: grid;
+      gap: 6px;
+      pointer-events: auto;
+      animation: toast-in 0.2s ease;
+    }
+
+    .toast.toast-error {
+      border-color: rgba(255, 110, 110, 0.6);
+    }
+
+    .toast.toast-warn {
+      border-color: rgba(255, 196, 100, 0.6);
+    }
+
+    .toast-title {
+      font-size: 0.9em;
+      font-weight: 600;
+      color: #f5f7fa;
+    }
+
+    .toast-message {
+      font-size: 0.85em;
+      color: #c7d4e8;
+      line-height: 1.4;
+    }
+
+    .toast-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .toast-btn {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(91, 158, 255, 0.45);
+      background: rgba(91, 158, 255, 0.18);
+      color: #f5f7fa;
+      font-size: 0.8em;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .toast-btn:hover {
+      background: rgba(91, 158, 255, 0.32);
+      border-color: rgba(91, 158, 255, 0.6);
+    }
+
+    @keyframes toast-in {
+      from { transform: translateY(6px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
     .modal-btn-danger {
       background: rgba(255, 100, 100, 0.18);
       color: #ffb3b3;

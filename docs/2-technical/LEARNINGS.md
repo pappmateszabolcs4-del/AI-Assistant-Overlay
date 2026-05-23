@@ -798,6 +798,7 @@ Initial diagnostics seemed fine:
 
 But Discord status meter showed: **Telekom - PROBLEMS 🔴** and **Discord - PROBLEMS 🔴**
 
+---
 **Root Cause**: NOT network-related, but **GPU/system-level resource hogging**
 
 ### The Culprit: Aggressive Chromium Flags
@@ -1095,6 +1096,35 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 
 #### Backups
 - Created via scripts/make-backup.ps1 before changes.
+- Never auto-delete or prompt-delete anything from backups/
+
+#### Verification
+- Tests: Not run (not requested).
+
+#### Follow-ups
+- TODO: None.
+
+---
+
+### 2026-05-23 (Night)
+
+#### Summary
+- What changed: Added persistent floating panel height behavior with auto cap, cross-window storage refresh, and detached resize syncing back to docked popups.
+- Why: Docked popups were reverting to stale sizes after detach/dock or window resize.
+- Impact: Panel heights now remain consistent across detach, resize, and dock flows.
+
+#### Details
+- Implementation notes: Stored user-resize flag separately, persisted desired height on resize, and refreshed local caches on storage events across windows.
+- Edge cases: Detached window resizes via OS frame now persist to docked panel sizes.
+
+#### Files touched
+- [src/shared/storage-keys.js](src/shared/storage-keys.js)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes
 - Never auto-delete or prompt-delete anything from backups/
 
 #### Verification
@@ -2016,6 +2046,39 @@ showConfirmModal(t().confirmTitle, t().resetLayout, callback, t().btnReset);
 - Properly translated in all 8 languages
 
 **Lesson**: Generic modal dialogs need context-specific button text to avoid confusion.
+
+---
+
+### 2026-05-23 (Night)
+
+#### Summary
+- What changed: Added error toasts + critical error modal (dev-only details) for AI failures; wired across overlay/block windows; added translations.
+- Why: Provide clear, actionable, game-safe error UX.
+- Impact: Users get consistent status/toast/modal guidance for AI/network/timeout/key issues.
+
+#### Details
+- Implementation notes: Error classification maps network/timeout/rate-limit/quota/key errors; Vision consent warnings use toast; settings shortcut for missing key.
+- Edge cases: Block windows omit settings action when panel unavailable; details toggle only in dev builds.
+
+#### Files touched
+- [overlay.html](overlay.html)
+- [block.html](block.html)
+- [overlay.css](overlay.css)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/renderer/overlay/block-app.js](src/renderer/overlay/block-app.js)
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Not created (not requested).
+
+#### Verification
+- Not run (not requested).
+
+#### Follow-ups
+- TODO: None.
 
 #### Issue 12: Content Filter Gaming-Awareness
 **Problem**: Filter blocked "kill", "weapon", "bomb" even in gaming context (Minecraft, FPS games)  
