@@ -277,9 +277,10 @@ const ENTITY_STOP_WORDS = {
     'fontos', 'fontosabb', 'prioritas', 'prioritaskent', 'koncentralj', 'koncentralt',
     'hasznalj', 'hasznalat', 'hasznalata', 'valaszd', 'valassz', 'valasztas',
     'karaktervalasztas', 'fegyver', 'fegyverek', 'felszereles', 'felszerelesek',
-    'taktikai', 'poziciovaltas', 'pozicionalas', 'csapatjatek', 'kessegek', 'fejlesztes', 'fejlesztese',
-    'ellenseg', 'ellensegek', 'tamadas', 'vedekezes', 'tamogatas', 'buffok', 'debuffok',
-    'kezdj', 'hasznald', 'probaj', 'strategiai', 'harci', 'turelem', 'kombinalt', 'egyszeru'
+    'taktikai', 'pozicio', 'poziciovaltas', 'pozicionalas', 'csapatjatek', 'csapatokban', 'kessegek', 'fejlesztes', 'fejlesztese',
+    'ellenseg', 'ellensegek', 'tamadas', 'tamadasi', 'vedekezes', 'tamogatas', 'buffok', 'debuffok',
+    'kezdj', 'hasznald', 'probaj', 'strategiai', 'harci', 'turelem', 'kombinalt', 'egyszeru',
+    'figyeld', 'eloszor', 'celprioritas', 'csoportositva', 'gyogyito', 'palyaszintu'
   ]
 };
 
@@ -471,6 +472,18 @@ const ENTITY_WHITELIST_TEMPLATES = {
   }
 };
 
+const ENTITY_REDACTION_TEXT = {
+  en: 'unknown entity',
+  hu: 'ismeretlen entitas',
+  de: 'unbekannte Entitaet',
+  ru: 'неизвестная сущность',
+  fr: 'entite inconnue',
+  zh: '未知实体',
+  es: 'entidad desconocida',
+  it: 'entita sconosciuta',
+  pl: 'nieznana jednostka'
+};
+
 const GAME_CONTEXT_PROMPTS = {
   en: '\n\n🎮 GAME CONTEXT DETECTED: The user is currently playing "{game}". Focus ALL your answers specifically on this game. Provide game-specific tips, strategies, item names, boss mechanics, builds, and gameplay advice that are ONLY relevant to "{game}". Do NOT give generic gaming advice or information about other games. Stay strictly within the context of "{game}". If the user asks what game they are playing, answer with "{game}" and do not say the game is unknown.',
   hu: '\n\n🎮 JATEK KONTEXTUS: A felhasznalo jelenleg a(z) "{game}" jatekkal jatszik. MINDEN valaszod erre a jatekra fokuszaljon. Adj jatekspecifikus tippeket, strategiakat, item neveket, boss mechanikakat, buildeket es jatekmenet tanacsokat, amelyek csak a(z) "{game}" jatekra relevansak. Ne adj altalanos jatek tanacsokat es ne emlits mas jatekokat. Maradj szigoruan a "{game}" kontextusaban. Ha a felhasznalo rakerdez, milyen jatekkal jatszik, valaszolj: "{game}", es ne mondd, hogy ismeretlen.',
@@ -620,6 +633,11 @@ function getEntityWhitelistTemplates(lang) {
   return ENTITY_WHITELIST_TEMPLATES[language] || ENTITY_WHITELIST_TEMPLATES[DEFAULT_LANG];
 }
 
+function getEntityRedactionText(lang) {
+  const language = normalizeLang(lang);
+  return ENTITY_REDACTION_TEXT[language] || ENTITY_REDACTION_TEXT[DEFAULT_LANG];
+}
+
 function getGameContextPromptText(lang, gameName) {
   if (!gameName) return '';
   const language = normalizeLang(lang);
@@ -761,6 +779,7 @@ module.exports = {
   getAntiHallucinationText,
   getKnowledgeTemplates,
   getEntityWhitelistTemplates,
+  getEntityRedactionText,
   getGameContextPromptText,
   getTemplatePromptLabels,
   getTemplateSectionLabels,

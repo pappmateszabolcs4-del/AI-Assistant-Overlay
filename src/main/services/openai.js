@@ -45,6 +45,7 @@ const {
   getUserMentionableMarkers,
   getEntityMarkerPatterns,
   getEntityStopWords,
+  getEntityRedactionText,
   getHighRiskIntents,
   getHighRiskPatterns,
   getTroubleshootPatterns,
@@ -436,13 +437,31 @@ function createOpenAIService(deps) {
 
   function normalizeNameToken(value) {
     return String(value || '')
+      .normalize('NFD')
+      .replace(/\p{M}+/gu, '')
       .toLowerCase()
       .replace(/[^\p{L}\p{N}]+/gu, '')
       .trim();
   }
 
+  function normalizeCandidateTokens(candidate) {
+    return String(candidate || '')
+      .split(/\s+/g)
+      .map(normalizeNameToken)
+      .filter(Boolean);
+  }
+
   function escapeRegExp(value) {
     return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function getCandidateCounts(text, candidate) {
+    const escaped = escapeRegExp(candidate);
+    const wordPattern = new RegExp(`\\b${escaped}\\b`, 'g');
+    const startPattern = new RegExp(`(^|[.!?]\\s+)["'\(]*${escaped}\\b`, 'g');
+    const count = (text.match(wordPattern) || []).length;
+    const starts = (text.match(startPattern) || []).length;
+    return { count, starts };
   }
 
   function extractPotentialNames(text) {
@@ -458,29 +477,65 @@ function createOpenAIService(deps) {
     return Array.from(candidates).slice(0, 25);
   }
 
+  function isEntityLikeCandidate(text, candidate) {
+    if (!candidate) return false;
+    const escaped = escapeRegExp(candidate);
+    const quotedPattern = new RegExp(`["']${escaped}["']`);
+    if (quotedPattern.test(text)) return true;
+    const counts = getCandidateCounts(text, candidate);
+    const sentenceStartOnly = counts.count > 0 && counts.count === counts.starts;
+    if (counts.count === 1 && sentenceStartOnly) return false;
+    if (candidate.includes(' ')) return true;
+    if (/[0-9]/.test(candidate)) return true;
+    if (/[-/]/.test(candidate)) return counts.count >= 2;
+    return counts.count >= 2;
+  }
+
   function enforceEntityWhitelist(answer, allowedNames, lang) {
     const allowed = Array.isArray(allowedNames) ? allowedNames : [];
-    if (!allowed.length) return { adjusted: answer, violated: false, offenders: [] };
+    if (!allowed.length) return { adjusted: answer, violated: false, offenders: [], suspects: [] };
     const normalizedAllowed = new Set(allowed.map(normalizeNameToken).filter(Boolean));
     const stopWords = new Set(getEntityStopWords(lang));
-    const sentenceStartOnly = (text, candidate) => {
-      const escaped = escapeRegExp(candidate);
-      const wordPattern = new RegExp(`\\b${escaped}\\b`, 'g');
-      const startPattern = new RegExp(`(^|[.!?]\\s+)["'\(]*${escaped}\\b`, 'g');
-      const total = (text.match(wordPattern) || []).length;
-      const starts = (text.match(startPattern) || []).length;
-      return total > 0 && total === starts;
+    const redactionText = getEntityRedactionText(lang);
+    const isSingleStartOnly = (text, candidate) => {
+      const counts = getCandidateCounts(text, candidate);
+      return counts.count === 1 && counts.starts === 1;
     };
     const candidates = extractPotentialNames(answer);
-    const offenders = candidates.filter((candidate) => {
+    const offenders = new Set();
+    const suspects = new Set();
+    for (const candidate of candidates) {
       const normalized = normalizeNameToken(candidate);
-      if (!normalized || stopWords.has(normalized)) return false;
-      if (!candidate.includes(' ') && sentenceStartOnly(answer, candidate)) return false;
-      return !normalizedAllowed.has(normalized);
-    });
-    if (!offenders.length) return { adjusted: answer, violated: false, offenders: [] };
-    const strictAnswer = getKnowledgeTemplates(lang).strictUnknown;
-    return { adjusted: strictAnswer, violated: true, offenders };
+      if (!normalized || stopWords.has(normalized)) continue;
+      const tokens = normalizeCandidateTokens(candidate);
+      if (!tokens.length || tokens.every((token) => stopWords.has(token))) continue;
+      if (!candidate.includes(' ') && isSingleStartOnly(answer, candidate)) continue;
+      if (normalizedAllowed.has(normalized)) continue;
+      if (isEntityLikeCandidate(answer, candidate)) {
+        offenders.add(candidate);
+      } else {
+        suspects.add(candidate);
+      }
+    }
+    if (!offenders.size) {
+      return {
+        adjusted: answer,
+        violated: false,
+        offenders: [],
+        suspects: Array.from(suspects)
+      };
+    }
+    let redactedAnswer = String(answer || '');
+    for (const offender of offenders) {
+      const escaped = escapeRegExp(offender);
+      redactedAnswer = redactedAnswer.replace(new RegExp(`\\b${escaped}\\b`, 'g'), redactionText);
+    }
+    return {
+      adjusted: redactedAnswer,
+      violated: true,
+      offenders: Array.from(offenders),
+      suspects: Array.from(suspects)
+    };
   }
 
   function buildEntityWhitelistPrompt(verifiedNames, mentionableNames, lang) {
@@ -1337,7 +1392,8 @@ function createOpenAIService(deps) {
           responseLength: String(guardedResponse || '').length,
           tooGeneric: isTooGeneric(guardedResponse, resolvedGameContext, specializationLevel || 3, resolvedLanguage),
           whitelistViolated: !!whitelistCheck.violated,
-          whitelistOffenders: whitelistCheck.offenders || []
+          whitelistOffenders: whitelistCheck.offenders || [],
+          whitelistSuspects: whitelistCheck.suspects || []
         });
         if (whitelistCheck.violated) {
           logAiDiagnostics({
@@ -1388,7 +1444,8 @@ function createOpenAIService(deps) {
         responseLength: String(guardedResponse || '').length,
         tooGeneric: isTooGeneric(guardedResponse, resolvedGameContext, specializationLevel || 3, resolvedLanguage),
         whitelistViolated: !!whitelistCheck.violated,
-        whitelistOffenders: whitelistCheck.offenders || []
+        whitelistOffenders: whitelistCheck.offenders || [],
+        whitelistSuspects: whitelistCheck.suspects || []
       });
       if (whitelistCheck.violated) {
         logAiDiagnostics({

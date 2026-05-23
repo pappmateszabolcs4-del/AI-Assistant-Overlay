@@ -6,6 +6,47 @@
 
 ---
 
+## [1.0.54] - 2026-05-23 (Phase 5: Whitelist Redaction Fallback)
+
+### 🔧 Changed
+
+- Whitelist violations now redact unknown entity names instead of replacing the entire answer with a strict fallback.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+## [1.0.53] - 2026-05-23 (Phase 5: Whitelist Soft Guard)
+
+### 🔧 Changed
+
+- Whitelist now only blocks on high-confidence entities; low-confidence candidates are logged as suspects.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+## [1.0.52] - 2026-05-23 (Phase 5: Whitelist Signal Guard)
+
+### 🔧 Changed
+
+- Whitelist enforcement now blocks only when candidate names show stronger entity signals (multi-word, quoted, repeated, or numeric).
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
+## [1.0.51] - 2026-05-23 (Phase 5: Whitelist Filtering Hardening)
+
+### 🔧 Changed
+
+- Entity whitelist name normalization now strips diacritics for consistent matching.
+- Expanded Hungarian entity stop words to reduce false-positive whitelist violations.
+
+### 🧾 Notes
+
+- Tests: `npm run check`.
+
 ## [1.0.50] - 2026-05-23 (Phase 5: AI i18n + Constants)
 
 ### ✅ Added

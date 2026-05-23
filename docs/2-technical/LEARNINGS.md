@@ -1387,6 +1387,116 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 
 ---
 
+### 2026-05-23 (Night)
+
+#### Summary
+- What changed: Hardened entity whitelist matching by stripping diacritics and expanding Hungarian stop words to reduce false positives.
+- Why: Common instruction words were being treated as entity names, forcing unnecessary unknown fallbacks.
+- Impact: Fewer false whitelist violations while keeping strict name enforcement for unknown entities.
+
+#### Details
+- Implementation notes: Normalized tokens now remove diacritics before stop-word and whitelist checks; added HU stop words for common instruction terms.
+- Edge cases: Unknown names at sentence start may still pass if not flagged by stop words.
+
+#### Files touched
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [src/shared/i18n/ai-text.js](src/shared/i18n/ai-text.js)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Not created (not requested).
+
+#### Verification
+- Tests: `npm run check`.
+
+#### Follow-ups
+- TODO: None.
+
+---
+
+### 2026-05-23 (Night)
+
+#### Summary
+- What changed: Tightened whitelist enforcement to require stronger entity signals before blocking (multi-word, quoted, repeated, numeric).
+- Why: Single-word capitalized instructions were still triggering false violations.
+- Impact: Fewer false-positive unknown fallbacks while retaining strict enforcement for likely names.
+
+#### Details
+- Implementation notes: Added an entity-like signal check that filters weak candidates before comparing to the allowed list.
+- Edge cases: Single-word names that appear only once and unquoted will no longer block.
+
+#### Files touched
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Not created (not requested).
+
+#### Verification
+- Tests: Not run (not requested).
+
+#### Follow-ups
+- TODO: None.
+
+---
+
+### 2026-05-23 (Night)
+
+#### Summary
+- What changed: Split whitelist enforcement into hard violations and soft suspects.
+- Why: Reduce app-blocking false positives without losing visibility.
+- Impact: Only high-confidence entities block; low-confidence candidates are logged for review.
+
+#### Details
+- Implementation notes: Added suspect tracking to the whitelist check and included it in response diagnostics.
+- Edge cases: Low-confidence single-word names can pass if they only appear once.
+
+#### Files touched
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Not created (not requested).
+
+#### Verification
+- Tests: Not run (not requested).
+
+#### Follow-ups
+- TODO: None.
+
+---
+
+### 2026-05-23 (Night)
+
+#### Summary
+- What changed: Whitelist violations now redact unknown names while keeping the rest of the answer.
+- Why: Avoid app-blocking strict fallbacks while still removing hallucinated entity names.
+- Impact: Users get useful guidance with unknown entities redacted and knowledge mode downgraded.
+
+#### Details
+- Implementation notes: Added localized redaction text and replaced offender occurrences in the response.
+- Edge cases: Multiple overlapping offenders may result in repeated redaction placeholders.
+
+#### Files touched
+- [src/shared/i18n/ai-text.js](src/shared/i18n/ai-text.js)
+- [src/main/services/openai.js](src/main/services/openai.js)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Not created (not requested).
+
+#### Verification
+- Tests: Not run (not requested).
+
+#### Follow-ups
+- TODO: None.
+
+---
+
 ### 2026-05-17 (Evening)
 
 #### Summary
