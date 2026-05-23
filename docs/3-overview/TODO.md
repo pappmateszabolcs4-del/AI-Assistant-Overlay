@@ -18,19 +18,15 @@ Note: We are switching to a config-first, no-hardcode approach (per Phase 2 Whit
 ### Target state (monetization-safe)
 
 - Target state: first-party core registry + user-local memory + opt-in, reviewed community hints + runtime hydration.
+- Positioning: gameplay assistance layer (compact, functional facts), not content replication.
+- Allowed: limited first-party curated facts for A-tier (top 50, manual review).
 - Not allowed: global IGDB dump, offline catalog, bulk artwork pack, public metadata API.
 - Moat: personalization + workflow + overlay intelligence, not a "every-game DB".
 - Project: monetizable desktop game assistant overlay.
-- Problem: offline global third-party dataset (IGDB) is a runtime dependency -> monetization/legal risk.
+- Problem: offline global third-party dataset (IGDB) was a runtime dependency -> monetization/legal risk.
 
 ### Decision points (recommended)
 
-- Global dataset: no runtime global dataset (minimize legal/monetization risk).
-- Data sources: local manifests + exe mapping + user-local cache + optional runtime lookup (compliance-safe, scalable).
-- Community knowledge: opt-in, reviewed patch layer (not a full DB).
-- Moat focus: personalization + workflow + overlay intelligence (defensible IP).
-
-Confirmed:
 - Global dataset: no runtime global dataset (minimize legal/monetization risk).
 - Data sources: local manifests + exe mapping + user-local cache + optional runtime lookup (compliance-safe, scalable).
 - Community knowledge: opt-in, reviewed patch layer (not a full DB).
@@ -92,6 +88,8 @@ Why: Enables “no prompt engineering needed” guidance.
       - [x] Fast-start mentionables (user-provided names auto-detect, mentionable-only)
       - [ ] Shared text normalizer (casefold + diacritics + Unicode normalize)
       - [ ] Entity marker expansion (all languages: location/character/item/boss/quest/mechanic)
+        - [ ] Temporary expansion only; replace with data-driven list after review
+        - [ ] Rollback criteria if overblocking does not improve (>=30% reduction over 100+ answers)
       - [ ] Inflection-tolerant whitelist (language-specific inflection rules)
       - [ ] False-offender suppression (language-specific)
       - [ ] Overblocking soft-violation mode (keep answer usable)
@@ -104,9 +102,31 @@ Why: Enables “no prompt engineering needed” guidance.
       - [ ] Per-game safe mode (when violations are frequent)
       - [ ] Prompt-guard regression tests (suffixes, articles, plurals)
 
-### Phase 3 — Facts strategy (scale to 5000 games)
+- [ ] Data extraction MVP (to seed test data)
+  - [ ] Source input policy (allowed/blocked sources)
+    - [ ] Blocked: full wiki mirrors/dumps, guide corpus rebuilds, IGDB parity goals, Steam/Reddit bulk persistence, unofficial dumps/archives
+    - [ ] Allowed: temporary source processing + compact transformed facts only (no full-page persistence)
+  - [ ] Chunking pipeline (500-1500 tokens + chunk metadata)
+  - [ ] Fact extraction step (LLM prompt + output validation)
+  - [ ] Structured fact schema (id, text, keywords, tags, priority; optional: system, gameStage, confidence, sourceType)
+  - [ ] Human review flow (approve/reject/rewrite/merge/retag)
+  - [ ] Priority system (P1/P2/P3 + retrieval weights)
+  - [ ] Retention rules (no persistent source input)
+  - [ ] Tiered support enforcement (A/B/C in prompt assembly)
+  - [ ] Diagnostics (extraction + tier logging)
+
+### Phase 3 — Facts pipeline (tiered support)
 
 Why: Keep coverage lean while grounding entities to reduce hallucinations.
+
+- [ ] Tiered support model (A/B/C)
+  - [ ] A-tier: top 50 games with curated facts (manual review)
+  - [ ] B-tier: runtime + user-fed context only
+  - [ ] C-tier: generic assistant + clarification
+- [ ] Compact gameplay facts only (no wiki-style content replication)
+- [ ] Dedupe/merge pipeline (embedding/semantic merge -> canonical fact)
+- [ ] System-based support taxonomy (game systems + fact tagging)
+- [ ] Diagnostics expansion (dedupe stats + extraction quality)
 
 - [x] On-demand knowledge (seed facts only when needed)
 - [x] Minimal entity-first seed (characters, locations, items, mechanics, quests)
@@ -200,7 +220,7 @@ Why: Make the system’s behavior visible and user-correctable.
 - [x] User-facing error UX for AI failures (clear, actionable)
 - [ ] Auto-raise specificity when "too generic" is detected
 - [ ] Guardrails check: UX does not expose or export cached metadata
-  - [ ] Starter packs (top 20-30 games minimal entity seed, manual review)
+  - [ ] Starter packs (A-tier top 50 games minimal entity seed, manual review)
   - [ ] Guided intake flow (2-minute wizard, minimal set)
   - [ ] Premium safe-mode UI indicator / dashboard
 
