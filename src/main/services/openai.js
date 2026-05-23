@@ -6,6 +6,7 @@ const { getTemplateEntryForGame } = require('./game-template-store');
 const { addFactRequest, loadMentionables, updateUsage } = require('./game-facts-store');
 const { IPC_CHANNELS } = require('../../shared/ipc-channels');
 const { isDev } = require('../../shared/app-env');
+const { normalizeText, normalizeToken } = require('../../shared/text-normalizer');
 const {
   AI_MODELS,
   AI_KNOWLEDGE_MODES,
@@ -252,11 +253,7 @@ function createOpenAIService(deps) {
   }
 
   function normalizeFactText(text) {
-    return String(text || '')
-      .toLowerCase()
-      .normalize('NFKD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .trim();
+    return normalizeText(text);
   }
 
   function tokenizeText(text) {
@@ -437,12 +434,7 @@ function createOpenAIService(deps) {
   }
 
   function normalizeNameToken(value) {
-    return String(value || '')
-      .normalize('NFD')
-      .replace(/\p{M}+/gu, '')
-      .toLowerCase()
-      .replace(/[^\p{L}\p{N}]+/gu, '')
-      .trim();
+    return normalizeToken(value);
   }
 
   function normalizeCandidateTokens(candidate) {
