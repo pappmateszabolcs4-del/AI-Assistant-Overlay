@@ -28,7 +28,10 @@ ipcRenderer.on(IPC_CHANNELS.SET_LANGUAGE, (event, lang) => {
 });
 
 ipcRenderer.on(IPC_CHANNELS.SET_SPEECH_RATE, (event, rate) => {
-  currentSpeechRate = rate || 100;
+  const nextRate = Number(rate);
+  currentSpeechRate = Number.isFinite(nextRate)
+    ? Math.max(0, Math.min(100, Math.round(nextRate)))
+    : 100;
   if (typeof setSpeechRateUI === 'function') {
     setSpeechRateUI(currentSpeechRate);
   }

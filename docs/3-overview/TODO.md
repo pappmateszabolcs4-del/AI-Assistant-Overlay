@@ -2,6 +2,8 @@
 
 Last updated: 2026-05-23
 
+Note: We are switching to a config-first, no-hardcode approach (per Phase 2 Whitelist v2) because the previous path did not move fast enough.
+
 ## Build plan (ordered, dependency-safe)
 
 ## Monetization Guardrails (MUST)
@@ -45,6 +47,11 @@ Why: Until we can see where quality drops, every fix is guesswork.
   - [x] Add a debug toggle to enable/disable diagnostics
   - [x] Track "too generic" flag in diagnostics
   - [x] Guardrails check: no new data sources or caching outside policy
+  - [ ] Error observability panel (why UNKNOWN)
+  - [ ] Logging privacy (retention limits + purge)
+  - [ ] i18n key linter (8 languages)
+  - [ ] Dev vs prod parity check (new UI panels)
+  - [ ] Policy guardrail checklist (metadata)
 
 ### Phase 1 — Stable game context (UX block)
 
@@ -52,13 +59,14 @@ Why: If the game context flaps or is wrong, routing and templates fall apart.
 
 - [x] Minimum-signal rule: title + exe/process path + window class must collectively reach the threshold
 - [x] Browser/process category guard: block title-only matches for known browser processes
-- [x] Stability threshold: require 2-3 consecutive matches before switching games
+- [x] Stability threshold + flapping guard: require 2-3 consecutive matches before switching games
 - [x] Raise score threshold so title-only match is not enough
 - [x] Mapping-first priority: prefer exe->game mapping (IGDB/Steam/Epic/GoG + learned), title is secondary
 - [x] Overlay-focused guard: if overlay is active, skip detection and keep last recognized
 - [x] Augment data sources (policy-safe): local manifests + exe mapping only (no global dataset) (see docs/2-technical/METADATA_POLICY.md)
 - [x] Guardrails check: no bundled catalogs, no public metadata API
 - [x] Stop the bleeding: remove global dataset dependency; keep local manifests + exe mapping + user-local cache only
+  - [ ] Handle multi-language mixing
 
 ### Phase 2 — Deterministic response scaffolds (AI core)
 
@@ -80,6 +88,21 @@ Why: Enables “no prompt engineering needed” guidance.
   - [x] "I don't know" policy: prefer "no reliable data" over invention
   - [x] Output template: [Knowledge Status] + [Answer] + [Unverified notice]
   - [x] Guardrails check: no external metadata ingestion beyond policy
+    - [ ] Whitelist v2 (all languages; config-first, no hardcode)
+      - [x] Fast-start mentionables (user-provided names auto-detect, mentionable-only)
+      - [ ] Shared text normalizer (casefold + diacritics + Unicode normalize)
+      - [ ] Entity marker expansion (all languages: location/character/item/boss/quest/mechanic)
+      - [ ] Inflection-tolerant whitelist (language-specific inflection rules)
+      - [ ] False-offender suppression (language-specific)
+      - [ ] Overblocking soft-violation mode (keep answer usable)
+      - [ ] Mentions vs Facts separation (clear labeling in the answer)
+      - [ ] Fail-safe answer plan (when everything is blocked)
+      - [ ] Entity-confidence scoring (verified/mentionable/unknown)
+      - [ ] Answer provenance tags (FACTS/USER/inferred)
+      - [ ] Language fallback (when language rules missing)
+      - [ ] Underblocking per-game safety level
+      - [ ] Per-game safe mode (when violations are frequent)
+      - [ ] Prompt-guard regression tests (suffixes, articles, plurals)
 
 ### Phase 3 — Facts strategy (scale to 5000 games)
 
@@ -93,12 +116,22 @@ Why: Keep coverage lean while grounding entities to reduce hallucinations.
 - [x] Fact versioning (fact_version + last_verified)
 - [x] Guardrails check: facts are verified, minimal, non-redistributed
 - [x] Safe knowledge: minimal first-party core + user-local memory + reviewed community hints
+  - [ ] Fact request UX (JIT + confirm, 1-click dev approval)
+  - [x] Auto-create facts.json on game saves
+  - [ ] Entity lifecycle + TTL mentionables
+  - [ ] Entity list contamination (dedupe + review)
+  - [ ] Synonym drift / alias mapping
+  - [ ] Cross-game name collision namespace
+  - [ ] Multi-turn mentionable cache (session scope)
+  - [ ] Per-session entity memory + "forget" button
+  - [ ] Handle implicit references (previous turn)
 
 ### Phase 4 — Answer style + auto-seed
 
 Why: Once routing is stable, styling and templates can ride the correct path.
 
 - [ ] Preset answer styles (short/step-by-step/deep) without user prompt writing (dev-only first; requires detailed multi-game testing before checking off)
+  - [ ] Answer style conflict rule priority
 - [x] Auto-seed per-game template defaults on first encounter (opt-in)
 - [x] Guardrails check: no auto-seeding from third-party dumps
 
@@ -131,9 +164,13 @@ Design/spec plan (order recommended):
 - [ ] Hybrid stack (structured DB + vector DB + LLM formatting)
 - [x] Token budget caps per detail level
 - [x] Template cache + reload strategy (dev)
-- [x] Prompt trim diagnostics (dev-only preview logging)
+- [x] Prompt trim diagnostics (dev-only preview logging; diagnostics only)
 - [x] Model strategy diagnostics (dev-only preview logging)
 - [x] Dev-only diagnostics UI (prompt budget, trim snapshots, intent breakdown, fact-load stats, latency) with 1000-entry local retention
+  - [ ] Prompt trim policy for facts/whitelist segments
+  - [ ] Chunked facts trim order control
+  - [ ] Context window hygiene (top-k entity filtering)
+  - [ ] High-risk fallback template (when verified facts are missing)
 - [ ] Trim/segment strict policy to reduce prompt bloat (requires extensive testing and joint review of trims before production enablement)
 - [ ] Guardrails check: hybrid stack uses verified facts, not store mirrors
   - [ ] Facts boundary: only VERIFIED facts can be indexed or vectorized; user input stays separate (tagged, non-authoritative).
@@ -163,6 +200,9 @@ Why: Make the system’s behavior visible and user-correctable.
 - [x] User-facing error UX for AI failures (clear, actionable)
 - [ ] Auto-raise specificity when "too generic" is detected
 - [ ] Guardrails check: UX does not expose or export cached metadata
+  - [ ] Starter packs (top 20-30 games minimal entity seed, manual review)
+  - [ ] Guided intake flow (2-minute wizard, minimal set)
+  - [ ] Premium safe-mode UI indicator / dashboard
 
 ## Product roadmap (not in current build chain)
 
@@ -245,22 +285,6 @@ Why: Make the system’s behavior visible and user-correctable.
 - [ ] Safe mode / reset layout shortcut
 - [ ] Guardrails check: user data stays local, no exportable metadata
 
-### IGDB data strategy (pending decision)
-
-- [ ] Runtime cache
-  - Idea: Query IGDB as needed and cache short-term for performance.
-  - Why: Avoid bundled dumps; lower redistribution risk.
-
-- [ ] First-run download
-  - Idea: Installer ships empty; app pulls dataset on first run and stores locally.
-  - Why: More defensible than bundling; still requires commercial clarity.
-
-- [ ] Own backend (recommended long-term)
-  - Idea: Server fetches IGDB and serves clients with strict control.
-  - Why: Best control of licensing, rate limits, and monetization risk.
-
-- [ ] Guardrails check: licensing gate before any commercial IGDB use
-
 ## Completed (key milestones)
 
 - [x] Dev/prod parity: single-source UI + automated diff check (stop drift)
@@ -284,7 +308,6 @@ Why: Make the system’s behavior visible and user-correctable.
 - [x] Add volume control for TTS
 - [x] History search/filter with pinned-only toggle (overlay + block windows)
 - [x] Basic unit tests (3-5 critical paths)
-- [x] Reduce offline IGDB dataset size (minify/prune/gzip) without losing match quality
 - [x] Unify UI translation sources (overlay/index/detached/aux windows)
 - [x] Modularize overlay renderer script
 - [x] Restructure IPC handlers (clear domain ownership)

@@ -12,7 +12,10 @@ const { listTemplates, upsertTemplate, deleteTemplate } = require('../services/g
 const {
   addFact,
   addFactRequest,
+  addMentionables,
   listFactRequests,
+  loadMentionables,
+  removeMentionable,
   updateFactRequest,
   getUsage,
   getHotGames
@@ -349,6 +352,36 @@ function registerOverlayIpc(deps) {
       const status = String(payload && payload.status || '').trim();
       const note = String(payload && payload.note || '').trim();
       return updateFactRequest(game, { id, status, note });
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GET_GAME_MENTIONABLES, async (_event, payload) => {
+    try {
+      const game = String(payload && payload.game || '').trim();
+      const data = loadMentionables(game);
+      return { success: true, names: data && Array.isArray(data.names) ? data.names : [] };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ADD_GAME_MENTIONABLES, async (_event, payload) => {
+    try {
+      const game = String(payload && payload.game || '').trim();
+      const names = Array.isArray(payload && payload.names) ? payload.names : [];
+      return addMentionables(game, names);
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.REMOVE_GAME_MENTIONABLE, async (_event, payload) => {
+    try {
+      const game = String(payload && payload.game || '').trim();
+      const name = String(payload && payload.name || '').trim();
+      return removeMentionable(game, name);
     } catch (err) {
       return { success: false, error: err.message };
     }

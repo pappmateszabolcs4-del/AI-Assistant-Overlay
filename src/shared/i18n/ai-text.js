@@ -270,7 +270,12 @@ const ENTITY_MARKER_PATTERNS = {
 };
 
 const ENTITY_STOP_WORDS = {
-  en: ['the', 'and', 'you', 'your', 'this', 'that', 'with', 'from', 'into', 'then', 'when', 'where', 'what', 'which', 'who', 'why', 'how', 'for', 'use', 'dont', 'do', 'not', 'yes', 'no', 'a'],
+  en: [
+    'the', 'and', 'you', 'your', 'this', 'that', 'with', 'from', 'into', 'then', 'when', 'where', 'what', 'which', 'who', 'why', 'how',
+    'for', 'use', 'using', 'dont', 'do', 'not', 'yes', 'no', 'a', 'an', 'tips', 'start', 'first', 'next', 'later', 'choose', 'pick',
+    'begin', 'focus', 'note', 'remember', 'basic', 'basics', 'general', 'common', 'simple', 'easy', 'hard', 'fast', 'slow', 'build',
+    'guide', 'setup', 'damage', 'health', 'defense', 'movement', 'range', 'skill', 'skills', 'weapon', 'weapons', 'item', 'items'
+  ],
   hu: [
     'az', 'ez', 'azzal', 'ezzel', 'ott', 'itt', 'ide', 'oda', 'igen', 'nem',
     'minden', 'mindig', 'soha', 'nagyon', 'roviden', 'reszletes', 'reszletesen',
@@ -280,7 +285,59 @@ const ENTITY_STOP_WORDS = {
     'taktikai', 'pozicio', 'poziciovaltas', 'pozicionalas', 'csapatjatek', 'csapatokban', 'kessegek', 'fejlesztes', 'fejlesztese',
     'ellenseg', 'ellensegek', 'tamadas', 'tamadasi', 'vedekezes', 'tamogatas', 'buffok', 'debuffok',
     'kezdj', 'hasznald', 'probaj', 'strategiai', 'harci', 'turelem', 'kombinalt', 'egyszeru',
-    'figyeld', 'eloszor', 'celprioritas', 'csoportositva', 'gyogyito', 'palyaszintu'
+    'figyeld', 'eloszor', 'celprioritas', 'csoportositva', 'gyogyito', 'palyaszintu',
+    'figyelj', 'karakter', 'inditsd', 'alapmechanikak', 'ismerkedj', 'elso', 'haladj', 'tippek',
+    'gyujtogetes', 'gyujts', 'gyujtsd', 'mozgas', 'sebzes', 'sebzesi', 'sebesseg', 'kepesseg',
+    'kepessegek', 'palya', 'kornyezetedre', 'tamadasok', 'vedo', 'gyors', 'lassu',
+    'altalanos', 'alap', 'kezdok', 'tipus', 'tippek', 'tipp'
+  ],
+  de: [
+    'der', 'die', 'das', 'und', 'du', 'dein', 'deine', 'dies', 'diese', 'dieser', 'mit', 'von', 'in', 'dann', 'wann', 'wo',
+    'was', 'welche', 'wer', 'warum', 'wie', 'fur', 'nutze', 'nutzen', 'nicht', 'ja', 'nein', 'ein', 'eine', 'tipps', 'start',
+    'anfang', 'zuerst', 'danach', 'spater', 'wahlen', 'wahl', 'fokus', 'merke',
+    'grundlagen', 'allgemein', 'einfach', 'schwer', 'schnell', 'langsam', 'build',
+    'schaden', 'leben', 'verteidigung', 'bewegung', 'reichweite', 'skill', 'skills',
+    'waffe', 'waffen', 'item', 'items'
+  ],
+  ru: [
+    'и', 'ты', 'твой', 'твоя', 'это', 'тот', 'эта', 'с', 'из', 'в', 'затем', 'когда', 'где', 'что', 'какой',
+    'кто', 'почему', 'как', 'для', 'используй', 'использовать', 'не', 'да', 'нет', 'советы', 'старт', 'сначала',
+    'потом', 'позже', 'выбери', 'выбор', 'фокус', 'помни', 'основы', 'общие', 'простой', 'сложный',
+    'быстрый', 'медленный', 'билд', 'урон', 'здоровье', 'защита', 'движение', 'дальность', 'умение', 'умения',
+    'оружие', 'предмет', 'предметы'
+  ],
+  fr: [
+    'le', 'la', 'les', 'et', 'tu', 'ton', 'ta', 'tes', 'ce', 'cet', 'cette', 'avec', 'de', 'dans', 'alors', 'quand', 'ou',
+    'quoi', 'quel', 'qui', 'pourquoi', 'comment', 'pour', 'utilise', 'utiliser', 'ne', 'pas', 'oui', 'non', 'conseils',
+    'debut', 'd abord', 'ensuite', 'plus tard', 'choisir', 'choix', 'focus', 'note', 'souviens',
+    'bases', 'general', 'simple', 'facile', 'difficile', 'rapide', 'lent', 'build',
+    'degats', 'vie', 'defense', 'mouvement', 'portee', 'competence', 'competences', 'arme', 'armes', 'objet', 'objets'
+  ],
+  zh: [
+    '的', '和', '你', '你的', '这', '那', '与', '从', '到', '然后', '当', '哪里', '什么', '哪个', '谁', '为什么', '如何',
+    '用于', '使用', '不要', '是', '否', '提示', '开始', '首先', '接着', '之后', '选择', '记住', '基础', '通用',
+    '简单', '困难', '快速', '缓慢', '构筑', '伤害', '生命', '防御', '移动', '射程', '技能', '武器', '物品'
+  ],
+  es: [
+    'el', 'la', 'los', 'las', 'y', 'tu', 'tus', 'este', 'esta', 'ese', 'esa', 'con', 'de', 'en', 'entonces', 'cuando', 'donde',
+    'que', 'cual', 'quien', 'por que', 'como', 'para', 'usa', 'usar', 'no', 'si', 'consejos', 'inicio', 'primero',
+    'luego', 'mas tarde', 'elige', 'eleccion', 'foco', 'nota', 'recuerda', 'basico', 'general', 'simple', 'facil', 'dificil',
+    'rapido', 'lento', 'build', 'dano', 'vida', 'defensa', 'movimiento', 'alcance', 'habilidad', 'habilidades',
+    'arma', 'armas', 'objeto', 'objetos'
+  ],
+  it: [
+    'il', 'lo', 'la', 'i', 'gli', 'le', 'e', 'tu', 'tuo', 'tua', 'tuoi', 'tue', 'questo', 'questa', 'quello', 'quella',
+    'con', 'da', 'in', 'poi', 'quando', 'dove', 'cosa', 'quale', 'chi', 'perche', 'come', 'per', 'usa', 'usare',
+    'non', 'si', 'no', 'consigli', 'inizio', 'prima', 'poi', 'piu tardi', 'scegli', 'scelta', 'focus', 'nota', 'ricorda',
+    'base', 'generale', 'semplice', 'facile', 'difficile', 'veloce', 'lento', 'build', 'danno', 'vita', 'difesa',
+    'movimento', 'gittata', 'abilita', 'abilita', 'arma', 'armi', 'oggetto', 'oggetti'
+  ],
+  pl: [
+    'i', 'ty', 'twoj', 'twoja', 'to', 'ten', 'ta', 'z', 'w', 'potem', 'kiedy', 'gdzie', 'co', 'ktory', 'kto', 'dlaczego',
+    'jak', 'dla', 'uzyj', 'uzywaj', 'nie', 'tak', 'nie', 'porady', 'start', 'najpierw', 'potem', 'pozniej',
+    'wybierz', 'wybor', 'fokus', 'pamietaj', 'podstawy', 'ogolne', 'prosty', 'latwy', 'trudny', 'szybki', 'wolny',
+    'build', 'obrazenia', 'zdrowie', 'obrona', 'ruch', 'zasieg', 'umiejetnosc', 'umiejetnosci', 'bron', 'bron',
+    'przedmiot', 'przedmioty'
   ]
 };
 
@@ -473,15 +530,81 @@ const ENTITY_WHITELIST_TEMPLATES = {
 };
 
 const ENTITY_REDACTION_TEXT = {
-  en: 'unknown entity',
-  hu: 'ismeretlen entitás',
-  de: 'unbekannte Entitaet',
-  ru: 'неизвестная сущность',
-  fr: 'entite inconnue',
-  zh: '未知实体',
-  es: 'entidad desconocida',
-  it: 'entita sconosciuta',
-  pl: 'nieznana jednostka'
+  en: '',
+  hu: '',
+  de: '',
+  ru: '',
+  fr: '',
+  zh: '',
+  es: '',
+  it: '',
+  pl: ''
+};
+
+const ENTITY_REDACTION_REPLACEMENTS = {
+  en: {
+    generic: 'that in-game element',
+    location: 'that area',
+    character: 'that character',
+    item: 'that item',
+    skill: 'that ability'
+  },
+  hu: {
+    generic: 'az a jatekbeli elem',
+    location: 'az a jatekbeli hely',
+    character: 'az a karakter',
+    item: 'az a targy',
+    skill: 'az a kepesseg'
+  },
+  de: {
+    generic: 'das Spielelement',
+    location: 'das Gebiet',
+    character: 'dieser Charakter',
+    item: 'dieses Item',
+    skill: 'diese Fahigkeit'
+  },
+  ru: {
+    generic: 'igrovoy element',
+    location: 'eta oblast',
+    character: 'etot personazh',
+    item: 'etot predmet',
+    skill: 'eta sposobnost'
+  },
+  fr: {
+    generic: 'cet element du jeu',
+    location: 'cette zone',
+    character: 'ce personnage',
+    item: 'cet objet',
+    skill: 'cette competence'
+  },
+  zh: {
+    generic: '游戏内要素',
+    location: '该区域',
+    character: '该角色',
+    item: '该物品',
+    skill: '该技能'
+  },
+  es: {
+    generic: 'ese elemento del juego',
+    location: 'esa zona',
+    character: 'ese personaje',
+    item: 'ese objeto',
+    skill: 'esa habilidad'
+  },
+  it: {
+    generic: 'quell elemento di gioco',
+    location: 'quella zona',
+    character: 'quel personaggio',
+    item: 'quell oggetto',
+    skill: 'quella abilita'
+  },
+  pl: {
+    generic: 'ten element gry',
+    location: 'ten obszar',
+    character: 'ta postac',
+    item: 'ten przedmiot',
+    skill: 'ta umiejetnosc'
+  }
 };
 
 const GAME_CONTEXT_PROMPTS = {
@@ -638,6 +761,14 @@ function getEntityRedactionText(lang) {
   return ENTITY_REDACTION_TEXT[language] || ENTITY_REDACTION_TEXT[DEFAULT_LANG];
 }
 
+function getEntityRedactionReplacement(lang, kind) {
+  const language = normalizeLang(lang);
+  const replacements = ENTITY_REDACTION_REPLACEMENTS[language] || ENTITY_REDACTION_REPLACEMENTS[DEFAULT_LANG];
+  if (!replacements) return '';
+  const key = kind === 'location' ? 'location' : 'generic';
+  return replacements[key] || replacements.generic || '';
+}
+
 function getGameContextPromptText(lang, gameName) {
   if (!gameName) return '';
   const language = normalizeLang(lang);
@@ -780,6 +911,7 @@ module.exports = {
   getKnowledgeTemplates,
   getEntityWhitelistTemplates,
   getEntityRedactionText,
+  getEntityRedactionReplacement,
   getGameContextPromptText,
   getTemplatePromptLabels,
   getTemplateSectionLabels,

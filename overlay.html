@@ -288,6 +288,27 @@
               </div>
 
               <div class="dev-tools-card">
+                <div class="dev-tools-row">
+                  <div class="dev-tools-card-title" id="mentionablesLabel"></div>
+                  <button class="dev-tools-btn" id="mentionablesRefreshBtn"></button>
+                </div>
+                <p id="mentionablesHint" class="dev-tools-hint"></p>
+                <div class="dev-tools-row mentionables-input-row" style="margin-top: 6px;">
+                  <label class="dev-tools-inline-label" for="mentionablesInput" id="mentionablesInputLabel"></label>
+                  <input type="text" id="mentionablesInput" class="dev-tools-input" placeholder="" />
+                  <button class="dev-tools-btn" id="mentionablesAddBtn"></button>
+                </div>
+                <div class="dev-tools-section">
+                  <div class="dev-tools-subtitle" id="mentionablesFromViolationLabel"></div>
+                  <div id="mentionablesFromViolationList" class="dev-tools-list"></div>
+                </div>
+                <div class="dev-tools-section">
+                  <div class="dev-tools-subtitle" id="mentionablesListLabel"></div>
+                  <div id="mentionablesList" class="dev-tools-list"></div>
+                </div>
+              </div>
+
+              <div class="dev-tools-card">
                 <div class="dev-tools-card-title" id="perfHudLabel"></div>
                 <label class="dev-tools-toggle">
                   <input type="checkbox" id="perfHudToggle" style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">

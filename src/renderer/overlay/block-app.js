@@ -1101,18 +1101,50 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
     selectedVoice = getBestVoice(langTag);
   }
 
-  function speakResponse(text) {
+  let lastSpokenText = '';
+  let activeUtterance = null;
+  let respeakTimer = null;
+
+  function speakResponse(text, options = {}) {
+    lastSpokenText = String(text || '');
     if (!enableTTS || !enableTTS.checked) return;
     if (!window.speechSynthesis) return;
 
+    if (!options.skipCancel && window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+
     const utterance = new SpeechSynthesisUtterance(text);
+    activeUtterance = utterance;
     const langTag = mapSpeechLang(currentLanguage);
     utterance.lang = langTag;
     const voice = selectedVoice || getBestVoice(langTag);
     if (voice) utterance.voice = voice;
     utterance.rate = 1.0;
     utterance.volume = Math.min(currentSpeechRate / 100, 1.0);
+    utterance.onend = () => {
+      if (activeUtterance === utterance) activeUtterance = null;
+    };
+    utterance.onerror = () => {
+      if (activeUtterance === utterance) activeUtterance = null;
+    };
     window.speechSynthesis.speak(utterance);
+  }
+
+  function resyncSpeechVolume() {
+    if (!enableTTS || !enableTTS.checked) return;
+    if (!window.speechSynthesis || !window.speechSynthesis.speaking) return;
+    if (!lastSpokenText) return;
+    window.speechSynthesis.cancel();
+    speakResponse(lastSpokenText, { skipCancel: true });
+  }
+
+  function scheduleSpeechVolumeResync() {
+    if (respeakTimer) clearTimeout(respeakTimer);
+    respeakTimer = setTimeout(() => {
+      respeakTimer = null;
+      resyncSpeechVolume();
+    }, 120);
   }
 
   function updateLayoutToggleText(mode) {
@@ -1346,6 +1378,7 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
       setSpeechRateUI(next);
       writeSpeechRateSetting(next);
       fireAndForget(IPC_CHANNELS.SET_SPEECH_RATE, next);
+      scheduleSpeechVolumeResync();
     });
   }
 
@@ -1810,7 +1843,10 @@ if (typeof __isBlockWindow !== 'undefined' && __isBlockWindow && __blockIdParam)
   });
 
   ipcRenderer.on(IPC_CHANNELS.SET_SPEECH_RATE, (_event, rate) => {
-    currentSpeechRate = rate || 100;
+    const nextRate = Number(rate);
+    currentSpeechRate = Number.isFinite(nextRate)
+      ? Math.max(0, Math.min(100, Math.round(nextRate)))
+      : 100;
     setSpeechRateUI(currentSpeechRate);
   });
 

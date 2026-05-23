@@ -719,6 +719,122 @@ function refreshDiagnosticsUI() {
   renderLatencySummary(store);
 }
 
+function getMentionablesGameName() {
+  const templateName = gameTemplateNameInput ? String(gameTemplateNameInput.value || '').trim() : '';
+  return currentGameContext || templateName || '';
+}
+
+function parseMentionablesInput(value) {
+  return String(value || '')
+    .split(/[\n,]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function renderMentionablesEmpty(listEl, emptyText) {
+  if (!listEl) return;
+  listEl.innerHTML = '';
+  const empty = document.createElement('div');
+  empty.className = 'dev-tools-item';
+  empty.textContent = emptyText;
+  listEl.appendChild(empty);
+}
+
+function renderMentionablesList(listEl, items, onRemove) {
+  if (!listEl) return;
+  listEl.innerHTML = '';
+  if (!items.length) {
+    renderMentionablesEmpty(listEl, t().mentionablesEmpty || 'No mentionable names yet.');
+    return;
+  }
+  items.forEach((name) => {
+    const item = document.createElement('div');
+    item.className = 'dev-tools-item';
+    const title = document.createElement('div');
+    title.className = 'dev-tools-item-title';
+    title.textContent = name;
+    item.appendChild(title);
+
+    if (typeof onRemove === 'function') {
+      const actions = document.createElement('div');
+      actions.className = 'dev-tools-actions';
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'dev-tools-action-btn reject';
+      removeBtn.type = 'button';
+      removeBtn.textContent = t().mentionablesRemoveBtn || 'Remove';
+      removeBtn.addEventListener('click', () => onRemove(name));
+      actions.appendChild(removeBtn);
+      item.appendChild(actions);
+    }
+
+    listEl.appendChild(item);
+  });
+}
+
+function renderMentionablesFromViolation(listEl, offenders, onAllow) {
+  if (!listEl) return;
+  listEl.innerHTML = '';
+  if (!offenders.length) {
+    renderMentionablesEmpty(listEl, t().mentionablesViolationEmpty || 'No whitelist offenders yet.');
+    return;
+  }
+  offenders.forEach((name) => {
+    const item = document.createElement('div');
+    item.className = 'dev-tools-item';
+    const title = document.createElement('div');
+    title.className = 'dev-tools-item-title';
+    title.textContent = name;
+    item.appendChild(title);
+
+    if (typeof onAllow === 'function') {
+      const actions = document.createElement('div');
+      actions.className = 'dev-tools-actions';
+      const allowBtn = document.createElement('button');
+      allowBtn.className = 'dev-tools-action-btn accept';
+      allowBtn.type = 'button';
+      allowBtn.textContent = t().mentionablesAllowBtn || 'Allow mention';
+      allowBtn.addEventListener('click', () => onAllow(name));
+      actions.appendChild(allowBtn);
+      item.appendChild(actions);
+    }
+
+    listEl.appendChild(item);
+  });
+}
+
+async function refreshMentionablesUI() {
+  if (!devToolsEnabled) return;
+  if (!mentionablesList || !mentionablesFromViolationList) return;
+  const game = getMentionablesGameName();
+  if (!game) {
+    renderMentionablesEmpty(mentionablesList, t().mentionablesMissingGame || 'No game context yet.');
+    renderMentionablesEmpty(mentionablesFromViolationList, t().mentionablesViolationEmpty || 'No whitelist offenders yet.');
+    return;
+  }
+
+  const store = loadDiagnosticsStore();
+  const violations = Array.isArray(store.violations) ? store.violations : [];
+  const lastViolation = violations.length ? violations[violations.length - 1] : null;
+  const offenders = Array.isArray(lastViolation && lastViolation.offenders)
+    ? lastViolation.offenders.filter(Boolean)
+    : [];
+
+  const response = await invokeMain(IPC_CHANNELS.GET_GAME_MENTIONABLES, { game });
+  const names = response && response.success && Array.isArray(response.names)
+    ? response.names
+    : [];
+
+  renderMentionablesFromViolation(mentionablesFromViolationList, offenders, async (name) => {
+    await invokeMain(IPC_CHANNELS.ADD_GAME_MENTIONABLES, { game, names: [name] });
+    refreshMentionablesUI();
+  });
+
+  renderMentionablesList(mentionablesList, names, async (name) => {
+    await invokeMain(IPC_CHANNELS.REMOVE_GAME_MENTIONABLE, { game, name });
+    refreshMentionablesUI();
+  });
+}
+
 function normalizeAnswerStyle(value) {
   const raw = String(value || '').trim().toLowerCase();
   if (raw === 'short' || raw === 'steps' || raw === 'deep') return raw;
@@ -1099,6 +1215,16 @@ const diagFactLoadLabel = document.getElementById('diagFactLoadLabel');
 const diagFactLoadList = document.getElementById('diagFactLoadList');
 const diagLatencyLabel = document.getElementById('diagLatencyLabel');
 const diagLatencyList = document.getElementById('diagLatencyList');
+const mentionablesLabel = document.getElementById('mentionablesLabel');
+const mentionablesRefreshBtn = document.getElementById('mentionablesRefreshBtn');
+const mentionablesHint = document.getElementById('mentionablesHint');
+const mentionablesInputLabel = document.getElementById('mentionablesInputLabel');
+const mentionablesInput = document.getElementById('mentionablesInput');
+const mentionablesAddBtn = document.getElementById('mentionablesAddBtn');
+const mentionablesFromViolationLabel = document.getElementById('mentionablesFromViolationLabel');
+const mentionablesFromViolationList = document.getElementById('mentionablesFromViolationList');
+const mentionablesListLabel = document.getElementById('mentionablesListLabel');
+const mentionablesList = document.getElementById('mentionablesList');
 const devToolsLabel = document.getElementById('devToolsLabel');
 const devToolsHint = document.getElementById('devToolsHint');
 const perfHudToggleLabel = document.getElementById('perfHudToggleLabel');
@@ -1962,6 +2088,10 @@ function updateInfoButtonText() {
   infoBtn.title = (t().infoBtnTitle || t().infoTitle || 'Info');
 }
 
+let lastSpokenText = '';
+let activeUtterance = null;
+let respeakTimer = null;
+
 async function openInfoPanel() {
   // Open a movable, note-panel-like window instead of a modal.
   try {
@@ -1976,12 +2106,17 @@ on(infoBtn, 'click', (e) => {
   openInfoPanel();
 });
 
-function speakResponse(text) {
+function speakResponse(text, options = {}) {
+  lastSpokenText = String(text || '');
   const enableTTS = document.getElementById('enableTTS');
   if (!enableTTS || !enableTTS.checked) return;
 
   if (!window.speechSynthesis) return;
+  if (!options.skipCancel && window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+  }
   const utterance = new SpeechSynthesisUtterance(text);
+  activeUtterance = utterance;
   const langTag = mapSpeechLang(currentLanguage);
   utterance.lang = langTag;
   const voice = selectedVoice || getBestVoice(langTag);
@@ -1992,7 +2127,30 @@ function speakResponse(text) {
   }
   utterance.rate = 1.0;
   utterance.volume = Math.min(currentSpeechRate / 100, 1.0); // Fix: volume must be 0-1
+  utterance.onend = () => {
+    if (activeUtterance === utterance) activeUtterance = null;
+  };
+  utterance.onerror = () => {
+    if (activeUtterance === utterance) activeUtterance = null;
+  };
   window.speechSynthesis.speak(utterance);
+}
+
+function resyncSpeechVolume() {
+  const enableTTS = document.getElementById('enableTTS');
+  if (!enableTTS || !enableTTS.checked) return;
+  if (!window.speechSynthesis || !window.speechSynthesis.speaking) return;
+  if (!lastSpokenText) return;
+  window.speechSynthesis.cancel();
+  speakResponse(lastSpokenText, { skipCancel: true });
+}
+
+function scheduleSpeechVolumeResync() {
+  if (respeakTimer) clearTimeout(respeakTimer);
+  respeakTimer = setTimeout(() => {
+    respeakTimer = null;
+    resyncSpeechVolume();
+  }, 120);
 }
 
 function mapSpeechLang(lang) {
@@ -2157,6 +2315,14 @@ function updateOverlayText() {
   if (factRequestsGameInput) factRequestsGameInput.placeholder = t().factRequestsGamePlaceholder || factRequestsGameInput.placeholder;
   if (hotGamesLabel) hotGamesLabel.textContent = t().hotGamesLabel || hotGamesLabel.textContent;
   if (hotGamesRefreshBtn) hotGamesRefreshBtn.textContent = t().hotGamesRefresh || hotGamesRefreshBtn.textContent;
+  if (mentionablesLabel) mentionablesLabel.textContent = t().mentionablesLabel || mentionablesLabel.textContent;
+  if (mentionablesHint) mentionablesHint.textContent = t().mentionablesHint || mentionablesHint.textContent;
+  if (mentionablesInputLabel) mentionablesInputLabel.textContent = t().mentionablesInputLabel || mentionablesInputLabel.textContent;
+  if (mentionablesInput) mentionablesInput.placeholder = t().mentionablesInputPlaceholder || mentionablesInput.placeholder;
+  if (mentionablesAddBtn) mentionablesAddBtn.textContent = t().mentionablesAddBtn || mentionablesAddBtn.textContent;
+  if (mentionablesRefreshBtn) mentionablesRefreshBtn.textContent = t().mentionablesRefreshBtn || mentionablesRefreshBtn.textContent;
+  if (mentionablesFromViolationLabel) mentionablesFromViolationLabel.textContent = t().mentionablesFromViolationLabel || mentionablesFromViolationLabel.textContent;
+  if (mentionablesListLabel) mentionablesListLabel.textContent = t().mentionablesListLabel || mentionablesListLabel.textContent;
   const visionConsentHint = document.getElementById('visionConsentHint');
   if (visionConsentHint) visionConsentHint.textContent = t().visionConsentHint || visionConsentHint.textContent;
   const visionAllowListLabel = document.getElementById('visionAllowListLabel');
@@ -2334,6 +2500,7 @@ if (speechRateInput) {
     setSpeechRateUI(next);
     writeSpeechRateSetting(next);
     fireAndForget(IPC_CHANNELS.SET_SPEECH_RATE, next);
+    scheduleSpeechVolumeResync();
   });
 }
 
@@ -3068,7 +3235,10 @@ if (aiDiagnosticsToggle) {
 try {
   ipcRenderer.on(IPC_CHANNELS.AI_DIAGNOSTICS_EVENT, (_event, payload) => {
     recordDiagnosticsEvent(payload);
-    if (devToolsEnabled) refreshDiagnosticsUI();
+    if (devToolsEnabled) {
+      refreshDiagnosticsUI();
+      refreshMentionablesUI();
+    }
   });
 } catch (_) {}
 
@@ -3083,6 +3253,7 @@ if (diagClearBtn) {
     saveDiagnosticsStore({ promptTrim: [], promptTrimSim: [], modelStrategy: [], requests: [], responses: [], violations: [], latency: [] });
     if (diagTrimExportOutput) diagTrimExportOutput.value = '';
     refreshDiagnosticsUI();
+    refreshMentionablesUI();
   });
 }
 
@@ -3092,8 +3263,27 @@ if (diagTrimExportBtn) {
   });
 }
 
+if (mentionablesRefreshBtn) {
+  on(mentionablesRefreshBtn, 'click', () => {
+    refreshMentionablesUI();
+  });
+}
+
+if (mentionablesAddBtn) {
+  on(mentionablesAddBtn, 'click', async () => {
+    const game = getMentionablesGameName();
+    if (!game || !mentionablesInput) return;
+    const names = parseMentionablesInput(mentionablesInput.value);
+    if (!names.length) return;
+    await invokeMain(IPC_CHANNELS.ADD_GAME_MENTIONABLES, { game, names });
+    mentionablesInput.value = '';
+    refreshMentionablesUI();
+  });
+}
+
 if (devToolsEnabled) {
   refreshDiagnosticsUI();
+  refreshMentionablesUI();
 }
 
 try {

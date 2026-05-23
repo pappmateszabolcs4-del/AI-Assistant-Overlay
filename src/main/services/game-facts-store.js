@@ -5,6 +5,7 @@ const { app } = require('electron');
 
 const FACTS_FILE_NAME = 'facts.json';
 const FACT_REQUESTS_FILE_NAME = 'fact-requests.json';
+const MENTIONABLES_FILE_NAME = 'mentionables.json';
 const USAGE_FILE_NAME = 'usage.json';
 
 function normalizeGameKey(value) {
@@ -38,6 +39,81 @@ function getGameDataPath(gameName, fileName) {
 
 function getGameFactsPath(gameName) {
   return getGameDataPath(gameName, FACTS_FILE_NAME);
+}
+
+function normalizeMentionableKey(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s\u00a0]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function loadMentionables(gameName) {
+  const filePath = getGameDataPath(gameName, MENTIONABLES_FILE_NAME);
+  if (!filePath) return { names: [] };
+  try {
+    if (!fs.existsSync(filePath)) {
+      return { names: [] };
+    }
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const parsed = JSON.parse(raw);
+    const names = Array.isArray(parsed && parsed.names) ? parsed.names : [];
+    return { names: names.filter(Boolean) };
+  } catch (_) {
+    return { names: [] };
+  }
+}
+
+function saveMentionables(gameName, payload) {
+  const filePath = getGameDataPath(gameName, MENTIONABLES_FILE_NAME);
+  if (!filePath) return { success: false, error: 'missing-game' };
+  const names = Array.isArray(payload && payload.names) ? payload.names.filter(Boolean) : [];
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  fs.writeFileSync(filePath, JSON.stringify({ names }, null, 2));
+  return { success: true };
+}
+
+function addMentionables(gameName, entries) {
+  const game = String(gameName || '').trim();
+  if (!game) return { success: false, error: 'missing-game' };
+  const incoming = Array.isArray(entries) ? entries : [entries];
+  const cleaned = incoming.map((entry) => String(entry || '').trim()).filter(Boolean);
+  if (!cleaned.length) return { success: false, error: 'missing-names' };
+  const existing = loadMentionables(game);
+  const names = Array.isArray(existing.names) ? existing.names : [];
+  const dedupe = new Map();
+  names.forEach((name) => {
+    const key = normalizeMentionableKey(name);
+    if (key) dedupe.set(key, name);
+  });
+  cleaned.forEach((name) => {
+    const key = normalizeMentionableKey(name);
+    if (!key) return;
+    if (!dedupe.has(key)) dedupe.set(key, name);
+  });
+  const next = Array.from(dedupe.values());
+  const saved = saveMentionables(game, { names: next });
+  if (!saved.success) return saved;
+  return { success: true, names: next };
+}
+
+function removeMentionable(gameName, entry) {
+  const game = String(gameName || '').trim();
+  if (!game) return { success: false, error: 'missing-game' };
+  const target = String(entry || '').trim();
+  if (!target) return { success: false, error: 'missing-name' };
+  const existing = loadMentionables(game);
+  const names = Array.isArray(existing.names) ? existing.names : [];
+  const targetKey = normalizeMentionableKey(target);
+  const filtered = names.filter((name) => normalizeMentionableKey(name) !== targetKey);
+  const saved = saveMentionables(game, { names: filtered });
+  if (!saved.success) return saved;
+  return { success: true, names: filtered };
 }
 
 function loadFacts(gameName) {
@@ -346,7 +422,10 @@ function addFact(gameName, payload) {
 module.exports = {
   addFact,
   addFactRequest,
+  addMentionables,
   listFactRequests,
+  loadMentionables,
+  removeMentionable,
   updateFactRequest,
   updateUsage,
   getUsage,

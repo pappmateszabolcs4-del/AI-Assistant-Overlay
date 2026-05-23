@@ -53,3 +53,5 @@ This is implementation guidance, not legal advice.
 - Full store catalog mirrors.
 - Bundled artwork packs.
 - Offline dumps of third-party store metadata.
+- First-run bulk dataset downloads (even if installer ships empty).
+- Backends that function as metadata mirrors or bulk redistribution.

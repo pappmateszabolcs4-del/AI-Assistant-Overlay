@@ -3,7 +3,7 @@ const path = require('path');
 const os = require('os');
 const { app } = require('electron');
 const { getTemplateEntryForGame } = require('./game-template-store');
-const { addFactRequest, updateUsage } = require('./game-facts-store');
+const { addFactRequest, loadMentionables, updateUsage } = require('./game-facts-store');
 const { IPC_CHANNELS } = require('../../shared/ipc-channels');
 const { isDev } = require('../../shared/app-env');
 const {
@@ -46,6 +46,7 @@ const {
   getEntityMarkerPatterns,
   getEntityStopWords,
   getEntityRedactionText,
+  getEntityRedactionReplacement,
   getHighRiskIntents,
   getHighRiskPatterns,
   getTroubleshootPatterns,
@@ -491,9 +492,74 @@ function createOpenAIService(deps) {
     return counts.count >= 2;
   }
 
+  function isListHeadingCandidate(text, candidate) {
+    if (!candidate) return false;
+    const escaped = escapeRegExp(candidate);
+    const pattern = new RegExp(`(^|\n)\s*(?:[-*•]|\d+\.)\s+${escaped}\b`, 'i');
+    return pattern.test(text);
+  }
+
+  function isLikelyLocationCandidate(candidate, lang) {
+    if (!candidate) return false;
+    const text = candidate.toLowerCase();
+    if (text.includes(' forest') || text.includes(' cave') || text.includes(' dungeon') || text.includes(' ruins') || text.includes(' temple') || text.includes(' valley')) {
+      return true;
+    }
+    if (text.includes(' zone') || text.includes(' area') || text.includes(' stage') || text.includes(' level') || text.includes(' map')) {
+      return true;
+    }
+    if (lang === 'hu') {
+      if (/[\-](ban|ben|ba|be|bol|rol|hoz|hez|hoz|ra|re|nal|nel)\b/i.test(candidate)) return true;
+    }
+    return false;
+  }
+
+  const REDACTION_CONTEXT_KEYWORDS = {
+    en: {
+      character: ['character', 'hero', 'class', 'boss', 'tank', 'healer', 'dps'],
+      item: ['item', 'gear', 'weapon', 'armor', 'shield', 'bow', 'sword', 'staff', 'ring', 'amulet', 'trinket'],
+      skill: ['skill', 'ability', 'ultimate', 'spell', 'perk', 'talent']
+    },
+    hu: {
+      character: ['karakter', 'hos', 'hős', 'kaszt', 'osztaly', 'osztály', 'boss'],
+      item: ['fegyver', 'pancel', 'páncél', 'targy', 'tárgy', 'felszereles', 'felszerelés', 'pajzs', 'kard', 'ij', 'íj', 'gyuru', 'gyűrű'],
+      skill: ['kepesseg', 'képesség', 'skill', 'varazslat', 'varázslat', 'talent', 'perk']
+    }
+  };
+
+  function getRedactionContextWindow(text, candidate) {
+    const body = String(text || '').toLowerCase();
+    const target = String(candidate || '').toLowerCase();
+    if (!body || !target) return '';
+    const index = body.indexOf(target);
+    if (index < 0) return '';
+    const start = Math.max(0, index - 40);
+    const end = Math.min(body.length, index + target.length + 40);
+    return body.slice(start, end);
+  }
+
+  function resolveRedactionKind(answer, candidate, lang) {
+    const context = getRedactionContextWindow(answer, candidate);
+    const keywords = REDACTION_CONTEXT_KEYWORDS[lang] || REDACTION_CONTEXT_KEYWORDS.en;
+    const hasAny = (list) => Array.isArray(list) && list.some((entry) => context.includes(entry));
+    if (hasAny(keywords.character)) return 'character';
+    if (hasAny(keywords.item)) return 'item';
+    if (hasAny(keywords.skill)) return 'skill';
+    if (isLikelyLocationCandidate(candidate, lang)) return 'location';
+    return 'generic';
+  }
+
+  function resolveRedactionReplacement(answer, candidate, lang, fallback) {
+    const kind = resolveRedactionKind(answer, candidate, lang);
+    const replacement = getEntityRedactionReplacement(lang, kind)
+      || getEntityRedactionReplacement(lang, 'generic');
+    return replacement || fallback || 'that in-game element';
+  }
+
   function enforceEntityWhitelist(answer, allowedNames, lang) {
     const allowed = Array.isArray(allowedNames) ? allowedNames : [];
     if (!allowed.length) return { adjusted: answer, violated: false, offenders: [], suspects: [] };
+    const baseAnswer = String(answer || '');
     const normalizedAllowed = new Set(allowed.map(normalizeNameToken).filter(Boolean));
     const stopWords = new Set(getEntityStopWords(lang));
     const redactionText = getEntityRedactionText(lang);
@@ -504,11 +570,15 @@ function createOpenAIService(deps) {
     const candidates = extractPotentialNames(answer);
     const offenders = new Set();
     const suspects = new Set();
-    for (const candidate of candidates) {
+    for (const candidate of candidates) { 
       const normalized = normalizeNameToken(candidate);
       if (!normalized || stopWords.has(normalized)) continue;
       const tokens = normalizeCandidateTokens(candidate);
       if (!tokens.length || tokens.every((token) => stopWords.has(token))) continue;
+      if (!candidate.includes(' ') && isListHeadingCandidate(answer, candidate)) {
+        suspects.add(candidate);
+        continue;
+      }
       if (!candidate.includes(' ') && isSingleStartOnly(answer, candidate)) continue;
       if (normalizedAllowed.has(normalized)) continue;
       if (isEntityLikeCandidate(answer, candidate)) {
@@ -528,8 +598,15 @@ function createOpenAIService(deps) {
     let redactedAnswer = String(answer || '');
     for (const offender of offenders) {
       const escaped = escapeRegExp(offender);
-      redactedAnswer = redactedAnswer.replace(new RegExp(`\\b${escaped}\\b`, 'g'), redactionText);
+      const replacement = resolveRedactionReplacement(baseAnswer, offender, lang, redactionText);
+      redactedAnswer = redactedAnswer.replace(new RegExp(`\\b${escaped}\\b`, 'g'), replacement);
     }
+    redactedAnswer = redactedAnswer
+      .replace(/\s{2,}/g, ' ')
+      .replace(/\s+([,.;:!?])/g, '$1')
+      .replace(/\(\s+/g, '(')
+      .replace(/\s+\)/g, ')')
+      .trim();
     return {
       adjusted: redactedAnswer,
       violated: true,
@@ -573,17 +650,13 @@ function createOpenAIService(deps) {
 
   function applyKnowledgeTemplate(answer, lang, mode) {
     const templates = getKnowledgeTemplates(lang);
-    const statusValue = mode === AI_KNOWLEDGE_MODES.verified
-      ? templates.verified
-      : (mode === AI_KNOWLEDGE_MODES.partial ? templates.partial : templates.unknown);
-    const header = `${templates.label}: ${statusValue}`;
     const notice = mode === AI_KNOWLEDGE_MODES.verified ? '' : templates.notice;
     const body = String(answer || '').trim();
-    if (!body) return header;
+    if (!body) return '';
     if (notice) {
-      return `${header}\n\n${body}\n\n${notice}`;
+      return `${body}\n\n${notice}`;
     }
-    return `${header}\n\n${body}`;
+    return body;
   }
 
   function buildProfilePrompt(profile, lang) {
@@ -1240,7 +1313,11 @@ function createOpenAIService(deps) {
           forbiddenNames: nameSets.forbidden
         });
       }
-      const mentionableNames = extractUserMentionables(text, resolvedLanguage);
+      const savedMentionables = resolvedGameContext ? loadMentionables(resolvedGameContext) : { names: [] };
+      const savedMentionableNames = Array.isArray(savedMentionables && savedMentionables.names)
+        ? savedMentionables.names
+        : [];
+      const mentionableNames = Array.from(new Set(extractUserMentionables(text, resolvedLanguage).concat(savedMentionableNames)));
       const mentionableEntities = extractMentionableEntities(text, resolvedLanguage);
       const mentionableEntityNames = mentionableEntities.map((entity) => entity && entity.name).filter(Boolean);
       const factDerivedNames = extractAllowedNamesFromFacts(factsSelected);
