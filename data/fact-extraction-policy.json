@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "sourcePolicy": {
+    "allowList": ["user", "manual", "reviewed", "official", "trusted", "community", "runtime"],
+    "blockList": ["wiki-mirror", "dump", "bulk", "archive"],
+    "blockedPatterns": [
+      "wiki mirror",
+      "full dump",
+      "guide corpus",
+      "igdb parity",
+      "steam review bulk",
+      "reddit bulk",
+      "unofficial dump",
+      "archive",
+      "mirror"
+    ]
+  },
+  "factLimits": {
+    "textMaxLength": 240,
+    "keywordsMax": 12,
+    "tagsMax": 8,
+    "keywordMaxLength": 48,
+    "tagMaxLength": 32
+  },
+  "priority": {
+    "min": 1,
+    "max": 3,
+    "default": 2
+  },
+  "hardFilters": {
+    "lorePatterns": [
+      "lore",
+      "story",
+      "plot",
+      "backstory",
+      "walkthrough",
+      "full guide",
+      "chapter",
+      "episode"
+    ]
+  },
+  "rejectPayloadFields": [
+    "sourceText",
+    "rawSource",
+    "sourceContent",
+    "rawContent",
+    "fullText",
+    "pageText"
+  ],
+  "dedupe": {
+    "exact": true,
+    "nearDuplicate": {
+      "enabled": true,
+      "threshold": 0.9,
+      "minTokens": 6,
+      "minTokenOverlap": 4
+    }
+  }
+}
