@@ -249,10 +249,19 @@ function exportDiagnosticsForShare(options) {
   const opts = options && typeof options === 'object' ? options : {};
   const store = loadDiagnosticsStore();
   const pickLast = (list) => (Array.isArray(list) && list.length ? list[list.length - 1] : null);
+  const response = pickLast(store.responses);
+  let whitelistViolation = pickLast(store.violations);
+  if (!whitelistViolation && response && response.whitelistViolated) {
+    whitelistViolation = {
+      ts: response.ts,
+      event: 'entity-whitelist-violation',
+      offenders: Array.isArray(response.whitelistOffenders) ? response.whitelistOffenders : []
+    };
+  }
   const payload = {
     request: pickLast(store.requests),
-    response: pickLast(store.responses),
-    whitelistViolation: pickLast(store.violations)
+    response,
+    whitelistViolation
   };
   const text = JSON.stringify(payload, null, 2);
   if (opts.copy !== false && navigator && navigator.clipboard && navigator.clipboard.writeText) {

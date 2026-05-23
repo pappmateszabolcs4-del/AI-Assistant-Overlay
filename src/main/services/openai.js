@@ -1326,13 +1326,18 @@ function createOpenAIService(deps) {
         });
         const aiResponse = finalizeResponseText(completion.choices[0].message.content);
         const whitelistCheck = enforceEntityWhitelist(aiResponse, enforcementWhitelist, resolvedLanguage);
+        if (whitelistCheck.violated) {
+          knowledgeMode = AI_KNOWLEDGE_MODES.unknown;
+        }
         const guardedResponse = applyKnowledgeTemplate(whitelistCheck.adjusted, resolvedLanguage, knowledgeMode);
         console.log(logText.visionAnswer, guardedResponse);
         logAiDiagnostics({
           event: AI_DIAG_EVENTS.response,
           model: AI_MODELS.highQuality,
           responseLength: String(guardedResponse || '').length,
-          tooGeneric: isTooGeneric(guardedResponse, resolvedGameContext, specializationLevel || 3, resolvedLanguage)
+          tooGeneric: isTooGeneric(guardedResponse, resolvedGameContext, specializationLevel || 3, resolvedLanguage),
+          whitelistViolated: !!whitelistCheck.violated,
+          whitelistOffenders: whitelistCheck.offenders || []
         });
         if (whitelistCheck.violated) {
           logAiDiagnostics({
@@ -1372,13 +1377,18 @@ function createOpenAIService(deps) {
       });
       const aiResponse = finalizeResponseText(completion.choices[0].message.content);
       const whitelistCheck = enforceEntityWhitelist(aiResponse, enforcementWhitelist, resolvedLanguage);
+      if (whitelistCheck.violated) {
+        knowledgeMode = AI_KNOWLEDGE_MODES.unknown;
+      }
       const guardedResponse = applyKnowledgeTemplate(whitelistCheck.adjusted, resolvedLanguage, knowledgeMode);
       console.log(logText.answer, guardedResponse);
       logAiDiagnostics({
         event: AI_DIAG_EVENTS.response,
         model: selectedModel,
         responseLength: String(guardedResponse || '').length,
-        tooGeneric: isTooGeneric(guardedResponse, resolvedGameContext, specializationLevel || 3, resolvedLanguage)
+        tooGeneric: isTooGeneric(guardedResponse, resolvedGameContext, specializationLevel || 3, resolvedLanguage),
+        whitelistViolated: !!whitelistCheck.violated,
+        whitelistOffenders: whitelistCheck.offenders || []
       });
       if (whitelistCheck.violated) {
         logAiDiagnostics({
