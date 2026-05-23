@@ -6,6 +6,23 @@
 
 ---
 
+## [1.0.59] - 2026-05-24 (Phase 2: Fact Extraction Dedupe + Review UX)
+
+### ✅ Added
+
+- Exact text dedupe with near-duplicate tagging during fact normalization.
+- Review CLI grouping by near-duplicate group plus back/next navigation.
+- Dedupe configuration in fact-extraction policy.
+
+### 🔧 Changed
+
+- Review workflow preserves decisions while navigating between items.
+- Rimworld facts updated with reviewed extraction output.
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
 ## [1.0.58] - 2026-05-23 (Phase 6: Floating Panel Height Persistence)
 
 ### ✅ Added

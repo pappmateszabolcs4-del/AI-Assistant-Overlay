@@ -40,6 +40,36 @@ When adding new work logs, append them under **Daily Logs (Chronological)** usin
 
 #### Follow-ups
 - TODO:
+
+### 2026-05-24 (Night)
+
+#### Summary
+- What changed: Added exact dedupe + near-duplicate tagging, grouped review UI with back/next, and merged reviewed Rimworld facts into per-game storage.
+- Why: Reduce near-identical facts, make review manageable, and expand verified facts to avoid whitelist blocks.
+- Impact: Cleaner extraction output, faster review, and broader verified coverage for Rimworld.
+
+#### Details
+- Implementation notes: Exact text dedupe merges keywords/tags/priority; near-duplicate tagging uses token overlap and is policy-controlled; review groups by nearDuplicateGroup and supports back/next navigation.
+- Edge cases: Navigation is explicit; approval/rejection still required to mark a decision.
+
+#### Files touched
+- [tools/fact-extraction/normalize.js](tools/fact-extraction/normalize.js)
+- [tools/fact-extraction/review.js](tools/fact-extraction/review.js)
+- [tools/fact-extraction/policy.js](tools/fact-extraction/policy.js)
+- [data/fact-extraction-policy.json](data/fact-extraction-policy.json)
+- [tools/fact-extraction/README_SIMPLE.md](tools/fact-extraction/README_SIMPLE.md)
+- [data/games/rimworld/facts.json](data/games/rimworld/facts.json)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+
+#### Backups
+- Not created (not requested).
+
+#### Verification
+- Manual: fact extraction + review CLI run.
+
+#### Follow-ups
+- TODO: Add research-specific facts (e.g., Electricity, Microelectronics, Smithing, Stonecutting).
 ```
 
 ## 🎯 Project Vision: Customer-First Product

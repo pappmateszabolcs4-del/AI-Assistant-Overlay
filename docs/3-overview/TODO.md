@@ -103,17 +103,25 @@ Why: Enables “no prompt engineering needed” guidance.
       - [ ] Prompt-guard regression tests (suffixes, articles, plurals)
 
 - [ ] Data extraction MVP (to seed test data)
-  - [ ] Source input policy (allowed/blocked sources)
-    - [ ] Blocked: full wiki mirrors/dumps, guide corpus rebuilds, IGDB parity goals, Steam/Reddit bulk persistence, unofficial dumps/archives
-    - [ ] Allowed: temporary source processing + compact transformed facts only (no full-page persistence)
-  - [ ] Chunking pipeline (500-1500 tokens + chunk metadata)
-  - [ ] Fact extraction step (LLM prompt + output validation)
-  - [ ] Structured fact schema (id, text, keywords, tags, priority; optional: system, gameStage, confidence, sourceType)
-  - [ ] Human review flow (approve/reject/rewrite/merge/retag)
+  - [ ] Spec alignment: Phase 2 MVP section in docs/2-technical/METADATA_POLICY.md
+  - [x] Source input policy (config-first allow/block)
+    - [x] Blocked: full wiki mirrors/dumps, guide corpus rebuilds, IGDB parity goals, Steam/Reddit bulk persistence, unofficial dumps/archives
+    - [x] Allowed: temporary source processing + compact transformed facts only (no full-page persistence)
+  - [x] Hard rule: no raw source persistence (disk or durable cache)
+  - [x] Ingest gate: reject blocked or unknown sources
+  - [x] Chunking pipeline (500-1500 tokens + chunk metadata: gameId, sourceType, chunkId)
+  - [x] Fact extraction step (LLM prompt + output validation)
+  - [x] Structured fact schema (id, text, keywords, tags, priority; optional: system, gameStage, confidence, sourceType)
+  - [x] Validation + normalization (length, required fields, dedupe keywords/tags, priority range)
+  - [x] Hard filter: lore/guide patterns (config-defined)
+  - [x] Human review flow (approve/reject/rewrite/merge/retag; dev-only)
+  - [x] Dedupe: exact text merge + near-duplicate tagging (policy-controlled)
+  - [x] Review UX: near-duplicate grouping + back/next navigation
+  - [x] Dedupe diagnostics (exact dropped + near-duplicate marked)
   - [ ] Priority system (P1/P2/P3 + retrieval weights)
-  - [ ] Retention rules (no persistent source input)
+  - [x] Storage gate: reject payloads containing raw source text
   - [ ] Tiered support enforcement (A/B/C in prompt assembly)
-  - [ ] Diagnostics (extraction + tier logging)
+  - [ ] Diagnostics (extraction count, drop reasons, tier lookup, retrieval hits)
 
 ### Phase 3 — Facts pipeline (tiered support)
 

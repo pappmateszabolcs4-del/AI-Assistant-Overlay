@@ -460,3 +460,87 @@ This is:
 - sustainable technically
 - and far more defensible legally
 	than a full global third-party game corpus.
+
+---
+
+## Phase 2 Data Extraction MVP (Implementation Spec)
+
+Goal: minimal, long-term compatible pipeline that yields compact, structured gameplay facts with strict policy enforcement and zero raw source persistence.
+
+### 1) Policy and enforcement (hard rules)
+
+Required:
+- Source policy uses config-defined allow/block lists (no hardcode).
+- Raw source content must never be persisted (disk or durable cache).
+- Only transformed, validated facts can be stored.
+- Dev/admin review tools must remain dev-only.
+
+Enforcement points:
+- Ingest gate: reject source if blocked or missing allow match.
+- Extraction buffer: in-memory only + TTL; no file writes.
+- Storage gate: reject any payload that includes source text.
+
+### 2) Fact schema (stable base)
+
+Required fields:
+- id (string, stable, unique)
+- text (string, short, actionable)
+- keywords (string[])
+- tags (string[])
+- priority (number or enum: P1/P2/P3)
+
+Optional fields:
+- system (string)
+- gameStage (string)
+- confidence (number 0..1)
+- sourceType (string)
+
+Normalization rules:
+- text length limit (config)
+- keywords/tags: lowercase, trimmed, deduped
+- priority constrained to allowed values
+
+### 3) Chunking + extraction pipeline
+
+Chunking:
+- 500 to 1500 tokens per chunk
+- chunk meta: gameId, sourceType, chunkId
+
+Extraction prompt constraints:
+- Output only compact, action-focused facts
+- No lore, no guide paragraphs, no rewrites
+- One fact per item
+
+### 4) Output validation + filtering
+
+Reject if:
+- Missing required fields
+- text too long
+- duplicate keywords/tags after normalization
+- lore/guide patterns detected (hard filter list in config)
+
+### 5) Human review flow (dev-only)
+
+States:
+- approve / reject / rewrite / merge / retag
+
+Rules:
+- Only approved facts can be promoted to A-tier
+- Review history stored without raw source
+
+### 6) Tiered enforcement in prompt assembly
+
+Tier rules:
+- A: curated, reviewed facts only
+- B: runtime + user input only
+- C: generic facts + clarification question
+
+### 7) Diagnostics (local-only)
+
+Log events:
+- extraction count
+- drop reasons
+- tier lookup result
+- retrieval hit count
+
+No raw source content in logs.
