@@ -11,11 +11,11 @@ const DETAIL_MAPS = {
     5: { suffix: 'Give encyclopedic, expert-level answers (max 4096 tokens). 20-35+ paragraphs; tactics, builds, synergies, boss mechanics, phases, timing, positioning, DPS optimization, meta, early/mid/late game, alternatives. Use the full token budget.', maxTokens: 4096 }
   },
   hu: {
-    1: { suffix: 'Adj rovid, lenyegre toro valaszokat. Max 1-2 bekezdes, csak a legfontosabb infok.', maxTokens: 300 },
-    2: { suffix: 'Adj kozepes hosszusagu valaszokat. 2-4 bekezdes alap tippekkel es ajanlasokkal.', maxTokens: 600 },
-    3: { suffix: 'Adj reszletes valaszokat. 5-10 bekezdes konkret tippekkel, strategiakkal, mechanikakkal.', maxTokens: 1600 },
-    4: { suffix: 'Adj nagyon reszletes valaszokat. 10-20 bekezdes halado strategiakkal, buildekkel, itemekkel, taktikakkal.', maxTokens: 3200 },
-    5: { suffix: 'Adj enciklopedikus, szakertoi szintu valaszokat (max 4096 token). 20-35+ bekezdes; taktikak, buildek, szinergiak, boss mechanikak, fazisok, timing, pozicionalas, DPS optimalizalas, meta, early/mid/late game, alternativak. Hasznald ki a tokenlimitet.', maxTokens: 4096 }
+    1: { suffix: 'Adj rövid, lényegre törő válaszokat. Max 1-2 bekezdés, csak a legfontosabb infók.', maxTokens: 300 },
+    2: { suffix: 'Adj közepes hosszúságú válaszokat. 2-4 bekezdés alap tippekkel és ajánlásokkal.', maxTokens: 600 },
+    3: { suffix: 'Adj részletes válaszokat. 5-10 bekezdés konkrét tippekkel, stratégiákkal, mechanikákkal.', maxTokens: 1600 },
+    4: { suffix: 'Adj nagyon részletes válaszokat. 10-20 bekezdés haladó stratégiákkal, buildekkel, itemekkel, taktikákkal.', maxTokens: 3200 },
+    5: { suffix: 'Adj enciklopédikus, szakértői szintű válaszokat (max 4096 token). 20-35+ bekezdés; taktikák, buildek, szinergiák, boss mechanikák, fázisok, időzítés, pozicionálás, DPS optimalizálás, meta, early/mid/late game, alternatívák. Használd ki a tokenlimitet.', maxTokens: 4096 }
   },
   de: {
     1: { suffix: 'Gib kurze, auf den Punkt gebrachte Antworten. Max. 1-2 Absatze, nur das Wichtigste.', maxTokens: 300 },
@@ -92,7 +92,7 @@ const STRICT_POLICY = {
 
 const ANTI_HALLUCINATION = {
   en: 'CRITICAL: NEVER invent game-specific names (characters, items, bosses, stages, mechanics). If you are not sure, say you do not know and ask for a brief clarification. If FACTS are provided, you MUST use them and you MUST NOT contradict them.',
-  hu: 'KRITIKUS: SOHA ne talalj ki jatekspecifikus neveket (karakterek, targyak, bossok, helyszinek, mechanikak). Ha nem vagy biztos, mondd, hogy nem tudod, es kerj rovid pontositast. Ha FACTS vannak, koteles vagy hasznalni oket, es nem mondhatsz nekik ellent.',
+  hu: 'KRITIKUS: SOHA ne találj ki játékspecifikus neveket (karakterek, tárgyak, bossok, helyszínek, mechanikák). Ha nem vagy biztos, mondd, hogy nem tudod, és kérj rövid pontosítást. Ha FACTS vannak, köteles vagy használni őket, és nem mondhatsz nekik ellent.',
   de: 'KRITISCH: Erfinde niemals spielspezifische Namen (Charaktere, Items, Bosse, Levels, Mechaniken). Wenn du unsicher bist, sag, dass du es nicht weisst, und bitte um eine kurze Klarung. Wenn FACTS gegeben sind, musst du sie verwenden und darfst ihnen nicht widersprechen.',
   ru: 'КРИТИЧНО: Никогда не выдумывай игровые имена (персонажи, предметы, боссы, этапы, механики). Если не уверен, скажи, что не знаешь, и попроси краткое уточнение. Если даны FACTS, ты обязан их использовать и не противоречить им.',
   fr: 'CRITIQUE : N\'invente jamais de noms specifiques au jeu (personnages, objets, boss, niveaux, mecaniques). Si tu n\'es pas sur, dis que tu ne sais pas et demande une breve clarification. Si des FACTS sont fournis, tu dois les utiliser et ne pas les contredire.',
@@ -104,7 +104,7 @@ const ANTI_HALLUCINATION = {
 
 const DEFAULT_GAME_TEMPLATES = {
   en: 'If no specific template is available, ask a short clarification about the player\'s current stage, goals, and constraints, then provide 3-5 actionable next steps with brief reasoning.',
-  hu: 'Ha nincs elerheto sablon, kerj rovid pontositast a jatekos jelenlegi szakaszarol, celjairol es korlatairrol, majd adj 3-5 megvalosithato kovetkezo lepest rovid indoklassal.',
+  hu: 'Ha nincs elérhető sablon, kérj rövid pontosítást a játékos jelenlegi szakaszáról, céljairól és korlátairól, majd adj 3-5 megvalósítható következő lépést rövid indoklással.',
   de: 'Wenn kein spezifisches Template verfugbar ist, frage kurz nach der aktuellen Spielphase, Zielen und Einschrankungen des Spielers und gib dann 3-5 umsetzbare nachste Schritte mit kurzer Begrundung.',
   ru: 'Esli net konkretnogo shablona, kratko utochni tekushchuyu stadiyu, tseli i ogranicheniya igroka, zatem dai 3-5 vypolnimykh sleduyushchikh shagov s korotkim obosnovaniem.',
   fr: 'Si aucun modele specifique n\'est disponible, demande brievement la phase actuelle, les objectifs et les contraintes du joueur, puis donne 3 a 5 prochaines etapes concretes avec une breve justification.',
@@ -116,7 +116,7 @@ const DEFAULT_GAME_TEMPLATES = {
 
 const NO_LINK_ACCESS_PROMPT = {
   en: 'IMPORTANT: You cannot access external links. If the user shares a URL, ask them to paste the relevant content (character list, map names, etc.). Do NOT claim you read or opened any link.',
-  hu: 'FONTOS: Nem ferhetsz hozza kulso linkekhez. Ha a felhasznalo URL-t kuld, kerdd meg, hogy masolja be a relevans tartalmat (karakterlista, palyanevek, stb.). Ne allitsd, hogy megnyitottad vagy elolvastad a linket.',
+  hu: 'FONTOS: Nem férhetsz hozzá külső linkekhez. Ha a felhasználó URL-t küld, kérdd meg, hogy másolja be a releváns tartalmat (karakterlista, pályanevek, stb.). Ne állítsd, hogy megnyitottad vagy elolvastad a linket.',
   de: 'WICHTIG: Du kannst nicht auf externe Links zugreifen. Wenn der Nutzer eine URL schickt, bitte ihn, den relevanten Inhalt einzufugen (Charakterliste, Kartennamen usw.). Behaupte NICHT, dass du den Link geoffnet oder gelesen hast.',
   ru: 'ВАЖНО: Ты не можешь открывать внешние ссылки. Если пользователь присылает URL, попроси вставить релевантный контент (список персонажей, названия уровней и т.д.). НЕ утверждай, что ты открыл или прочитал ссылку.',
   fr: 'IMPORTANT : Tu ne peux pas acceder aux liens externes. Si l\'utilisateur envoie une URL, demande-lui de coller le contenu pertinent (liste de personnages, noms de niveaux, etc.). Ne pretend PAS avoir ouvert ou lu le lien.',
@@ -133,9 +133,9 @@ const ANSWER_STYLE_TEMPLATES = {
     deep: 'ANSWER STYLE: Deep. Provide a structured, detailed answer with sections and extra context.'
   },
   hu: {
-    short: 'VALASZ STILUS: Rovid. Maximum 2-4 bullet, tores, roviden, hosszu magyarazat nelkul.',
-    steps: 'VALASZ STILUS: Lepesrol lepesre. Szamozott lepesek rovid indoklassal.',
-    deep: 'VALASZ STILUS: Reszletes. Strukturalt, reszletes valasz szekciokkal es extra kontextussal.'
+    short: 'VÁLASZ STÍLUS: Rövid. Maximum 2-4 bullet, törés, röviden, hosszú magyarázat nélkül.',
+    steps: 'VÁLASZ STÍLUS: Lépésről lépésre. Számozott lépések rövid indoklással.',
+    deep: 'VÁLASZ STÍLUS: Részletes. Strukturált, részletes válasz szekciókkal és extra kontextussal.'
   },
   de: {
     short: 'ANTWORTSTIL: Kurz. Maximal 2-4 Stichpunkte, knapp, ohne lange Erklarungen.',
@@ -176,7 +176,7 @@ const ANSWER_STYLE_TEMPLATES = {
 
 const FACTS_HEADERS = {
   en: 'FACTS (use these if relevant):',
-  hu: 'TENYEK (hasznald ezeket, ha relevans):',
+  hu: 'TÉNYEK (használd ezeket, ha releváns):',
   de: 'FAKTEN (nutze diese, falls relevant):',
   ru: 'ФАКТЫ (используй, если релевантно):',
   fr: 'FAITS (utilise-les si pertinent):',
@@ -194,10 +194,10 @@ const NAME_GUARD_TEMPLATES = {
     noVerified: 'NAME GUARD: There are no verified character names in FACTS. You must not name any characters. Give general, game-agnostic tips (mobility, damage, crowd-control, defense, range), then briefly ask for the actual character list.'
   },
   hu: {
-    verified: 'HITELES NEVEK (csak ezeket szabad emliteni): {names}.',
-    forbidden: 'TILTOTT NEVEK (ne emlitsd): {names}.',
-    onlyForbidden: 'CSAK TILTOTT NEVEK ismertek. Ne javasolj karaktereket. Adj altalanos strategiai tippeket, es eloszor kerj teljes karakterlistat.',
-    noVerified: 'NEV-TILALOM: Nincs hiteles karakternev a FACTS-ben. Semmilyen karakternevet nem mondhatsz. Adj altalanos, jatekmenet-fuggetlen tippeket (mobilitas, sebzes, crowd-control, vedekezes, tavolsag), es kerj roviden egy pontos listat a valaszthato karakterekrol.'
+    verified: 'HITELES NEVEK (csak ezeket szabad említeni): {names}.',
+    forbidden: 'TILTOTT NEVEK (ne említsd): {names}.',
+    onlyForbidden: 'CSAK TILTOTT NEVEK ismertek. Ne javasolj karaktereket. Adj általános stratégiai tippeket, és először kérj teljes karakterlistát.',
+    noVerified: 'NÉV-TILALOM: Nincs hiteles karakternév a FACTS-ben. Semmilyen karakternevet nem mondhatsz. Adj általános, játékmenet-független tippeket (mobilitás, sebzés, crowd-control, védekezés, távolság), és kérj röviden egy pontos listát a választható karakterekről.'
   },
   de: {
     verified: 'VERIFIZIERTE NAMEN (nur diese durfen genannt werden): {names}.',
@@ -302,28 +302,28 @@ const MULTI_TURN_HINTS = {
 };
 
 const OPENAI_LOG_TEXT = {
-  audioProcessing: '[AI] Audio feldolgozas (Whisper)...',
+  audioProcessing: '[AI] Audió feldolgozás (Whisper)...',
   audioTranscript: '[AI] Transzkript:',
-  audioError: '[AI] Audio error:',
-  gptProcessing: '[AI] GPT feldolgozas: {text} | Specialization level: {level} | Has image: {hasImage} | Game: {game}',
-  gameContextInjected: '[AI] Game context injected: {game}',
-  visionAnswer: '[AI] Vision valasz:',
-  answer: '[AI] Valasz:',
+  audioError: '[AI] Audió hiba:',
+  gptProcessing: '[AI] GPT feldolgozás: {text} | Specialization level: {level} | Has image: {hasImage} | Game: {game}',
+  gameContextInjected: '[AI] Játék-kontekstus beillesztve: {game}',
+  visionAnswer: '[AI] Vision válasz:',
+  answer: '[AI] Válasz:',
   aiError: '[AI] Hiba:',
   unknownGame: 'Unknown',
-  openaiKeySaved: '[SECURITY] OpenAI API kulcs beallitva es inicializalva',
-  openaiKeyDeleted: '[SECURITY] OpenAI API kulcs torolve (keytar)',
-  openaiKeySaveError: '[SECURITY] Hiba az API kulcs mentesekor:',
-  openaiKeyDeleteError: '[SECURITY] Hiba a kulcs torlesekor:',
-  uiTranslationError: '[OPENAI] UI translation error:',
-  openaiInitSource: '[SECURITY] OpenAI inicializalva ({source}-bol)',
-  openaiInitError: '[SECURITY] Hiba az API kulcs lekeresebol:',
-  openaiMissingKey: '[SECURITY] OpenAI API kulcs nincs beallitva. Allitsd be a Settings panelen vagy .env-ben (dev)!'
+  openaiKeySaved: '[SECURITY] OpenAI API kulcs beállítva és inicializálva',
+  openaiKeyDeleted: '[SECURITY] OpenAI API kulcs törölve (keytar)',
+  openaiKeySaveError: '[SECURITY] Hiba az API kulcs mentésekor:',
+  openaiKeyDeleteError: '[SECURITY] Hiba a kulcs törlésekor:',
+  uiTranslationError: '[OPENAI] UI fordítási hiba:',
+  openaiInitSource: '[SECURITY] OpenAI inicializálva ({source}-ból)',
+  openaiInitError: '[SECURITY] Hiba az API kulcs lekéréséből:',
+  openaiMissingKey: '[SECURITY] OpenAI API kulcs nincs beállítva. Állítsd be a Settings panelen vagy .env-ben (dev)!'
 };
 
 const SYSTEM_BASE_PROMPTS = {
   en: 'You are an elite-level professional game assistant. You answer game-related questions in GREAT DETAIL. Start immediately with the answer, no introduction. Always end with a complete sentence.',
-  hu: 'Te egy elit szintu, professzionalis jatekasszisztens vagy. A felhasznalo jatekbelikerdesekre NAGYON RESZLETESEN valaszolsz. Minden valaszod ALAPOSAN kifejti a temat, jatekspecifikus tanacsokkal. Kezdd a valaszt azonnal, bevezeto nelkul. Mindig befejezett mondattal zard a valaszt.',
+  hu: 'Te egy elit szintű, professzionális játékasszisztens vagy. A felhasználó játékbeli kérdésekre NAGYON RÉSZLETESEN válaszolsz. Minden válaszod ALAPOSAN kifejti a témát, játékspecifikus tanácsokkal. Kezdd a választ azonnal, bevezető nélkül. Mindig befejezett mondattal zárd a választ.',
   de: 'Du bist ein Elite-Level professioneller Spielassistent. Du antwortest SEHR DETAILLIERT auf spielbezogene Fragen. Antworte sofort ohne Einleitung. Beende deine Antwort immer mit einem vollstaendigen Satz.',
   ru: 'Ty elitnyy professionalnyy igrovoy assistant. Ty otvechaesh OCHEN PODROBNO na igrovye voprosy. Otvechay srazu, bez vstupleniya. Vsegda zakanchivay otvet polnoy frazoy.',
   fr: 'Tu es un assistant de jeu professionnel de niveau elite. Tu reponds de maniere TRES DETAILLEE aux questions de jeu. Reponds directement, sans introduction. Termine toujours par une phrase complete.',
@@ -335,7 +335,7 @@ const SYSTEM_BASE_PROMPTS = {
 
 const STRICT_OVERRIDE_PROMPTS = {
   en: 'STRICT OVERRIDE: A game context is present. You MUST answer as a game assistant and MUST NOT refuse. If the user includes a link, ask them to paste the relevant content, then proceed with general guidance without inventing names.',
-  hu: 'SZIGORU FELULIRAS: Jatek-kontekst van. JATEKASSZISZTENSKENT KOTELEZO valaszolni, es TILOS elutasitani. Ha a felhasznalo linket kuld, kerdd meg, hogy masolja be a relevans tartalmat, majd adj altalanos iranymutatast uj nevek kitalalasa nelkul.',
+  hu: 'SZIGORÚ FELÜLÍRÁS: Játék-kontekstus van. JÁTÉKASSZISZTENSKÉNT KÖTELEZŐ válaszolni, és TILOS elutasítani. Ha a felhasználó linket küld, kérdd meg, hogy másolja be a releváns tartalmat, majd adj általános iránymutatást új nevek kitalálása nélkül.',
   de: 'STRICT OVERRIDE: Es liegt ein Spielkontext vor. Du MUSST als Spielassistent antworten und DARFST NICHT ablehnen. Wenn der Nutzer einen Link sendet, bitte ihn, den relevanten Inhalt einzufugen, und gib dann allgemeine Hinweise ohne neue Namen zu erfinden.',
   ru: 'STRICT OVERRIDE: Est igrovoy kontekst. Ty OBLIAZAN otvechat kak igrovoy assistent i NE DOLZHEN otkazyvat. Esli polzovatel prisylaet ssylku, poprosi vstavit relevantnyi content, zatem dai obshchie rekomendatsii bez vymyslennykh imen.',
   fr: 'STRICT OVERRIDE : Un contexte de jeu est present. Tu dois repondre comme assistant de jeu et NE DOIS PAS refuser. Si l utilisateur inclut un lien, demande de coller le contenu pertinent, puis donne des conseils generaux sans inventer de noms.',
@@ -359,12 +359,12 @@ const KNOWLEDGE_TEMPLATES = {
     strictUnknown: 'I do not have reliable data for this yet. Please share the exact name or a short list, and I will help further. General tips: check the in-game journal, tooltips, and crafting or quest menus.'
   },
   hu: {
-    label: 'Ismereti allapot',
+    label: 'Ismereti állapot',
     verified: 'HITELES',
-    partial: 'RESZLEGES',
+    partial: 'RÉSZLEGES',
     unknown: 'ISMERETLEN',
-    notice: 'Nem ellenorzott: Ez a valasz korlatozott informacio alapjan keszult. Kerlek ellenorizd a jatekban.',
-    strictUnknown: 'Nincs megbizhato adatom errol. Ird meg a pontos nevet vagy egy rovid listat, es segitek. Altalanos tippek: nezd meg a jatekon beluli naplot, tooltippeket, es a craft/quest menuket.'
+    notice: 'Nem ellenőrzött: Ez a válasz korlátozott információ alapján készült. Kérlek ellenőrizd a játékban.',
+    strictUnknown: 'Nincs megbízható adatom erről. Írd meg a pontos nevet vagy egy rövid listát, és segítek. Általános tippek: nézd meg a játékon belüli naplót, tooltippeket, és a craft/quest menüket.'
   },
   de: {
     label: 'Wissensstatus',
@@ -431,9 +431,9 @@ const ENTITY_WHITELIST_TEMPLATES = {
     mentionable: 'USER PROVIDED NAMES (mentionable, not verified): {names}.'
   },
   hu: {
-    title: 'ENTITAS WHITELIST: Csak a FACTS-ben vagy a FELHASZNALO ALTAL ADOTT nevek hasznalhatok. Ne talalj ki uj neveket.',
-    verified: 'HITELES NEVEK (FACTS-bol): {names}.',
-    mentionable: 'FELHASZNALOI NEVEK (emlitheto, de nem hiteles): {names}.'
+    title: 'ENTITÁS WHITELIST: Csak a FACTS-ben vagy a FELHASZNÁLÓ ÁLTAL ADOTT nevek használhatók. Ne találj ki új neveket.',
+    verified: 'HITELES NEVEK (FACTS-ból): {names}.',
+    mentionable: 'FELHASZNÁLÓI NEVEK (említhető, de nem hiteles): {names}.'
   },
   de: {
     title: 'ENTITY WHITELIST: Nutze nur Eigennamen aus FACTS oder aus USER PROVIDED NAMES. Keine neuen Namen erfinden.',
@@ -474,7 +474,7 @@ const ENTITY_WHITELIST_TEMPLATES = {
 
 const ENTITY_REDACTION_TEXT = {
   en: 'unknown entity',
-  hu: 'ismeretlen entitas',
+  hu: 'ismeretlen entitás',
   de: 'unbekannte Entitaet',
   ru: 'неизвестная сущность',
   fr: 'entite inconnue',
@@ -486,7 +486,7 @@ const ENTITY_REDACTION_TEXT = {
 
 const GAME_CONTEXT_PROMPTS = {
   en: '\n\n🎮 GAME CONTEXT DETECTED: The user is currently playing "{game}". Focus ALL your answers specifically on this game. Provide game-specific tips, strategies, item names, boss mechanics, builds, and gameplay advice that are ONLY relevant to "{game}". Do NOT give generic gaming advice or information about other games. Stay strictly within the context of "{game}". If the user asks what game they are playing, answer with "{game}" and do not say the game is unknown.',
-  hu: '\n\n🎮 JATEK KONTEXTUS: A felhasznalo jelenleg a(z) "{game}" jatekkal jatszik. MINDEN valaszod erre a jatekra fokuszaljon. Adj jatekspecifikus tippeket, strategiakat, item neveket, boss mechanikakat, buildeket es jatekmenet tanacsokat, amelyek csak a(z) "{game}" jatekra relevansak. Ne adj altalanos jatek tanacsokat es ne emlits mas jatekokat. Maradj szigoruan a "{game}" kontextusaban. Ha a felhasznalo rakerdez, milyen jatekkal jatszik, valaszolj: "{game}", es ne mondd, hogy ismeretlen.',
+  hu: '\n\n🎮 JÁTÉK KONTEXTUS: A felhasználó jelenleg a(z) "{game}" játékkal játszik. MINDEN válaszod erre a játékra fókuszáljon. Adj játékspecifikus tippeket, stratégiákat, item neveket, boss mechanikákat, buildeket és játékmenet tanácsokat, amelyek csak a(z) "{game}" játékra relevánsak. Ne adj általános játék tanácsokat és ne említs más játékokat. Maradj szigorúan a "{game}" kontextusában. Ha a felhasználó rákérdez, milyen játékkal játszik, válaszolj: "{game}", és ne mondd, hogy ismeretlen.',
   de: '\n\n🎮 SPIELKONTEXT: Der Nutzer spielt derzeit "{game}". Konzentriere ALLE Antworten auf dieses Spiel. Gib spielbezogene Tipps, Strategien, Item-Namen, Boss-Mechaniken, Builds und Gameplay-Ratschlage, die NUR fur "{game}" relevant sind. Gib keine allgemeinen Gaming-Tipps oder Infos uber andere Spiele. Bleibe strikt im Kontext von "{game}". Wenn der Nutzer fragt, welches Spiel er spielt, antworte mit "{game}" und sage nicht, dass es unbekannt ist.',
   ru: '\n\n🎮 ИГРОВОЙ КОНТЕКСТ: Пользователь сейчас играет в "{game}". Фокусируй ВСЕ ответы только на этой игре. Давай игровые советы, стратегии, названия предметов, механики боссов, билды и рекомендации по геймплею, которые релевантны только "{game}". Не давай общих советов и не упоминай другие игры. Строго соблюдай контекст "{game}". Если пользователь спросит, во что он играет, ответь "{game}" и не говори, что игра неизвестна.',
   fr: '\n\n🎮 CONTEXTE DE JEU : L\'utilisateur joue actuellement a "{game}". Concentre TOUTES tes reponses sur ce jeu. Donne des conseils, strategies, noms d\'objets, mecanismes de boss, builds et recommandations de gameplay qui ne sont pertinents que pour "{game}". Ne donne pas de conseils generaux ni d\'infos sur d\'autres jeux. Reste strictement dans le contexte de "{game}". Si l\'utilisateur demande a quel jeu il joue, reponds "{game}" et ne dis pas que le jeu est inconnu.',
@@ -498,7 +498,7 @@ const GAME_CONTEXT_PROMPTS = {
 
 const TEMPLATE_PROMPT_LABELS = {
   en: { gameTemplate: 'GAME TEMPLATE:', generalTemplate: 'GENERAL GAME TEMPLATE:' },
-  hu: { gameTemplate: 'JATEK SABLON:', generalTemplate: 'ALTALANOS JATEK SABLON:' },
+  hu: { gameTemplate: 'JÁTÉK SABLON:', generalTemplate: 'ÁLTALÁNOS JÁTÉK SABLON:' },
   de: { gameTemplate: 'SPIELVORLAGE:', generalTemplate: 'ALLGEMEINE SPIELVORLAGE:' },
   ru: { gameTemplate: 'ШАБЛОН ИГРЫ:', generalTemplate: 'ОБЩИЙ ШАБЛОН ИГРЫ:' },
   fr: { gameTemplate: 'MODELE DE JEU:', generalTemplate: 'MODELE DE JEU GENERAL:' },
@@ -534,7 +534,7 @@ const TEMPLATE_GUIDANCE_INTRO = {
 
 const PROFILE_PROMPT_LABELS = {
   en: { header: 'GAME PROFILE:', systems: 'systems', notes: 'notes' },
-  hu: { header: 'JATEK PROFIL:', systems: 'rendszerek', notes: 'megjegyzesek' },
+  hu: { header: 'JÁTÉK PROFIL:', systems: 'rendszerek', notes: 'megjegyzések' },
   de: { header: 'SPIELPROFIL:', systems: 'systeme', notes: 'notizen' },
   ru: { header: 'ПРОФИЛЬ ИГРЫ:', systems: 'системы', notes: 'заметки' },
   fr: { header: 'PROFIL DU JEU:', systems: 'systemes', notes: 'notes' },
@@ -546,7 +546,7 @@ const PROFILE_PROMPT_LABELS = {
 
 const INTENT_ROUTING_HEADERS = {
   en: 'Intent routing rules:',
-  hu: 'Szandek iranyitas szabalyai:',
+  hu: 'Szándék irányítás szabályai:',
   de: 'Regeln zur Intent-Zuordnung:',
   ru: 'Правила маршрутизации намерения:',
   fr: 'Regles de routage d intention:',
@@ -562,8 +562,8 @@ const VISION_PROMPTS = {
     user: '[GAME IMAGE CLASSIFICATION]\n\nTask: Determine if the image is a VIDEO GAME screenshot.\n- If NOT a game image, refuse with the policy refusal message in the user\'s language.\n- If it IS a game image, answer the user\'s question with detailed game-specific guidance.\n\nUser question: {question}'
   },
   hu: {
-    system: 'FONTOS VISION SZABALYOK: Eloszor dontsd el, hogy a kep videojatek-kepernyokep vagy valos vilagbeli tartalom. Ha NEM egyertelmuen videojatek-kepernyokep, KOTELEZO elutasitani a felhasznalo nyelven. Ha videojatek-kepernyokep, kezeld a szereploket virtualisnak (NPC-k, jatekos avatarok, sprite-ok), es elemezz szabadon: ellenfelek, bossok, targyak, terkep, UI elemek, mechanikak. Ne kezeld a virtualis tartalmat valos szemelyekkent.',
-    user: '[JATEK KEP OSZTALYOZAS]\n\nFeladat: Dontsd el, hogy a kep videojatek-kepernyokep-e.\n- Ha NEM jatekkep, utasitsd el a felhasznalo nyelven.\n- Ha jatekkep, valaszolj a kerdesre reszletes, jatekspecifikus tanacsokkal.\n\nFelhasznalo kerdese: {question}'
+    system: 'FONTOS VISION SZABÁLYOK: Először döntsd el, hogy a kép videojáték-képernyőkép vagy valós világbeli tartalom. Ha NEM egyértelműen videojáték-képernyőkép, KÖTELEZŐ elutasítani a felhasználó nyelvén. Ha videojáték-képernyőkép, kezeld a szereplőket virtuálisnak (NPC-k, játékos avatarok, sprite-ok), és elemezz szabadon: ellenfelek, bossok, tárgyak, térkép, UI elemek, mechanikák. Ne kezeld a virtuális tartalmat valós személyként.',
+    user: '[JÁTÉK KÉP OSZTÁLYOZÁS]\n\nFeladat: Döntsd el, hogy a kép videojáték-képernyőkép-e.\n- Ha NEM játékkép, utasítsd el a felhasználó nyelvén.\n- Ha játékkép, válaszolj a kérdésre részletes, játékspecifikus tanácsokkal.\n\nFelhasználó kérdése: {question}'
   },
   de: {
     system: 'WICHTIGE VISION-REGELN: Bestimme zuerst, ob das Bild ein VIDEOSPIEL-SCREENSHOT oder reales Welt-Inhalt ist. Wenn es NICHT eindeutig ein Spiel-Screenshot ist, MUSST du mit der Ablehnungsnachricht in der Sprache des Nutzers ablehnen. Wenn es ein Spiel-Screenshot ist, behandle alle Charaktere als virtuell (NPCs, Avatare, Sprites) und analysiere frei: Gegner, Bosse, Items, Karten, UI-Elemente, Mechaniken. Behandle virtuelle Inhalte nicht als reale Personen.',
