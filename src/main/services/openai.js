@@ -46,6 +46,9 @@ const {
   getUserMentionableMarkers,
   getEntityMarkerPatterns,
   getEntityStopWords,
+  getEntityContextKeywords,
+  getEntityLocationHints,
+  getEntityInflectionSuffixes,
   getEntityRedactionText,
   getEntityRedactionReplacement,
   getHighRiskIntents,
@@ -437,11 +440,37 @@ function createOpenAIService(deps) {
     return normalizeToken(value);
   }
 
-  function normalizeCandidateTokens(candidate) {
+  function getNormalizedInflectionSuffixes(lang) {
+    return getEntityInflectionSuffixes(lang)
+      .map((suffix) => normalizeNameToken(suffix))
+      .filter(Boolean)
+      .sort((a, b) => b.length - a.length);
+  }
+
+  function stripInflectionSuffix(token, lang) {
+    const normalized = normalizeNameToken(token);
+    if (!normalized) return '';
+    const suffixes = getNormalizedInflectionSuffixes(lang);
+    for (const suffix of suffixes) {
+      if (!suffix) continue;
+      if (normalized.length > suffix.length + 1 && normalized.endsWith(suffix)) {
+        return normalized.slice(0, -suffix.length);
+      }
+    }
+    return normalized;
+  }
+
+  function normalizeCandidateTokens(candidate, lang) {
     return String(candidate || '')
       .split(/\s+/g)
-      .map(normalizeNameToken)
+      .map((value) => stripInflectionSuffix(value, lang))
       .filter(Boolean);
+  }
+
+  function normalizeCandidateForWhitelist(candidate, lang) {
+    const tokens = normalizeCandidateTokens(candidate, lang);
+    if (!tokens.length) return '';
+    return tokens.join('');
   }
 
   function escapeRegExp(value) {
@@ -493,31 +522,22 @@ function createOpenAIService(deps) {
 
   function isLikelyLocationCandidate(candidate, lang) {
     if (!candidate) return false;
-    const text = candidate.toLowerCase();
-    if (text.includes(' forest') || text.includes(' cave') || text.includes(' dungeon') || text.includes(' ruins') || text.includes(' temple') || text.includes(' valley')) {
-      return true;
-    }
-    if (text.includes(' zone') || text.includes(' area') || text.includes(' stage') || text.includes(' level') || text.includes(' map')) {
-      return true;
-    }
-    if (lang === 'hu') {
-      if (/[\-](ban|ben|ba|be|bol|rol|hoz|hez|hoz|ra|re|nal|nel)\b/i.test(candidate)) return true;
-    }
-    return false;
+    const hints = getEntityLocationHints(lang);
+    const normalizedText = normalizeText(candidate);
+    const contains = Array.isArray(hints.contains) ? hints.contains : [];
+    const matchesContains = contains
+      .map((entry) => normalizeText(entry))
+      .filter(Boolean)
+      .some((entry) => normalizedText.includes(entry));
+    if (matchesContains) return true;
+    const suffixes = Array.isArray(hints.suffixes) ? hints.suffixes : [];
+    const normalizedToken = normalizeNameToken(candidate);
+    if (!normalizedToken) return false;
+    return suffixes
+      .map((suffix) => normalizeNameToken(suffix))
+      .filter(Boolean)
+      .some((suffix) => normalizedToken.length > suffix.length + 1 && normalizedToken.endsWith(suffix));
   }
-
-  const REDACTION_CONTEXT_KEYWORDS = {
-    en: {
-      character: ['character', 'hero', 'class', 'boss', 'tank', 'healer', 'dps'],
-      item: ['item', 'gear', 'weapon', 'armor', 'shield', 'bow', 'sword', 'staff', 'ring', 'amulet', 'trinket'],
-      skill: ['skill', 'ability', 'ultimate', 'spell', 'perk', 'talent']
-    },
-    hu: {
-      character: ['karakter', 'hos', 'hős', 'kaszt', 'osztaly', 'osztály', 'boss'],
-      item: ['fegyver', 'pancel', 'páncél', 'targy', 'tárgy', 'felszereles', 'felszerelés', 'pajzs', 'kard', 'ij', 'íj', 'gyuru', 'gyűrű'],
-      skill: ['kepesseg', 'képesség', 'skill', 'varazslat', 'varázslat', 'talent', 'perk']
-    }
-  };
 
   function getRedactionContextWindow(text, candidate) {
     const body = String(text || '').toLowerCase();
@@ -531,12 +551,17 @@ function createOpenAIService(deps) {
   }
 
   function resolveRedactionKind(answer, candidate, lang) {
-    const context = getRedactionContextWindow(answer, candidate);
-    const keywords = REDACTION_CONTEXT_KEYWORDS[lang] || REDACTION_CONTEXT_KEYWORDS.en;
-    const hasAny = (list) => Array.isArray(list) && list.some((entry) => context.includes(entry));
+    const context = normalizeText(getRedactionContextWindow(answer, candidate));
+    const keywords = getEntityContextKeywords(lang);
+    const hasAny = (list) => Array.isArray(list)
+      && list
+        .map((entry) => normalizeText(entry))
+        .filter(Boolean)
+        .some((entry) => context.includes(entry));
     if (hasAny(keywords.character)) return 'character';
     if (hasAny(keywords.item)) return 'item';
     if (hasAny(keywords.skill)) return 'skill';
+    if (hasAny(keywords.location)) return 'location';
     if (isLikelyLocationCandidate(candidate, lang)) return 'location';
     return 'generic';
   }
@@ -552,8 +577,12 @@ function createOpenAIService(deps) {
     const allowed = Array.isArray(allowedNames) ? allowedNames : [];
     if (!allowed.length) return { adjusted: answer, violated: false, offenders: [], suspects: [] };
     const baseAnswer = String(answer || '');
-    const normalizedAllowed = new Set(allowed.map(normalizeNameToken).filter(Boolean));
-    const stopWords = new Set(getEntityStopWords(lang));
+    const normalizedAllowed = new Set(allowed
+      .map((name) => normalizeCandidateForWhitelist(name, lang))
+      .filter(Boolean));
+    const stopWords = new Set(getEntityStopWords(lang)
+      .map((word) => stripInflectionSuffix(word, lang))
+      .filter(Boolean));
     const redactionText = getEntityRedactionText(lang);
     const isSingleStartOnly = (text, candidate) => {
       const counts = getCandidateCounts(text, candidate);
@@ -563,9 +592,9 @@ function createOpenAIService(deps) {
     const offenders = new Set();
     const suspects = new Set();
     for (const candidate of candidates) { 
-      const normalized = normalizeNameToken(candidate);
+      const normalized = normalizeCandidateForWhitelist(candidate, lang);
       if (!normalized || stopWords.has(normalized)) continue;
-      const tokens = normalizeCandidateTokens(candidate);
+      const tokens = normalizeCandidateTokens(candidate, lang);
       if (!tokens.length || tokens.every((token) => stopWords.has(token))) continue;
       if (!candidate.includes(' ') && isListHeadingCandidate(answer, candidate)) {
         suspects.add(candidate);
@@ -736,13 +765,7 @@ function createOpenAIService(deps) {
   }
 
   function normalizeIntentText(text) {
-    return String(text || '')
-      .toLowerCase()
-      .normalize('NFKD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^\p{L}\p{N}]+/gu, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    return normalizeText(text);
   }
 
   function classifyIntent(text) {

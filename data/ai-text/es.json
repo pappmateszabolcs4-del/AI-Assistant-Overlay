@@ -21,6 +21,31 @@
     "onlyForbidden": "SOLO HAY NOMBRES PROHIBIDOS. No sugieras personajes. Da consejos generales y pide primero la lista completa de personajes.",
     "noVerified": "BLOQUEO DE NOMBRES: No hay nombres de personajes verificados en FACTS. No debes nombrar personajes. Da consejos generales y no dependientes del juego (movilidad, dano, control de masas, defensa, alcance) y pide brevemente la lista exacta de personajes."
   },
+  "userMentionableMarkers": [
+    "personajes", "personaje", "jefes", "jefe", "objetos", "objeto", "armas", "arma",
+    "npc", "npcs", "clases", "clase"
+  ],
+  "entityMarkerPatterns": [
+    {"type": "character", "markers": ["personajes", "personaje"]},
+    {"type": "boss", "markers": ["jefes", "jefe"]},
+    {"type": "item", "markers": ["objetos", "objeto", "armas", "arma"]},
+    {"type": "npc", "markers": ["npc", "npcs"]},
+    {"type": "class", "markers": ["clases", "clase"]},
+    {"type": "location", "markers": ["lugares", "lugar", "mapas", "mapa", "zonas", "zona", "areas", "area", "niveles", "nivel", "etapas", "etapa"]},
+    {"type": "quest", "markers": ["misiones", "mision"]},
+    {"type": "mechanic", "markers": ["mecanicas", "mecanica"]}
+  ],
+  "entityContextKeywords": {
+    "character": ["personaje", "heroe", "clase", "jefe", "tanque", "sanador", "dps"],
+    "item": ["objeto", "arma", "armadura", "escudo", "arco", "espada", "baston", "anillo", "amuleto"],
+    "skill": ["habilidad", "skill", "hechizo", "talento", "perk", "ulti"],
+    "location": ["bosque", "cueva", "mazmorra", "ruinas", "templo", "valle", "zona", "area", "nivel", "mapa"]
+  },
+  "entityLocationHints": {
+    "contains": ["bosque", "cueva", "mazmorra", "ruinas", "templo", "valle", "zona", "area", "nivel", "mapa"],
+    "suffixes": []
+  },
+  "entityInflectionSuffixes": [],
   "entityStopWords": [
     "el", "la", "los", "las", "y", "tu", "tus", "este", "esta", "ese", "esa", "con", "de", "en", "entonces", "cuando", "donde",
     "que", "cual", "quien", "por que", "como", "para", "usa", "usar", "no", "si", "consejos", "inicio", "primero",

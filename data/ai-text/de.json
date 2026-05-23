@@ -21,6 +21,31 @@
     "onlyForbidden": "NUR VERBOTENE NAMEN sind bekannt. Nenne keine Charaktere. Gib allgemeine Strategietipps und bitte zuerst um die komplette Charakterliste.",
     "noVerified": "NAMENSSPERRE: In FACTS gibt es keine verifizierten Charakternamen. Du darfst keine Charakternamen nennen. Gib allgemeine, spielunabhangige Tipps (Mobilitat, Schaden, Crowd-Control, Verteidigung, Reichweite) und bitte kurz um die genaue Charakterliste."
   },
+  "userMentionableMarkers": [
+    "charaktere", "charakter", "bosse", "boss", "gegenstaende", "gegenstand", "waffen", "waffe",
+    "npc", "npcs", "helden", "held", "klassen", "klasse"
+  ],
+  "entityMarkerPatterns": [
+    {"type": "character", "markers": ["charaktere", "charakter", "helden", "held"]},
+    {"type": "boss", "markers": ["bosse", "boss"]},
+    {"type": "item", "markers": ["gegenstaende", "gegenstand", "items", "item", "waffen", "waffe"]},
+    {"type": "npc", "markers": ["npc", "npcs"]},
+    {"type": "class", "markers": ["klassen", "klasse"]},
+    {"type": "location", "markers": ["orte", "ort", "karten", "karte", "zonen", "zone", "gebiete", "gebiet", "stufen", "stufe", "levels", "level"]},
+    {"type": "quest", "markers": ["quests", "quest", "aufgaben", "aufgabe"]},
+    {"type": "mechanic", "markers": ["mechaniken", "mechanik"]}
+  ],
+  "entityContextKeywords": {
+    "character": ["charakter", "held", "klasse", "boss", "tank", "heiler", "dps"],
+    "item": ["gegenstand", "item", "waffe", "ruestung", "schild", "bogen", "schwert", "stab", "ring", "amulett"],
+    "skill": ["fahigkeit", "skill", "zauber", "talent", "perk", "ultimate"],
+    "location": ["wald", "hoehle", "dungeon", "ruine", "tempel", "tal", "zone", "gebiet", "stufe", "level", "karte"]
+  },
+  "entityLocationHints": {
+    "contains": ["wald", "hoehle", "dungeon", "ruine", "tempel", "tal", "zone", "gebiet", "stufe", "level", "karte"],
+    "suffixes": []
+  },
+  "entityInflectionSuffixes": [],
   "entityStopWords": [
     "der", "die", "das", "und", "du", "dein", "deine", "dies", "diese", "dieser", "mit", "von", "in", "dann", "wann", "wo",
     "was", "welche", "wer", "warum", "wie", "fur", "nutze", "nutzen", "nicht", "ja", "nein", "ein", "eine", "tipps", "start",

@@ -21,6 +21,31 @@
     "onlyForbidden": "SEULS DES NOMS INTERDITS sont connus. Ne propose aucun personnage. Donne des conseils generaux et demande d'abord la liste complete des personnages.",
     "noVerified": "GARDE DES NOMS : Aucun nom de personnage verifie dans FACTS. Ne cite aucun personnage. Donne des conseils generaux et independants du jeu (mobilite, degats, controle, defense, portee), puis demande brievement la liste exacte des personnages."
   },
+  "userMentionableMarkers": [
+    "personnages", "personnage", "boss", "bosses", "objets", "objet", "armes", "arme",
+    "pnj", "pnjs", "classes", "classe"
+  ],
+  "entityMarkerPatterns": [
+    {"type": "character", "markers": ["personnages", "personnage"]},
+    {"type": "boss", "markers": ["boss", "bosses"]},
+    {"type": "item", "markers": ["objets", "objet", "armes", "arme"]},
+    {"type": "npc", "markers": ["pnj", "pnjs"]},
+    {"type": "class", "markers": ["classes", "classe"]},
+    {"type": "location", "markers": ["lieux", "lieu", "cartes", "carte", "zones", "zone", "aires", "aire", "niveaux", "niveau"]},
+    {"type": "quest", "markers": ["quetes", "quete"]},
+    {"type": "mechanic", "markers": ["mecaniques", "mecanique"]}
+  ],
+  "entityContextKeywords": {
+    "character": ["personnage", "heros", "classe", "boss", "tank", "healer", "dps"],
+    "item": ["objet", "arme", "armure", "bouclier", "arc", "epee", "baton", "anneau", "amulette"],
+    "skill": ["competence", "skill", "sort", "talent", "perk", "ultime"],
+    "location": ["foret", "grotte", "donjon", "ruines", "temple", "vallee", "zone", "aire", "niveau", "carte"]
+  },
+  "entityLocationHints": {
+    "contains": ["foret", "grotte", "donjon", "ruines", "temple", "vallee", "zone", "aire", "niveau", "carte"],
+    "suffixes": []
+  },
+  "entityInflectionSuffixes": [],
   "entityStopWords": [
     "le", "la", "les", "et", "tu", "ton", "ta", "tes", "ce", "cet", "cette", "avec", "de", "dans", "alors", "quand", "ou",
     "quoi", "quel", "qui", "pourquoi", "comment", "pour", "utilise", "utiliser", "ne", "pas", "oui", "non", "conseils",

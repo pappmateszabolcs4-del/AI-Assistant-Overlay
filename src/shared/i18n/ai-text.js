@@ -209,6 +209,32 @@ function getEntityStopWords(lang) {
   return baseList.concat(extraList);
 }
 
+function getEntityContextKeywords(lang) {
+  const data = getMergedAiText(lang);
+  const keywords = data.entityContextKeywords && typeof data.entityContextKeywords === 'object'
+    ? data.entityContextKeywords
+    : {};
+  return { ...keywords };
+}
+
+function getEntityLocationHints(lang) {
+  const data = getMergedAiText(lang);
+  const hints = data.entityLocationHints && typeof data.entityLocationHints === 'object'
+    ? data.entityLocationHints
+    : {};
+  return {
+    contains: Array.isArray(hints.contains) ? hints.contains.slice() : [],
+    suffixes: Array.isArray(hints.suffixes) ? hints.suffixes.slice() : []
+  };
+}
+
+function getEntityInflectionSuffixes(lang) {
+  const { base, extra } = getBaseAndExtra(lang);
+  const baseList = Array.isArray(base.entityInflectionSuffixes) ? base.entityInflectionSuffixes : [];
+  const extraList = Array.isArray(extra.entityInflectionSuffixes) ? extra.entityInflectionSuffixes : [];
+  return baseList.concat(extraList);
+}
+
 function getHighRiskIntents() {
   const data = getMergedAiText(DEFAULT_LANG);
   const list = Array.isArray(data.highRiskIntents) ? data.highRiskIntents : [];
@@ -283,6 +309,9 @@ module.exports = {
   getUserMentionableMarkers,
   getEntityMarkerPatterns,
   getEntityStopWords,
+  getEntityContextKeywords,
+  getEntityLocationHints,
+  getEntityInflectionSuffixes,
   getHighRiskIntents,
   getHighRiskPatterns,
   getTroubleshootPatterns,

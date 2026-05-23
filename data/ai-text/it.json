@@ -21,6 +21,31 @@
     "onlyForbidden": "SONO NOTI SOLO NOMI VIETATI. Non suggerire personaggi. Fornisci consigli generali e chiedi prima la lista completa dei personaggi.",
     "noVerified": "BLOCCO NOMI: In FACTS non ci sono nomi di personaggi verificati. Non devi nominare personaggi. Fornisci consigli generali e non legati al gioco (mobilita, danno, controllo, difesa, gittata) e chiedi brevemente l'elenco completo dei personaggi."
   },
+  "userMentionableMarkers": [
+    "personaggi", "personaggio", "boss", "oggetti", "oggetto", "armi", "arma",
+    "npc", "npcs", "classi", "classe"
+  ],
+  "entityMarkerPatterns": [
+    {"type": "character", "markers": ["personaggi", "personaggio"]},
+    {"type": "boss", "markers": ["boss"]},
+    {"type": "item", "markers": ["oggetti", "oggetto", "armi", "arma"]},
+    {"type": "npc", "markers": ["npc", "npcs"]},
+    {"type": "class", "markers": ["classi", "classe"]},
+    {"type": "location", "markers": ["luoghi", "luogo", "mappe", "mappa", "zone", "zona", "aree", "area", "livelli", "livello"]},
+    {"type": "quest", "markers": ["missioni", "missione"]},
+    {"type": "mechanic", "markers": ["meccaniche", "meccanica"]}
+  ],
+  "entityContextKeywords": {
+    "character": ["personaggio", "eroe", "classe", "boss", "tank", "healer", "dps"],
+    "item": ["oggetto", "arma", "armatura", "scudo", "arco", "spada", "bastone", "anello", "amuleto"],
+    "skill": ["abilita", "skill", "incantesimo", "talento", "perk", "ulti"],
+    "location": ["foresta", "grotta", "dungeon", "rovine", "tempio", "valle", "zona", "area", "livello", "mappa"]
+  },
+  "entityLocationHints": {
+    "contains": ["foresta", "grotta", "dungeon", "rovine", "tempio", "valle", "zona", "area", "livello", "mappa"],
+    "suffixes": []
+  },
+  "entityInflectionSuffixes": [],
   "entityStopWords": [
     "il", "lo", "la", "i", "gli", "le", "e", "tu", "tuo", "tua", "tuoi", "tue", "questo", "questa", "quello", "quella",
     "con", "da", "in", "poi", "quando", "dove", "cosa", "quale", "chi", "perche", "come", "per", "usa", "usare",

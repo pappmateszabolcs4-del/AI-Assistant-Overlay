@@ -44,12 +44,32 @@
     "nem létező"
   ],
   "userMentionableMarkers": [
-    "karakterek",
-    "karakter"
+    "karakterek", "karakter", "bossok", "boss", "targyak", "targy", "fegyverek", "fegyver",
+    "npc", "npck", "kasztok", "kaszt", "osztalyok", "osztaly", "helyszinek", "helyszin",
+    "mapok", "map", "zonak", "zona", "teruletek", "terulet", "palyak", "palya",
+    "szintek", "szint", "kuldetesek", "kuldetes", "mechanikak", "mechanika"
   ],
   "entityMarkerPatterns": [
-    {"type": "character", "markers": ["karakterek", "karakter"]}
+    {"type": "character", "markers": ["karakterek", "karakter"]},
+    {"type": "boss", "markers": ["bossok", "boss"]},
+    {"type": "item", "markers": ["targyak", "targy", "fegyverek", "fegyver", "itemek", "item"]},
+    {"type": "npc", "markers": ["npc", "npck"]},
+    {"type": "class", "markers": ["kasztok", "kaszt", "osztalyok", "osztaly"]},
+    {"type": "location", "markers": ["helyszinek", "helyszin", "mapok", "map", "zonak", "zona", "teruletek", "terulet", "palyak", "palya", "szintek", "szint"]},
+    {"type": "quest", "markers": ["kuldetesek", "kuldetes"]},
+    {"type": "mechanic", "markers": ["mechanikak", "mechanika"]}
   ],
+  "entityContextKeywords": {
+    "character": ["karakter", "hos", "kaszt", "osztaly", "boss", "tank", "healer", "dps"],
+    "item": ["fegyver", "pancel", "targy", "felszereles", "pajzs", "kard", "ij", "gyuru"],
+    "skill": ["kepesseg", "skill", "varazslat", "talent", "perk"],
+    "location": ["erd", "barlang", "kazamata", "rom", "templom", "volgy", "zona", "terulet", "szakasz", "szint", "palya", "terkep", "map"]
+  },
+  "entityLocationHints": {
+    "contains": ["erd", "barlang", "kazamata", "rom", "templom", "volgy", "zona", "terulet", "szakasz", "szint", "palya", "terkep", "map"],
+    "suffixes": ["ban", "ben", "ba", "be", "bol", "rol", "hoz", "hez", "ra", "re", "nal", "nel"]
+  },
+  "entityInflectionSuffixes": ["ban", "ben", "ba", "be", "bol", "rol", "hoz", "hez", "ra", "re", "nal", "nel"],
   "entityStopWords": [
     "az", "ez", "azzal", "ezzel", "ott", "itt", "ide", "oda", "igen", "nem",
     "minden", "mindig", "soha", "nagyon", "roviden", "reszletes", "reszletesen",

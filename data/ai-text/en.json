@@ -66,6 +66,17 @@
     {"type": "quest", "markers": ["quests", "quest"]},
     {"type": "mechanic", "markers": ["mechanics", "mechanic"]}
   ],
+  "entityContextKeywords": {
+    "character": ["character", "hero", "class", "boss", "tank", "healer", "dps"],
+    "item": ["item", "gear", "weapon", "armor", "shield", "bow", "sword", "staff", "ring", "amulet", "trinket"],
+    "skill": ["skill", "ability", "ultimate", "spell", "perk", "talent"],
+    "location": ["forest", "cave", "dungeon", "ruins", "temple", "valley", "zone", "area", "stage", "level", "map"]
+  },
+  "entityLocationHints": {
+    "contains": ["forest", "cave", "dungeon", "ruins", "temple", "valley", "zone", "area", "stage", "level", "map"],
+    "suffixes": []
+  },
+  "entityInflectionSuffixes": [],
   "entityStopWords": [
     "the", "and", "you", "your", "this", "that", "with", "from", "into", "then", "when", "where", "what", "which", "who", "why", "how",
     "for", "use", "using", "dont", "do", "not", "yes", "no", "a", "an", "tips", "start", "first", "next", "later", "choose", "pick",

@@ -21,6 +21,31 @@
     "onlyForbidden": "ZNANE SA TYLKO ZAKAZANE NAZWY. Nie proponuj postaci. Podaj ogolne wskazowki i najpierw popros o pelna liste postaci.",
     "noVerified": "BLOKADA NAZW: W FACTS nie ma zweryfikowanych nazw postaci. Nie wolno podawac nazw postaci. Podaj ogolne, niezalezne od gry wskazowki (mobilnosc, obrazenia, kontrola tlumu, obrona, zasieg) i krotko popros o pelna liste postaci."
   },
+  "userMentionableMarkers": [
+    "postacie", "postac", "bossowie", "boss", "przedmioty", "przedmiot", "bronie", "bron",
+    "npc", "npcs", "klasy", "klasa"
+  ],
+  "entityMarkerPatterns": [
+    {"type": "character", "markers": ["postacie", "postac"]},
+    {"type": "boss", "markers": ["bossowie", "boss"]},
+    {"type": "item", "markers": ["przedmioty", "przedmiot", "bronie", "bron"]},
+    {"type": "npc", "markers": ["npc", "npcs"]},
+    {"type": "class", "markers": ["klasy", "klasa"]},
+    {"type": "location", "markers": ["miejsca", "miejsce", "mapy", "mapa", "strefy", "strefa", "obszary", "obszar", "poziomy", "poziom"]},
+    {"type": "quest", "markers": ["zadania", "zadanie"]},
+    {"type": "mechanic", "markers": ["mechaniki", "mechanika"]}
+  ],
+  "entityContextKeywords": {
+    "character": ["postac", "bohater", "klasa", "boss", "tank", "healer", "dps"],
+    "item": ["przedmiot", "bron", "zbroja", "tarcza", "luk", "miecz", "laska", "pierscien", "amulet"],
+    "skill": ["umiejetnosc", "skill", "czar", "talent", "perk", "ulti"],
+    "location": ["las", "jaskinia", "loch", "ruiny", "swiatynia", "dolina", "strefa", "obszar", "poziom", "mapa"]
+  },
+  "entityLocationHints": {
+    "contains": ["las", "jaskinia", "loch", "ruiny", "swiatynia", "dolina", "strefa", "obszar", "poziom", "mapa"],
+    "suffixes": []
+  },
+  "entityInflectionSuffixes": [],
   "entityStopWords": [
     "i", "ty", "twoj", "twoja", "to", "ten", "ta", "z", "w", "potem", "kiedy", "gdzie", "co", "ktory", "kto", "dlaczego",
     "jak", "dla", "uzyj", "uzywaj", "nie", "tak", "nie", "porady", "start", "najpierw", "potem", "pozniej",
