@@ -6,6 +6,33 @@
 
 ---
 
+## [1.0.56] - 2026-05-23 (Phase 6: History + Panel Resize UX)
+
+### ✅ Added
+
+- Resizable popup panels using the existing bottom handle, with per-panel height persistence.
+- Saved history section header with toggle and count badge.
+
+### 🔧 Changed
+
+- Popup panel resize can grow the overlay window to avoid clipping tall content.
+- Expanded history items now scroll internally when the answer is long.
+- Pinned-only toggle restyled for clearer affordance.
+
+### 🧾 Notes
+
+- Tests: `npm run check`.
+
+## [1.0.55] - 2026-05-23 (Phase 6: Saved History)
+
+### ✅ Added
+
+- Save action for history items (local-only, userData JSON persistence).
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
 ## [1.0.54] - 2026-05-23 (Phase 5: Whitelist Redaction Fallback)
 
 ### 🔧 Changed

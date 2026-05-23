@@ -1364,6 +1364,38 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 - Impact: No behavior change; cleaner OpenAI service and shared AI constants.
 
 #### Details
+
+---
+
+### 2026-05-23 (Evening)
+
+#### Summary
+- What changed: Enabled per-panel resize using the existing popup handle, persisted panel heights, and added a saved-history header + per-item scroll for long answers.
+- Why: Long history entries were clipped unless pinned; panel content could not grow beyond the current overlay height.
+- Impact: Panels can grow to fit long content, and history entries scroll without requiring pinning.
+
+#### Details
+- Implementation notes: Panel resize now requests overlay height growth when needed; saved heights are restored per panel; history entries get internal scroll with a capped max height.
+- Edge cases: Overlay height growth is clamped to screen bounds; saved heights apply only when panels open.
+
+#### Files touched
+- [overlay.html](overlay.html)
+- [overlay.css](overlay.css)
+- [src/renderer/overlay/ui.js](src/renderer/overlay/ui.js)
+- [src/renderer/overlay/history.js](src/renderer/overlay/history.js)
+- [src/shared/storage-keys.js](src/shared/storage-keys.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+
+#### Backups
+- Created via scripts/make-backup.ps1 before changes.
+
+#### Verification
+- Script: npm run check.
+- Manual: resized all three panels and confirmed saved heights persist across reload.
+
+#### Follow-ups
+- TODO: None.
 - Implementation notes: Added shared AI constants module (models, diagnostics events, error codes, prompt segments) and updated OpenAI service to use them.
 - Edge cases: None; purely refactor and i18n consolidation.
 
@@ -1483,6 +1515,38 @@ Use the **Daily Log Entry Template** in the CRITICAL section above.
 #### Files touched
 - [src/shared/i18n/ai-text.js](src/shared/i18n/ai-text.js)
 - [src/main/services/openai.js](src/main/services/openai.js)
+- [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
+- [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
+
+#### Backups
+- Not created (not requested).
+
+#### Verification
+- Tests: Not run (not requested).
+
+#### Follow-ups
+- TODO: None.
+
+---
+
+### 2026-05-23 (Night)
+
+#### Summary
+- What changed: Added saved history persistence with a per-item save action.
+- Why: Important user items should persist beyond the rolling history list.
+- Impact: Users can store key Q/A entries in a local JSON file under userData.
+
+#### Details
+- Implementation notes: Added saved history store in main process and save/remove actions in history UI.
+- Edge cases: Saved items are capped to prevent unbounded growth.
+
+#### Files touched
+- [src/main/services/saved-history-store.js](src/main/services/saved-history-store.js)
+- [src/main/ipc/overlay-ipc.js](src/main/ipc/overlay-ipc.js)
+- [src/shared/ipc-channels.js](src/shared/ipc-channels.js)
+- [src/renderer/overlay/history.js](src/renderer/overlay/history.js)
+- [src/shared/i18n/ui-text.js](src/shared/i18n/ui-text.js)
+- [overlay.css](overlay.css)
 - [docs/3-overview/CHANGELOG.md](docs/3-overview/CHANGELOG.md)
 - [docs/2-technical/LEARNINGS.md](docs/2-technical/LEARNINGS.md)
 

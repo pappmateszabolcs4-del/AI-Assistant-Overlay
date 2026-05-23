@@ -158,6 +158,8 @@ Design/spec plan (order recommended):
 
 Why: Make the system’s behavior visible and user-correctable.
 
+- [x] Resizable popup panels with per-panel height persistence
+- [x] History saved list header + toggle + per-item scroll for long answers
 - [ ] User-facing error UX for AI failures (clear, actionable)
 - [ ] Auto-raise specificity when "too generic" is detected
 - [ ] Guardrails check: UX does not expose or export cached metadata
