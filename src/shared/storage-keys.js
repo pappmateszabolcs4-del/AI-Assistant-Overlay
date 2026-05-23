@@ -8,6 +8,7 @@ const STORAGE_KEYS = {
   OVERLAY_POSITION_X: 'overlayPositionX',
   OVERLAY_POSITION_Y: 'overlayPositionY',
   AI_DIAGNOSTICS_ENABLED: 'aiDiagnosticsEnabled',
+  AI_DIAGNOSTICS_STORE: 'aiDiagnosticsStore',
   GAME_DETECT_MAPPINGS: 'gameDetectMappings',
   GAME_TEMPLATE_DRAFT: 'gameTemplateDraft',
   ASK_ENABLE_TTS: 'askEnableTTS',

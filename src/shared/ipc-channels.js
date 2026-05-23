@@ -78,6 +78,7 @@ const IPC_CHANNELS = {
   UPDATE_GAME_FACT_REQUEST: 'update-game-fact-request',
   GET_GAME_USAGE: 'get-game-usage',
   GET_HOT_GAMES: 'get-hot-games',
+  AI_DIAGNOSTICS_EVENT: 'ai-diagnostics-event',
   SET_OPENAI_KEY: 'set-openai-key',
   GET_OPENAI_STATUS: 'get-openai-status',
   DELETE_OPENAI_KEY: 'delete-openai-key',

@@ -184,6 +184,283 @@ function syncAiDiagnosticsEnabled(enabled) {
   try { invokeMain(IPC_CHANNELS.SET_AI_DIAGNOSTICS, { enabled: !!enabled }); } catch (_) {}
 }
 
+const DIAGNOSTICS_STORE_LIMIT = 1000;
+
+function loadDiagnosticsStore() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.AI_DIAGNOSTICS_STORE);
+    if (!raw) return { promptTrim: [], promptTrimSim: [], modelStrategy: [], requests: [], responses: [], violations: [], latency: [] };
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object'
+      ? parsed
+      : { promptTrim: [], promptTrimSim: [], modelStrategy: [], requests: [], responses: [], violations: [], latency: [] };
+  } catch (_) {
+    return { promptTrim: [], promptTrimSim: [], modelStrategy: [], requests: [], responses: [], violations: [], latency: [] };
+  }
+}
+
+function saveDiagnosticsStore(store) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.AI_DIAGNOSTICS_STORE, JSON.stringify(store || {}));
+  } catch (_) {}
+}
+
+function pushDiagnosticsEntry(list, entry) {
+  if (!Array.isArray(list)) return;
+  list.push(entry);
+  if (list.length > DIAGNOSTICS_STORE_LIMIT) {
+    list.splice(0, list.length - DIAGNOSTICS_STORE_LIMIT);
+  }
+}
+
+function recordDiagnosticsEvent(payload) {
+  if (!payload || !readAiDiagnosticsEnabled()) return;
+  const store = loadDiagnosticsStore();
+  const event = String(payload.event || '').trim();
+  if (event === 'prompt-trim-preview') {
+    pushDiagnosticsEntry(store.promptTrim, payload);
+  } else if (event === 'prompt-trim-simulated') {
+    pushDiagnosticsEntry(store.promptTrimSim, payload);
+  } else if (event === 'model-strategy-preview') {
+    pushDiagnosticsEntry(store.modelStrategy, payload);
+  } else if (event === 'request') {
+    pushDiagnosticsEntry(store.requests, payload);
+  } else if (event === 'response') {
+    pushDiagnosticsEntry(store.responses, payload);
+  } else if (event === 'entity-whitelist-violation') {
+    pushDiagnosticsEntry(store.violations, payload);
+  }
+  saveDiagnosticsStore(store);
+}
+
+function recordLatencySample(durationMs, hasImage) {
+  if (!readAiDiagnosticsEnabled()) return;
+  const store = loadDiagnosticsStore();
+  const sample = {
+    ts: Date.now(),
+    durationMs: Math.max(0, Math.round(Number(durationMs) || 0)),
+    hasImage: !!hasImage
+  };
+  pushDiagnosticsEntry(store.latency, sample);
+  saveDiagnosticsStore(store);
+}
+
+function exportDiagnosticsForShare(options) {
+  const opts = options && typeof options === 'object' ? options : {};
+  const store = loadDiagnosticsStore();
+  const pickLast = (list) => (Array.isArray(list) && list.length ? list[list.length - 1] : null);
+  const payload = {
+    request: pickLast(store.requests),
+    response: pickLast(store.responses),
+    whitelistViolation: pickLast(store.violations)
+  };
+  const text = JSON.stringify(payload, null, 2);
+  if (opts.copy !== false && navigator && navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(() => {});
+  }
+  return text;
+}
+
+function formatNumber(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '0';
+  return String(Math.round(num));
+}
+
+function formatRate(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '0%';
+  return `${Math.round(num * 100)}%`;
+}
+
+function getP95(samples) {
+  if (!samples.length) return 0;
+  const sorted = samples.slice().sort((a, b) => a - b);
+  const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil(sorted.length * 0.95) - 1));
+  return sorted[idx];
+}
+
+function renderDiagTable(tableEl, rows) {
+  if (!tableEl) return;
+  tableEl.innerHTML = '';
+  rows.forEach((row) => {
+    const rowEl = document.createElement('div');
+    rowEl.className = row.isHeader ? 'dev-tools-table-row header' : 'dev-tools-table-row';
+    row.cells.forEach((cell) => {
+      const cellEl = document.createElement('div');
+      cellEl.className = 'dev-tools-table-cell';
+      cellEl.textContent = cell;
+      rowEl.appendChild(cellEl);
+    });
+    tableEl.appendChild(rowEl);
+  });
+}
+
+function renderDiagList(listEl, items, emptyText) {
+  if (!listEl) return;
+  listEl.innerHTML = '';
+  if (!items.length) {
+    const empty = document.createElement('div');
+    empty.className = 'dev-tools-item';
+    empty.textContent = emptyText;
+    listEl.appendChild(empty);
+    return;
+  }
+  items.forEach((text) => {
+    const item = document.createElement('div');
+    item.className = 'dev-tools-item';
+    item.textContent = text;
+    listEl.appendChild(item);
+  });
+}
+
+function renderPromptBudgetSummary(store) {
+  if (!diagPromptBudgetTable) return;
+  const entries = Array.isArray(store.promptTrim) ? store.promptTrim : [];
+  if (!entries.length) {
+    diagPromptBudgetTable.textContent = t().diagPromptBudgetEmpty || 'No prompt trim data.';
+    return;
+  }
+  const segmentStats = new Map();
+  let totalCount = 0;
+  let totalChars = 0;
+  let totalMax = 0;
+  entries.forEach((entry) => {
+    if (!entry || !Array.isArray(entry.segments)) return;
+    const entryTotal = Number(entry.totalChars) || 0;
+    totalCount += 1;
+    totalChars += entryTotal;
+    if (entryTotal > totalMax) totalMax = entryTotal;
+    entry.segments.forEach((segment) => {
+      const id = String(segment && segment.id || 'unknown');
+      const chars = Number(segment && segment.chars) || 0;
+      const stat = segmentStats.get(id) || { count: 0, total: 0, max: 0 };
+      stat.count += 1;
+      stat.total += chars;
+      stat.max = Math.max(stat.max, chars);
+      segmentStats.set(id, stat);
+    });
+  });
+  const rows = [{
+    isHeader: true,
+    cells: [t().diagPromptBudgetSegment || 'Segment', t().diagPromptBudgetAvg || 'Avg chars', t().diagPromptBudgetMax || 'Max chars']
+  }];
+  if (totalCount) {
+    rows.push({
+      isHeader: false,
+      cells: [t().diagPromptBudgetTotal || 'Total', formatNumber(totalChars / totalCount), formatNumber(totalMax)]
+    });
+  }
+  const segmentRows = Array.from(segmentStats.entries())
+    .map(([id, stat]) => ({ id, avg: stat.total / Math.max(1, stat.count), max: stat.max }))
+    .sort((a, b) => b.avg - a.avg)
+    .slice(0, 8);
+  segmentRows.forEach((row) => {
+    rows.push({
+      isHeader: false,
+      cells: [row.id, formatNumber(row.avg), formatNumber(row.max)]
+    });
+  });
+  renderDiagTable(diagPromptBudgetTable, rows);
+}
+
+function renderIntentBreakdown(store) {
+  const entries = Array.isArray(store.promptTrim) ? store.promptTrim : [];
+  const intentStats = new Map();
+  entries.forEach((entry) => {
+    const intent = String(entry && entry.intent || 'unknown');
+    const total = Number(entry && entry.totalChars) || 0;
+    const stat = intentStats.get(intent) || { count: 0, total: 0 };
+    stat.count += 1;
+    stat.total += total;
+    intentStats.set(intent, stat);
+  });
+  const items = Array.from(intentStats.entries())
+    .map(([intent, stat]) => ({
+      intent,
+      count: stat.count,
+      avg: stat.total / Math.max(1, stat.count)
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8)
+    .map((item) => `${item.intent}: avg ${formatNumber(item.avg)} chars (${item.count})`);
+  renderDiagList(diagIntentBreakdownList, items, t().diagIntentBreakdownEmpty || 'No intent data.');
+}
+
+function renderFactLoadSummary(store) {
+  const requests = Array.isArray(store.requests) ? store.requests : [];
+  const responses = Array.isArray(store.responses) ? store.responses : [];
+  const pairs = Math.min(requests.length, responses.length);
+  if (!pairs) {
+    renderDiagList(diagFactLoadList, [], t().diagFactLoadEmpty || 'No fact stats yet.');
+    return;
+  }
+  const startReq = requests.length - pairs;
+  const startRes = responses.length - pairs;
+  let factsWith = 0;
+  let factsWithCount = 0;
+  let factsWithTooGeneric = 0;
+  let factsZero = 0;
+  let factsZeroTooGeneric = 0;
+  for (let i = 0; i < pairs; i += 1) {
+    const req = requests[startReq + i] || {};
+    const res = responses[startRes + i] || {};
+    const factsCount = Number(req.factsCount) || 0;
+    const tooGeneric = !!res.tooGeneric;
+    if (factsCount > 0) {
+      factsWith += factsCount;
+      factsWithCount += 1;
+      if (tooGeneric) factsWithTooGeneric += 1;
+    } else {
+      factsZero += 1;
+      if (tooGeneric) factsZeroTooGeneric += 1;
+    }
+  }
+  const items = [
+    `${t().diagFactLoadPairs || 'Paired samples'}: ${pairs}`,
+    `${t().diagFactLoadWithFacts || 'Facts > 0'}: avg ${formatNumber(factsWith / Math.max(1, factsWithCount))}, ${t().diagFactLoadTooGeneric || 'too generic'} ${formatRate(factsWithTooGeneric / Math.max(1, factsWithCount))}`,
+    `${t().diagFactLoadNoFacts || 'Facts = 0'}: ${t().diagFactLoadTooGeneric || 'too generic'} ${formatRate(factsZeroTooGeneric / Math.max(1, factsZero))}`
+  ];
+  renderDiagList(diagFactLoadList, items, t().diagFactLoadEmpty || 'No fact stats yet.');
+}
+
+function renderLatencySummary(store) {
+  const samples = Array.isArray(store.latency) ? store.latency : [];
+  if (!samples.length) {
+    renderDiagList(diagLatencyList, [], t().diagLatencyEmpty || 'No latency samples yet.');
+    return;
+  }
+  const withImage = samples.filter((sample) => sample.hasImage);
+  const withoutImage = samples.filter((sample) => !sample.hasImage);
+  const avg = (list) => list.reduce((sum, sample) => sum + (Number(sample.durationMs) || 0), 0) / Math.max(1, list.length);
+  const p95 = (list) => getP95(list.map((sample) => Number(sample.durationMs) || 0));
+  const items = [
+    `${t().diagLatencySamples || 'Samples'}: ${samples.length}`,
+    `${t().diagLatencyNoImage || 'Text-only'}: avg ${formatNumber(avg(withoutImage))}ms, p95 ${formatNumber(p95(withoutImage))}ms (${withoutImage.length})`,
+    `${t().diagLatencyWithImage || 'With image'}: avg ${formatNumber(avg(withImage))}ms, p95 ${formatNumber(p95(withImage))}ms (${withImage.length})`
+  ];
+  renderDiagList(diagLatencyList, items, t().diagLatencyEmpty || 'No latency samples yet.');
+}
+
+function buildTrimExport(store) {
+  if (!diagTrimExportOutput) return;
+  const entries = Array.isArray(store.promptTrimSim) ? store.promptTrimSim : [];
+  if (!entries.length) {
+    diagTrimExportOutput.value = t().diagTrimExportEmpty || 'No trim snapshots yet.';
+    return;
+  }
+  const snapshot = entries.slice(-20);
+  diagTrimExportOutput.value = JSON.stringify(snapshot, null, 2);
+}
+
+function refreshDiagnosticsUI() {
+  const store = loadDiagnosticsStore();
+  renderPromptBudgetSummary(store);
+  renderIntentBreakdown(store);
+  renderFactLoadSummary(store);
+  renderLatencySummary(store);
+}
+
 function normalizeAnswerStyle(value) {
   const raw = String(value || '').trim().toLowerCase();
   if (raw === 'short' || raw === 'steps' || raw === 'deep') return raw;
@@ -458,6 +735,22 @@ const aiDiagnosticsLabel = document.getElementById('aiDiagnosticsLabel');
 const aiDiagnosticsToggle = document.getElementById('aiDiagnosticsToggle');
 const aiDiagnosticsToggleLabel = document.getElementById('aiDiagnosticsToggleLabel');
 const aiDiagnosticsHint = document.getElementById('aiDiagnosticsHint');
+const diagPanelLabel = document.getElementById('diagPanelLabel');
+const diagRefreshBtn = document.getElementById('diagRefreshBtn');
+const diagClearBtn = document.getElementById('diagClearBtn');
+const diagHint = document.getElementById('diagHint');
+const diagPromptBudgetLabel = document.getElementById('diagPromptBudgetLabel');
+const diagPromptBudgetTable = document.getElementById('diagPromptBudgetTable');
+const diagTrimExportLabel = document.getElementById('diagTrimExportLabel');
+const diagTrimExportBtn = document.getElementById('diagTrimExportBtn');
+const diagTrimExportOutput = document.getElementById('diagTrimExportOutput');
+const diagTrimExportHint = document.getElementById('diagTrimExportHint');
+const diagIntentBreakdownLabel = document.getElementById('diagIntentBreakdownLabel');
+const diagIntentBreakdownList = document.getElementById('diagIntentBreakdownList');
+const diagFactLoadLabel = document.getElementById('diagFactLoadLabel');
+const diagFactLoadList = document.getElementById('diagFactLoadList');
+const diagLatencyLabel = document.getElementById('diagLatencyLabel');
+const diagLatencyList = document.getElementById('diagLatencyList');
 const devToolsLabel = document.getElementById('devToolsLabel');
 const devToolsHint = document.getElementById('devToolsHint');
 const perfHudToggleLabel = document.getElementById('perfHudToggleLabel');
@@ -1413,6 +1706,17 @@ function updateOverlayText() {
   if (aiDiagnosticsLabel) aiDiagnosticsLabel.textContent = t().aiDiagnosticsLabel || aiDiagnosticsLabel.textContent;
   if (aiDiagnosticsToggleLabel) aiDiagnosticsToggleLabel.textContent = t().aiDiagnosticsToggle || aiDiagnosticsToggleLabel.textContent;
   if (aiDiagnosticsHint) aiDiagnosticsHint.textContent = t().aiDiagnosticsHint || aiDiagnosticsHint.textContent;
+  if (diagPanelLabel) diagPanelLabel.textContent = t().diagPanelLabel || diagPanelLabel.textContent;
+  if (diagRefreshBtn) diagRefreshBtn.textContent = t().diagRefresh || diagRefreshBtn.textContent;
+  if (diagClearBtn) diagClearBtn.textContent = t().diagClear || diagClearBtn.textContent;
+  if (diagHint) diagHint.textContent = t().diagHint || diagHint.textContent;
+  if (diagPromptBudgetLabel) diagPromptBudgetLabel.textContent = t().diagPromptBudgetLabel || diagPromptBudgetLabel.textContent;
+  if (diagTrimExportLabel) diagTrimExportLabel.textContent = t().diagTrimExportLabel || diagTrimExportLabel.textContent;
+  if (diagTrimExportBtn) diagTrimExportBtn.textContent = t().diagTrimExportBtn || diagTrimExportBtn.textContent;
+  if (diagTrimExportHint) diagTrimExportHint.textContent = t().diagTrimExportHint || diagTrimExportHint.textContent;
+  if (diagIntentBreakdownLabel) diagIntentBreakdownLabel.textContent = t().diagIntentBreakdownLabel || diagIntentBreakdownLabel.textContent;
+  if (diagFactLoadLabel) diagFactLoadLabel.textContent = t().diagFactLoadLabel || diagFactLoadLabel.textContent;
+  if (diagLatencyLabel) diagLatencyLabel.textContent = t().diagLatencyLabel || diagLatencyLabel.textContent;
   if (perfHudToggleLabel) perfHudToggleLabel.textContent = t().perfHudToggle || perfHudToggleLabel.textContent;
   if (factRequestsLabel) factRequestsLabel.textContent = t().factRequestsLabel || factRequestsLabel.textContent;
   if (factRequestsGameLabel) factRequestsGameLabel.textContent = t().factRequestsGameLabel || factRequestsGameLabel.textContent;
@@ -1634,6 +1938,8 @@ async function askQuestion() {
   const answerStyle = await resolveAnswerStyleForGame(resolvedGameContext);
 
   askBtn.disabled = true;
+  const latencyStart = Date.now();
+  const latencyHasImage = !!currentScreenshot;
   try {
     const result = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, text, currentLanguage, parseInt(specializationSlider.value), currentScreenshot, resolvedGameContext, answerStyle);
     if (result.success) {
@@ -1653,6 +1959,7 @@ async function askQuestion() {
     status.textContent = t().apiErrorPrefix + (friendly || (err && err.message) || t().unknownError);
   } finally {
     askBtn.disabled = false;
+    recordLatencySample(Date.now() - latencyStart, latencyHasImage);
   }
 }
 
@@ -1737,9 +2044,11 @@ on(micBtn, 'click', async () => {
               const templateGame = await ensureTemplateDraftSaved();
               const resolvedGameContext = currentGameContext || templateGame || null;
 
+          const latencyStart = Date.now();
+          const latencyHasImage = !!currentScreenshot;
           try {
-                const answerStyle = await resolveAnswerStyleForGame(resolvedGameContext);
-                const processResult = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, transcript, currentLanguage, parseInt(specializationSlider.value), currentScreenshot, resolvedGameContext, answerStyle);
+            const answerStyle = await resolveAnswerStyleForGame(resolvedGameContext);
+            const processResult = await invokeMain(IPC_CHANNELS.PROCESS_TEXT, transcript, currentLanguage, parseInt(specializationSlider.value), currentScreenshot, resolvedGameContext, answerStyle);
 
             if (processResult.success) {
               document.getElementById('aiResponse').textContent = processResult.response;
@@ -1755,6 +2064,8 @@ on(micBtn, 'click', async () => {
           } catch (err) {
             const friendly = getUserFacingErrorMessage(err && err.message);
             status.textContent = t().apiErrorPrefix + (friendly || (err && err.message) || t().unknownError);
+          } finally {
+            recordLatencySample(Date.now() - latencyStart, latencyHasImage);
           }
         } else {
           const friendly = getUserFacingErrorMessage(result.error);
@@ -2326,8 +2637,44 @@ if (aiDiagnosticsToggle) {
   on(aiDiagnosticsToggle, 'change', () => {
     writeAiDiagnosticsEnabled(aiDiagnosticsToggle.checked);
     syncAiDiagnosticsEnabled(aiDiagnosticsToggle.checked);
+    refreshDiagnosticsUI();
   });
 }
+
+try {
+  ipcRenderer.on(IPC_CHANNELS.AI_DIAGNOSTICS_EVENT, (_event, payload) => {
+    recordDiagnosticsEvent(payload);
+    if (devToolsEnabled) refreshDiagnosticsUI();
+  });
+} catch (_) {}
+
+if (diagRefreshBtn) {
+  on(diagRefreshBtn, 'click', () => {
+    refreshDiagnosticsUI();
+  });
+}
+
+if (diagClearBtn) {
+  on(diagClearBtn, 'click', () => {
+    saveDiagnosticsStore({ promptTrim: [], promptTrimSim: [], modelStrategy: [], requests: [], responses: [], violations: [], latency: [] });
+    if (diagTrimExportOutput) diagTrimExportOutput.value = '';
+    refreshDiagnosticsUI();
+  });
+}
+
+if (diagTrimExportBtn) {
+  on(diagTrimExportBtn, 'click', () => {
+    buildTrimExport(loadDiagnosticsStore());
+  });
+}
+
+if (devToolsEnabled) {
+  refreshDiagnosticsUI();
+}
+
+try {
+  window.__exportDiagnosticsForShare = exportDiagnosticsForShare;
+} catch (_) {}
 
 function getFactRequestStatusLabel(status) {
   const normalized = String(status || '').trim().toLowerCase();

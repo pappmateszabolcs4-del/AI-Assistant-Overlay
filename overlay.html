@@ -240,6 +240,44 @@
               </div>
 
               <div class="dev-tools-card">
+                <div class="dev-tools-row">
+                  <div class="dev-tools-card-title" id="diagPanelLabel"></div>
+                  <button class="dev-tools-btn" id="diagRefreshBtn"></button>
+                  <button class="dev-tools-btn" id="diagClearBtn"></button>
+                </div>
+                <p id="diagHint" class="dev-tools-hint"></p>
+
+                <div class="dev-tools-section">
+                  <div class="dev-tools-subtitle" id="diagPromptBudgetLabel"></div>
+                  <div id="diagPromptBudgetTable" class="dev-tools-table"></div>
+                </div>
+
+                <div class="dev-tools-section">
+                  <div class="dev-tools-subtitle" id="diagTrimExportLabel"></div>
+                  <div class="dev-tools-row" style="margin-top: 6px;">
+                    <button class="dev-tools-btn" id="diagTrimExportBtn"></button>
+                  </div>
+                  <textarea id="diagTrimExportOutput" class="dev-tools-textarea" rows="6" readonly></textarea>
+                  <p id="diagTrimExportHint" class="dev-tools-hint"></p>
+                </div>
+
+                <div class="dev-tools-section">
+                  <div class="dev-tools-subtitle" id="diagIntentBreakdownLabel"></div>
+                  <div id="diagIntentBreakdownList" class="dev-tools-list"></div>
+                </div>
+
+                <div class="dev-tools-section">
+                  <div class="dev-tools-subtitle" id="diagFactLoadLabel"></div>
+                  <div id="diagFactLoadList" class="dev-tools-list"></div>
+                </div>
+
+                <div class="dev-tools-section">
+                  <div class="dev-tools-subtitle" id="diagLatencyLabel"></div>
+                  <div id="diagLatencyList" class="dev-tools-list"></div>
+                </div>
+              </div>
+
+              <div class="dev-tools-card">
                 <div class="dev-tools-card-title" id="perfHudLabel"></div>
                 <label class="dev-tools-toggle">
                   <input type="checkbox" id="perfHudToggle" style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">

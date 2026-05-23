@@ -333,6 +333,64 @@
       overflow: auto;
     }
 
+    .dev-tools-section {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(120, 140, 170, 0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .dev-tools-subtitle {
+      font-size: 0.85em;
+      font-weight: 600;
+      color: #d8e3f5;
+    }
+
+    .dev-tools-table {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.8em;
+      color: #f5f7fa;
+    }
+
+    .dev-tools-table-row {
+      display: grid;
+      grid-template-columns: minmax(120px, 1.2fr) minmax(80px, 0.6fr) minmax(80px, 0.6fr);
+      gap: 8px;
+      padding: 6px 8px;
+      background: rgba(10, 14, 22, 0.75);
+      border: 1px solid rgba(120, 140, 170, 0.2);
+      border-radius: 8px;
+    }
+
+    .dev-tools-table-row.header {
+      background: rgba(91, 158, 255, 0.12);
+      border-color: rgba(91, 158, 255, 0.28);
+      font-weight: 600;
+      color: #dbe7fb;
+    }
+
+    .dev-tools-table-cell {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dev-tools-textarea {
+      width: 100%;
+      resize: vertical;
+      margin-top: 6px;
+      padding: 8px;
+      background: rgba(20, 24, 31, 0.85);
+      border: 1px solid rgba(120, 140, 170, 0.35);
+      border-radius: 6px;
+      color: #f5f7fa;
+      font-size: 0.8em;
+    }
+
     .dev-tools-item {
       padding: 8px;
       border-radius: 8px;
