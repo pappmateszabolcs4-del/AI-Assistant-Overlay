@@ -41,6 +41,36 @@ When adding new work logs, append them under **Daily Logs (Chronological)** usin
 #### Follow-ups
 - TODO:
 
+### 2026-05-24 (Evening)
+
+#### Summary
+- What changed: Added canonicalization stage with embeddings, cross-game mechanic families, keyword normalization, and quality guardrails (live-service/wiki/time-bound/lore/actionability).
+- Why: Reduce semantic drift, improve merge stability, and prevent dataset contamination before multi-game scaling.
+- Impact: Cleaner, more consistent fact anchors; actionable-only gameplay facts; richer diagnostics for tuning.
+
+#### Details
+- Implementation notes: Normalization split into raw → canonicalize → dedupe → retention shaping; embeddings now include text + systems + families + keywords; canonical diagnostics report candidate outcomes.
+- Edge cases: Short, template-heavy facts still need lower similarity thresholds; evergreen filter excludes time-bound release metadata even if impactful.
+
+#### Files touched
+- [tools/fact-extraction/normalize.js](tools/fact-extraction/normalize.js)
+- [tools/fact-extraction/canonicalize.js](tools/fact-extraction/canonicalize.js)
+- [tools/fact-extraction/quality-diagnostics.js](tools/fact-extraction/quality-diagnostics.js)
+- [tools/fact-extraction/fact-extract.js](tools/fact-extraction/fact-extract.js)
+- [tools/fact-extraction/batch-run.js](tools/fact-extraction/batch-run.js)
+- [tools/fact-extraction/README_SIMPLE.md](tools/fact-extraction/README_SIMPLE.md)
+- [data/game-support-tiers.json](data/game-support-tiers.json)
+- [data/fact-retrieval.json](data/fact-retrieval.json)
+
+#### Backups
+- Not created (not requested).
+
+#### Verification
+- Manual: fact extraction runs for RimWorld, Valorant, and World of Warcraft with diagnostics output.
+
+#### Follow-ups
+- TODO: Stress-test taxonomy on additional genres and tune alias coverage.
+
 ### 2026-05-24 (Night)
 
 #### Summary

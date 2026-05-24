@@ -51,9 +51,10 @@
     "exact": true,
     "nearDuplicate": {
       "enabled": true,
-      "threshold": 0.9,
-      "minTokens": 6,
-      "minTokenOverlap": 4
+      "action": "drop",
+      "threshold": 0.93,
+      "minTokens": 8,
+      "minTokenOverlap": 6
     }
   }
 }

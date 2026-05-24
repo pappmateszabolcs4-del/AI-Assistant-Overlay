@@ -118,10 +118,10 @@ Why: Enables “no prompt engineering needed” guidance.
   - [x] Dedupe: exact text merge + near-duplicate tagging (policy-controlled)
   - [x] Review UX: near-duplicate grouping + back/next navigation
   - [x] Dedupe diagnostics (exact dropped + near-duplicate marked)
-  - [ ] Priority system (P1/P2/P3 + retrieval weights)
+  - [x] Priority system (P1/P2/P3 + retrieval weights)
   - [x] Storage gate: reject payloads containing raw source text
-  - [ ] Tiered support enforcement (A/B/C in prompt assembly)
-  - [ ] Diagnostics (extraction count, drop reasons, tier lookup, retrieval hits)
+  - [x] Tiered support enforcement (A/B/C in prompt assembly)
+  - [x] Diagnostics (extraction count, drop reasons, tier lookup, retrieval hits)
 
 ### Phase 3 — Facts pipeline (tiered support)
 
@@ -132,9 +132,10 @@ Why: Keep coverage lean while grounding entities to reduce hallucinations.
   - [ ] B-tier: runtime + user-fed context only
   - [ ] C-tier: generic assistant + clarification
 - [ ] Compact gameplay facts only (no wiki-style content replication)
-- [ ] Dedupe/merge pipeline (embedding/semantic merge -> canonical fact)
-- [ ] System-based support taxonomy (game systems + fact tagging)
-- [ ] Diagnostics expansion (dedupe stats + extraction quality)
+- [x] Dedupe/merge pipeline (embedding/semantic merge -> canonical fact)
+- [x] System-based support taxonomy (game systems + fact tagging)
+- [x] Diagnostics expansion (dedupe stats + extraction quality)
+- [x] Editorial quality guardrails (live-service/wiki/time-bound/actionability/lore filters)
 
 - [x] On-demand knowledge (seed facts only when needed)
 - [x] Minimal entity-first seed (characters, locations, items, mechanics, quests)

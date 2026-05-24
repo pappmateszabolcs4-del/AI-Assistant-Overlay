@@ -7,6 +7,7 @@ function estimateTokens(text) {
 function chunkText(text, options = {}) {
   const minTokens = Number.isFinite(options.minTokens) ? options.minTokens : 500;
   const maxTokens = Number.isFinite(options.maxTokens) ? options.maxTokens : 1500;
+  const maxChunks = Number.isFinite(options.maxChunks) ? Math.max(1, options.maxChunks) : 0;
   const words = String(text || '').split(/\s+/).filter(Boolean);
   const chunks = [];
   let buffer = [];
@@ -27,6 +28,21 @@ function chunkText(text, options = {}) {
     buffer = [];
     bufferTokens = 0;
   };
+
+  if (maxChunks) {
+    const perChunk = Math.ceil(words.length / maxChunks);
+    for (let i = 0; i < words.length; i += perChunk) {
+      const slice = words.slice(i, i + perChunk).join(' ').trim();
+      if (!slice) continue;
+      chunks.push({
+        chunkId,
+        text: slice,
+        tokenEstimate: estimateTokens(slice)
+      });
+      chunkId += 1;
+    }
+    return chunks;
+  }
 
   for (const word of words) {
     const nextBuffer = buffer.concat(word).join(' ');

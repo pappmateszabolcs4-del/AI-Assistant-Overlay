@@ -4,7 +4,9 @@ const { loadPolicy, validateSourceType, validateSourceUrl } = require('./policy'
 const { fetchUrlText } = require('./fetch');
 const { chunkText } = require('./chunker');
 const { extractFactsFromChunk } = require('./extractor');
-const { normalizeFactList } = require('./normalize');
+const { normalizeFactListRaw, applyDedupe, applyRetentionShaping, mergeDropReasons } = require('./normalize');
+const { canonicalizeFacts } = require('./canonicalize');
+const { buildQualityDiagnostics } = require('./quality-diagnostics');
 
 function parseArgs(argv) {
   const args = {};
@@ -93,7 +95,7 @@ async function readInput(entry, policy, args) {
   return { ok: false, error: 'missing-input' };
 }
 
-async function runEntry(entry, policy, args) {
+async function runEntry(entry, policyInfo, policy, args) {
   const game = String(entry.game || '').trim();
   if (!game) return { ok: false, error: 'missing-game' };
   const tier = String(entry.tier || '').trim().toUpperCase();
@@ -108,7 +110,10 @@ async function runEntry(entry, policy, args) {
   const text = String(inputResult.text || '').trim();
   if (!text) return { ok: false, error: 'empty-input' };
 
-  const chunks = chunkText(text, { minTokens: 500, maxTokens: 1500 });
+  const maxChunks = Number.isFinite(Number(args.maxChunks))
+    ? Number(args.maxChunks)
+    : (Number.isFinite(Number(args.chunks)) ? Number(args.chunks) : 10);
+  const chunks = chunkText(text, { minTokens: 500, maxTokens: 1500, maxChunks });
   const extracted = [];
   const extractionDiagnostics = [];
   const enableLlm = !!args.llm && !args.noLLM;
@@ -138,25 +143,43 @@ async function runEntry(entry, policy, args) {
     }
   }
 
-  const normalized = normalizeFactList(extracted, policy);
+  const rawNormalized = normalizeFactListRaw(extracted, policy);
+  const canonicalizeEnabled = !args.noCanonicalize;
+  const canonicalized = await canonicalizeFacts(rawNormalized.facts, {
+    enableCanonicalize: canonicalizeEnabled,
+    model: args.embedModel ? String(args.embedModel).trim() : '',
+    allowEnv,
+    keytarService,
+    keytarAccount,
+    softThreshold: Number.isFinite(Number(args.canonicalSoft)) ? Number(args.canonicalSoft) : undefined,
+    strongThreshold: Number.isFinite(Number(args.canonicalStrong)) ? Number(args.canonicalStrong) : undefined,
+    diagLimit: Number.isFinite(Number(args.canonicalDiagTop)) ? Number(args.canonicalDiagTop) : undefined
+  });
+  const deduped = applyDedupe(canonicalized.facts, policy);
+  applyRetentionShaping(deduped.facts);
+
   const output = {
     game,
     sourceType: sourceCheck.sourceType,
     sourceUrlHost: inputResult.sourceUrlHost || null,
     extractedAt: new Date().toISOString(),
-    facts: normalized.facts,
+    facts: deduped.facts,
     diagnostics: {
       chunks: chunks.length,
       extracted: extracted.length,
-      kept: normalized.facts.length,
-      dropped: normalized.dropped,
-      dropReasons: normalized.dropReasons,
+      kept: deduped.facts.length,
+      dropped: rawNormalized.dropped + deduped.dropped,
+      dropReasons: mergeDropReasons(rawNormalized.dropReasons, deduped.dropReasons),
       dedupe: {
-        exactDropped: normalized.exactDeduped || 0,
-        nearDuplicateMarked: normalized.nearDuplicateMarked || 0
+        exactDropped: deduped.exactDeduped || 0,
+        nearDuplicateMarked: deduped.nearDuplicateMarked || 0,
+        nearDuplicateDropped: deduped.nearDuplicateDropped || 0
       },
+      canonicalization: canonicalized.diagnostics || { enabled: false },
+      quality: buildQualityDiagnostics(deduped.facts),
       llmEnabled: enableLlm,
-      policyPath: args.policy || null,
+      policyLoaded: policyInfo.loaded,
+      policyPath: policyInfo.path,
       chunkDiagnostics: extractionDiagnostics
     }
   };
@@ -170,9 +193,9 @@ async function runEntry(entry, policy, args) {
   return {
     ok: true,
     outputPath: outPath,
-    kept: normalized.facts.length,
-    dropped: normalized.dropped,
-    dropReasons: normalized.dropReasons,
+    kept: deduped.facts.length,
+    dropped: rawNormalized.dropped + deduped.dropped,
+    dropReasons: mergeDropReasons(rawNormalized.dropReasons, deduped.dropReasons),
     tier
   };
 }
@@ -206,7 +229,7 @@ async function main() {
   const tierTotals = {};
   for (const entry of entries) {
     // eslint-disable-next-line no-await-in-loop
-    const result = await runEntry(entry, policy, args);
+    const result = await runEntry(entry, policyInfo, policy, args);
     results.push({
       game: entry.game || '',
       ok: result.ok,

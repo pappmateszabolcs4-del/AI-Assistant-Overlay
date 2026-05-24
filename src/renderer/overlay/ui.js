@@ -660,10 +660,23 @@ function renderFactLoadSummary(store) {
   let factsWithTooGeneric = 0;
   let factsZero = 0;
   let factsZeroTooGeneric = 0;
+  let poolTotal = 0;
+  let hitsTotal = 0;
+  const tierCounts = { A: 0, B: 0, C: 0, unknown: 0 };
   for (let i = 0; i < pairs; i += 1) {
     const req = requests[startReq + i] || {};
     const res = responses[startRes + i] || {};
     const factsCount = Number(req.factsCount) || 0;
+    const poolCount = Number(req.factsPoolCount) || 0;
+    const hitCount = Number(req.factsHitCount) || 0;
+    poolTotal += poolCount;
+    hitsTotal += hitCount;
+    const tier = String(req.supportTier || '').toUpperCase();
+    if (tierCounts[tier] !== undefined) {
+      tierCounts[tier] += 1;
+    } else {
+      tierCounts.unknown += 1;
+    }
     const tooGeneric = !!res.tooGeneric;
     if (factsCount > 0) {
       factsWith += factsCount;
@@ -676,6 +689,8 @@ function renderFactLoadSummary(store) {
   }
   const items = [
     `${t().diagFactLoadPairs || 'Paired samples'}: ${pairs}`,
+    `${t().diagFactLoadTier || 'Tier split'}: A ${tierCounts.A}, B ${tierCounts.B}, C ${tierCounts.C}`,
+    `${t().diagFactLoadPool || 'Fact pool'}: avg ${formatNumber(poolTotal / Math.max(1, pairs))}, ${t().diagFactLoadHits || 'retrieval hits'} avg ${formatNumber(hitsTotal / Math.max(1, pairs))}`,
     `${t().diagFactLoadWithFacts || 'Facts > 0'}: avg ${formatNumber(factsWith / Math.max(1, factsWithCount))}, ${t().diagFactLoadTooGeneric || 'too generic'} ${formatRate(factsWithTooGeneric / Math.max(1, factsWithCount))}`,
     `${t().diagFactLoadNoFacts || 'Facts = 0'}: ${t().diagFactLoadTooGeneric || 'too generic'} ${formatRate(factsZeroTooGeneric / Math.max(1, factsZero))}`
   ];

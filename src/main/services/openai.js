@@ -66,6 +66,10 @@ const INTENT_ROUTING_PATH = path.join(__dirname, '../../../data/intent-routing.j
 const INTENT_ROUTING_TTL_MS = Number(process.env.INTENT_ROUTING_TTL_MS || 10 * 1000);
 const RESPONSE_TEMPLATES_PATH = path.join(__dirname, '../../../data/response-templates.json');
 const RESPONSE_TEMPLATES_TTL_MS = Number(process.env.RESPONSE_TEMPLATES_TTL_MS || 10 * 1000);
+const SUPPORT_TIERS_PATH = path.join(__dirname, '../../../data/game-support-tiers.json');
+const SUPPORT_TIERS_TTL_MS = Number(process.env.GAME_SUPPORT_TIERS_TTL_MS || 10 * 1000);
+const FACT_RETRIEVAL_PATH = path.join(__dirname, '../../../data/fact-retrieval.json');
+const FACT_RETRIEVAL_TTL_MS = Number(process.env.FACT_RETRIEVAL_TTL_MS || 10 * 1000);
 const GAME_DATA_DIR = path.join(__dirname, '../../../data/games');
 const GAME_DATA_TTL_MS = Number(process.env.GAME_DATA_TTL_MS || 10 * 1000);
 let cachedTemplateOptions = null;
@@ -74,6 +78,10 @@ let cachedIntentRouting = null;
 let cachedIntentRoutingAt = 0;
 let cachedResponseTemplates = null;
 let cachedResponseTemplatesAt = 0;
+let cachedSupportTiers = null;
+let cachedSupportTiersAt = 0;
+let cachedFactRetrieval = null;
+let cachedFactRetrievalAt = 0;
 const cachedGameProfiles = new Map();
 const cachedGameFacts = new Map();
 
@@ -121,6 +129,73 @@ function createOpenAIService(deps) {
       .replace(/-+$/, '');
   }
 
+  function loadSupportTiers() {
+    const now = Date.now();
+    if (cachedSupportTiers && (now - cachedSupportTiersAt) < SUPPORT_TIERS_TTL_MS) {
+      return cachedSupportTiers;
+    }
+    try {
+      if (!fs.existsSync(SUPPORT_TIERS_PATH)) {
+        cachedSupportTiers = { defaultTier: 'C', A: [], B: [], C: [] };
+        cachedSupportTiersAt = now;
+        return cachedSupportTiers;
+      }
+      const raw = fs.readFileSync(SUPPORT_TIERS_PATH, 'utf8');
+      const parsed = JSON.parse(raw);
+      cachedSupportTiers = parsed && typeof parsed === 'object'
+        ? parsed
+        : { defaultTier: 'C', A: [], B: [], C: [] };
+      cachedSupportTiersAt = now;
+      return cachedSupportTiers;
+    } catch (_) {
+      cachedSupportTiers = { defaultTier: 'C', A: [], B: [], C: [] };
+      cachedSupportTiersAt = now;
+      return cachedSupportTiers;
+    }
+  }
+
+  function resolveSupportTier(gameName) {
+    const key = normalizeGameKey(gameName);
+    if (!key) return 'C';
+    const tiers = loadSupportTiers();
+    const normalizeList = (list) => (Array.isArray(list) ? list : [])
+      .map((entry) => normalizeGameKey(entry))
+      .filter(Boolean);
+    const a = new Set(normalizeList(tiers.A));
+    const b = new Set(normalizeList(tiers.B));
+    const c = new Set(normalizeList(tiers.C));
+    if (a.has(key)) return 'A';
+    if (b.has(key)) return 'B';
+    if (c.has(key)) return 'C';
+    const fallback = String(tiers.defaultTier || 'C').trim().toUpperCase();
+    return fallback === 'A' || fallback === 'B' || fallback === 'C' ? fallback : 'C';
+  }
+
+  function loadFactRetrievalConfig() {
+    const now = Date.now();
+    if (cachedFactRetrieval && (now - cachedFactRetrievalAt) < FACT_RETRIEVAL_TTL_MS) {
+      return cachedFactRetrieval;
+    }
+    try {
+      if (!fs.existsSync(FACT_RETRIEVAL_PATH)) {
+        cachedFactRetrieval = { priorityWeights: { P1: 1, P2: 0.6, P3: 0.3 }, minScore: 0.1 };
+        cachedFactRetrievalAt = now;
+        return cachedFactRetrieval;
+      }
+      const raw = fs.readFileSync(FACT_RETRIEVAL_PATH, 'utf8');
+      const parsed = JSON.parse(raw);
+      cachedFactRetrieval = parsed && typeof parsed === 'object'
+        ? parsed
+        : { priorityWeights: { P1: 1, P2: 0.6, P3: 0.3 }, minScore: 0.1 };
+      cachedFactRetrievalAt = now;
+      return cachedFactRetrieval;
+    } catch (_) {
+      cachedFactRetrieval = { priorityWeights: { P1: 1, P2: 0.6, P3: 0.3 }, minScore: 0.1 };
+      cachedFactRetrievalAt = now;
+      return cachedFactRetrieval;
+    }
+  }
+
   function truncateForLog(text, maxChars) {
     const raw = String(text || '');
     const limit = Number.isFinite(maxChars) ? Math.max(0, maxChars) : 0;
@@ -128,12 +203,16 @@ function createOpenAIService(deps) {
     return `${raw.slice(0, limit)}…`;
   }
 
-  function getGameDataDirs() {
+  function getGameDataDirs(tier) {
+    const resolvedTier = String(tier || '').toUpperCase();
+    if (resolvedTier === 'C') return [];
     const dirs = [];
     try {
       dirs.push(path.join(app.getPath('userData'), 'games'));
     } catch (_) {}
-    dirs.push(GAME_DATA_DIR);
+    if (resolvedTier === 'A' || resolvedTier === 'B') {
+      dirs.push(GAME_DATA_DIR);
+    }
     return dirs;
   }
 
@@ -188,7 +267,7 @@ function createOpenAIService(deps) {
       return cached.data;
     }
     try {
-      const baseDirs = getGameDataDirs();
+      const baseDirs = getGameDataDirs('A');
       for (const baseDir of baseDirs) {
         const directPath = path.join(baseDir, key, 'profile.json');
         if (fs.existsSync(directPath)) {
@@ -217,23 +296,29 @@ function createOpenAIService(deps) {
     }
   }
 
-  function loadGameFacts(gameName) {
+  function loadGameFacts(gameName, options = {}) {
     const key = normalizeGameKey(gameName);
     if (!key) return [];
+    const tierKey = String(options.tier || 'A').toUpperCase();
+    const cacheKey = `${key}::${tierKey}`;
     const now = Date.now();
-    const cached = cachedGameFacts.get(key);
+    const cached = cachedGameFacts.get(cacheKey);
     if (cached && (now - cached.at) < GAME_DATA_TTL_MS) {
       return cached.data;
     }
     try {
-      const baseDirs = getGameDataDirs();
+      const baseDirs = getGameDataDirs(tierKey);
+      if (!baseDirs.length) {
+        cachedGameFacts.set(cacheKey, { data: [], at: now });
+        return [];
+      }
       for (const baseDir of baseDirs) {
         const directPath = path.join(baseDir, key, 'facts.json');
         if (fs.existsSync(directPath)) {
           const raw = fs.readFileSync(directPath, 'utf8');
           const parsed = JSON.parse(raw);
           const list = Array.isArray(parsed && parsed.facts) ? parsed.facts : [];
-          cachedGameFacts.set(key, { data: list, at: now });
+          cachedGameFacts.set(cacheKey, { data: list, at: now });
           return list;
         }
       }
@@ -243,14 +328,14 @@ function createOpenAIService(deps) {
           const raw = fs.readFileSync(fallbackPath, 'utf8');
           const parsed = JSON.parse(raw);
           const list = Array.isArray(parsed && parsed.facts) ? parsed.facts : [];
-          cachedGameFacts.set(key, { data: list, at: now });
+          cachedGameFacts.set(cacheKey, { data: list, at: now });
           return list;
         }
       }
-      cachedGameFacts.set(key, { data: [], at: now });
+      cachedGameFacts.set(cacheKey, { data: [], at: now });
       return [];
     } catch (_) {
-      cachedGameFacts.set(key, { data: [], at: now });
+      cachedGameFacts.set(cacheKey, { data: [], at: now });
       return [];
     }
   }
@@ -265,6 +350,27 @@ function createOpenAIService(deps) {
     return normalized
       .split(/[^\p{L}\p{N}]+/gu)
       .filter(Boolean);
+  }
+
+  function normalizePriorityLabel(value) {
+    if (typeof value === 'string') {
+      const trimmed = value.trim().toUpperCase();
+      if (trimmed === 'P1' || trimmed === 'P2' || trimmed === 'P3') return trimmed;
+    }
+    if (Number.isFinite(value)) {
+      if (value >= 3) return 'P1';
+      if (value === 2) return 'P2';
+      if (value === 1) return 'P3';
+    }
+    return '';
+  }
+
+  function getPriorityWeight(priority) {
+    const config = loadFactRetrievalConfig();
+    const weights = config && typeof config === 'object' ? config.priorityWeights : null;
+    const label = normalizePriorityLabel(priority);
+    if (label && weights && Number.isFinite(weights[label])) return weights[label];
+    return Number.isFinite(weights && weights.default) ? weights.default : 0;
   }
 
   function scoreFact(fact, text, tokens, intentId) {
@@ -301,23 +407,28 @@ function createOpenAIService(deps) {
     if (intentId && Array.isArray(fact.tags) && fact.tags.includes(intentId)) {
       score += 1;
     }
-    const priority = Number.isFinite(fact.priority) ? fact.priority : 0;
-    return score + priority * 0.1;
+    const priorityWeight = getPriorityWeight(fact.priority);
+    if (score > 0 && priorityWeight > 0) {
+      score += priorityWeight;
+    }
+    return score;
   }
 
   function selectFacts(text, facts, intentId, maxFacts) {
     const normalized = normalizeFactText(text);
     const tokens = tokenizeText(text);
     const limit = Number.isFinite(maxFacts) ? Math.max(0, maxFacts) : 0;
+    const config = loadFactRetrievalConfig();
+    const minScore = Number.isFinite(config && config.minScore) ? config.minScore : 0;
     const scored = facts
       .map((fact) => ({
         fact,
         score: scoreFact(fact, normalized, tokens, intentId)
       }))
-      .filter((entry) => entry.score > 0)
+      .filter((entry) => entry.score >= minScore)
       .sort((a, b) => b.score - a.score);
     const selected = scored.slice(0, limit || 0).map((entry) => entry.fact);
-    return selected;
+    return { selected, hits: scored.length };
   }
 
   function buildFactsPrompt(facts, lang) {
@@ -1172,6 +1283,7 @@ function createOpenAIService(deps) {
       const resolvedLanguage = lang || getCurrentLanguage();
       const responseTemplate = getResponseTemplate(intentInfo.intent, resolvedLanguage);
       const resolvedAnswerStyle = normalizeAnswerStyle(answerStyle);
+      const supportTier = resolvedGameContext ? resolveSupportTier(resolvedGameContext) : null;
       const deterministicResponse = buildDeterministicResponse(
         intentInfo,
         responseTemplate,
@@ -1190,6 +1302,9 @@ function createOpenAIService(deps) {
           responseTemplateUseFacts: false,
           responseTemplateUseProfile: false,
           factsCount: 0,
+          supportTier,
+          factsPoolCount: 0,
+          factsHitCount: 0,
           profileUsed: false,
           gameContext: resolvedGameContext || null,
           detectScore: typeof game.lastDetectScore === 'number' ? game.lastDetectScore : null,
@@ -1298,10 +1413,16 @@ function createOpenAIService(deps) {
         }
       }
       let factsSelected = [];
+      let factsPoolCount = 0;
+      let factsHitCount = 0;
       let nameSets = { verified: [], forbidden: [] };
-      if (resolvedGameContext && responseTemplate.useFacts) {
-        const facts = loadGameFacts(resolvedGameContext);
-        factsSelected = selectFacts(text, facts, intentInfo.intent, responseTemplate.maxFacts);
+      const useFactsForTier = !!(resolvedGameContext && responseTemplate.useFacts && supportTier !== 'C');
+      if (useFactsForTier) {
+        const facts = loadGameFacts(resolvedGameContext, { tier: supportTier || 'A' });
+        factsPoolCount = facts.length;
+        const selection = selectFacts(text, facts, intentInfo.intent, responseTemplate.maxFacts);
+        factsSelected = selection.selected;
+        factsHitCount = selection.hits;
         const factsPrompt = buildFactsPrompt(factsSelected, resolvedLanguage);
         if (factsPrompt) {
           const factsSegment = `\n\n${factsPrompt}`;
@@ -1361,6 +1482,9 @@ function createOpenAIService(deps) {
       const highRiskQuestion = isHighRiskQuestion(text, intentInfo.intent, resolvedLanguage);
       let knowledgeMode = knowledgeModeBase;
       let strictMode = false;
+      if (supportTier === 'C') {
+        knowledgeMode = AI_KNOWLEDGE_MODES.unknown;
+      }
       if (highRiskQuestion && knowledgeMode !== AI_KNOWLEDGE_MODES.verified) {
         strictMode = true;
         knowledgeMode = AI_KNOWLEDGE_MODES.unknown;
@@ -1435,6 +1559,9 @@ function createOpenAIService(deps) {
         responseTemplateUseFacts: responseTemplate.useFacts,
         responseTemplateUseProfile: responseTemplate.useProfile,
         factsCount: factsSelected.length,
+        supportTier,
+        factsPoolCount,
+        factsHitCount,
         knowledgeMode,
         strictMode,
         highRiskQuestion,

@@ -169,6 +169,8 @@ async function reviewInteractive(facts) {
     console.log(`  tags: ${formatList(current.tags)}`);
     // eslint-disable-next-line no-console
     console.log(`  priority: ${current.priority}`);
+    // eslint-disable-next-line no-console
+    console.log('  decision-support test: dependency/tradeoff/blocker/optimization');
 
     const existingDecision = decisionById.get(current.id);
     if (existingDecision) {

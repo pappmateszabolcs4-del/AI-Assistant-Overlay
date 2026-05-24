@@ -1,0 +1,8 @@
+{
+  "priorityWeights": {
+    "P1": 1,
+    "P2": 0.6,
+    "P3": 0.3
+  },
+  "minScore": 0.1
+}

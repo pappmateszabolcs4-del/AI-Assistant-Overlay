@@ -4,7 +4,9 @@ const { loadPolicy, validateSourceType, validateSourceUrl } = require('./policy'
 const { fetchUrlText } = require('./fetch');
 const { chunkText } = require('./chunker');
 const { extractFactsFromChunk } = require('./extractor');
-const { normalizeFactList } = require('./normalize');
+const { normalizeFactListRaw, applyDedupe, applyRetentionShaping, mergeDropReasons } = require('./normalize');
+const { buildQualityDiagnostics } = require('./quality-diagnostics');
+const { canonicalizeFacts } = require('./canonicalize');
 
 function parseArgs(argv) {
   const args = {};
@@ -127,7 +129,10 @@ async function main() {
     process.exit(1);
   }
 
-  const chunks = chunkText(input, { minTokens: 500, maxTokens: 1500 });
+  const maxChunks = Number.isFinite(Number(args.maxChunks))
+    ? Number(args.maxChunks)
+    : (Number.isFinite(Number(args.chunks)) ? Number(args.chunks) : 10);
+  const chunks = chunkText(input, { minTokens: 500, maxTokens: 1500, maxChunks });
   const extracted = [];
   const extractionDiagnostics = [];
   const enableLlm = !!args.llm && !args.noLLM;
@@ -168,17 +173,33 @@ async function main() {
     }
   }
 
-  const normalized = normalizeFactList(extracted, policy);
+  const rawNormalized = normalizeFactListRaw(extracted, policy);
+  const canonicalizeEnabled = !args.noCanonicalize;
+  const canonicalized = await canonicalizeFacts(rawNormalized.facts, {
+    enableCanonicalize: canonicalizeEnabled,
+    model: args.embedModel ? String(args.embedModel).trim() : '',
+    allowEnv,
+    keytarService,
+    keytarAccount,
+    softThreshold: Number.isFinite(Number(args.canonicalSoft)) ? Number(args.canonicalSoft) : undefined,
+    strongThreshold: Number.isFinite(Number(args.canonicalStrong)) ? Number(args.canonicalStrong) : undefined,
+    diagLimit: Number.isFinite(Number(args.canonicalDiagTop)) ? Number(args.canonicalDiagTop) : undefined
+  });
+  const deduped = applyDedupe(canonicalized.facts, policy);
+  applyRetentionShaping(deduped.facts);
   const diagnostics = {
     chunks: chunks.length,
     extracted: extracted.length,
-    kept: normalized.facts.length,
-    dropped: normalized.dropped,
-    dropReasons: normalized.dropReasons,
+    kept: deduped.facts.length,
+    dropped: rawNormalized.dropped + deduped.dropped,
+    dropReasons: mergeDropReasons(rawNormalized.dropReasons, deduped.dropReasons),
     dedupe: {
-      exactDropped: normalized.exactDeduped || 0,
-      nearDuplicateMarked: normalized.nearDuplicateMarked || 0
+      exactDropped: deduped.exactDeduped || 0,
+      nearDuplicateMarked: deduped.nearDuplicateMarked || 0,
+      nearDuplicateDropped: deduped.nearDuplicateDropped || 0
     },
+    canonicalization: canonicalized.diagnostics || { enabled: false },
+    quality: buildQualityDiagnostics(deduped.facts),
     llmEnabled: enableLlm,
     policyLoaded: policyInfo.loaded,
     policyPath: policyInfo.path,
@@ -189,7 +210,7 @@ async function main() {
     sourceType,
     sourceUrlHost: sourceUrlHost || null,
     extractedAt: new Date().toISOString(),
-    facts: normalized.facts,
+    facts: deduped.facts,
     diagnostics
   };
 

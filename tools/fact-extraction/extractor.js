@@ -44,10 +44,21 @@ function buildSystemPrompt(policy) {
     'You extract compact gameplay facts for a game assistant.',
     'Return JSON only, no markdown, no explanations.',
     'Each fact is short, actionable, and focused on gameplay decisions.',
+    'Do not write tutorial sentences or step-by-step UI instructions.',
+    'Every fact must include at least one: dependency, tradeoff, blocker, or optimization.',
+    'If a statement does not help a decision, drop it.',
+    'Reject generic colony-management advice (no "balance resources" or "prioritize X").',
+    'Each fact must mention a specific mechanic, building, tool, research, status, event, or rule from the source.',
+    'Each fact must also include a concrete condition or dependency (requires/only when/near/while/blocked by/without).',
+    'Avoid template facts like "X improves Y but costs resources/time" unless the mechanic and condition are specific.',
+    'Avoid near-duplicate facts. If two facts overlap, merge into one stronger fact.',
     'No lore, no story, no guide paragraphs.',
+    'Add noveltyScore (0-1, higher is more novel) and obviousness (0-1, higher is more obvious).',
+    'Add interactionCount (integer) and systems (1-4 short system labels from the fact).',
+    'Add suggestedPriority as P1/P2/P3 based on signal strength.',
     `Fact text must be at most ${maxLen} characters.`,
     `Max ${maxKeywords} keywords and ${maxTags} tags per fact.`,
-    'Allowed fields: text, keywords, tags, priority, system, gameStage, confidence.',
+    'Allowed fields: text, keywords, tags, priority, system, gameStage, confidence, noveltyScore, obviousness, interactionCount, systems, suggestedPriority.',
     'Priority is 1-3 where 3 is highest.',
     'Output format: {"facts": [ ... ]}.'
   ].join(' ');
@@ -59,7 +70,7 @@ function buildUserPrompt(chunk, options) {
   return [
     `Game: ${game || 'Unknown'}.`,
     `Source type: ${sourceType || 'user'}.`,
-    'Extract 3-10 compact gameplay facts from the text below.',
+    'Extract 5-12 compact gameplay facts from the text below.',
     'Text:',
     String(chunk && chunk.text || '').trim()
   ].join('\n');
@@ -119,7 +130,7 @@ async function extractFactsFromChunk(chunk, options = {}) {
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.2,
-        max_tokens: 800
+        max_tokens: 1200
       }),
       timeoutMs
     );

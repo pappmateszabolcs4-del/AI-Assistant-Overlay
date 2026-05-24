@@ -6,6 +6,24 @@
 
 ---
 
+## [1.0.60] - 2026-05-24 (Phase 2/3: Canonicalization + Quality Guardrails)
+
+### ✅ Added
+
+- Semantic canonicalization stage (embeddings + systems/family/keyword anchors) with advanced/beginner retention.
+- Cross-game mechanic family taxonomy and normalized keyword anchors for clustering stability.
+- Quality diagnostics: priority/family/novelty/obviousness/template shapes + evergreen/time-bound flags.
+- Editorial filters for live-service, wiki/editorial, time-bound metadata, and non-actionable lore.
+
+### 🔧 Changed
+
+- Normalization pipeline split into raw normalize → canonicalize → dedupe → retention shaping.
+- Canonicalization thresholds tuned for short, compressed facts; richer embedding input (text + systems + families + keywords).
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
 ## [1.0.59] - 2026-05-24 (Phase 2: Fact Extraction Dedupe + Review UX)
 
 ### ✅ Added

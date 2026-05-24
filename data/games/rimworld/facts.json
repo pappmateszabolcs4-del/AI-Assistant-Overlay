@@ -45,58 +45,6 @@
       "priority": 2
     },
     {
-      "id": "comms-console",
-      "text": "A Comms Console is used to contact passing trade ships for buying and selling.",
-      "keywords": [
-        "comms console",
-        "trade ship",
-        "trader"
-      ],
-      "tags": [
-        "economy",
-        "resource"
-      ],
-      "priority": 1
-    },
-    {
-      "id": "power-grid",
-      "text": "Mining and drilling equipment require power; keep the grid stable to avoid downtime.",
-      "keywords": [
-        "power",
-        "grid",
-        "mining",
-        "drill"
-      ],
-      "tags": [
-        "base",
-        "resource"
-      ],
-      "priority": 1
-    },
-    {
-      "text": "Trade with passing ships or caravans to acquire rare items and resources.",
-      "keywords": [
-        "trade",
-        "ships",
-        "caravans",
-        "items",
-        "resources"
-      ],
-      "tags": [
-        "trading",
-        "economy",
-        "strategy"
-      ],
-      "priority": 1,
-      "system": "PC",
-      "gameStage": "mid-game",
-      "sourceType": "official",
-      "confidence": 0.85,
-      "nearDuplicateGroup": "nd-abcf4be4",
-      "nearDuplicateScore": 1,
-      "id": "fact-db7064a7"
-    },
-    {
       "text": "Keep an eye on food supplies; grow crops and hunt to ensure your colony doesn't starve.",
       "keywords": [
         "food",
@@ -118,52 +66,6 @@
       "nearDuplicateGroup": "nd-cf2ad5be",
       "nearDuplicateScore": 0.92,
       "id": "fact-346f4def"
-    },
-    {
-      "text": "Create growing zones to cultivate crops. Select the area, choose the crop type, and ensure it has enough sunlight and water.",
-      "keywords": [
-        "growing",
-        "zones",
-        "crops",
-        "select",
-        "area",
-        "sunlight",
-        "water"
-      ],
-      "tags": [
-        "farming",
-        "strategy",
-        "management"
-      ],
-      "priority": 1,
-      "system": "PC",
-      "gameStage": "mid-game",
-      "sourceType": "official",
-      "confidence": 0.9,
-      "id": "fact-dafb1547"
-    },
-    {
-      "text": "Designate areas for specific activities like animal grazing or storage to optimize space and resource management.",
-      "keywords": [
-        "designate",
-        "areas",
-        "activities",
-        "animal",
-        "grazing",
-        "storage",
-        "optimize"
-      ],
-      "tags": [
-        "strategy",
-        "management",
-        "planning"
-      ],
-      "priority": 1,
-      "system": "PC",
-      "gameStage": "early-game",
-      "sourceType": "official",
-      "confidence": 0.85,
-      "id": "fact-5ecd3286"
     },
     {
       "text": "Use the 'Home Area' zone to define where colonists will fight fires and clean dirt. Adjust as needed for efficiency.",
@@ -1190,27 +1092,6 @@
       "sourceType": "official",
       "confidence": 0.85,
       "id": "fact-d67cbf86"
-    },
-    {
-      "text": "Gather resources like wood, steel, and food early to ensure your colony's survival.",
-      "keywords": [
-        "resources",
-        "wood",
-        "steel",
-        "food",
-        "survival"
-      ],
-      "tags": [
-        "gathering",
-        "strategy",
-        "survival"
-      ],
-      "priority": 1,
-      "system": "PC",
-      "gameStage": "early",
-      "sourceType": "official",
-      "confidence": 0.9,
-      "id": "fact-ebcc9dfa"
     },
     {
       "text": "Use the environment to your advantage; set ambushes in choke points or use natural cover during combat.",
