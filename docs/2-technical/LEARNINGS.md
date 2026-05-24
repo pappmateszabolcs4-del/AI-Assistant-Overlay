@@ -100,6 +100,31 @@ When adding new work logs, append them under **Daily Logs (Chronological)** usin
 
 #### Follow-ups
 - TODO: Add research-specific facts (e.g., Electricity, Microelectronics, Smithing, Stonecutting).
+
+### 2026-05-24 (Night)
+
+#### Summary
+- What changed: Added bounded implication recovery, advice-tone reframing, procedural downgrade, state-transition/constraint-chain signals, and expanded diagnostics + canonicalization overlap logic.
+- Why: v3 overcorrected toward extractive procedural facts; needed grounded implication recovery without narration.
+- Impact: Restores downstream/operational implications while keeping synthetic commentary suppressed.
+
+#### Details
+- Implementation notes: Recovery now prefers explicit mechanic + condition + effect; procedural downgrade is based on low consequence density rather than UI keyword blacklists.
+- Edge cases: Aggressive advice-tone penalties can still suppress valid implications if anchors are weak; watch procedural vs recovery ratios.
+
+#### Files touched
+- [tools/fact-extraction/normalize.js](tools/fact-extraction/normalize.js)
+- [tools/fact-extraction/quality-diagnostics.js](tools/fact-extraction/quality-diagnostics.js)
+- [tools/fact-extraction/canonicalize.js](tools/fact-extraction/canonicalize.js)
+
+#### Backups
+- Not created (not requested).
+
+#### Verification
+- Not run (not requested).
+
+#### Follow-ups
+- TODO: Review recovery vs procedural ratios on Railway and adjust thresholds if implication depth stays low.
 ```
 
 ## 🎯 Project Vision: Customer-First Product

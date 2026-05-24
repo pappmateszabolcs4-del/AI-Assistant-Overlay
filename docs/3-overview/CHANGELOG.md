@@ -24,6 +24,25 @@
 
 - Tests: Not run (not requested).
 
+## [1.0.61] - 2026-05-24 (Phase 3: Grounded Implication Recovery)
+
+### ✅ Added
+
+- Advice-tone handling with mechanistic recovery framing and procedural downgrade heuristics.
+- State-transition, downstream impact, constraint-chain, and failure/constraint signals for bounded implication recovery.
+- Representation diagnostics (extractive/inferred/compressed/transformed) + recovery/procedural metrics.
+- Canonicalization overlap checks using consequence + entity anchors, plus role stability hints in clusters.
+
+### 🔧 Changed
+
+- Retention shaping now prioritizes anchored implication recovery over strict suppression.
+- Layer A gating adjusted to favor explicit condition/effect/state-change signals.
+- Canonicalization merge requires consequence overlap (not just entity overlap).
+
+### 🧾 Notes
+
+- Tests: Not run (not requested).
+
 ## [1.0.59] - 2026-05-24 (Phase 2: Fact Extraction Dedupe + Review UX)
 
 ### ✅ Added

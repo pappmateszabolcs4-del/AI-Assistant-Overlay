@@ -1,6 +1,6 @@
 # ✅ TODO / Backlog
 
-Last updated: 2026-05-23
+Last updated: 2026-05-24
 
 Note: We are switching to a config-first, no-hardcode approach (per Phase 2 Whitelist v2) because the previous path did not move fast enough.
 
@@ -136,6 +136,8 @@ Why: Keep coverage lean while grounding entities to reduce hallucinations.
 - [x] System-based support taxonomy (game systems + fact tagging)
 - [x] Diagnostics expansion (dedupe stats + extraction quality)
 - [x] Editorial quality guardrails (live-service/wiki/time-bound/actionability/lore filters)
+- [ ] Implication recovery calibration (procedural vs downstream balance)
+- [ ] Representation drift review (extractive vs inferred vs transformed shares)
 
 - [x] On-demand knowledge (seed facts only when needed)
 - [x] Minimal entity-first seed (characters, locations, items, mechanics, quests)
@@ -233,6 +235,34 @@ Why: Make the system’s behavior visible and user-correctable.
   - [ ] Guided intake flow (2-minute wizard, minimal set)
   - [ ] Premium safe-mode UI indicator / dashboard
 
+### Phase 7 — Stabilization + Scaling (Dataset Quality)
+
+Why: Focus on multi-genre stability, retrieval quality, and maintainability before new features.
+
+- [ ] Normalize modularization (incremental refactor)
+  - [ ] Split normalize.js into filters/, taxonomy/, scoring/, diagnostics/ modules
+  - [ ] Keep behavior parity with regression notes per module
+  - [ ] Add lightweight unit checks for filters where feasible
+- [ ] Multi-genre dataset stress testing
+  - [ ] MMO
+  - [ ] FPS/PvP
+  - [ ] ARPG
+  - [ ] Roguelike
+  - [ ] Extraction shooter
+  - [ ] Strategy
+- [ ] Reviewer workflow metrics
+  - [ ] Approval rate + reject reasons summary
+  - [ ] Reviewer disagreement tracking (if multiple reviewers)
+  - [ ] Common edit/retag patterns
+- [ ] Retrieval quality validation
+  - [ ] Batch redundancy score
+  - [ ] Contextual usefulness checks (manual rubric)
+  - [ ] Beginner vs advanced mix ratio
+  - [ ] Template repetition frequency
+  - [ ] Actionability score tracking
+- [ ] Hotkey conflict detection and messaging
+- [ ] Guardrails check: no telemetry or remote data export
+
 ## Product roadmap (not in current build chain)
 
 ### Release readiness
@@ -299,8 +329,6 @@ Why: Make the system’s behavior visible and user-correctable.
 
 - [ ] Settings export/import (backup + restore)
 - [ ] Startup/perf profiling (release build)
-- [ ] Hotkey conflict detection and messaging
-- [ ] Guardrails check: no telemetry or remote data export
 
 ### UX
 
