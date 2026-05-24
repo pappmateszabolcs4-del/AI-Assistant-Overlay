@@ -2,10 +2,10 @@ const fs = require('fs');
 const path = require('path');
 const { loadPolicy, validateSourceType, validateSourceUrl } = require('./policy');
 const { fetchUrlText } = require('./fetch');
-const { chunkText } = require('./chunker');
+const { chunkText, isHeadingLine, analyzeTextStructure } = require('./chunker');
 const { extractFactsFromChunk } = require('./extractor');
 const { normalizeFactListRaw, applyDedupe, applyRetentionShaping, mergeDropReasons } = require('./normalize');
-const { buildQualityDiagnostics } = require('./quality-diagnostics');
+const { buildQualityDiagnostics, buildChunkCohesionDiagnostics } = require('./quality-diagnostics');
 const { canonicalizeFacts } = require('./canonicalize');
 
 function parseArgs(argv) {
@@ -78,6 +78,15 @@ function purgeOldFiles(dirPath, maxAgeDays) {
   }
 }
 
+function countHeadingLines(text) {
+  const lines = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  let count = 0;
+  for (const line of lines) {
+    if (isHeadingLine(line)) count += 1;
+  }
+  return count;
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const game = String(args.game || '').trim();
@@ -132,6 +141,7 @@ async function main() {
   const maxChunks = Number.isFinite(Number(args.maxChunks))
     ? Number(args.maxChunks)
     : (Number.isFinite(Number(args.chunks)) ? Number(args.chunks) : 10);
+  const ingestionStats = analyzeTextStructure(input);
   const chunks = chunkText(input, { minTokens: 500, maxTokens: 1500, maxChunks });
   const extracted = [];
   const extractionDiagnostics = [];
@@ -166,10 +176,15 @@ async function main() {
     extractionDiagnostics.push({
       chunkId: chunk.chunkId,
       tokenEstimate: chunk.tokenEstimate,
+      headingLines: countHeadingLines(chunk.text),
       ...result.diagnostics
     });
     if (Array.isArray(result.facts)) {
-      extracted.push(...result.facts.map((fact) => ({ ...fact, sourceType })));
+      extracted.push(...result.facts.map((fact) => ({
+        ...fact,
+        sourceType,
+        _chunkId: chunk.chunkId
+      })));
     }
   }
 
@@ -187,10 +202,14 @@ async function main() {
   });
   const deduped = applyDedupe(canonicalized.facts, policy);
   applyRetentionShaping(deduped.facts);
+  const chunkCohesion = buildChunkCohesionDiagnostics(rawNormalized.facts, extractionDiagnostics, {
+    limit: Number.isFinite(Number(args.chunkDiagTop)) ? Number(args.chunkDiagTop) : undefined
+  });
+  const outputFacts = deduped.facts.map(({ _chunkId, ...rest }) => rest);
   const diagnostics = {
     chunks: chunks.length,
     extracted: extracted.length,
-    kept: deduped.facts.length,
+    kept: outputFacts.length,
     dropped: rawNormalized.dropped + deduped.dropped,
     dropReasons: mergeDropReasons(rawNormalized.dropReasons, deduped.dropReasons),
     dedupe: {
@@ -200,6 +219,8 @@ async function main() {
     },
     canonicalization: canonicalized.diagnostics || { enabled: false },
     quality: buildQualityDiagnostics(deduped.facts),
+    chunkCohesion,
+    ingestion: ingestionStats,
     llmEnabled: enableLlm,
     policyLoaded: policyInfo.loaded,
     policyPath: policyInfo.path,
@@ -210,7 +231,7 @@ async function main() {
     sourceType,
     sourceUrlHost: sourceUrlHost || null,
     extractedAt: new Date().toISOString(),
-    facts: deduped.facts,
+    facts: outputFacts,
     diagnostics
   };
 

@@ -2,11 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const { loadPolicy, validateSourceType, validateSourceUrl } = require('./policy');
 const { fetchUrlText } = require('./fetch');
-const { chunkText } = require('./chunker');
+const { chunkText, isHeadingLine, analyzeTextStructure } = require('./chunker');
 const { extractFactsFromChunk } = require('./extractor');
 const { normalizeFactListRaw, applyDedupe, applyRetentionShaping, mergeDropReasons } = require('./normalize');
 const { canonicalizeFacts } = require('./canonicalize');
-const { buildQualityDiagnostics } = require('./quality-diagnostics');
+const { buildQualityDiagnostics, buildChunkCohesionDiagnostics } = require('./quality-diagnostics');
 
 function parseArgs(argv) {
   const args = {};
@@ -75,6 +75,15 @@ function loadList(listPath) {
   return Array.isArray(parsed) ? parsed : [];
 }
 
+function countHeadingLines(text) {
+  const lines = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  let count = 0;
+  for (const line of lines) {
+    if (isHeadingLine(line)) count += 1;
+  }
+  return count;
+}
+
 async function readInput(entry, policy, args) {
   if (entry.url) {
     const urlCheck = validateSourceUrl(entry.url, policy);
@@ -113,6 +122,7 @@ async function runEntry(entry, policyInfo, policy, args) {
   const maxChunks = Number.isFinite(Number(args.maxChunks))
     ? Number(args.maxChunks)
     : (Number.isFinite(Number(args.chunks)) ? Number(args.chunks) : 10);
+  const ingestionStats = analyzeTextStructure(text);
   const chunks = chunkText(text, { minTokens: 500, maxTokens: 1500, maxChunks });
   const extracted = [];
   const extractionDiagnostics = [];
@@ -121,6 +131,40 @@ async function runEntry(entry, policyInfo, policy, args) {
   const allowEnv = !!args.allowEnv;
   const keytarService = args.keytarService ? String(args.keytarService).trim() : '';
   const keytarAccount = args.keytarAccount ? String(args.keytarAccount).trim() : '';
+
+  function normalizeContextText(value) {
+    return String(value || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function buildLocalContextWindow(factText, chunkText) {
+    const source = normalizeContextText(chunkText);
+    const target = normalizeContextText(factText).toLowerCase();
+    if (!source || !target) return '';
+    const stopWords = new Set([
+      'the', 'and', 'that', 'with', 'from', 'this', 'into', 'they', 'their', 'your',
+      'about', 'there', 'which', 'while', 'when', 'where', 'what', 'will', 'should',
+      'would', 'could', 'have', 'has', 'had', 'been', 'were', 'them', 'then', 'than',
+      'also', 'only', 'does', 'doesn', 'into', 'over', 'under', 'more', 'most'
+    ]);
+    const tokens = target
+      .split(/[^a-z0-9]+/g)
+      .filter((token) => token.length >= 4 && !stopWords.has(token));
+    if (!tokens.length) return '';
+    const sourceLower = source.toLowerCase();
+    let hitIndex = -1;
+    for (const token of tokens) {
+      const idx = sourceLower.indexOf(token);
+      if (idx !== -1) {
+        hitIndex = idx;
+        break;
+      }
+    }
+    if (hitIndex === -1) return '';
+    const windowRadius = 140;
+    const start = Math.max(0, hitIndex - windowRadius);
+    const end = Math.min(source.length, hitIndex + windowRadius);
+    return source.slice(start, end).trim();
+  }
 
   for (const chunk of chunks) {
     const result = await extractFactsFromChunk(chunk, {
@@ -136,10 +180,16 @@ async function runEntry(entry, policyInfo, policy, args) {
     extractionDiagnostics.push({
       chunkId: chunk.chunkId,
       tokenEstimate: chunk.tokenEstimate,
+      headingLines: countHeadingLines(chunk.text),
       ...result.diagnostics
     });
     if (Array.isArray(result.facts)) {
-      extracted.push(...result.facts.map((fact) => ({ ...fact, sourceType: sourceCheck.sourceType })));
+      extracted.push(...result.facts.map((fact) => ({
+        ...fact,
+        sourceType: sourceCheck.sourceType,
+        _chunkId: chunk.chunkId,
+        _contextWindow: buildLocalContextWindow(fact && fact.text, chunk.text)
+      })));
     }
   }
 
@@ -157,17 +207,21 @@ async function runEntry(entry, policyInfo, policy, args) {
   });
   const deduped = applyDedupe(canonicalized.facts, policy);
   applyRetentionShaping(deduped.facts);
+  const chunkCohesion = buildChunkCohesionDiagnostics(rawNormalized.facts, extractionDiagnostics, {
+    limit: Number.isFinite(Number(args.chunkDiagTop)) ? Number(args.chunkDiagTop) : undefined
+  });
+  const outputFacts = deduped.facts.map(({ _chunkId, _grounding, ...rest }) => rest);
 
   const output = {
     game,
     sourceType: sourceCheck.sourceType,
     sourceUrlHost: inputResult.sourceUrlHost || null,
     extractedAt: new Date().toISOString(),
-    facts: deduped.facts,
+    facts: outputFacts,
     diagnostics: {
       chunks: chunks.length,
       extracted: extracted.length,
-      kept: deduped.facts.length,
+      kept: outputFacts.length,
       dropped: rawNormalized.dropped + deduped.dropped,
       dropReasons: mergeDropReasons(rawNormalized.dropReasons, deduped.dropReasons),
       dedupe: {
@@ -177,6 +231,8 @@ async function runEntry(entry, policyInfo, policy, args) {
       },
       canonicalization: canonicalized.diagnostics || { enabled: false },
       quality: buildQualityDiagnostics(deduped.facts),
+      chunkCohesion,
+      ingestion: ingestionStats,
       llmEnabled: enableLlm,
       policyLoaded: policyInfo.loaded,
       policyPath: policyInfo.path,
@@ -196,7 +252,8 @@ async function runEntry(entry, policyInfo, policy, args) {
     kept: deduped.facts.length,
     dropped: rawNormalized.dropped + deduped.dropped,
     dropReasons: mergeDropReasons(rawNormalized.dropReasons, deduped.dropReasons),
-    tier
+    tier,
+    familyBundle: buildFamilyBundleStats(outputFacts)
   };
 }
 
@@ -206,6 +263,45 @@ function mergeCounts(target, source) {
     out[key] = (out[key] || 0) + Number(value || 0);
   });
   return out;
+}
+
+function buildFamilyBundleStats(facts) {
+  const familyFactCounts = {};
+  const pairCounts = {};
+  const entryFamilies = new Set();
+  const factList = Array.isArray(facts) ? facts : [];
+
+  for (const fact of factList) {
+    const families = Array.isArray(fact.mechanicFamilies) ? fact.mechanicFamilies : [];
+    const unique = Array.from(new Set(families.map((value) => String(value || '').trim()).filter(Boolean)));
+    if (!unique.length) continue;
+    for (const family of unique) {
+      familyFactCounts[family] = (familyFactCounts[family] || 0) + 1;
+      entryFamilies.add(family);
+    }
+    for (let i = 0; i < unique.length; i += 1) {
+      for (let j = i + 1; j < unique.length; j += 1) {
+        const a = unique[i];
+        const b = unique[j];
+        const key = a < b ? `${a}|${b}` : `${b}|${a}`;
+        pairCounts[key] = (pairCounts[key] || 0) + 1;
+      }
+    }
+  }
+
+  return {
+    factCount: factList.length,
+    familyFactCounts,
+    pairCounts,
+    entryFamilies: Array.from(entryFamilies)
+  };
+}
+
+function collectTopCounts(counts, limit) {
+  return Object.entries(counts || {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([key, count]) => ({ key, count }));
 }
 
 async function main() {
@@ -227,6 +323,11 @@ async function main() {
   const results = [];
   const dropReasonTotals = {};
   const tierTotals = {};
+  const familyFactTotals = {};
+  const familyEntryTotals = {};
+  const familyPairTotals = {};
+  let familyEntries = 0;
+  let familyFacts = 0;
   for (const entry of entries) {
     // eslint-disable-next-line no-await-in-loop
     const result = await runEntry(entry, policyInfo, policy, args);
@@ -245,6 +346,15 @@ async function main() {
       if (result.tier) {
         tierTotals[result.tier] = (tierTotals[result.tier] || 0) + 1;
       }
+      if (result.familyBundle) {
+        familyEntries += 1;
+        familyFacts += Number(result.familyBundle.factCount || 0);
+        mergeCounts(familyFactTotals, result.familyBundle.familyFactCounts);
+        mergeCounts(familyPairTotals, result.familyBundle.pairCounts);
+        for (const family of result.familyBundle.entryFamilies || []) {
+          familyEntryTotals[family] = (familyEntryTotals[family] || 0) + 1;
+        }
+      }
     }
   }
 
@@ -255,7 +365,14 @@ async function main() {
     failed: results.filter((r) => !r.ok).length,
     diagnosticsSummary: {
       dropReasons: dropReasonTotals,
-      tiers: tierTotals
+      tiers: tierTotals,
+      familyBundles: {
+        entries: familyEntries,
+        facts: familyFacts,
+        topFamiliesByFact: collectTopCounts(familyFactTotals, 12),
+        topFamiliesByEntry: collectTopCounts(familyEntryTotals, 12),
+        topPairs: collectTopCounts(familyPairTotals, 12)
+      }
     },
     results
   };

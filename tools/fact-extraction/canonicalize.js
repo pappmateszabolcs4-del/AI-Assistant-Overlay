@@ -122,6 +122,24 @@ function pickRepresentatives(cluster, strongThreshold) {
   return { advanced, beginner };
 }
 
+function getDominantRole(cluster) {
+  const counts = {};
+  let total = 0;
+  for (const item of cluster) {
+    const roles = Array.isArray(item.fact.roleTags) ? item.fact.roleTags : [];
+    if (!roles.length) continue;
+    total += 1;
+    for (const role of roles) {
+      counts[role] = (counts[role] || 0) + 1;
+    }
+  }
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (!entries.length || !total) return null;
+  const [role, count] = entries[0];
+  const share = count / total;
+  return share >= 0.7 ? { role, share: Number(share.toFixed(2)) } : null;
+}
+
 async function embedTexts(texts, options) {
   const apiKey = await resolveApiKey(options);
   if (!apiKey) return { ok: false, error: 'missing-api-key' };
@@ -168,8 +186,8 @@ async function canonicalizeFacts(facts, options = {}) {
     return { facts, diagnostics: { enabled: true, skipped: true, reason: embedResult.error } };
   }
 
-    const softThreshold = Number.isFinite(options.softThreshold) ? options.softThreshold : 0.78;
-  const strongThreshold = Number.isFinite(options.strongThreshold) ? options.strongThreshold : 0.9;
+  const softThreshold = Number.isFinite(options.softThreshold) ? options.softThreshold : 0.74;
+  const strongThreshold = Number.isFinite(options.strongThreshold) ? options.strongThreshold : 0.86;
   const diagLimit = Number.isFinite(options.diagLimit) ? options.diagLimit : 5;
 
   const items = facts.map((fact, index) => ({
@@ -212,8 +230,19 @@ async function canonicalizeFacts(facts, options = {}) {
         item.fact.keywordsNormalized || item.fact.keywords,
         rep.fact.keywordsNormalized || rep.fact.keywords
       );
+      const entityOverlap = hasSystems || hasFamilies || keywordHits >= 1;
+      const anchorOverlap = Boolean(item.fact._grounding && item.fact._grounding.anchor)
+        && Boolean(rep.fact._grounding && rep.fact._grounding.anchor);
+      const consequenceOverlap = Boolean(item.fact._grounding && item.fact._grounding.hasEffect)
+        && Boolean(rep.fact._grounding && rep.fact._grounding.hasEffect)
+        && (item.fact._grounding.failureConstraint || item.fact._grounding.downstreamImpact
+          || item.fact._grounding.stateTransition || item.fact._grounding.constraintChain
+          || rep.fact._grounding.failureConstraint || rep.fact._grounding.downstreamImpact
+          || rep.fact._grounding.stateTransition || rep.fact._grounding.constraintChain);
       const strongMatch = similarity >= strongThreshold;
-      if (!strongMatch && !hasSystems && !hasFamilies && keywordHits < 1) {
+      if (!strongMatch
+        && (!entityOverlap || !consequenceOverlap)
+        && !(anchorOverlap && consequenceOverlap && similarity >= (softThreshold - 0.02))) {
         rejectReasons.noAnchorOverlap += 1;
         pushTopCandidates(topCandidates, {
           similarity,
@@ -222,6 +251,9 @@ async function canonicalizeFacts(facts, options = {}) {
           systemsOverlap: hasSystems,
           familyOverlap: hasFamilies,
           keywordOverlap: keywordHits,
+          anchorOverlap,
+          consequenceOverlap,
+          entityOverlap,
           a: String(item.fact.text || '').slice(0, 80),
           b: String(rep.fact.text || '').slice(0, 80)
         }, diagLimit);
@@ -242,6 +274,9 @@ async function canonicalizeFacts(facts, options = {}) {
         systemsOverlap: hasSystems,
         familyOverlap: hasFamilies,
         keywordOverlap: keywordHits,
+        anchorOverlap,
+        consequenceOverlap,
+        entityOverlap,
         a: String(item.fact.text || '').slice(0, 80),
         b: String(rep.fact.text || '').slice(0, 80)
       }, diagLimit);
@@ -258,9 +293,19 @@ async function canonicalizeFacts(facts, options = {}) {
   const output = [];
   let clusterId = 1;
   for (const cluster of clusters) {
+    const dominantRole = getDominantRole(cluster);
     if (cluster.length === 1) {
       const fact = cluster[0].fact;
-      output.push({ ...fact, canonicalClusterId: clusterId, canonicalRole: 'solo', canonicalClusterSize: 1 });
+      const roleTags = Array.isArray(fact.roleTags) ? fact.roleTags.slice() : [];
+      if (dominantRole && !roleTags.includes(dominantRole.role)) roleTags.push(dominantRole.role);
+      output.push({
+        ...fact,
+        roleTags,
+        roleStability: dominantRole || null,
+        canonicalClusterId: clusterId,
+        canonicalRole: 'solo',
+        canonicalClusterSize: 1
+      });
       clusterId += 1;
       continue;
     }
@@ -268,16 +313,24 @@ async function canonicalizeFacts(facts, options = {}) {
     merged += cluster.length - 1;
     const { advanced, beginner } = pickRepresentatives(cluster, strongThreshold);
     if (advanced) {
+      const roleTags = Array.isArray(advanced.fact.roleTags) ? advanced.fact.roleTags.slice() : [];
+      if (dominantRole && !roleTags.includes(dominantRole.role)) roleTags.push(dominantRole.role);
       output.push({
         ...advanced.fact,
+        roleTags,
+        roleStability: dominantRole || null,
         canonicalClusterId: clusterId,
         canonicalRole: 'advanced',
         canonicalClusterSize: cluster.length
       });
     }
     if (beginner) {
+      const roleTags = Array.isArray(beginner.fact.roleTags) ? beginner.fact.roleTags.slice() : [];
+      if (dominantRole && !roleTags.includes(dominantRole.role)) roleTags.push(dominantRole.role);
       output.push({
         ...beginner.fact,
+        roleTags,
+        roleStability: dominantRole || null,
         canonicalClusterId: clusterId,
         canonicalRole: 'beginner',
         canonicalClusterSize: cluster.length

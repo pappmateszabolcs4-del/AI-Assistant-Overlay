@@ -58,6 +58,12 @@ const LIVE_SERVICE_PATTERNS = [
   /\bupdate\b[^.]{0,40}\bnotes?\b/i,
   /\bseason\b/i,
   /\bbattle pass\b/i,
+  /\bseries\b\s*\d+\b/i,
+  /\bcampaign\b/i,
+  /\blimited[-\s]?time\b/i,
+  /\bseasonal\b/i,
+  /\bactive event\b/i,
+  /\bevent reward\b/i,
   /\bshop\b/i,
   /\bstore\b/i,
   /\bcosmetic\b/i,
@@ -66,6 +72,7 @@ const LIVE_SERVICE_PATTERNS = [
   /\brotation\b/i,
   /\bpromot(e|ion|ional)\b/i,
   /\bevent\b[^.]{0,40}\b(announcement|schedule|timing)\b/i,
+  /\bevent\b[^.]{0,40}\b(reward|limited|seasonal)\b/i,
   /\brelease\b[^.]{0,40}\bdate\b/i,
   /\broadmap\b/i,
   /\bpre-?order\b/i,
@@ -95,6 +102,9 @@ const TIME_BOUND_PATTERNS = [
   /\b\d{4}\b/i,
   /\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/i,
   /\bseason(al)?\b/i,
+  /\bseries\b\s*\d+\b/i,
+  /\bcampaign\b/i,
+  /\blimited[-\s]?time\b/i,
   /\bpatch\s*\d+(\.\d+)*\b/i,
   /\bversion\s*\d+(\.\d+)*\b/i,
   /\bupdate\s*\d+(\.\d+)*\b/i,
@@ -103,6 +113,27 @@ const TIME_BOUND_PATTERNS = [
   /\bavailability\b[^.]{0,20}\b(window|period)\b/i,
   /\bevent\b[^.]{0,20}\b(window|period|schedule|timing)\b/i,
   /\bpromotion\b/i
+];
+
+const DEPENDENCY_GATING_PATTERNS = [
+  /\brequires\b[^.]{0,40}\blevel\b/i,
+  /\brequires\b[^.]{0,40}\bquest\b/i,
+  /\brequires\b[^.]{0,40}\bparty\b/i,
+  /\brequires\b[^.]{0,40}\baccess\b/i,
+  /\bmust\b[^.]{0,40}\bcomplete\b[^.]{0,40}\bquest\b/i,
+  /\bunlock\b[^.]{0,40}\baccess\b/i,
+  /\benter\b[^.]{0,40}\brequires\b/i,
+  /\bqueue\b[^.]{0,40}\brequires\b/i
+];
+
+const EVERGREEN_TIGHTEN_PATTERNS = [
+  /\bexpansion\b/i,
+  /\bmsq\b/i,
+  /\bpatch\b\s*\d+(\.\d+)*\b/i,
+  /\btier\b[^.]{0,20}\b(raid|trial)\b/i,
+  /\bseason\b\s*\d+\b/i,
+  /\bcampaign\b/i,
+  /\bevent\b[^.]{0,20}\b(access|unlock)\b/i
 ];
 
 const EVERGREEN_MECHANIC_PATTERNS = [
@@ -132,6 +163,16 @@ const LORE_NARRATIVE_PATTERNS = [
   /\bhistory\b/i
 ];
 
+const COSMETIC_ONLY_PATTERNS = [
+  /\b(cosmetic|skin|skins|appearance|visual|aesthetic|cosmetics)\b/i,
+  /\bno\s+gameplay\s+(impact|effect|difference)\b/i,
+  /\bdoes\s+not\s+affect\s+gameplay\b/i,
+  /\bno\s+gameplay\s+advantage\b/i,
+  /\bpurely\s+cosmetic\b/i,
+  /\bvisual\s+only\b/i,
+  /\bjust\s+cosmetic\b/i
+];
+
 const GAMEPLAY_SIGNAL_PATTERNS = [
   /\bability\b/i,
   /\bskill\b/i,
@@ -150,7 +191,43 @@ const GAMEPLAY_SIGNAL_PATTERNS = [
   /\bbuild(ing)?\b/i,
   /\bquest\b/i,
   /\bloot\b/i,
-  /\bcurrency\b/i
+  /\bcurrency\b/i,
+  /\bpower\b/i,
+  /\benergy\b/i,
+  /\befficien(t|cy)\b/i,
+  /\bthroughput\b/i,
+  /\boutput\b/i,
+  /\bratio\b/i,
+  /\bcapacity\b/i,
+  /\bconsumption\b/i,
+  /\bpollution\b/i,
+  /\bheat\b/i,
+  /\btemperature\b/i,
+  /\bcooling\b/i,
+  /\bgenerator\b/i,
+  /\breactor\b/i,
+  /\bfuel\b/i
+];
+
+const SUPPORTING_SIGNAL_PATTERNS = [
+  /\bsetup\b/i,
+  /\bprerequisite\b/i,
+  /\bunlock\b/i,
+  /\bworkstation\b/i,
+  /\btool\b/i,
+  /\bmaintenance\b/i,
+  /\bworkflow\b/i,
+  /\binfrastructure\b/i,
+  /\bsupply\b/i,
+  /\bthroughput\b/i,
+  /\bcapacity\b/i,
+  /\bnetwork\b/i,
+  /\bplumbing\b/i,
+  /\bpower\b/i,
+  /\bfuel\b/i,
+  /\bwater\b/i,
+  /\bresource\b/i,
+  /\bchain\b/i
 ];
 
 const NON_ACTIONABLE_PATTERNS = [
@@ -338,6 +415,231 @@ const EMERGENT_CONSEQUENCE_PATTERNS = [
   /\breduces treatment quality\b/i
 ];
 
+const MULTI_STEP_PATTERNS = [
+  /\bthen\b/i,
+  /\bafter\b/i,
+  /\bwhen\b[^.]{0,40}\bthen\b/i,
+  /\bchain\b/i,
+  /\bsequence\b/i,
+  /\bloop\b/i
+];
+
+const OPTIMIZATION_CHAIN_PATTERNS = [
+  /\boptimi[sz]e\b/i,
+  /\bthroughput\b/i,
+  /\bscaling\b/i,
+  /\bcapacity\b/i,
+  /\bbottleneck\b/i,
+  /\bratio\b/i,
+  /\befficien(t|cy)\b/i,
+  /\boutput\b/i,
+  /\bload\b/i
+];
+
+const DEEP_IMPLICATION_PATTERNS = [
+  /\bdownstream\b/i,
+  /\bknock-?on\b/i,
+  /\bchain reaction\b/i,
+  /\bcascade\b/i,
+  /\bpropagat(e|ion)\b/i,
+  /\bfeedback loop\b/i,
+  /\bsnowball\b/i
+];
+
+const SCALING_CONSTRAINT_PATTERNS = [
+  /\bscal(e|ing)\b/i,
+  /\bthroughput\b/i,
+  /\bcapacity\b/i,
+  /\bsaturation\b/i,
+  /\bcongestion\b/i,
+  /\bbackpressure\b/i,
+  /\bbottleneck\b/i,
+  /\bqueue\b/i,
+  /\blatency\b/i
+];
+
+const FAILURE_BEHAVIOR_PATTERNS = [
+  /\bfailure\b/i,
+  /\bstall\b/i,
+  /\bdeadlock\b/i,
+  /\bbackup\b/i,
+  /\bclog\b/i,
+  /\boverflow\b/i,
+  /\bbreakdown\b/i
+];
+
+const SHALLOW_ACTION_PATTERNS = [
+  /\bincreases?\b/i,
+  /\bimproves?\b/i,
+  /\bboosts?\b/i,
+  /\ballows?\b/i,
+  /\benables?\b/i,
+  /\bused for\b/i,
+  /\bcan be used\b/i,
+  /\bprovides?\b/i,
+  /\badds?\b/i
+];
+
+const CONDITION_PATTERNS = [
+  /\bif\b/i,
+  /\bwhen\b/i,
+  /\bwhile\b/i,
+  /\bunless\b/i,
+  /\buntil\b/i,
+  /\bonly when\b/i,
+  /\brequires?\b/i,
+  /\bwithout\b/i,
+  /\bblocked by\b/i,
+  /\bafter\b/i,
+  /\bbefore\b/i,
+  /\bnear\b/i,
+  /\bwithin\b/i
+];
+
+const STATE_CHANGE_PATTERNS = [
+  /\bcauses?\b/i,
+  /\bresults in\b/i,
+  /\bleads to\b/i,
+  /\bforces?\b/i,
+  /\bcreates?\b/i,
+  /\breduces?\b/i,
+  /\blimits?\b/i,
+  /\bblocks?\b/i,
+  /\bprevents?\b/i,
+  /\bhalts?\b/i,
+  /\bstalls?\b/i,
+  /\bslows?\b/i,
+  /\bdelays?\b/i,
+  /\bdepletes?\b/i,
+  /\bdrains?\b/i,
+  /\boverloads?\b/i,
+  /\bdisables?\b/i,
+  /\bconsumes?\b/i,
+  /\bconverts?\b/i
+];
+
+const SYNTHETIC_NARRATION_PATTERNS = [
+  /\boverall\b/i,
+  /\bgenerally\b/i,
+  /\bmaximize\b/i,
+  /\bminimize\b/i,
+  /\boptimi[sz]e\b/i,
+  /\bimprove\b[^.]{0,20}\b(efficiency|effectiveness|performance|output)\b/i,
+  /\bconsider\b[^.]{0,20}\b(strategy|strategies|approach|approaches)\b/i,
+  /\bbest practice\b/i,
+  /\bimportant to\b/i,
+  /\buseful for\b/i
+];
+
+const ADVICE_TONE_PATTERNS = [
+  /\bshould\b/i,
+  /\bshouldn\b/i,
+  /\brecommended\b/i,
+  /\bideal\b/i,
+  /\bcareful\b/i,
+  /\bplanning\b/i,
+  /\bmonitor\b/i,
+  /\bkeep an eye on\b/i,
+  /\bmake sure\b/i,
+  /\bensure\b/i,
+  /\bavoid\b/i,
+  /\bstrategic\b/i,
+  /\bstrategy\b/i,
+  /\bchoose\b/i,
+  /\bplace\b/i,
+  /\bposition\b/i,
+  /\buse\b[^.]{0,20}\bto\b/i,
+  /\bset up\b/i,
+  /\bprioritize\b/i,
+  /\bmaintain\b/i,
+  /\bkeep\b[^.]{0,20}\bclear\b/i
+];
+
+const FAILURE_CONSTRAINT_PATTERNS = [
+  /\bfailure\b/i,
+  /\bconstraint\b/i,
+  /\blimitation\b/i,
+  /\blimited\b/i,
+  /\bcap\b/i,
+  /\bmaximum\b/i,
+  /\bminimum\b/i,
+  /\bbottleneck\b/i,
+  /\bcongestion\b/i,
+  /\bqueue\b/i,
+  /\bstall\b/i,
+  /\bdeadlock\b/i,
+  /\boverload\b/i,
+  /\bshortage\b/i,
+  /\binsufficient\b/i,
+  /\bblocked\b/i,
+  /\bblocking\b/i,
+  /\bdelay\b/i,
+  /\bdowntime\b/i,
+  /\bconflict\b/i
+];
+
+const STATE_TRANSITION_PATTERNS = [
+  /\b(active|inactive)\b/i,
+  /\b(enabled|disabled)\b/i,
+  /\bavailable|unavailable\b/i,
+  /\bblocked|unblocked\b/i,
+  /\bfull|empty\b/i,
+  /\breserved|released\b/i,
+  /\brerouted\b/i,
+  /\bturns?\s+(on|off)\b/i,
+  /\bswitch(es)?\b/i,
+  /\bchanges?\s+state\b/i,
+  /\bbecomes?\b/i
+];
+
+const DOWNSTREAM_IMPACT_PATTERNS = [
+  /\bdownstream\b/i,
+  /\bknock-?on\b/i,
+  /\bpropagat(e|ion)\b/i,
+  /\bchain reaction\b/i,
+  /\bcauses?\b[^.]{0,40}\b(stall|delay|block|shortage|backup|congestion)\b/i
+];
+
+const CONSTRAINT_CHAIN_PATTERNS = [
+  /\bwhich\b[^.]{0,60}\b(stalls?|blocks?|delays?|forces?)\b/i,
+  /\bthat\b[^.]{0,60}\b(stalls?|blocks?|delays?|forces?)\b/i,
+  /\bthen\b[^.]{0,60}\b(stalls?|blocks?|delays?|forces?)\b/i
+];
+
+const CAUSAL_CHAIN_PATTERNS = [
+  /\bcauses?\b/i,
+  /\bresults in\b/i,
+  /\bleads to\b/i,
+  /\btherefore\b/i,
+  /\bso that\b/i,
+  /\bdrives\b/i,
+  /\bforces\b/i,
+  /\bcreates\b[^.]{0,40}\bpressure\b/i,
+  /\bstarvation\b/i,
+  /\bbackpressure\b/i,
+  /\binstability\b/i
+];
+
+const SYSTEMIC_PATTERN_SIGNALS = [
+  /\bfeedback loop\b/i,
+  /\bself-?reinforcing\b/i,
+  /\bcompounding\b/i,
+  /\bpropagat(e|ion)\b/i,
+  /\bcascade\b/i,
+  /\bsnowball\b/i,
+  /\bsystemic\b/i,
+  /\bfragility\b/i
+];
+
+const INTERACTION_SPREAD_PATTERNS = [
+  /\bacross\b/i,
+  /\bbetween\b/i,
+  /\bmultiple\b/i,
+  /\bnetwork\b/i,
+  /\bchain\b/i,
+  /\bpropagat(e|ion)\b/i
+];
+
 const TRADEOFF_IMPLICATION_PATTERNS = [
   /\btradeoff\b/i,
   /\brisk\b/i,
@@ -384,6 +686,76 @@ const SPECIFICITY_BONUS_PATTERNS = [
   /\bcontextual\b/i,
   /\bwindow\b[^.]{0,20}\b(cooldown|timing)\b/i
 ];
+
+const GAMEPLAY_IMPLICATION_PATTERNS = [
+  /\bpositioning\b/i,
+  /\btiming\b/i,
+  /\bcoordination\b/i,
+  /\btradeoff\b/i,
+  /\bresource\b[^.]{0,20}\b(pressure|strain|cost)\b/i,
+  /\bopportunity cost\b/i,
+  /\binformation asymmetr(y|ic)\b/i,
+  /\btactical\b[^.]{0,30}\b(vulnerability|risk|advantage)\b/i,
+  /\brisk\b[^.]{0,20}\breward\b/i,
+  /\bteam\b[^.]{0,20}\bcoordination\b/i
+];
+
+const ARCHETYPE_FAMILY_MAP = {
+  tactical_fps: ['combat_operations', 'spatial_tactics', 'information_control', 'objective_control', 'tempo_management'],
+  mmo_raider: ['combat_operations', 'team_coordination', 'tempo_management', 'survivability'],
+  arpg_grinder: ['combat_operations', 'character_progression', 'ability_synergy', 'risk_reward'],
+  automation_sandbox: ['production_systems', 'logistics_systems', 'resource_extraction', 'power_infrastructure', 'automation_control']
+};
+
+const ARCHETYPE_TEXT_PATTERNS = {
+  tactical_fps: [
+    /\bspike\b/i,
+    /\bdefuse\b/i,
+    /\bplant\b[^.]{0,20}\bsite\b/i,
+    /\bbuy phase\b/i,
+    /\bround timer\b/i
+  ],
+  mmo_raider: [
+    /\braid\b/i,
+    /\bdungeon\b/i,
+    /\bparty\b/i,
+    /\btrial\b/i
+  ],
+  arpg_grinder: [
+    /\bgear\b/i,
+    /\baffix\b/i,
+    /\bloot\b/i,
+    /\bbuild\b/i
+  ],
+  automation_sandbox: [
+    /\bautomation\b/i,
+    /\bproduction\b/i,
+    /\blogistics\b/i,
+    /\bconveyor\b/i
+  ]
+};
+
+const ARCHETYPE_OBVIOUS_PATTERNS = {
+  tactical_fps: [
+    /\bultimate\b[^.]{0,40}\brequires\b[^.]{0,40}\bcharge\b/i,
+    /\bspike\b[^.]{0,40}\bmust\b[^.]{0,40}\bplant\b/i,
+    /\bdefuse\b[^.]{0,40}\brequires\b[^.]{0,40}\btime\b/i
+  ],
+  mmo_raider: [
+    /\brequires\b[^.]{0,40}\bparty\b/i,
+    /\brequires\b[^.]{0,40}\blevel\b/i,
+    /\brequires\b[^.]{0,40}\bquest\b/i,
+    /\brequires\b[^.]{0,40}\bitem level\b/i
+  ],
+  arpg_grinder: [
+    /\bgear\b[^.]{0,40}\brequires\b[^.]{0,40}\blevel\b/i,
+    /\bskills?\b[^.]{0,40}\bunlock\b[^.]{0,40}\blevel\b/i
+  ],
+  automation_sandbox: [
+    /\brequires\b[^.]{0,40}\bpower\b/i,
+    /\brequires\b[^.]{0,40}\bresources?\b/i
+  ]
+};
 
 const MECHANIC_FAMILIES = new Set([
   'power_infrastructure',
@@ -526,6 +898,22 @@ const SYSTEM_TO_FAMILY = {
   resource: 'resource_extraction'
 };
 
+const FAMILY_TO_SYSTEM = {
+  power_infrastructure: 'power',
+  medical_systems: 'medicine',
+  food_systems: 'food',
+  defense_systems: 'defense',
+  production_systems: 'crafting',
+  logistics_systems: 'automation',
+  research_progression: 'research',
+  morale_psychology: 'morale',
+  economy_trade: 'trade',
+  mobility_travel: 'mobility',
+  combat_operations: 'combat',
+  automation_control: 'automation',
+  resource_extraction: 'resource'
+};
+
 function looksTutorial(text) {
   for (const pattern of TUTORIAL_PATTERNS) {
     if (pattern.test(text)) return true;
@@ -575,11 +963,57 @@ function isTimeBoundMetadata(text) {
   return true;
 }
 
+function hasGameplayConsequence(text) {
+  return matchesAny(EMERGENT_CONSEQUENCE_PATTERNS, text)
+    || matchesAny(TRADEOFF_IMPLICATION_PATTERNS, text)
+    || matchesAny(SPECIFICITY_BONUS_PATTERNS, text);
+}
+
+function isPureDependencyGate(text, interactionCount, systemsCount) {
+  if (!matchesAny(DEPENDENCY_GATING_PATTERNS, text)) return false;
+  if (hasGameplayConsequence(text)) return false;
+  if (interactionCount >= 2 || systemsCount >= 2) return false;
+  return true;
+}
+
+function applyDependencySuppression(text, interactionCount, systemsCount, noveltyScore, obviousness) {
+  if (!matchesAny(DEPENDENCY_GATING_PATTERNS, text)) {
+    return { noveltyScore, obviousness, dependencyPenaltyApplied: false, hardDrop: false };
+  }
+  if (isPureDependencyGate(text, interactionCount, systemsCount)) {
+    return { noveltyScore, obviousness, dependencyPenaltyApplied: false, hardDrop: true };
+  }
+  const boostedObviousness = Math.min(1, (obviousness ?? 0.4) + 0.14);
+  const reducedNovelty = Math.max(0, (noveltyScore ?? 0.5) - 0.1);
+  return { noveltyScore: reducedNovelty, obviousness: boostedObviousness, dependencyPenaltyApplied: true, hardDrop: false };
+}
+
+function applyEvergreenTightening(text, noveltyScore, obviousness) {
+  if (!matchesAny(EVERGREEN_TIGHTEN_PATTERNS, text)) {
+    return { noveltyScore, obviousness, evergreenPenaltyApplied: false, hardDrop: false };
+  }
+  if (matchesAny(EVERGREEN_MECHANIC_PATTERNS, text) || hasGameplayConsequence(text)) {
+    const boostedObviousness = Math.min(1, (obviousness ?? 0.4) + 0.1);
+    const reducedNovelty = Math.max(0, (noveltyScore ?? 0.5) - 0.08);
+    return { noveltyScore: reducedNovelty, obviousness: boostedObviousness, evergreenPenaltyApplied: true, hardDrop: false };
+  }
+  return { noveltyScore, obviousness, evergreenPenaltyApplied: false, hardDrop: true };
+}
+
 function isLiveServiceContamination(text) {
   if (!matchesAny(LIVE_SERVICE_PATTERNS, text)) return false;
   if (matchesAny(GAMEPLAY_IMPACT_PATTERNS, text)) return false;
   if (matchesAny(EMERGENT_CONSEQUENCE_PATTERNS, text)) return false;
   if (matchesAny(TRADEOFF_IMPLICATION_PATTERNS, text)) return false;
+  return true;
+}
+
+function isCosmeticOnly(text) {
+  if (!matchesAny(COSMETIC_ONLY_PATTERNS, text)) return false;
+  if (matchesAny(GAMEPLAY_SIGNAL_PATTERNS, text)) return false;
+  if (matchesAny(EMERGENT_CONSEQUENCE_PATTERNS, text)) return false;
+  if (matchesAny(TRADEOFF_IMPLICATION_PATTERNS, text)) return false;
+  if (hasGameplayConsequence(text)) return false;
   return true;
 }
 
@@ -599,6 +1033,116 @@ function hasSpecificSignal(text) {
     unique.add(token);
   }
   return unique.size >= 2;
+}
+
+function hasMechanisticEntity(textLower, systemsCount, familiesCount, keywordsCount) {
+  if (hasSpecificSignal(textLower)) return true;
+  if (systemsCount > 0 || familiesCount > 0) return true;
+  if (keywordsCount >= 2) return true;
+  return false;
+}
+
+function detectGroundingSignals(textLower, systemsCount, familiesCount, keywordsCount) {
+  const hasEntity = hasMechanisticEntity(textLower, systemsCount, familiesCount, keywordsCount);
+  const hasCondition = matchesAny(CONDITION_PATTERNS, textLower)
+    || matchesAny(DEPENDENCY_GATING_PATTERNS, textLower);
+  const hasEffect = matchesAny(STATE_CHANGE_PATTERNS, textLower)
+    || matchesAny(EMERGENT_CONSEQUENCE_PATTERNS, textLower)
+    || matchesAny(TRADEOFF_IMPLICATION_PATTERNS, textLower)
+    || matchesAny(FAILURE_BEHAVIOR_PATTERNS, textLower);
+  return {
+    hasEntity,
+    hasCondition,
+    hasEffect,
+    anchor: hasEntity && hasCondition && hasEffect
+  };
+}
+
+function computeGroundingSignals(textLower, contextLower, systemsCount, familiesCount, keywordsCount) {
+  const base = detectGroundingSignals(textLower, systemsCount, familiesCount, keywordsCount);
+  const stateTransition = matchesAny(STATE_TRANSITION_PATTERNS, textLower);
+  const downstreamImpact = matchesAny(DOWNSTREAM_IMPACT_PATTERNS, textLower);
+  const constraintChain = matchesAny(CONSTRAINT_CHAIN_PATTERNS, textLower);
+  if (!contextLower) {
+    return {
+      anchor: base.anchor,
+      anchorInText: base.anchor,
+      anchorInLocal: base.anchor,
+      anchorScope: base.anchor ? 'text' : 'none',
+      hasEntity: base.hasEntity,
+      hasCondition: base.hasCondition,
+      hasEffect: base.hasEffect,
+      syntheticNarration: matchesAny(SYNTHETIC_NARRATION_PATTERNS, textLower),
+      adviceTone: matchesAny(ADVICE_TONE_PATTERNS, textLower),
+      failureConstraint: matchesAny(FAILURE_CONSTRAINT_PATTERNS, textLower),
+      stateTransition,
+      downstreamImpact,
+      constraintChain
+    };
+  }
+  const combined = detectGroundingSignals(
+    `${textLower} ${contextLower}`,
+    systemsCount,
+    familiesCount,
+    keywordsCount
+  );
+  const anchor = base.anchor || combined.anchor;
+  const anchorScope = base.anchor ? 'text' : (combined.anchor ? 'local' : 'none');
+  return {
+    anchor,
+    anchorInText: base.anchor,
+    anchorInLocal: combined.anchor,
+    anchorScope,
+    hasEntity: combined.hasEntity,
+    hasCondition: combined.hasCondition,
+    hasEffect: combined.hasEffect,
+    syntheticNarration: matchesAny(SYNTHETIC_NARRATION_PATTERNS, textLower),
+    adviceTone: matchesAny(ADVICE_TONE_PATTERNS, textLower),
+    failureConstraint: matchesAny(FAILURE_CONSTRAINT_PATTERNS, textLower),
+    stateTransition,
+    downstreamImpact,
+    constraintChain
+  };
+}
+
+function computeProceduralFlag(textLower, grounding) {
+  if (!grounding) return false;
+  const lacksImpact = !grounding.hasEffect
+    && !grounding.failureConstraint
+    && !grounding.stateTransition
+    && !grounding.downstreamImpact
+    && !grounding.constraintChain;
+  if (!lacksImpact) return false;
+  const workflowSignal = matchesAny(SUPPORTING_SIGNAL_PATTERNS, textLower)
+    || matchesAny(DEPENDENCY_GATING_PATTERNS, textLower)
+    || matchesAny(RESOURCE_DEPENDENCY_PATTERNS, textLower)
+    || matchesAny(TUTORIAL_PATTERNS, textLower)
+    || grounding.adviceTone;
+  return workflowSignal;
+}
+
+function computeRecoveryFlag(grounding) {
+  if (!grounding || !grounding.anchor || !grounding.hasCondition || !grounding.hasEffect) return false;
+  return grounding.downstreamImpact || grounding.constraintChain || grounding.failureConstraint || grounding.stateTransition;
+}
+
+function applyMechanicFirstReframe(text, grounding) {
+  if (!grounding || !grounding.anchor || !grounding.adviceTone) return text;
+  let updated = String(text || '');
+  updated = updated.replace(/^\s*(you\s+)?(should|shouldn'?t|ensure|make sure|remember)\b\s*/i, '');
+  updated = updated.replace(/^\s*(to\s+avoid|to\s+prevent)\b\s*/i, '');
+  updated = updated.replace(/^\s*(carefully|strategically)\b\s*/i, '');
+  updated = updated.replace(/\s*\.\s*$/, '');
+  return updated.trim();
+}
+
+function applyFailureConstraintBonus(text, noveltyScore, obviousness) {
+  if (!matchesAny(FAILURE_CONSTRAINT_PATTERNS, text)) {
+    return { noveltyScore, obviousness, failureBonusApplied: false };
+  }
+  const boostedNovelty = Math.min(1, (noveltyScore ?? 0.5) + 0.12);
+  const reducedObviousness = Math.max(0, (obviousness ?? 0.5) - 0.06);
+  return { noveltyScore: boostedNovelty, obviousness: reducedObviousness, failureBonusApplied: true };
 }
 
 function normalizeText(value) {
@@ -775,6 +1319,16 @@ function extractFamiliesFromText(text) {
   return found;
 }
 
+function deriveSystemsFromFamilies(families) {
+  const list = Array.isArray(families) ? families : [];
+  const output = [];
+  for (const family of list) {
+    const mapped = FAMILY_TO_SYSTEM[family];
+    if (mapped) output.push(mapped);
+  }
+  return output;
+}
+
 function applyObviousnessBoost(text, noveltyScore, obviousness) {
   let boostHits = 0;
   for (const pattern of OBVIOUSNESS_BOOST_PATTERNS) {
@@ -803,8 +1357,9 @@ function getTemplateShape(text) {
 function applyTemplatePenalty(text, noveltyScore, obviousness) {
   const shape = getTemplateShape(text);
   if (!shape) return { noveltyScore, obviousness, shape };
-  const boostedObviousness = Math.min(1, (obviousness ?? 0.4) + 0.1);
-  const reducedNovelty = Math.max(0, (noveltyScore ?? 0.5) - 0.05);
+  const shapePenalty = (shape === 'requires_x' || shape === 'blocked_without') ? 0.04 : 0;
+  const boostedObviousness = Math.min(1, (obviousness ?? 0.4) + 0.14 + shapePenalty);
+  const reducedNovelty = Math.max(0, (noveltyScore ?? 0.5) - 0.08 - shapePenalty);
   return { noveltyScore: reducedNovelty, obviousness: boostedObviousness, shape };
 }
 
@@ -812,8 +1367,8 @@ function applyAbilityTemplatePenalty(text, noveltyScore, obviousness) {
   if (!matchesAny(ABILITY_TEMPLATE_PATTERNS, text)) {
     return { noveltyScore, obviousness, abilityPenaltyApplied: false };
   }
-  const boostedObviousness = Math.min(1, (obviousness ?? 0.4) + 0.08);
-  const reducedNovelty = Math.max(0, (noveltyScore ?? 0.5) - 0.06);
+  const boostedObviousness = Math.min(1, (obviousness ?? 0.4) + 0.12);
+  const reducedNovelty = Math.max(0, (noveltyScore ?? 0.5) - 0.08);
   return { noveltyScore: reducedNovelty, obviousness: boostedObviousness, abilityPenaltyApplied: true };
 }
 
@@ -826,6 +1381,54 @@ function applySpecificityBonus(text, noveltyScore, obviousness) {
   return { noveltyScore: boostedNovelty, obviousness: reducedObviousness, specificityBonusApplied: true };
 }
 
+function applyGameplayImplicationBoost(text, interactionCount, systemsCount, noveltyScore, obviousness) {
+  if (!matchesAny(GAMEPLAY_IMPLICATION_PATTERNS, text)) {
+    return { noveltyScore, obviousness, implicationBoostApplied: false };
+  }
+  if (interactionCount < 2 && systemsCount < 2) {
+    return { noveltyScore, obviousness, implicationBoostApplied: false };
+  }
+  const boostedNovelty = Math.min(1, (noveltyScore ?? 0.5) + 0.12);
+  const reducedObviousness = Math.max(0, (obviousness ?? 0.5) - 0.08);
+  return { noveltyScore: boostedNovelty, obviousness: reducedObviousness, implicationBoostApplied: true };
+}
+
+function inferArchetypes(text, families) {
+  const results = new Set();
+  const familyList = Array.isArray(families) ? families : [];
+  const familySet = new Set(familyList);
+  Object.entries(ARCHETYPE_FAMILY_MAP).forEach(([key, familyGroup]) => {
+    let hits = 0;
+    for (const family of familyGroup) {
+      if (familySet.has(family)) hits += 1;
+    }
+    if (hits >= 2) results.add(key);
+  });
+  Object.entries(ARCHETYPE_TEXT_PATTERNS).forEach(([key, patterns]) => {
+    if (matchesAny(patterns, text)) results.add(key);
+  });
+  return results;
+}
+
+function applyExperiencedGate(text, families, noveltyScore, obviousness) {
+  if (hasGameplayConsequence(text)) {
+    return { noveltyScore, obviousness, experiencedGateApplied: false };
+  }
+  const archetypes = inferArchetypes(text, families);
+  if (!archetypes.size) {
+    return { noveltyScore, obviousness, experiencedGateApplied: false };
+  }
+  for (const archetype of archetypes) {
+    const patterns = ARCHETYPE_OBVIOUS_PATTERNS[archetype] || [];
+    if (matchesAny(patterns, text)) {
+      const boostedObviousness = Math.min(1, (obviousness ?? 0.4) + 0.06);
+      const reducedNovelty = Math.max(0, (noveltyScore ?? 0.5) - 0.04);
+      return { noveltyScore: reducedNovelty, obviousness: boostedObviousness, experiencedGateApplied: true };
+    }
+  }
+  return { noveltyScore, obviousness, experiencedGateApplied: false };
+}
+
 function applyEmergentConsequenceBonus(text, noveltyScore, obviousness) {
   if (!matchesAny(EMERGENT_CONSEQUENCE_PATTERNS, text)) {
     return { noveltyScore, obviousness, emergentBonusApplied: false };
@@ -833,6 +1436,120 @@ function applyEmergentConsequenceBonus(text, noveltyScore, obviousness) {
   const boostedNovelty = Math.min(1, (noveltyScore ?? 0.5) + 0.15);
   const reducedObviousness = Math.max(0, (obviousness ?? 0.5) - 0.1);
   return { noveltyScore: boostedNovelty, obviousness: reducedObviousness, emergentBonusApplied: true };
+}
+
+function applyOptimizationChainBoost(text, interactionCount, systemsCount, noveltyScore, obviousness) {
+  if (!matchesAny(OPTIMIZATION_CHAIN_PATTERNS, text)) {
+    return { noveltyScore, obviousness, optimizationBoostApplied: false };
+  }
+  if (interactionCount < 2 && systemsCount < 2) {
+    return { noveltyScore, obviousness, optimizationBoostApplied: false };
+  }
+  const boostedNovelty = Math.min(1, (noveltyScore ?? 0.5) + 0.08);
+  const reducedObviousness = Math.max(0, (obviousness ?? 0.5) - 0.04);
+  return { noveltyScore: boostedNovelty, obviousness: reducedObviousness, optimizationBoostApplied: true };
+}
+
+function applyMultiStepBoost(text, noveltyScore, obviousness) {
+  if (!matchesAny(MULTI_STEP_PATTERNS, text)) {
+    return { noveltyScore, obviousness, multiStepApplied: false };
+  }
+  if (!(matchesAny(EMERGENT_CONSEQUENCE_PATTERNS, text)
+    || matchesAny(TRADEOFF_IMPLICATION_PATTERNS, text)
+    || matchesAny(OPTIMIZATION_CHAIN_PATTERNS, text))) {
+    return { noveltyScore, obviousness, multiStepApplied: false };
+  }
+  const boostedNovelty = Math.min(1, (noveltyScore ?? 0.5) + 0.08);
+  const reducedObviousness = Math.max(0, (obviousness ?? 0.5) - 0.05);
+  return { noveltyScore: boostedNovelty, obviousness: reducedObviousness, multiStepApplied: true };
+}
+
+function applyDeepImplicationBoost(text, interactionCount, systemsCount, noveltyScore, obviousness) {
+  const deepSignal = matchesAny(DEEP_IMPLICATION_PATTERNS, text)
+    || matchesAny(SCALING_CONSTRAINT_PATTERNS, text)
+    || matchesAny(FAILURE_BEHAVIOR_PATTERNS, text);
+  if (!deepSignal) {
+    return { noveltyScore, obviousness, deepBoostApplied: false };
+  }
+  if (interactionCount < 2 && systemsCount < 2) {
+    return { noveltyScore, obviousness, deepBoostApplied: false };
+  }
+  const boostedNovelty = Math.min(1, (noveltyScore ?? 0.5) + 0.1);
+  const reducedObviousness = Math.max(0, (obviousness ?? 0.5) - 0.06);
+  return { noveltyScore: boostedNovelty, obviousness: reducedObviousness, deepBoostApplied: true };
+}
+
+function applyShallowActionPenalty(text, interactionCount, systemsCount, noveltyScore, obviousness) {
+  if (!matchesAny(SHALLOW_ACTION_PATTERNS, text)) {
+    return { noveltyScore, obviousness, shallowPenaltyApplied: false };
+  }
+  if (hasGameplayConsequence(text)) {
+    return { noveltyScore, obviousness, shallowPenaltyApplied: false };
+  }
+  if (interactionCount >= 2 || systemsCount >= 2) {
+    return { noveltyScore, obviousness, shallowPenaltyApplied: false };
+  }
+  const boostedObviousness = Math.min(1, (obviousness ?? 0.4) + 0.1);
+  const reducedNovelty = Math.max(0, (noveltyScore ?? 0.5) - 0.06);
+  return { noveltyScore: reducedNovelty, obviousness: boostedObviousness, shallowPenaltyApplied: true };
+}
+
+function computeSystemicDepth(textLower, interactionCount, systemsCount) {
+  const chainSignal = matchesAny(CAUSAL_CHAIN_PATTERNS, textLower)
+    || matchesAny(DEEP_IMPLICATION_PATTERNS, textLower);
+  const emergentSignal = matchesAny(SYSTEMIC_PATTERN_SIGNALS, textLower)
+    || matchesAny(FAILURE_BEHAVIOR_PATTERNS, textLower);
+  const spreadSignal = matchesAny(INTERACTION_SPREAD_PATTERNS, textLower)
+    || (interactionCount >= 2 && systemsCount >= 2);
+
+  let depthScore = 0;
+  if (chainSignal) depthScore += 0.4;
+  if (emergentSignal) depthScore += 0.4;
+  if (spreadSignal) depthScore += 0.2;
+  depthScore = Math.min(1, Number(depthScore.toFixed(2)));
+
+  return {
+    depthScore,
+    chainSignal,
+    emergentSignal,
+    spreadSignal
+  };
+}
+
+function applyWorkflowPenalty(text, interactionCount, systemsCount, noveltyScore, obviousness) {
+  const isWorkflow = matchesAny(DEPENDENCY_GATING_PATTERNS, text)
+    || matchesAny(RESOURCE_DEPENDENCY_PATTERNS, text)
+    || matchesAny(SUPPORTING_SIGNAL_PATTERNS, text);
+  if (!isWorkflow) {
+    return { noveltyScore, obviousness, workflowPenaltyApplied: false };
+  }
+  if (hasGameplayConsequence(text)) {
+    return { noveltyScore, obviousness, workflowPenaltyApplied: false };
+  }
+  if (interactionCount >= 2 || systemsCount >= 2) {
+    return { noveltyScore, obviousness, workflowPenaltyApplied: false };
+  }
+  const boostedObviousness = Math.min(1, (obviousness ?? 0.4) + 0.12);
+  const reducedNovelty = Math.max(0, (noveltyScore ?? 0.5) - 0.08);
+  return { noveltyScore: reducedNovelty, obviousness: boostedObviousness, workflowPenaltyApplied: true };
+}
+
+function computeRoleTags(textLower, interactionCount, systemsCount, familiesCount) {
+  const tags = new Set();
+  const workflow = matchesAny(DEPENDENCY_GATING_PATTERNS, textLower)
+    || matchesAny(RESOURCE_DEPENDENCY_PATTERNS, textLower)
+    || matchesAny(SUPPORTING_SIGNAL_PATTERNS, textLower);
+  const implication = matchesAny(EMERGENT_CONSEQUENCE_PATTERNS, textLower)
+    || matchesAny(TRADEOFF_IMPLICATION_PATTERNS, textLower)
+    || matchesAny(GAMEPLAY_IMPLICATION_PATTERNS, textLower)
+    || (matchesAny(OPTIMIZATION_CHAIN_PATTERNS, textLower) && (interactionCount >= 2 || systemsCount >= 2));
+  const operational = (systemsCount > 0 || familiesCount > 0) && !implication;
+
+  if (workflow) tags.add('workflow');
+  if (implication) tags.add('gameplay_implication');
+  if (operational) tags.add('operational');
+
+  return Array.from(tags);
 }
 
 function shouldApplyResourcePenalty(text, interactionCount, systemsCount) {
@@ -858,15 +1575,172 @@ function computeRetentionScore(fact) {
   const interaction = Number.isFinite(fact.interactionCount)
     ? fact.interactionCount
     : (Array.isArray(fact.systems) ? fact.systems.length : 0);
+  const grounding = fact && fact._grounding ? fact._grounding : null;
   const interactionBonus = Math.min(0.2, interaction * 0.05);
   const textLower = normalizeTextKey(fact.text);
   const templatePenalty = looksWeakTradeoffTemplate(textLower) ? 0.2 : 0;
+  const consequenceBonus = matchesAny(EMERGENT_CONSEQUENCE_PATTERNS, textLower) ? 0.08 : 0;
+  const tradeoffBonus = matchesAny(TRADEOFF_IMPLICATION_PATTERNS, textLower) ? 0.06 : 0;
+  const optimizationBonus = matchesAny(OPTIMIZATION_CHAIN_PATTERNS, textLower) ? 0.06 : 0;
+  const multiStepBonus = matchesAny(MULTI_STEP_PATTERNS, textLower) ? 0.04 : 0;
+  const deepBonus = matchesAny(DEEP_IMPLICATION_PATTERNS, textLower)
+    || matchesAny(SCALING_CONSTRAINT_PATTERNS, textLower)
+    || matchesAny(FAILURE_BEHAVIOR_PATTERNS, textLower)
+    ? 0.07
+    : 0;
+  const depthSignals = computeSystemicDepth(
+    textLower,
+    interaction,
+    Array.isArray(fact.systems) ? fact.systems.length : 0
+  );
+  const depthBonus = depthSignals.depthScore ? depthSignals.depthScore * 0.08 : 0;
+  const workflowPenalty = (!hasGameplayConsequence(textLower)
+    && matchesAny(DEPENDENCY_GATING_PATTERNS, textLower)
+    && interaction < 2) ? 0.08 : 0;
+  const roleTags = computeRoleTags(
+    textLower,
+    interaction,
+    Array.isArray(fact.systems) ? fact.systems.length : 0,
+    Array.isArray(fact.mechanicFamilies) ? fact.mechanicFamilies.length : 0
+  );
+  const implicationRoleBonus = roleTags.includes('gameplay_implication') ? 0.06 : 0;
+  const workflowRolePenalty = roleTags.includes('workflow') && !roleTags.includes('gameplay_implication') ? 0.05 : 0;
+  const mechanicFirstBonus = grounding && grounding.anchor
+    ? (grounding.anchorScope === 'text' ? 0.06 : 0.04)
+    : 0;
+  const unanchoredImplicationPenalty = grounding
+    && roleTags.includes('gameplay_implication')
+    && !grounding.anchor
+    ? 0.08
+    : 0;
+  const syntheticNarrationPenalty = grounding && grounding.syntheticNarration && !grounding.anchor ? 0.06 : 0;
+  const adviceTonePenalty = grounding && grounding.adviceTone && !grounding.anchor ? 0.08 : 0;
+  const failureConstraintBonus = grounding && grounding.failureConstraint ? 0.06 : 0;
+  const downstreamImpactBonus = grounding && grounding.downstreamImpact ? 0.05 : 0;
+  const stateTransitionBonus = grounding && grounding.stateTransition ? 0.05 : 0;
+  const constraintChainBonus = grounding && grounding.constraintChain ? 0.04 : 0;
+  const recoveryBonus = grounding && grounding.recoveredImplication ? 0.06 : 0;
   let onboardingPenalty = 0;
   for (const pattern of OBVIOUSNESS_BOOST_PATTERNS) {
     if (pattern.test(textLower)) onboardingPenalty += 0.04;
   }
   onboardingPenalty = Math.min(0.12, onboardingPenalty);
-  return novelty - obvious + interactionBonus - templatePenalty - onboardingPenalty;
+  return novelty - obvious + interactionBonus + consequenceBonus + tradeoffBonus
+    + optimizationBonus + multiStepBonus + deepBonus + depthBonus + implicationRoleBonus + mechanicFirstBonus
+    + failureConstraintBonus + downstreamImpactBonus + stateTransitionBonus + constraintChainBonus + recoveryBonus
+    - templatePenalty - onboardingPenalty - workflowPenalty - workflowRolePenalty
+    - unanchoredImplicationPenalty - syntheticNarrationPenalty - adviceTonePenalty;
+}
+
+function computeRetentionScoreB(fact) {
+  const novelty = Number.isFinite(fact.noveltyScore) ? fact.noveltyScore : 0.5;
+  const obvious = Number.isFinite(fact.obviousness) ? fact.obviousness : 0.5;
+  const interaction = Number.isFinite(fact.interactionCount)
+    ? fact.interactionCount
+    : (Array.isArray(fact.systems) ? fact.systems.length : 0);
+  const systemsCount = Array.isArray(fact.systems) ? fact.systems.length : 0;
+  const familiesCount = Array.isArray(fact.mechanicFamilies) ? fact.mechanicFamilies.length : 0;
+  const textLower = normalizeTextKey(fact.text);
+  const grounding = fact && fact._grounding ? fact._grounding : null;
+
+  let score = 0;
+  if (matchesAny(SUPPORTING_SIGNAL_PATTERNS, textLower)) score += 0.2;
+  if (matchesAny(DEPENDENCY_GATING_PATTERNS, textLower)) score += 0.15;
+  if (matchesAny(RESOURCE_DEPENDENCY_PATTERNS, textLower)) score += 0.1;
+  if (matchesAny(EMERGENT_CONSEQUENCE_PATTERNS, textLower)) score += 0.2;
+  if (matchesAny(TRADEOFF_IMPLICATION_PATTERNS, textLower)) score += 0.15;
+  if (interaction >= 1) score += 0.1;
+  if (systemsCount >= 1) score += 0.1;
+  if (familiesCount >= 1) score += 0.1;
+  score += (novelty - obvious) * 0.2;
+
+  if (looksWeakTradeoffTemplate(textLower) && !hasSpecificSignal(textLower)) {
+    score -= 0.2;
+  }
+  if (!hasGameplayConsequence(textLower)
+    && matchesAny(DEPENDENCY_GATING_PATTERNS, textLower)
+    && interaction < 2) {
+    score -= 0.1;
+  }
+  const roleTags = computeRoleTags(textLower, interaction, systemsCount, familiesCount);
+  if (roleTags.includes('gameplay_implication')) score += 0.06;
+  if (roleTags.includes('workflow') && !roleTags.includes('gameplay_implication')) score -= 0.05;
+  if (matchesAny(DEEP_IMPLICATION_PATTERNS, textLower)
+    || matchesAny(SCALING_CONSTRAINT_PATTERNS, textLower)
+    || matchesAny(FAILURE_BEHAVIOR_PATTERNS, textLower)) {
+    score += 0.04;
+  }
+  const depthSignals = computeSystemicDepth(textLower, interaction, systemsCount);
+  if (depthSignals.depthScore) score += depthSignals.depthScore * 0.04;
+  if (grounding && roleTags.includes('gameplay_implication') && !grounding.anchor) score -= 0.06;
+  if (grounding && grounding.syntheticNarration && !grounding.anchor) score -= 0.04;
+  if (grounding && grounding.adviceTone && !grounding.anchor) score -= 0.06;
+  if (grounding && grounding.anchor) score += grounding.anchorScope === 'text' ? 0.03 : 0.02;
+  if (grounding && grounding.failureConstraint) score += 0.04;
+  if (grounding && grounding.downstreamImpact) score += 0.03;
+  if (grounding && grounding.stateTransition) score += 0.03;
+  if (grounding && grounding.constraintChain) score += 0.02;
+  if (grounding && grounding.recoveredImplication) score += 0.04;
+
+  return score;
+}
+
+function assignKnowledgeLayer(fact) {
+  const textLower = normalizeTextKey(fact.text);
+  const interaction = Number.isFinite(fact.interactionCount)
+    ? fact.interactionCount
+    : (Array.isArray(fact.systems) ? fact.systems.length : 0);
+  const systemsCount = Array.isArray(fact.systems) ? fact.systems.length : 0;
+  const familiesCount = Array.isArray(fact.mechanicFamilies) ? fact.mechanicFamilies.length : 0;
+  const grounding = fact && fact._grounding ? fact._grounding : null;
+  const roleTags = Array.isArray(fact.roleTags) ? fact.roleTags : [];
+  const unanchoredImplication = roleTags.includes('gameplay_implication')
+    && grounding
+    && !grounding.anchor;
+  const scoreA = computeRetentionScore(fact);
+  const scoreB = computeRetentionScoreB(fact);
+
+  const anchoredImplicationSignal = grounding && grounding.anchor
+    && grounding.hasCondition
+    && grounding.hasEffect
+    && (grounding.downstreamImpact || grounding.constraintChain
+      || grounding.failureConstraint || grounding.stateTransition
+      || matchesAny(GAMEPLAY_IMPLICATION_PATTERNS, textLower));
+
+  const highSignal = anchoredImplicationSignal
+    || interaction >= 2
+    || (systemsCount >= 2 && Number.isFinite(fact.obviousness) ? fact.obviousness <= 0.6 : false);
+
+  const supportingSignal = matchesAny(SUPPORTING_SIGNAL_PATTERNS, textLower)
+    || matchesAny(DEPENDENCY_GATING_PATTERNS, textLower)
+    || matchesAny(RESOURCE_DEPENDENCY_PATTERNS, textLower);
+  const systemicPresence = systemsCount > 0 || familiesCount > 0;
+
+  const knowledgeRoleSupporting = supportingSignal
+    && systemicPresence
+    && !matchesAny(GAMEPLAY_IMPLICATION_PATTERNS, textLower)
+    && !matchesAny(EMERGENT_CONSEQUENCE_PATTERNS, textLower)
+    && !matchesAny(TRADEOFF_IMPLICATION_PATTERNS, textLower)
+    && interaction < 2;
+
+  let layer = 'A';
+  if (knowledgeRoleSupporting) {
+    layer = 'B';
+  } else if (grounding && grounding.procedural && !grounding.recoveredImplication && scoreA < 0.18) {
+    layer = 'B';
+  } else if (unanchoredImplication && !(interaction >= 2 && scoreA >= 0.18)) {
+    layer = 'B';
+  } else if (highSignal || scoreA >= 0.1) {
+    layer = 'A';
+  } else if (fact.evergreen && supportingSignal && systemicPresence && scoreB >= 0.03) {
+    layer = 'B';
+  }
+
+  return {
+    layer,
+    retentionScoreA: Number(scoreA.toFixed(3)),
+    retentionScoreB: Number(scoreB.toFixed(3))
+  };
 }
 
 function applyP1Cap(facts) {
@@ -968,6 +1842,13 @@ function decideFinalPriority(basePriority, suggestedPriority, noveltyScore, obvi
   }
 
   if (interactionCount >= 2 && Number.isFinite(obviousness) && obviousness <= 0.5) {
+    const implicationLikely = Number.isFinite(noveltyScore) ? noveltyScore >= 0.55 : false;
+    if (implicationLikely) {
+      priority = Math.max(priority, 3);
+    }
+  }
+
+  if (interactionCount >= 2 && Number.isFinite(obviousness) && obviousness <= 0.5) {
     priority = Math.max(priority, 2);
   }
 
@@ -1007,6 +1888,8 @@ function normalizeFactPayload(payload, policyInput) {
   }
 
   const textLower = text.toLowerCase();
+  const contextWindow = normalizeText(payload && payload._contextWindow);
+  const contextLower = contextWindow ? contextWindow.toLowerCase() : '';
   if (matchesBlockedPattern(textLower, policy.hardFilters ? policy.hardFilters.lorePatterns : [])) {
     return { ok: false, error: 'lore-pattern' };
   }
@@ -1030,6 +1913,9 @@ function normalizeFactPayload(payload, policyInput) {
   }
   if (isLiveServiceContamination(textLower)) {
     return { ok: false, error: 'live-service' };
+  }
+  if (isCosmeticOnly(textLower)) {
+    return { ok: false, error: 'cosmetic-only' };
   }
   if (isHardLowSignal(textLower)) {
     return { ok: false, error: 'low-signal' };
@@ -1070,7 +1956,7 @@ function normalizeFactPayload(payload, policyInput) {
     : 0;
   const systems = normalizeSystemsList(payload && payload.systems);
   const derivedSystems = extractSystemsFromText(textLower);
-  const mergedSystems = normalizeSystemsList([].concat(systems, derivedSystems, payload && payload.system));
+  let mergedSystems = normalizeSystemsList([].concat(systems, derivedSystems, payload && payload.system));
   const keywordFamilies = extractFamiliesFromText((keywordsNormalized || []).join(' '));
   const keywordFamilyHints = (keywordsNormalized || [])
     .map((keyword) => KEYWORD_FAMILY_MAP[keyword])
@@ -1086,12 +1972,120 @@ function normalizeFactPayload(payload, policyInput) {
     systemFamilies,
     derivedFamilies
   ));
+  const familySystems = deriveSystemsFromFamilies(mergedFamilies);
+  mergedSystems = normalizeSystemsList([].concat(mergedSystems, familySystems));
   const interactionCountFinal = mergedSystems.length;
+  const roleTags = computeRoleTags(
+    textLower,
+    interactionCountFinal,
+    mergedSystems.length,
+    mergedFamilies.length
+  );
   ({ noveltyScore, obviousness } = applyObviousnessBoost(textLower, noveltyScore, obviousness));
   ({ noveltyScore, obviousness } = applyTemplatePenalty(textLower, noveltyScore, obviousness));
   ({ noveltyScore, obviousness } = applyAbilityTemplatePenalty(textLower, noveltyScore, obviousness));
   ({ noveltyScore, obviousness } = applySpecificityBonus(textLower, noveltyScore, obviousness));
+  ({ noveltyScore, obviousness } = applyGameplayImplicationBoost(
+    textLower,
+    interactionCountFinal,
+    mergedSystems.length,
+    noveltyScore,
+    obviousness
+  ));
   ({ noveltyScore, obviousness } = applyEmergentConsequenceBonus(textLower, noveltyScore, obviousness));
+  ({ noveltyScore, obviousness } = applyOptimizationChainBoost(
+    textLower,
+    interactionCountFinal,
+    mergedSystems.length,
+    noveltyScore,
+    obviousness
+  ));
+  ({ noveltyScore, obviousness } = applyMultiStepBoost(textLower, noveltyScore, obviousness));
+  ({ noveltyScore, obviousness } = applyDeepImplicationBoost(
+    textLower,
+    interactionCountFinal,
+    mergedSystems.length,
+    noveltyScore,
+    obviousness
+  ));
+  ({ noveltyScore, obviousness } = applyFailureConstraintBonus(
+    textLower,
+    noveltyScore,
+    obviousness
+  ));
+  const depthSignals = computeSystemicDepth(textLower, interactionCountFinal, mergedSystems.length);
+  const grounding = computeGroundingSignals(
+    textLower,
+    contextLower,
+    interactionCountFinal,
+    mergedSystems.length,
+    mergedFamilies.length,
+    keywordsNormalized.length
+  );
+  grounding.procedural = computeProceduralFlag(textLower, grounding);
+  grounding.recoveredImplication = computeRecoveryFlag(grounding);
+  if (depthSignals.depthScore === 0) {
+    ({ noveltyScore, obviousness } = applyShallowActionPenalty(
+      textLower,
+      interactionCountFinal,
+      mergedSystems.length,
+      noveltyScore,
+      obviousness
+    ));
+  }
+  ({ noveltyScore, obviousness } = applyWorkflowPenalty(
+    textLower,
+    interactionCountFinal,
+    mergedSystems.length,
+    noveltyScore,
+    obviousness
+  ));
+  ({ noveltyScore, obviousness } = applyExperiencedGate(
+    textLower,
+    mergedFamilies,
+    noveltyScore,
+    obviousness
+  ));
+  if (grounding.syntheticNarration && !grounding.anchor) {
+    noveltyScore = Math.max(0, (noveltyScore ?? 0.5) - 0.06);
+    obviousness = Math.min(1, (obviousness ?? 0.5) + 0.06);
+    grounding.narrationPenaltyApplied = true;
+  }
+  if (grounding.adviceTone && !grounding.anchor) {
+    noveltyScore = Math.max(0, (noveltyScore ?? 0.5) - 0.09);
+    obviousness = Math.min(1, (obviousness ?? 0.5) + 0.09);
+    grounding.advicePenaltyApplied = true;
+    if (!grounding.demotionReason) grounding.demotionReason = 'advice-tone';
+  }
+  if (grounding.procedural && !grounding.recoveredImplication) {
+    noveltyScore = Math.max(0, (noveltyScore ?? 0.5) - 0.08);
+    obviousness = Math.min(1, (obviousness ?? 0.5) + 0.08);
+    grounding.proceduralPenaltyApplied = true;
+    if (!grounding.demotionReason) grounding.demotionReason = 'procedural';
+  }
+  if (roleTags.includes('gameplay_implication') && !grounding.anchor) {
+    noveltyScore = Math.max(0, (noveltyScore ?? 0.5) - 0.08);
+    obviousness = Math.min(1, (obviousness ?? 0.5) + 0.08);
+    grounding.demotionReason = 'missing-anchor';
+  }
+  const evergreenPenalty = applyEvergreenTightening(textLower, noveltyScore, obviousness);
+  noveltyScore = evergreenPenalty.noveltyScore;
+  obviousness = evergreenPenalty.obviousness;
+  if (evergreenPenalty.hardDrop) {
+    return { ok: false, error: 'evergreen-drop' };
+  }
+  const dependencyPenalty = applyDependencySuppression(
+    textLower,
+    interactionCountFinal,
+    mergedSystems.length,
+    noveltyScore,
+    obviousness
+  );
+  noveltyScore = dependencyPenalty.noveltyScore;
+  obviousness = dependencyPenalty.obviousness;
+  if (dependencyPenalty.hardDrop) {
+    return { ok: false, error: 'dependency-gate' };
+  }
   const resourcePenalty = applyResourcePenalty(
     textLower,
     interactionCountFinal,
@@ -1109,19 +2103,42 @@ function normalizeFactPayload(payload, policyInput) {
     interactionCountFinal,
     mergedSystems.length
   );
-  const priorityWithCap = resourcePenalty.resourcePenaltyApplied
+  let priorityWithCap = resourcePenalty.resourcePenaltyApplied
     ? Math.min(finalPriority, 2)
     : finalPriority;
+  if (dependencyPenalty.dependencyPenaltyApplied) {
+    priorityWithCap = Math.min(priorityWithCap, 2);
+  }
+  if (evergreenPenalty.evergreenPenaltyApplied) {
+    priorityWithCap = Math.min(priorityWithCap, 2);
+  }
   const confidence = Number.isFinite(payload && payload.confidence)
     ? Math.max(0, Math.min(1, payload.confidence))
     : null;
 
+  const transformedText = applyMechanicFirstReframe(text, grounding);
+  if (transformedText !== text) grounding.transformed = true;
+  const compressionRatio = contextWindow && contextWindow.length
+    ? Number((transformedText.length / contextWindow.length).toFixed(3))
+    : null;
+  grounding.compressionRatio = compressionRatio;
+  grounding.compressed = Boolean(compressionRatio && compressionRatio < 0.6 && grounding.anchorScope === 'text');
+  if (grounding.transformed) grounding.representation = 'transformed';
+  else if (grounding.anchorScope === 'local') grounding.representation = 'inferred';
+  else if (grounding.anchorScope === 'text') grounding.representation = grounding.compressed ? 'compressed' : 'extractive';
+  else grounding.representation = 'synthetic';
+
   const fact = {
-    text,
+    text: transformedText,
     keywords,
     tags,
     priority: priorityWithCap
   };
+
+  const chunkId = Number.isFinite(Number(payload && payload._chunkId))
+    ? Number(payload._chunkId)
+    : 0;
+  if (chunkId) fact._chunkId = chunkId;
 
   if (payload && payload.id) fact.id = normalizeText(payload.id);
   if (payload && payload.system) fact.system = normalizeText(payload.system);
@@ -1139,8 +2156,52 @@ function normalizeFactPayload(payload, policyInput) {
   const evergreen = !isTimeBoundMetadata(textLower) && !isLiveServiceContamination(textLower)
     && (matchesAny(GAMEPLAY_SIGNAL_PATTERNS, textLower)
       || matchesAny(EMERGENT_CONSEQUENCE_PATTERNS, textLower)
-      || matchesAny(TRADEOFF_IMPLICATION_PATTERNS, textLower));
+      || matchesAny(TRADEOFF_IMPLICATION_PATTERNS, textLower)
+      || mergedSystems.length > 0
+      || mergedFamilies.length > 0);
   fact.evergreen = !!evergreen;
+
+  if (roleTags.length) fact.roleTags = roleTags;
+
+  if (depthSignals.depthScore && grounding.anchor) {
+    fact.systemicDepth = depthSignals.depthScore;
+    fact.depthSignals = Object.entries({
+      chain: depthSignals.chainSignal,
+      emergent: depthSignals.emergentSignal,
+      spread: depthSignals.spreadSignal
+    }).filter(([, value]) => value).map(([key]) => key);
+  }
+
+  fact._grounding = {
+    anchor: grounding.anchor,
+    anchorScope: grounding.anchorScope,
+    anchorInText: grounding.anchorInText,
+    anchorInLocal: grounding.anchorInLocal,
+    hasEntity: grounding.hasEntity,
+    hasCondition: grounding.hasCondition,
+    hasEffect: grounding.hasEffect,
+    syntheticNarration: grounding.syntheticNarration,
+    adviceTone: grounding.adviceTone,
+    failureConstraint: grounding.failureConstraint,
+    stateTransition: grounding.stateTransition,
+    downstreamImpact: grounding.downstreamImpact,
+    constraintChain: grounding.constraintChain,
+    procedural: grounding.procedural,
+    recoveredImplication: grounding.recoveredImplication,
+    transformed: !!grounding.transformed,
+    representation: grounding.representation,
+    compressed: !!grounding.compressed,
+    compressionRatio: grounding.compressionRatio,
+    narrationPenaltyApplied: !!grounding.narrationPenaltyApplied,
+    advicePenaltyApplied: !!grounding.advicePenaltyApplied,
+    proceduralPenaltyApplied: !!grounding.proceduralPenaltyApplied,
+    demotionReason: grounding.demotionReason || ''
+  };
+
+  const layerInfo = assignKnowledgeLayer(fact);
+  fact.layer = layerInfo.layer;
+  fact.retentionScoreA = layerInfo.retentionScoreA;
+  fact.retentionScoreB = layerInfo.retentionScoreB;
 
   return { ok: true, fact };
 }
