@@ -1,0 +1,14 @@
+{
+  "name": "neighborhood-quick-verbose",
+  "seed": "https://wiki.factorio.com/Railway",
+  "game": "Factorio",
+  "sourceType": "official",
+  "outDir": "out/regression/neighborhood-quick-verbose",
+  "args": {
+    "maxPages": 1,
+    "minScore": 0.18,
+    "llm": true,
+    "llmTimeoutSec": 20,
+    "verbose": true
+  }
+}

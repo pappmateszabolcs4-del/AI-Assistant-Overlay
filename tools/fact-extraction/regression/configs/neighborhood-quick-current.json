@@ -1,0 +1,16 @@
+{
+  "name": "neighborhood-quick-current",
+  "seed": "https://wiki.factorio.com/Railway",
+  "game": "Factorio",
+  "sourceType": "official",
+  "outDir": "out/regression/neighborhood-quick-current",
+  "args": {
+    "maxPages": 3,
+    "minScore": 0.18,
+    "llm": true,
+    "llmTimeoutSec": 45,
+    "dumpRawInputs": true,
+    "verbose": false,
+    "stageLog": true
+  }
+}

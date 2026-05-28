@@ -1,0 +1,15 @@
+{
+  "name": "neighborhood-quick-baseline",
+  "seed": "https://wiki.factorio.com/Railway",
+  "game": "Factorio",
+  "sourceType": "official",
+  "outDir": "out/regression/neighborhood-quick-baseline",
+  "args": {
+    "maxPages": 3,
+    "minScore": 0.18,
+    "llm": true,
+    "llmTimeoutSec": 45,
+    "verbose": false,
+    "stageLog": true
+  }
+}

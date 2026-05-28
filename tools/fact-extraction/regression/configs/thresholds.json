@@ -1,0 +1,9 @@
+{
+  "ratio": { "minor": 0.01, "notable": 0.03, "regression": 0.06, "break": 0.1 },
+  "count": { "minor": 1, "notable": 5, "regression": 10, "break": 20 },
+  "metricOverrides": {
+    "totals.facts": { "minor": 2, "notable": 6, "regression": 12, "break": 25 },
+    "totals.factsA": { "minor": 2, "notable": 6, "regression": 12, "break": 25 },
+    "totals.factsB": { "minor": 2, "notable": 6, "regression": 12, "break": 25 }
+  }
+}

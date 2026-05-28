@@ -1,10 +1,10 @@
+
 # ✅ TODO / Backlog
 
-Last updated: 2026-05-24
+Last updated: 2026-05-26
 
-Note: We are switching to a config-first, no-hardcode approach (per Phase 2 Whitelist v2) because the previous path did not move fast enough.
-
-## Build plan (ordered, dependency-safe)
+Note: Config-first, no-hardcode remains mandatory. The architecture now assumes:
+OFFLINE KNOWLEDGE ENGINE -> EXPORTED RUNTIME KNOWLEDGE PACKAGE -> LIGHTWEIGHT RUNTIME.
 
 ## Monetization Guardrails (MUST)
 
@@ -25,14 +25,7 @@ Note: We are switching to a config-first, no-hardcode approach (per Phase 2 Whit
 - Project: monetizable desktop game assistant overlay.
 - Problem: offline global third-party dataset (IGDB) was a runtime dependency -> monetization/legal risk.
 
-### Decision points (recommended)
-
-- Global dataset: no runtime global dataset (minimize legal/monetization risk).
-- Data sources: local manifests + exe mapping + user-local cache + optional runtime lookup (compliance-safe, scalable).
-- Community knowledge: opt-in, reviewed patch layer (not a full DB).
-- Moat focus: personalization + workflow + overlay intelligence (defensible IP).
-
-### Phase 0 — Baseline visibility
+## Phase 0 — Baseline visibility
 
 Why: Until we can see where quality drops, every fix is guesswork.
 
@@ -49,7 +42,7 @@ Why: Until we can see where quality drops, every fix is guesswork.
   - [ ] Dev vs prod parity check (new UI panels)
   - [ ] Policy guardrail checklist (metadata)
 
-### Phase 1 — Stable game context (UX block)
+## Phase 1 — Stable game context (UX block)
 
 Why: If the game context flaps or is wrong, routing and templates fall apart.
 
@@ -64,208 +57,196 @@ Why: If the game context flaps or is wrong, routing and templates fall apart.
 - [x] Stop the bleeding: remove global dataset dependency; keep local manifests + exe mapping + user-local cache only
   - [ ] Handle multi-language mixing
 
-### Phase 2 — Deterministic response scaffolds (AI core)
+## Phase 2 — Deterministic scaffolds + strict safety
 
-Why: Enables “no prompt engineering needed” guidance.
+Why: Enables safe routing and strict guardrails before bounded synthesis.
 
-- [x] Deterministic shortcuts for common intents (e.g., "what game am I playing")
-  - [x] Add common game intents (farm/build/boss/quest/loadout/progression/mechanics/resource/economy/combat/base/exploration/troubleshoot/crafting/settings/multiplayer/roadmap) with fixed response structures
-  - [x] Enable deterministic only for game-identity (safety + game-specific priority)
+- [x] Deterministic shortcuts for common intents
 - [x] Intent routing layer (simple router before LLM call)
-  - [x] Route how-to/farming questions to step-by-step, game-specific answers
-  - [x] Enforce "no generic tips" mode when game context is known
-
 - [x] Anti-hallucination safeguards (deterministic)
   - [x] KnowledgeMode: VERIFIED / PARTIAL / UNKNOWN
   - [x] Entity whitelist: allow only VERIFIED FACTS + USER INPUT; forbid new proper nouns
-  - [x] User list != verified facts (mentionable, but never asserted as truth)
-  - [x] High-risk question detection (loot, boss spawn, quest, recipe, mechanics) -> STRICT / UNKNOWN
-  - [x] Post-validation: strip disallowed entities, downgrade to general tips + clarification
   - [x] "I don't know" policy: prefer "no reliable data" over invention
   - [x] Output template: [Knowledge Status] + [Answer] + [Unverified notice]
   - [x] Guardrails check: no external metadata ingestion beyond policy
-    - [ ] Whitelist v2 (all languages; config-first, no hardcode)
-      - [x] Fast-start mentionables (user-provided names auto-detect, mentionable-only)
-      - [ ] Shared text normalizer (casefold + diacritics + Unicode normalize)
-      - [ ] Entity marker expansion (all languages: location/character/item/boss/quest/mechanic)
-        - [ ] Temporary expansion only; replace with data-driven list after review
-        - [ ] Rollback criteria if overblocking does not improve (>=30% reduction over 100+ answers)
-      - [ ] Inflection-tolerant whitelist (language-specific inflection rules)
-      - [ ] False-offender suppression (language-specific)
-      - [ ] Overblocking soft-violation mode (keep answer usable)
-      - [ ] Mentions vs Facts separation (clear labeling in the answer)
-      - [ ] Fail-safe answer plan (when everything is blocked)
-      - [ ] Entity-confidence scoring (verified/mentionable/unknown)
-      - [ ] Answer provenance tags (FACTS/USER/inferred)
-      - [ ] Language fallback (when language rules missing)
-      - [ ] Underblocking per-game safety level
-      - [ ] Per-game safe mode (when violations are frequent)
-      - [ ] Prompt-guard regression tests (suffixes, articles, plurals)
+  - [ ] Allow bounded verified + grounded synthesis (anchor-gated, one-step only)
+  - [ ] Disallow strict fact-only lock when anchored composition is permitted
+  - [ ] Runtime answer policy: verified facts + bounded synthesis, not facts-only
 
-- [ ] Data extraction MVP (to seed test data)
-  - [ ] Spec alignment: Phase 2 MVP section in docs/2-technical/METADATA_POLICY.md
-  - [x] Source input policy (config-first allow/block)
-    - [x] Blocked: full wiki mirrors/dumps, guide corpus rebuilds, IGDB parity goals, Steam/Reddit bulk persistence, unofficial dumps/archives
-    - [x] Allowed: temporary source processing + compact transformed facts only (no full-page persistence)
-  - [x] Hard rule: no raw source persistence (disk or durable cache)
-  - [x] Ingest gate: reject blocked or unknown sources
-  - [x] Chunking pipeline (500-1500 tokens + chunk metadata: gameId, sourceType, chunkId)
-  - [x] Fact extraction step (LLM prompt + output validation)
-  - [x] Structured fact schema (id, text, keywords, tags, priority; optional: system, gameStage, confidence, sourceType)
-  - [x] Validation + normalization (length, required fields, dedupe keywords/tags, priority range)
-  - [x] Hard filter: lore/guide patterns (config-defined)
-  - [x] Human review flow (approve/reject/rewrite/merge/retag; dev-only)
-  - [x] Dedupe: exact text merge + near-duplicate tagging (policy-controlled)
-  - [x] Review UX: near-duplicate grouping + back/next navigation
-  - [x] Dedupe diagnostics (exact dropped + near-duplicate marked)
-  - [x] Priority system (P1/P2/P3 + retrieval weights)
-  - [x] Storage gate: reject payloads containing raw source text
-  - [x] Tiered support enforcement (A/B/C in prompt assembly)
-  - [x] Diagnostics (extraction count, drop reasons, tier lookup, retrieval hits)
+- [ ] Whitelist v2 (all languages; config-first, no hardcode)
+  - [x] Fast-start mentionables (user-provided names auto-detect, mentionable-only)
+  - [ ] Shared text normalizer (casefold + diacritics + Unicode normalize)
+  - [ ] Entity marker expansion (all languages)
+  - [ ] Inflection-tolerant whitelist (language-specific)
+  - [ ] Overblocking soft-violation mode
+  - [ ] Answer provenance tags (FACTS/USER/inferred)
 
-### Phase 3 — Facts pipeline (tiered support)
+## Phase 3 — Offline knowledge compiler (pipeline)
 
-Why: Keep coverage lean while grounding entities to reduce hallucinations.
+Why: The pipeline is a heavy offline toolchain for verified knowledge creation.
 
-- [ ] Tiered support model (A/B/C)
-  - [ ] A-tier: top 50 games with curated facts (manual review)
-  - [ ] B-tier: runtime + user-fed context only
-  - [ ] C-tier: generic assistant + clarification
-- [ ] Compact gameplay facts only (no wiki-style content replication)
-- [x] Dedupe/merge pipeline (embedding/semantic merge -> canonical fact)
-- [x] System-based support taxonomy (game systems + fact tagging)
-- [x] Diagnostics expansion (dedupe stats + extraction quality)
-- [x] Editorial quality guardrails (live-service/wiki/time-bound/actionability/lore filters)
-- [ ] Implication recovery calibration (procedural vs downstream balance)
-- [ ] Representation drift review (extractive vs inferred vs transformed shares)
+- [x] Source input policy (allow/block)
+- [x] Ingest gate + no raw source persistence
+- [x] Chunking pipeline
+- [x] Fact extraction + validation
+- [x] Normalization + canonicalization + dedupe
+- [x] Representation shaping + diagnostics
+- [x] Review UX (approve/reject/rewrite/merge/retag)
+- [x] Storage gate (facts only; runtime may use bounded synthesis)
+- [x] Tiered support enforcement (A/B/C in prompt assembly)
 
-- [x] On-demand knowledge (seed facts only when needed)
-- [x] Minimal entity-first seed (characters, locations, items, mechanics, quests)
-- [x] Hot-game prioritization (usage x hallucination rate x session length)
-- [x] Community correction loop (user flags -> review -> FACTS)
-- [x] Source reliability ranking (official > trusted > community > user input)
-- [x] Fact versioning (fact_version + last_verified)
-- [x] Guardrails check: facts are verified, minimal, non-redistributed
-- [x] Safe knowledge: minimal first-party core + user-local memory + reviewed community hints
-  - [ ] Fact request UX (JIT + confirm, 1-click dev approval)
-  - [x] Auto-create facts.json on game saves
-  - [ ] Entity lifecycle + TTL mentionables
-  - [ ] Entity list contamination (dedupe + review)
-  - [ ] Synonym drift / alias mapping
-  - [ ] Cross-game name collision namespace
-  - [ ] Multi-turn mentionable cache (session scope)
-  - [ ] Per-session entity memory + "forget" button
-  - [ ] Handle implicit references (previous turn)
+- [ ] Review throughput plan (manual review scaling)
+- [ ] Curated A-tier facts (top games, manual)
+- [ ] Fact request UX (JIT + approve)
 
-### Phase 4 — Answer style + auto-seed
+## Phase 4 — Runtime knowledge package (export)
 
-Why: Once routing is stable, styling and templates can ride the correct path.
+Why: The runtime must remain lightweight and bounded.
 
-- [ ] Preset answer styles (short/step-by-step/deep) without user prompt writing (dev-only first; requires detailed multi-game testing before checking off)
+- [ ] Define runtime knowledge package schema
+  - [ ] mechanistic core
+  - [ ] canonical entities
+  - [ ] transitions + constraints
+  - [ ] composition hints
+  - [ ] retrieval metadata
+- [ ] Export tool (pipeline -> runtime package)
+- [ ] Versioning + compatibility checks
+- [ ] Verify no heavy heuristics are shipped to runtime
+
+## Phase 5 — Runtime bounded synthesis
+
+Why: Strict verified-only direct answering causes retrieval starvation.
+
+- [ ] Anchor-gated one-step composition (condition -> transition -> consequence)
+- [ ] Retrieval-local synthesis only (no cross-fact reasoning)
+- [ ] No gameplay coaching/strategy narration
+- [ ] No multi-hop inference or graph propagation
+- [ ] Runtime retrieval prefers mechanistic overlap vs sentence-only
+- [ ] Runtime answers may include anchored composition beyond strict fact sentences
+- [ ] Runtime diagnostics for bounded synthesis (local only)
+
+## Phase 6 — Representation Stability + Scaling
+
+Why: Stabilization phase for runtime-usable representation at scale.
+
+Mode: Stabilization (foundation freeze; no large refactors).
+
+### Phase 6 stabilization strategy
+
+- Foundation freeze
+  - No large normalize refactors or module moves
+  - No heuristic explosion
+  - Allowed: boundary cleanup, parity fixes, ownership cleanup, small stabilization work
+- Stabilization KPIs (primary success metrics)
+  - mechanicRecoverability
+  - operationalContinuityPreservation
+  - corePersistence
+  - continuityBearingRetention
+  - retrievalStitchingPressure
+  - fragmentationScore
+  - runtimeUtilityIdentityPersistence
+- Controlled representation experiments
+  - Trace-only, observability-only, deterministic, bounded
+  - No scoring impact, no retention tuning, no runtime integration
+  - One representation hypothesis per experiment
+- Representation stabilization focus
+  - Continuity-aware representation semantics stabilization
+  - Runtime utility identity stabilization
+  - Continuity-bearing fact stability
+- Canonical stabilization follow-up
+  - Merge stability, canonical persistence, wording independence, merge arbitration stabilization
+- Multi-genre scaling after semantics + canonical stability
+
+- [x] Normalize architecture refactor (split normalize.js) — foundation complete
+  - [x] Modules: filters / grounding / representation / scoring / composition / diagnostics / taxonomy / canonical signals
+  - [x] Explicit ownership boundaries
+  - [x] Behavior parity + regression notes
+  - [x] Lightweight validation checks
+  - [x] Fixed-input isolation run (same seed/pages/raw candidates)
+  - [x] Per-stage delta tracing (filters/grounding/scoring/retention/composition/canonical signals)
+- [ ] Representation stability (core-centric, structure-native)
+  - [ ] Operational continuity recoverability
+  - [ ] Retrieval stitching friendliness
+  - [ ] Runtime answerability
+  - [ ] Composition utility
+  - [ ] Mechanistic density vs fragmentation balance
+  - [ ] Runtime utility identity stabilization (continuity-aware, no tuning)
+  - [ ] Continuity-bearing fact representation stability
+- [ ] Canonicalization stability (structure-first merge)
+  - [ ] Drift prevention
+  - [ ] Genre robustness
+  - [ ] Stable merge behavior
+  - [ ] Wording independence calibration
+  - [ ] Runtime-oriented merge usefulness
+- [ ] Bounded composition + grounding safety
+  - [ ] Local + one-step + anchor-gated + mechanistically explicit + structure-native
+  - [ ] No reasoning engine, no graph propagation, no gameplay commentary, no planning layer
+- [ ] Multi-genre stress testing
+  - [ ] MMO / FPS-PvP / ARPG / Roguelike / Extraction shooter / Survival / Sandbox / RTS
+- [ ] Retrieval quality validation
+  - [ ] Fragmentation score
+  - [ ] Retrieval stitching pressure
+  - [ ] Operational continuity score
+  - [ ] Retrieval packability
+  - [ ] Composition utility
+  - [ ] Answer composition friendliness
+  - [ ] Local continuation recoverability
+- [ ] Reviewer + human calibration workflow
+  - [ ] Semantic drift review
+  - [ ] Merge quality review
+  - [ ] Composition usefulness review
+  - [ ] Runtime usefulness review
+  - [ ] False-positive composition review
+  - [ ] Representation stability tracking
+- [ ] Diagnostics + observability
+  - [x] Runtime-oriented diagnostics
+  - [ ] Composition diagnostics
+  - [x] Representation drift
+  - [ ] Merge behavior
+  - [ ] Retrieval usefulness
+  - [ ] Fragmentation pressure
+  - [x] Utility semantics observability (trace-only, no scoring/retention impact)
+- [ ] Operational continuity causal tracing (domain-agnostic, structure-native)
+  - [ ] Entity-role persistence tracking
+  - [ ] Condition -> transition -> consequence preservation tracing
+  - [x] Operational dependency continuity
+  - [ ] Local propagation preservation
+  - [x] Continuity fragmentation points by stage
+  - [x] Retention-induced decomposition tracing
+  - [ ] Representation granularity drift
+  - [ ] Core compression side-effects
+  - [x] Guardrail: analysis-only, no auto-correction/tuning
+
+### Current core finding (2026-05)
+
+- The drift is primarily a representation semantics + runtime utility identity problem, not penalties/merge/modularization.
+- Implicit runtime usefulness is currently biased toward compact, shallow, standalone, synthetic, low-continuity-burden facts.
+- Continuity-bearing operational facts are structurally strong but lack stable runtime-utility identity.
+- Utility semantics experiments must remain trace-only/observability-only until representation + canonical stability improves.
+- [ ] Guardrails + architectural constraints
+  - [ ] Bounded + grounded + structure-first + diagnostics-first + runtime-oriented + mechanistically explicit
+  - [ ] No open-ended reasoning, no graph-native inference, no symbolic planner, no heuristic explosion
+
+## Phase 7 — Answer style + UX surfacing
+
+Why: Once routing and synthesis are safe, UX can be tuned.
+
+- [ ] Preset answer styles (short/steps/deep)
   - [ ] Answer style conflict rule priority
 - [x] Auto-seed per-game template defaults on first encounter (opt-in)
 - [x] Guardrails check: no auto-seeding from third-party dumps
+- [ ] Auto-raise specificity when "too generic" is detected
 
-### Phase 5 — Tuning + durability
+## Phase 8 — Tuning + durability
 
 Why: Optimization on a stable pipeline.
 
-Design/spec plan (order recommended):
-1) Trim/segment strict policy (prompt bloat control)
-  - Define prompt budget by layer (system, facts, templates, user text).
-  - Define trim order (e.g., optional hints → verbose template text → low-priority facts).
-  - Segment policy: hard cap per section + final assembly check.
-  - Add diagnostics fields to log what was trimmed (dev-only).
-2) Model strategy split + timeout fallback
-  - Decision matrix: text-only vs vision vs high-quality model.
-  - Timeout thresholds per mode and a safe fallback response template.
-  - Retry rules: once max, no cascading retries.
-  - Telemetry: local counters only (no external telemetry).
-3) Hybrid stack (structured DB + vector DB + LLM formatting) — design only
-  - Define data boundaries: verified facts vs user inputs vs ephemeral context.
-  - Decide vector usage: local-only, opt-in, TTL, no redistribution.
-  - Storage schema + migration plan (non-destructive).
-  - Guardrails check: no metadata mirrors, no bulk imports.
-4) Platformization — roadmap only
-  - Identify 2-3 first-party automation workflows.
-  - Define plugin/extension safety model + permissions.
-  - Guardrails check: no metadata export or bulk sharing.
+- [ ] Trim/segment strict policy (prompt bloat control)
+- [ ] Model strategy split + timeout fallback
+- [ ] Hybrid stack design (structured DB + vector DB + LLM formatting)
+- [ ] Platformization roadmap only (no metadata export)
 
-- [ ] Model strategy split (text-only vs vision) + timeout fallback (requires extensive testing and joint review before production enablement)
-- [ ] Hybrid stack (structured DB + vector DB + LLM formatting)
-- [x] Token budget caps per detail level
-- [x] Template cache + reload strategy (dev)
-- [x] Prompt trim diagnostics (dev-only preview logging; diagnostics only)
-- [x] Model strategy diagnostics (dev-only preview logging)
-- [x] Dev-only diagnostics UI (prompt budget, trim snapshots, intent breakdown, fact-load stats, latency) with 1000-entry local retention
-  - [ ] Prompt trim policy for facts/whitelist segments
-  - [ ] Chunked facts trim order control
-  - [ ] Context window hygiene (top-k entity filtering)
-  - [ ] High-risk fallback template (when verified facts are missing)
-- [ ] Trim/segment strict policy to reduce prompt bloat (requires extensive testing and joint review of trims before production enablement)
-- [ ] Guardrails check: hybrid stack uses verified facts, not store mirrors
-  - [ ] Facts boundary: only VERIFIED facts can be indexed or vectorized; user input stays separate (tagged, non-authoritative).
-  - [ ] No mirrors: forbid bulk ingestion of third-party catalogs; allow only user-local, game-scoped facts.
-  - [ ] TTL and purge: ephemeral context has TTL; purge paths validated and logged.
-  - [ ] Data lineage: every stored fact keeps source and verification status; reject unknown sources.
-  - [ ] Access rules: prompt assembly can only read VERIFIED facts + user session data; never merge with external dumps.
-  - [ ] Export rules: no bulk export of facts/embeddings; only per-game user export with explicit consent.
-  - [ ] Security: encrypt sensitive store fields; minimize retention; document keys and rotation plan.
-  - [ ] Review checklist: add a formal checklist in docs/2-technical/METADATA_POLICY.md after implementation.
-- [ ] Platformization: first-party ecosystem (automation, OCR packs, workflows) with metadata as descriptor only
-  - [ ] Scope: first-party only; no third-party marketplace at this phase.
-  - [ ] Workflows: define 2-3 automation flows (e.g., capture -> classify -> summarize) with clear permissions.
-  - [ ] OCR packs: treat OCR outputs as transient session context; no persistent archive.
-  - [ ] Metadata: descriptor-only (game name, high-level tags); forbid item/quest catalogs.
-  - [ ] Permissions: explicit opt-in per workflow; visible activity indicator; no background capture by default.
-  - [ ] Storage: local-only, per-game; TTL for workflow artifacts; manual purge control.
-  - [ ] Dev gating: all platformization UI/tools dev-only until guardrails review passes.
-  - [ ] Abuse guardrails: block scraping, bulk export, or automated ingestion workflows.
-
-### Phase 6 — UX surfacing
-
-Why: Make the system’s behavior visible and user-correctable.
-
-- [x] Resizable popup panels with per-panel height persistence
-- [x] History saved list header + toggle + per-item scroll for long answers
-- [x] User-facing error UX for AI failures (clear, actionable)
-- [ ] Auto-raise specificity when "too generic" is detected
-- [ ] Guardrails check: UX does not expose or export cached metadata
-  - [ ] Starter packs (A-tier top 50 games minimal entity seed, manual review)
-  - [ ] Guided intake flow (2-minute wizard, minimal set)
-  - [ ] Premium safe-mode UI indicator / dashboard
-
-### Phase 7 — Stabilization + Scaling (Dataset Quality)
-
-Why: Focus on multi-genre stability, retrieval quality, and maintainability before new features.
-
-- [ ] Normalize modularization (incremental refactor)
-  - [ ] Split normalize.js into filters/, taxonomy/, scoring/, diagnostics/ modules
-  - [ ] Keep behavior parity with regression notes per module
-  - [ ] Add lightweight unit checks for filters where feasible
-- [ ] Multi-genre dataset stress testing
-  - [ ] MMO
-  - [ ] FPS/PvP
-  - [ ] ARPG
-  - [ ] Roguelike
-  - [ ] Extraction shooter
-  - [ ] Strategy
-- [ ] Reviewer workflow metrics
-  - [ ] Approval rate + reject reasons summary
-  - [ ] Reviewer disagreement tracking (if multiple reviewers)
-  - [ ] Common edit/retag patterns
-- [ ] Retrieval quality validation
-  - [ ] Batch redundancy score
-  - [ ] Contextual usefulness checks (manual rubric)
-  - [ ] Beginner vs advanced mix ratio
-  - [ ] Template repetition frequency
-  - [ ] Actionability score tracking
-- [ ] Hotkey conflict detection and messaging
-- [ ] Guardrails check: no telemetry or remote data export
-
-## Product roadmap (not in current build chain)
-
-### Release readiness
+## Phase 9 — Release readiness
 
 - [ ] Remove openDevTools() from production
 - [ ] Create Windows installer (NSIS/MSI)
@@ -276,6 +257,8 @@ Why: Focus on multi-genre stability, retrieval quality, and maintainability befo
 - [ ] Crash reporting (opt-in) + minimal telemetry policy
 - [ ] Release build smoke test checklist (clean VM)
 - [ ] Guardrails check: distribution has no bundled datasets or artwork
+
+## Product roadmap (not in current build chain)
 
 ### v2.0 (Q2 2026)
 

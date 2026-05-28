@@ -4,3 +4,7 @@ out/
 *.log
 backups/
 docs/PRIVATE_SECURITY_PLAN.md
+tools/fact-extraction/regression/analysis/
+tools/fact-extraction/regression/diffs/
+tools/fact-extraction/regression/snapshots/
+tools/fact-extraction/regression/summaries/

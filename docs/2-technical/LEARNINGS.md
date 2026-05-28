@@ -125,6 +125,30 @@ When adding new work logs, append them under **Daily Logs (Chronological)** usin
 
 #### Follow-ups
 - TODO: Review recovery vs procedural ratios on Railway and adjust thresholds if implication depth stays low.
+
+### 2026-05-26 (Night)
+
+#### Summary
+- What changed: Documented runtime bounded synthesis and the offline pipeline vs runtime architecture split.
+- Why: Verified-only answering can cause retrieval starvation; bounded synthesis keeps answers usable while staying anchored.
+- Impact: Clearer guardrails for runtime composition and knowledge package boundaries.
+
+#### Details
+- Implementation notes: Runtime is lightweight and retrieval-local; offline pipeline remains the knowledge compiler.
+- Edge cases: Ensure anchor-gated one-step composition does not drift into implied coaching.
+
+#### Files touched
+- [docs/2-technical/METADATA_POLICY.md](docs/2-technical/METADATA_POLICY.md)
+- [docs/3-overview/TODO.md](docs/3-overview/TODO.md)
+
+#### Backups
+- Not created (not requested).
+
+#### Verification
+- Docs only.
+
+#### Follow-ups
+- TODO: Define runtime knowledge package schema and bounded synthesis checks.
 ```
 
 ## 🎯 Project Vision: Customer-First Product

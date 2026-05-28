@@ -82,6 +82,67 @@ function keywordOverlap(a, b) {
   return overlap;
 }
 
+function buildCoreText(fact) {
+  const core = fact && fact.mechanicCore ? fact.mechanicCore : null;
+  if (!core || !core.partial) return '';
+  if (core.coreText) return `Core: ${core.coreText}`;
+  const entities = Array.isArray(core.entities) ? core.entities.join(', ') : '';
+  return [
+    entities ? `Entities: ${entities}` : '',
+    core.hasCondition ? 'Condition: yes' : '',
+    core.hasEffect ? 'Effect: yes' : '',
+    core.stateTransition ? 'Transition: yes' : '',
+    core.constraint ? 'Constraint: yes' : '',
+    core.downstream ? 'Downstream: yes' : ''
+  ].filter(Boolean).join(' | ');
+}
+
+function computeCoreOverlap(coreA, coreB) {
+  if (!coreA || !coreB) return 0;
+  const entitiesA = new Set(Array.isArray(coreA.entities) ? coreA.entities : []);
+  const entitiesB = new Set(Array.isArray(coreB.entities) ? coreB.entities : []);
+  let entityOverlap = 0;
+  for (const entity of entitiesA) {
+    if (entitiesB.has(entity)) entityOverlap += 1;
+  }
+  const entityUnion = entitiesA.size + entitiesB.size - entityOverlap;
+  const entityScore = entityUnion ? entityOverlap / entityUnion : 0;
+  const flags = ['hasCondition', 'hasEffect', 'stateTransition', 'constraint', 'downstream'];
+  let sharedFlags = 0;
+  let totalFlags = 0;
+  for (const flag of flags) {
+    const aVal = !!coreA[flag];
+    const bVal = !!coreB[flag];
+    if (aVal || bVal) totalFlags += 1;
+    if (aVal && bVal) sharedFlags += 1;
+  }
+  const flagScore = totalFlags ? sharedFlags / totalFlags : 0;
+  return Math.min(1, (entityScore * 0.6) + (flagScore * 0.4));
+}
+
+function computeMechanicShapeOverlap(groundingA, groundingB) {
+  const shapeA = groundingA && groundingA.mechanicShape ? groundingA.mechanicShape : null;
+  const shapeB = groundingB && groundingB.mechanicShape ? groundingB.mechanicShape : null;
+  if (!shapeA || !shapeB) return 0;
+  const keys = [
+    'hasCondition',
+    'hasEffect',
+    'stateTransition',
+    'downstreamImpact',
+    'constraintChain',
+    'failureConstraint'
+  ];
+  let total = 0;
+  let shared = 0;
+  for (const key of keys) {
+    const aVal = !!shapeA[key];
+    const bVal = !!shapeB[key];
+    if (aVal || bVal) total += 1;
+    if (aVal && bVal) shared += 1;
+  }
+  return total ? shared / total : 0;
+}
+
 function pushTopCandidates(list, item, limit) {
   if (!limit) return;
   list.push(item);
@@ -174,8 +235,10 @@ async function canonicalizeFacts(facts, options = {}) {
     const families = Array.isArray(fact.mechanicFamilies) ? fact.mechanicFamilies.slice(0, 4).join(', ') : '';
     const keywordsSource = Array.isArray(fact.keywordsNormalized) ? fact.keywordsNormalized : fact.keywords;
     const keywords = Array.isArray(keywordsSource) ? keywordsSource.slice(0, 6).join(', ') : '';
+    const core = buildCoreText(fact);
     return [
-      text,
+      core || text,
+      core ? text : '',
       systems ? `Systems: ${systems}` : '',
       families ? `Families: ${families}` : '',
       keywords ? `Keywords: ${keywords}` : ''
@@ -203,6 +266,16 @@ async function canonicalizeFacts(facts, options = {}) {
   let candidateChecks = 0;
   let accepted = 0;
   let acceptedStrongNoAnchor = 0;
+  let representationChecks = 0;
+  let representationDrift = 0;
+  let tutorialVoiceMerged = 0;
+  let coreMergeCount = 0;
+  let coreGuardMergeCount = 0;
+  let lowSimilarityCoreMergeCount = 0;
+  let coreOverlapSum = 0;
+  let stateTransitionOverlapCount = 0;
+  let consequenceOverlapCount = 0;
+  let wordingVsMechanicTotal = 0;
   const topCandidates = [];
   for (const item of items) {
     let assigned = false;
@@ -210,20 +283,6 @@ async function canonicalizeFacts(facts, options = {}) {
       const rep = cluster[0];
       const similarity = cosineSimilarity(item.embedding, rep.embedding);
       candidateChecks += 1;
-      if (similarity < softThreshold) {
-        rejectReasons.belowSoftThreshold += 1;
-        pushTopCandidates(topCandidates, {
-          similarity,
-          accepted: false,
-          reason: 'below-soft-threshold',
-          systemsOverlap: false,
-          familyOverlap: false,
-          keywordOverlap: 0,
-          a: String(item.fact.text || '').slice(0, 80),
-          b: String(rep.fact.text || '').slice(0, 80)
-        }, diagLimit);
-        continue;
-      }
       const hasSystems = systemsOverlap(item.fact.systems, rep.fact.systems);
       const hasFamilies = familiesOverlap(item.fact.mechanicFamilies, rep.fact.mechanicFamilies);
       const keywordHits = keywordOverlap(
@@ -233,16 +292,72 @@ async function canonicalizeFacts(facts, options = {}) {
       const entityOverlap = hasSystems || hasFamilies || keywordHits >= 1;
       const anchorOverlap = Boolean(item.fact._grounding && item.fact._grounding.anchor)
         && Boolean(rep.fact._grounding && rep.fact._grounding.anchor);
+      const stateTransitionOverlap = Boolean(item.fact._grounding && item.fact._grounding.stateTransition)
+        && Boolean(rep.fact._grounding && rep.fact._grounding.stateTransition);
+      const constraintOverlap = Boolean(item.fact._grounding && item.fact._grounding.failureConstraint)
+        && Boolean(rep.fact._grounding && rep.fact._grounding.failureConstraint);
       const consequenceOverlap = Boolean(item.fact._grounding && item.fact._grounding.hasEffect)
         && Boolean(rep.fact._grounding && rep.fact._grounding.hasEffect)
         && (item.fact._grounding.failureConstraint || item.fact._grounding.downstreamImpact
           || item.fact._grounding.stateTransition || item.fact._grounding.constraintChain
           || rep.fact._grounding.failureConstraint || rep.fact._grounding.downstreamImpact
           || rep.fact._grounding.stateTransition || rep.fact._grounding.constraintChain);
+      const mechanicShapeOverlap = computeMechanicShapeOverlap(item.fact._grounding, rep.fact._grounding);
+      const coreOverlap = computeCoreOverlap(item.fact.mechanicCore, rep.fact.mechanicCore);
+      const shapeA = item.fact._grounding ? item.fact._grounding.mechanicShape : null;
+      const shapeB = rep.fact._grounding ? rep.fact._grounding.mechanicShape : null;
+      const shapeStrength = shapeA && shapeB
+        && (shapeA.activeSignals >= 3)
+        && (shapeB.activeSignals >= 3);
+      const shapeCoreOverlap = mechanicShapeOverlap >= 0.5
+        && shapeA && shapeB
+        && shapeA.structuralCore
+        && shapeB.structuralCore;
+      const conditionEffectAligned = Boolean(item.fact._grounding && item.fact._grounding.hasCondition)
+        && Boolean(rep.fact._grounding && rep.fact._grounding.hasCondition)
+        && Boolean(item.fact._grounding && item.fact._grounding.hasEffect)
+        && Boolean(rep.fact._grounding && rep.fact._grounding.hasEffect);
+      const mechanicScore = Math.min(1,
+        (entityOverlap ? 0.35 : 0)
+        + (stateTransitionOverlap ? 0.2 : 0)
+        + (consequenceOverlap ? 0.2 : 0)
+        + (constraintOverlap ? 0.2 : 0)
+        + (mechanicShapeOverlap >= 0.5 ? 0.15 : 0)
+        + (shapeStrength ? 0.1 : 0)
+        + (conditionEffectAligned ? 0.1 : 0)
+        + (coreOverlap >= 0.4 ? 0.2 : 0)
+      );
+      const structuralOverlap = consequenceOverlap || stateTransitionOverlap || constraintOverlap;
+      const mechanicGuard = anchorOverlap
+        && (mechanicScore >= 0.65 || (shapeCoreOverlap && structuralOverlap) || coreOverlap >= 0.5);
+      const similarityFloor = mechanicGuard ? (softThreshold - 0.12) : softThreshold;
+      if (similarity < similarityFloor) {
+        rejectReasons.belowSoftThreshold += 1;
+        pushTopCandidates(topCandidates, {
+          similarity,
+          accepted: false,
+          reason: 'below-soft-threshold',
+          systemsOverlap: hasSystems,
+          familyOverlap: hasFamilies,
+          keywordOverlap: keywordHits,
+          anchorOverlap,
+          consequenceOverlap,
+          constraintOverlap,
+          stateTransitionOverlap,
+          shapeCoreOverlap,
+          coreOverlap: Number(coreOverlap.toFixed(2)),
+          mechanicShapeOverlap: Number(mechanicShapeOverlap.toFixed(2)),
+          mechanicScore: Number(mechanicScore.toFixed(2)),
+          entityOverlap,
+          a: String(item.fact.text || '').slice(0, 80),
+          b: String(rep.fact.text || '').slice(0, 80)
+        }, diagLimit);
+        continue;
+      }
       const strongMatch = similarity >= strongThreshold;
       if (!strongMatch
-        && (!entityOverlap || !consequenceOverlap)
-        && !(anchorOverlap && consequenceOverlap && similarity >= (softThreshold - 0.02))) {
+        && (!entityOverlap || (!structuralOverlap && mechanicShapeOverlap < 0.5))
+        && !(anchorOverlap && structuralOverlap && similarity >= (softThreshold - 0.02))) {
         rejectReasons.noAnchorOverlap += 1;
         pushTopCandidates(topCandidates, {
           similarity,
@@ -253,6 +368,12 @@ async function canonicalizeFacts(facts, options = {}) {
           keywordOverlap: keywordHits,
           anchorOverlap,
           consequenceOverlap,
+          constraintOverlap,
+          stateTransitionOverlap,
+          shapeCoreOverlap,
+          coreOverlap: Number(coreOverlap.toFixed(2)),
+          mechanicShapeOverlap: Number(mechanicShapeOverlap.toFixed(2)),
+          mechanicScore: Number(mechanicScore.toFixed(2)),
           entityOverlap,
           a: String(item.fact.text || '').slice(0, 80),
           b: String(rep.fact.text || '').slice(0, 80)
@@ -267,6 +388,23 @@ async function canonicalizeFacts(facts, options = {}) {
         acceptedStrongNoAnchor += 1;
       }
       accepted += 1;
+      if (coreOverlap >= 0.4) coreMergeCount += 1;
+      if (mechanicGuard) coreGuardMergeCount += 1;
+      if (mechanicGuard && similarity < softThreshold) lowSimilarityCoreMergeCount += 1;
+      coreOverlapSum += coreOverlap;
+      if (stateTransitionOverlap) stateTransitionOverlapCount += 1;
+      if (consequenceOverlap) consequenceOverlapCount += 1;
+      if ((item.fact._grounding && item.fact._grounding.adviceTone)
+        || (rep.fact._grounding && rep.fact._grounding.adviceTone)) {
+        tutorialVoiceMerged += 1;
+      }
+      const repA = item.fact._grounding ? item.fact._grounding.representation : '';
+      const repB = rep.fact._grounding ? rep.fact._grounding.representation : '';
+      if (repA && repB) {
+        representationChecks += 1;
+        if (repA !== repB) representationDrift += 1;
+      }
+      wordingVsMechanicTotal += similarity - mechanicScore;
       pushTopCandidates(topCandidates, {
         similarity,
         accepted: true,
@@ -276,6 +414,12 @@ async function canonicalizeFacts(facts, options = {}) {
         keywordOverlap: keywordHits,
         anchorOverlap,
         consequenceOverlap,
+        constraintOverlap,
+        stateTransitionOverlap,
+        shapeCoreOverlap,
+        coreOverlap: Number(coreOverlap.toFixed(2)),
+        mechanicShapeOverlap: Number(mechanicShapeOverlap.toFixed(2)),
+        mechanicScore: Number(mechanicScore.toFixed(2)),
         entityOverlap,
         a: String(item.fact.text || '').slice(0, 80),
         b: String(rep.fact.text || '').slice(0, 80)
@@ -353,6 +497,22 @@ async function canonicalizeFacts(facts, options = {}) {
       candidateChecks,
       accepted,
       acceptedStrongNoAnchor,
+      semanticMergeRate: candidateChecks ? Number((accepted / candidateChecks).toFixed(3)) : 0,
+      coreMergeShare: accepted ? Number((coreMergeCount / accepted).toFixed(3)) : 0,
+      coreGuardMergeShare: accepted ? Number((coreGuardMergeCount / accepted).toFixed(3)) : 0,
+      lowSimilarityCoreMergeShare: accepted
+        ? Number((lowSimilarityCoreMergeCount / accepted).toFixed(3))
+        : 0,
+      avgCoreOverlap: accepted ? Number((coreOverlapSum / accepted).toFixed(3)) : 0,
+      representationDriftBetweenMerged: representationChecks
+        ? Number((representationDrift / representationChecks).toFixed(3))
+        : 0,
+      stateTransitionOverlap: accepted ? Number((stateTransitionOverlapCount / accepted).toFixed(3)) : 0,
+      consequenceOverlap: accepted ? Number((consequenceOverlapCount / accepted).toFixed(3)) : 0,
+      wordingVsMechanicSimilarity: accepted
+        ? Number((wordingVsMechanicTotal / accepted).toFixed(3))
+        : 0,
+      tutorialVoiceMergedShare: accepted ? Number((tutorialVoiceMerged / accepted).toFixed(3)) : 0,
       rejectReasons,
       topCandidates
     }

@@ -1,0 +1,14 @@
+{
+  "name": "neighborhood-default",
+  "seed": "https://wiki.factorio.com/Railway",
+  "game": "Factorio",
+  "sourceType": "official",
+  "outDir": "out/regression/neighborhood",
+  "args": {
+    "maxPages": 10,
+    "minScore": 0.18,
+    "llm": true,
+    "llmTimeoutSec": 60,
+    "verbose": false
+  }
+}

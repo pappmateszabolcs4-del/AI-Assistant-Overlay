@@ -83,6 +83,28 @@ Positioning: gameplay assistance layer, not a content replication platform.
 - Each fact has tags + priority for deterministic retrieval and ranking.
 - Deduping and review required before promotion to curated facts.
 
+### Runtime knowledge model (bounded synthesis)
+
+Verified facts remain the source of truth, but the runtime layer may perform
+bounded, anchor-gated composition to avoid retrieval starvation.
+
+Allowed at runtime:
+- One-step, retrieval-local composition (condition -> transition -> consequence).
+- Only when explicit mechanic anchors and transitions are present.
+- Mechanically explicit continuation (no narration or coaching).
+
+Not allowed at runtime:
+- Multi-hop inference or cross-fact reasoning.
+- Gameplay strategy or advisory narration.
+- Graph-native propagation or hidden causal chains.
+
+Runtime inputs (lightweight only):
+- Mechanistic core
+- Canonical entities
+- Transitions and constraints
+- Composition hints
+- Retrieval metadata
+
 ## Gameplay fact extraction pipeline (long form)
 
 Summary of the new data strategy and gameplay fact extraction pipeline for the game assistant overlay project.

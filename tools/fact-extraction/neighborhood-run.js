@@ -34,6 +34,38 @@ function logVerbose(args, message) {
   console.log(message);
 }
 
+function createStageLogger(args) {
+  const enabled = !!(args && (args.stageLog || args.verbose));
+  const starts = new Map();
+
+  const formatMeta = (meta) => {
+    if (!meta || typeof meta !== 'object') return '';
+    const parts = [];
+    Object.entries(meta).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      parts.push(`${key}=${value}`);
+    });
+    return parts.length ? ` ${parts.join(' ')}` : '';
+  };
+
+  const enter = (name, meta) => {
+    if (!enabled) return;
+    starts.set(name, process.hrtime.bigint());
+    // eslint-disable-next-line no-console
+    console.log(`[STAGE] enter ${name}${formatMeta(meta)}`);
+  };
+
+  const exit = (name, meta) => {
+    if (!enabled) return;
+    const start = starts.get(name);
+    const elapsedMs = start ? Number((process.hrtime.bigint() - start) / 1000000n) : 0;
+    // eslint-disable-next-line no-console
+    console.log(`[STAGE] exit ${name} elapsedMs=${elapsedMs}${formatMeta(meta)}`);
+  };
+
+  return { enter, exit };
+}
+
 function ensureDir(filePath) {
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) {
@@ -171,6 +203,7 @@ async function buildNeighborhoodPackage(options) {
     args,
     policy
   } = options;
+  const stage = options.stage;
   const allowEnv = !!args.allowEnv;
   const keytarService = args.keytarService ? String(args.keytarService).trim() : '';
   const keytarAccount = args.keytarAccount ? String(args.keytarAccount).trim() : '';
@@ -178,6 +211,7 @@ async function buildNeighborhoodPackage(options) {
 
   let mergedFacts = Array.isArray(facts) ? facts.slice() : [];
   let canonicalDiagnostics = { enabled: false };
+  stage && stage.enter('NEIGHBORHOOD_CANONICALIZE', { enabled: neighborhoodCanonicalize, input: mergedFacts.length });
   if (neighborhoodCanonicalize) {
     const canonicalized = await canonicalizeFacts(mergedFacts, {
       enableCanonicalize: true,
@@ -192,9 +226,14 @@ async function buildNeighborhoodPackage(options) {
     canonicalDiagnostics = canonicalized.diagnostics || { enabled: false };
     mergedFacts = canonicalized.facts || [];
   }
+  stage && stage.exit('NEIGHBORHOOD_CANONICALIZE', { kept: mergedFacts.length });
 
+  stage && stage.enter('NEIGHBORHOOD_DEDUPE', { input: mergedFacts.length });
   const deduped = applyDedupe(mergedFacts, policy);
+  stage && stage.exit('NEIGHBORHOOD_DEDUPE', { kept: deduped.facts.length, dropped: deduped.dropped });
+  stage && stage.enter('NEIGHBORHOOD_RETENTION', { input: deduped.facts.length });
   applyRetentionShaping(deduped.facts);
+  stage && stage.exit('NEIGHBORHOOD_RETENTION', { kept: deduped.facts.length });
 
   const factsWithIds = deduped.facts.map((fact) => ({
     ...fact,
@@ -402,6 +441,7 @@ function collectSeedSignals(facts) {
 
 async function runExtraction(text, options) {
   const { game, sourceType, policy, args } = options;
+  const stage = options.stage;
   const maxChunks = Number.isFinite(Number(args.maxChunks))
     ? Number(args.maxChunks)
     : (Number.isFinite(Number(args.chunks)) ? Number(args.chunks) : 10);
@@ -453,38 +493,70 @@ async function runExtraction(text, options) {
 
   let chunkIndex = 0;
   let chunkTokenTotal = 0;
+  stage && stage.enter('EXTRACT', { chunks: chunks.length, llmEnabled: enableLlm });
   for (const chunk of chunks) {
     chunkIndex += 1;
     chunkTokenTotal += Number(chunk.tokenEstimate || 0);
     logVerbose(args, `Chunk ${chunkIndex}/${chunks.length} (tokens ~${chunk.tokenEstimate})`);
-    // eslint-disable-next-line no-await-in-loop
-    const result = await extractFactsFromChunk(chunk, {
-      enableLlm,
-      game,
-      sourceType,
-      model,
-      policy,
-      timeoutMs,
-      allowEnv,
-      keytarService,
-      keytarAccount
-    });
-    extractionDiagnostics.push({
-      chunkId: chunk.chunkId,
-      tokenEstimate: chunk.tokenEstimate,
-      ...result.diagnostics
-    });
-    if (Array.isArray(result.facts)) {
-      extracted.push(...result.facts.map((fact) => ({
-        ...fact,
+    stage && stage.enter('EXTRACT_CHUNK', { chunk: chunkIndex, tokens: chunk.tokenEstimate || 0 });
+    const chunkStart = process.hrtime.bigint();
+    let warnTimer = null;
+    if (timeoutMs) {
+      warnTimer = setTimeout(() => {
+        // eslint-disable-next-line no-console
+        console.log(`[STAGE] warn EXTRACT_CHUNK chunk=${chunkIndex} elapsedMs>${timeoutMs}`);
+      }, timeoutMs);
+    }
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      const result = await extractFactsFromChunk(chunk, {
+        enableLlm,
+        game,
         sourceType,
-        _chunkId: chunk.chunkId,
-        _contextWindow: buildLocalContextWindow(fact && fact.text, chunk.text)
-      })));
+        model,
+        policy,
+        timeoutMs,
+        allowEnv,
+        keytarService,
+        keytarAccount
+      });
+      if (warnTimer) clearTimeout(warnTimer);
+      extractionDiagnostics.push({
+        chunkId: chunk.chunkId,
+        tokenEstimate: chunk.tokenEstimate,
+        ...result.diagnostics
+      });
+      if (Array.isArray(result.facts)) {
+        extracted.push(...result.facts.map((fact) => ({
+          ...fact,
+          sourceType,
+          _chunkId: chunk.chunkId,
+          _contextWindow: buildLocalContextWindow(fact && fact.text, chunk.text)
+        })));
+      }
+      const elapsedMs = Number((process.hrtime.bigint() - chunkStart) / 1000000n);
+      const diagError = result.diagnostics && result.diagnostics.error ? result.diagnostics.error : '';
+      stage && stage.exit('EXTRACT_CHUNK', {
+        chunk: chunkIndex,
+        elapsedMs,
+        facts: Array.isArray(result.facts) ? result.facts.length : 0,
+        error: diagError || undefined
+      });
+    } catch (err) {
+      if (warnTimer) clearTimeout(warnTimer);
+      const elapsedMs = Number((process.hrtime.bigint() - chunkStart) / 1000000n);
+      const message = err && err.message ? err.message : String(err);
+      stage && stage.exit('EXTRACT_CHUNK', { chunk: chunkIndex, elapsedMs, error: message });
+      throw err;
     }
   }
+  stage && stage.exit('EXTRACT', { extracted: extracted.length, chunkTokenTotal });
 
+  stage && stage.enter('NORMALIZE', { extracted: extracted.length });
   const rawNormalized = normalizeFactListRaw(extracted, policy);
+  stage && stage.exit('NORMALIZE', { kept: rawNormalized.facts.length, dropped: rawNormalized.dropped });
+
+  stage && stage.enter('CANONICALIZE', { enabled: !args.noCanonicalize, input: rawNormalized.facts.length });
   const canonicalizeEnabled = !args.noCanonicalize;
   const canonicalized = await canonicalizeFacts(rawNormalized.facts, {
     enableCanonicalize: canonicalizeEnabled,
@@ -496,15 +568,26 @@ async function runExtraction(text, options) {
     strongThreshold: Number.isFinite(Number(args.canonicalStrong)) ? Number(args.canonicalStrong) : undefined,
     diagLimit: Number.isFinite(Number(args.canonicalDiagTop)) ? Number(args.canonicalDiagTop) : undefined
   });
+  stage && stage.exit('CANONICALIZE', { kept: (canonicalized.facts || []).length });
+
+  stage && stage.enter('DEDUPE', { input: (canonicalized.facts || []).length });
   const deduped = applyDedupe(canonicalized.facts, policy);
+  stage && stage.exit('DEDUPE', { kept: deduped.facts.length, dropped: deduped.dropped });
+
+  stage && stage.enter('RETENTION', { input: deduped.facts.length });
   applyRetentionShaping(deduped.facts);
+  stage && stage.exit('RETENTION', { kept: deduped.facts.length });
+
+  stage && stage.enter('DIAGNOSTICS', { input: deduped.facts.length });
   const chunkCohesion = buildChunkCohesionDiagnostics(rawNormalized.facts, extractionDiagnostics, {
     limit: Number.isFinite(Number(args.chunkDiagTop)) ? Number(args.chunkDiagTop) : undefined
   });
   const outputFacts = deduped.facts.map(({ _chunkId, _grounding, ...rest }) => rest);
+  stage && stage.exit('DIAGNOSTICS', { kept: outputFacts.length });
 
   return {
     facts: outputFacts,
+    rawExtracted: extracted,
     diagnostics: {
       chunks: chunks.length,
       chunkTokenTotal,
@@ -527,18 +610,25 @@ async function runExtraction(text, options) {
 
 async function runSectionIngestion(html, options) {
   const { game, sourceType, policy, args } = options;
+  const stage = options.stage;
   const rawSections = extractHierarchicalSections(html);
   const sectionMax = Number.isFinite(Number(args.sectionMaxSections)) ? Number(args.sectionMaxSections) : 60;
   const sections = mergeSectionBudget(rawSections, sectionMax);
   const sectionFacts = [];
+  const sectionRawExtracted = [];
   const sectionDiagnostics = [];
+
+  stage && stage.enter('SECTION_INGEST', { sections: sections.length });
 
   for (const section of sections) {
     const sectionText = String(section.text || '').trim();
     if (!sectionText) continue;
     logVerbose(args, `Section: ${section.sectionPath || section.heading || 'untitled'}`);
     // eslint-disable-next-line no-await-in-loop
-    const result = await runExtraction(sectionText, { game, sourceType, policy, args });
+    const result = await runExtraction(sectionText, { game, sourceType, policy, args, stage });
+    if (Array.isArray(result.rawExtracted)) {
+      sectionRawExtracted.push(...result.rawExtracted);
+    }
     const sectionPath = section.sectionPath || '';
     const sectionHeading = section.heading || '';
     const factsWithSection = result.facts.map((fact) => ({
@@ -570,6 +660,7 @@ async function runSectionIngestion(html, options) {
   const allowEnv = !!args.allowEnv;
   const keytarService = args.keytarService ? String(args.keytarService).trim() : '';
   const keytarAccount = args.keytarAccount ? String(args.keytarAccount).trim() : '';
+  stage && stage.enter('SECTION_CANONICALIZE', { input: sectionFacts.length });
   const canonicalized = await canonicalizeFacts(sectionFacts, {
     enableCanonicalize: canonicalizeEnabled,
     model: args.embedModel ? String(args.embedModel).trim() : '',
@@ -580,15 +671,22 @@ async function runSectionIngestion(html, options) {
     strongThreshold: Number.isFinite(Number(args.canonicalStrong)) ? Number(args.canonicalStrong) : undefined,
     diagLimit: Number.isFinite(Number(args.canonicalDiagTop)) ? Number(args.canonicalDiagTop) : undefined
   });
+  stage && stage.exit('SECTION_CANONICALIZE', { kept: (canonicalized.facts || []).length });
+  stage && stage.enter('SECTION_DEDUPE', { input: (canonicalized.facts || []).length });
   const deduped = applyDedupe(canonicalized.facts, policy);
+  stage && stage.exit('SECTION_DEDUPE', { kept: deduped.facts.length, dropped: deduped.dropped });
+  stage && stage.enter('SECTION_RETENTION', { input: deduped.facts.length });
   applyRetentionShaping(deduped.facts);
+  stage && stage.exit('SECTION_RETENTION', { kept: deduped.facts.length });
   const avgTokens = sections.length
     ? Number((sections.reduce((sum, sec) => sum + (sec.tokenEstimate || 0), 0) / sections.length).toFixed(2))
     : 0;
   const shortSections = sections.filter((sec) => Number(sec.tokenEstimate || 0) > 0 && Number(sec.tokenEstimate || 0) < 200).length;
 
+  stage && stage.exit('SECTION_INGEST', { kept: deduped.facts.length });
   return {
     facts: deduped.facts,
+    rawExtracted: sectionRawExtracted,
     diagnostics: {
       sections: sections.length,
       sectionBudget: sectionMax,
@@ -603,6 +701,7 @@ async function runSectionIngestion(html, options) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+  const stage = createStageLogger(args);
   const seedUrl = String(args.seed || args.seedUrl || '').trim();
   const game = String(args.game || '').trim();
   if (!seedUrl || !game) {
@@ -639,17 +738,24 @@ async function main() {
   const minScore = Number.isFinite(Number(args.minScore)) ? Number(args.minScore) : 0.12;
   const fallbackScore = Number.isFinite(Number(args.fallbackScore)) ? Number(args.fallbackScore) : 0.05;
 
+  stage.enter('FETCH_SEED_HTML', { url: urlCheck.url });
   logVerbose(args, `Fetching seed HTML: ${urlCheck.url}`);
   const seedHtml = await fetchUrlHtml(urlCheck.url, { maxBytes, userAgent });
+  stage.exit('FETCH_SEED_HTML', { bytes: seedHtml.length });
+  stage.enter('FETCH_SEED_TEXT', { url: urlCheck.url });
   logVerbose(args, 'Fetching seed text');
   const seedText = await fetchUrlText(urlCheck.url, { maxBytes, userAgent });
+  stage.exit('FETCH_SEED_TEXT', { bytes: seedText.length });
+  stage.enter('EXTRACT_SEED', { bytes: seedText.length });
   logVerbose(args, 'Extracting seed facts');
   const seedResult = await runExtraction(seedText, {
     game,
     sourceType,
     policy,
-    args
+    args,
+    stage
   });
+  stage.exit('EXTRACT_SEED', { kept: seedResult.facts.length });
 
   const seedSignals = collectSeedSignals(seedResult.facts);
   const seedSections = extractHierarchicalSections(seedHtml);
@@ -663,6 +769,7 @@ async function main() {
   seedSignals.density = seedTokenTotal
     ? Number(((seedResult.facts.length / seedTokenTotal) * 1000).toFixed(3))
     : 0;
+  stage.enter('ANCHOR_SELECTION');
   const anchors = extractAnchorLinks(seedHtml, urlCheck.url, allowExternal)
     .filter((anchor) => !isUiLinkText(anchor.text));
   const seedLang = detectLanguageCode(urlCheck.url);
@@ -684,6 +791,7 @@ async function main() {
   }).filter((entry) => entry.score > 0);
 
   scored.sort((a, b) => b.score - a.score);
+  stage.exit('ANCHOR_SELECTION', { candidates: scored.length });
 
   let selected = scored.filter((entry) => entry.score >= minScore);
   if (!selected.length && scored.length) {
@@ -698,35 +806,46 @@ async function main() {
   const combinedFacts = new Map();
   const skippedPages = [];
   for (const entry of selected) {
+    stage.enter('FETCH_PAGE', { url: entry.url });
     logVerbose(args, `Fetching page: ${entry.url}`);
     let pageText;
     try {
       // eslint-disable-next-line no-await-in-loop
       pageText = await fetchUrlText(entry.url, { maxBytes, userAgent });
+      stage.exit('FETCH_PAGE', { bytes: pageText.length });
     } catch (err) {
       const reason = err && err.message ? err.message : 'error';
       if (reason === 'source-too-large') {
         logVerbose(args, `Oversized page, switching to section ingestion: ${entry.url}`);
+        stage.enter('SECTION_FETCH', { url: entry.url });
         try {
           // eslint-disable-next-line no-await-in-loop
           const pageHtml = await fetchUrlHtml(entry.url, { maxBytes: sectionMaxBytes, userAgent });
+          stage.exit('SECTION_FETCH', { bytes: pageHtml.length });
+          stage.enter('SECTION_INGESTION', { url: entry.url });
           // eslint-disable-next-line no-await-in-loop
-          const result = await runSectionIngestion(pageHtml, { game, sourceType, policy, args });
+          const result = await runSectionIngestion(pageHtml, { game, sourceType, policy, args, stage });
+          stage.exit('SECTION_INGESTION', { kept: result.facts.length });
           const factsWithSource = result.facts.map((fact) => ({
             ...fact,
             sourceUrl: entry.url
           }));
+          const rawExtracted = Array.isArray(result.rawExtracted) ? result.rawExtracted : [];
           const slug = slugify(new URL(entry.url).pathname.split('/').pop());
           const outputPath = path.join(outDir, game, `${slug}.json`);
           ensureDir(outputPath);
-          fs.writeFileSync(outputPath, JSON.stringify({
+          const outputPayload = {
             game,
             sourceType,
             sourceUrl: entry.url,
             extractedAt: new Date().toISOString(),
             facts: factsWithSource,
             diagnostics: result.diagnostics
-          }, null, 2));
+          };
+          if (args.dumpRawInputs) {
+            outputPayload.rawExtracted = rawExtracted;
+          }
+          fs.writeFileSync(outputPath, JSON.stringify(outputPayload, null, 2));
           outputs.push({
             url: entry.url,
             linkText: entry.text,
@@ -734,13 +853,15 @@ async function main() {
             outputPath,
             kept: factsWithSource.length,
             sectionIngestion: true,
-            sectionDiagnostics: result.diagnostics
+            sectionDiagnostics: result.diagnostics,
+            rawExtracted: args.dumpRawInputs ? rawExtracted : undefined
           });
           mergeFacts(combinedFacts, factsWithSource);
           continue;
         } catch (sectionErr) {
           const sectionReason = sectionErr && sectionErr.message ? sectionErr.message : 'error';
           logVerbose(args, `Skipping page (section ingestion failed): ${entry.url} (${sectionReason})`);
+          stage.exit('SECTION_INGESTION', { error: sectionReason });
           skippedPages.push({
             url: entry.url,
             linkText: entry.text,
@@ -751,6 +872,7 @@ async function main() {
         }
       }
       logVerbose(args, `Skipping page (fetch failed): ${entry.url} (${reason})`);
+      stage.exit('FETCH_PAGE', { error: reason });
       skippedPages.push({
         url: entry.url,
         linkText: entry.text,
@@ -759,30 +881,38 @@ async function main() {
       });
       continue;
     }
+    stage.enter('EXTRACT_PAGE', { url: entry.url, bytes: pageText.length });
     logVerbose(args, 'Extracting page facts');
     // eslint-disable-next-line no-await-in-loop
-    const result = await runExtraction(pageText, { game, sourceType, policy, args });
+    const result = await runExtraction(pageText, { game, sourceType, policy, args, stage });
+    stage.exit('EXTRACT_PAGE', { kept: result.facts.length });
     const factsWithSource = result.facts.map((fact) => ({
       ...fact,
       sourceUrl: entry.url
     }));
+    const rawExtracted = Array.isArray(result.rawExtracted) ? result.rawExtracted : [];
     const slug = slugify(new URL(entry.url).pathname.split('/').pop());
     const outputPath = path.join(outDir, game, `${slug}.json`);
     ensureDir(outputPath);
-    fs.writeFileSync(outputPath, JSON.stringify({
+    const outputPayload = {
       game,
       sourceType,
       sourceUrl: entry.url,
       extractedAt: new Date().toISOString(),
       facts: factsWithSource,
       diagnostics: result.diagnostics
-    }, null, 2));
+    };
+    if (args.dumpRawInputs) {
+      outputPayload.rawExtracted = rawExtracted;
+    }
+    fs.writeFileSync(outputPath, JSON.stringify(outputPayload, null, 2));
     outputs.push({
       url: entry.url,
       linkText: entry.text,
       score: entry.score,
       outputPath,
-      kept: result.facts.length
+      kept: result.facts.length,
+      rawExtracted: args.dumpRawInputs ? rawExtracted : undefined
     });
     mergeFacts(combinedFacts, factsWithSource);
   }
@@ -815,6 +945,7 @@ async function main() {
   };
 
   const mergedFacts = Array.from(combinedFacts.values());
+  stage.enter('PACKAGE_BUILD', { facts: mergedFacts.length });
   const packagePayload = await buildNeighborhoodPackage({
     facts: mergedFacts,
     seed: report.seed,
@@ -822,10 +953,13 @@ async function main() {
     outputs,
     skipped: report.skipped,
     args,
-    policy
+    policy,
+    stage
   });
+  stage.exit('PACKAGE_BUILD', { facts: packagePayload.allFacts.facts.length });
   const summary = packagePayload.summary;
 
+  stage.enter('WRITE_REPORTS');
   const reportPath = args.report
     ? path.resolve(args.report)
     : path.join(outDir, game, 'neighborhood-report.json');
@@ -849,6 +983,39 @@ async function main() {
     kept: entry.kept,
     sectionIngestion: !!entry.sectionIngestion
   })));
+  if (args.dumpRawInputs) {
+    const rawBundle = {
+      meta: {
+        seedUrl: urlCheck.url,
+        game,
+        sourceType,
+        createdAt: new Date().toISOString(),
+        policyPath: policyInfo && policyInfo.path ? policyInfo.path : null,
+        config: {
+          embedModel: args.embedModel ? String(args.embedModel).trim() : '',
+          canonicalSoft: args.canonicalSoft ? Number(args.canonicalSoft) : undefined,
+          canonicalStrong: args.canonicalStrong ? Number(args.canonicalStrong) : undefined,
+          canonicalDiagTop: args.canonicalDiagTop ? Number(args.canonicalDiagTop) : undefined,
+          noCanonicalize: !!args.noCanonicalize,
+          noNeighborhoodCanonicalize: !!args.noNeighborhoodCanonicalize
+        }
+      },
+      seed: {
+        url: urlCheck.url,
+        facts: Array.isArray(seedResult.rawExtracted) ? seedResult.rawExtracted : []
+      },
+      selection: report.selection,
+      outputs: outputs.map((entry) => ({
+        url: entry.url,
+        linkText: entry.linkText,
+        score: entry.score,
+        sectionIngestion: !!entry.sectionIngestion,
+        facts: Array.isArray(entry.rawExtracted) ? entry.rawExtracted : []
+      }))
+    };
+    writeJson(path.join(packageDir, 'raw-extracted.json'), rawBundle);
+  }
+  stage.exit('WRITE_REPORTS', { reportPath, summaryPath, packageDir });
   // eslint-disable-next-line no-console
   console.log(`Neighborhood report saved to ${reportPath}`);
   // eslint-disable-next-line no-console
