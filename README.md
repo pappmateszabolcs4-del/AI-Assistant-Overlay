@@ -1,6 +1,9 @@
 # AI Assistant Overlay
 
-Electron-based desktop overlay assistant for video games on Windows. It detects the active game window, provides in-game help, and supports text, voice (Whisper STT), and image-based analysis (Vision).
+Electron-based desktop overlay assistant for video games on Windows. It detects the active game window, provides in-game help, and Currently supports text, voice (Whisper STT), and image-based analysis (Vision).
+
+Project is stopped due to making my own Video Game.
+
 
 ## ✨ Features
 
